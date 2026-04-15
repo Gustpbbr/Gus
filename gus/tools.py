@@ -9,6 +9,26 @@ logger = logging.getLogger(__name__)
 
 TOOLS = [
     {
+        "name": "read_from_github",
+        "description": (
+            "Lê o conteúdo de um arquivo Markdown do repositório do Gustavo no GitHub. "
+            "Use quando precisar de contexto específico de um projeto, histórico de saúde, "
+            "exames anteriores, decisões passadas, ou qualquer informação estruturada salva. "
+            "Exemplos de paths: 'pessoal/saude/historico-saude.md', "
+            "'phronesis-bench/semantico/phronesis-00-briefing.md', 'capturado/insight-x.md'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "Caminho completo do arquivo no repositório, incluindo extensão (ex: 'pessoal/saude/historico-saude.md')"
+                }
+            },
+            "required": ["path"]
+        }
+    },
+    {
         "name": "search_web",
         "description": (
             "Busca informações atuais na web. Use quando não tiver certeza sobre fatos recentes, "
@@ -60,6 +80,33 @@ TOOLS = [
 ]
 
 
+async def _read_from_github(path: str) -> str:
+    token = os.getenv("GITHUB_TOKEN")
+    repo = os.getenv("GITHUB_REPO", "Gustpbbr/Gus")
+
+    if not token:
+        return "GITHUB_TOKEN não configurado."
+
+    url = f"https://api.github.com/repos/{repo}/contents/{path.lstrip('/')}"
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json",
+        "X-GitHub-Api-Version": "2022-11-28"
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url, headers=headers)
+
+    if response.status_code == 404:
+        return f"Arquivo não encontrado: `{path}`"
+    if response.status_code != 200:
+        return f"Erro ao ler do GitHub: {response.status_code}"
+
+    data = response.json()
+    content = base64.b64decode(data["content"]).decode("utf-8")
+    return content
+
+
 async def _search_web(query: str) -> str:
     def _run():
         with DDGS() as ddgs:
@@ -81,7 +128,7 @@ async def _search_web(query: str) -> str:
 
 async def _save_to_github(filename: str, content: str, folder: str) -> str:
     token = os.getenv("GITHUB_TOKEN")
-    repo = os.getenv("GITHUB_REPO", "Gustpbbr/Segundo-cerebro")
+    repo = os.getenv("GITHUB_REPO", "Gustpbbr/Gus")
 
     if not token:
         return "GITHUB_TOKEN não configurado. Adicione a variável no Railway."
@@ -121,7 +168,9 @@ async def _save_to_github(filename: str, content: str, folder: str) -> str:
 
 
 async def executar_tool(name: str, inputs: dict) -> str:
-    if name == "search_web":
+    if name == "read_from_github":
+        return await _read_from_github(inputs["path"])
+    elif name == "search_web":
         return await _search_web(inputs["query"])
     elif name == "save_to_github":
         return await _save_to_github(
