@@ -1,4 +1,5 @@
 import os
+import re
 import asyncio
 import logging
 import base64
@@ -6,6 +7,19 @@ import httpx
 from duckduckgo_search import DDGS
 
 logger = logging.getLogger(__name__)
+
+# Caracteres permitidos em nomes de arquivo e pastas
+_SAFE_PATH_RE = re.compile(r"^[a-zA-Z0-9\-_/]+$")
+
+
+def _validar_path(path: str) -> str:
+    """Valida path contra traversal e caracteres perigosos."""
+    path = path.strip().lstrip("/")
+    if ".." in path:
+        raise ValueError(f"Path inválido (traversal): {path}")
+    if not _SAFE_PATH_RE.match(path.replace(".md", "")):
+        raise ValueError(f"Path contém caracteres não permitidos: {path}")
+    return path
 
 TOOLS = [
     {
@@ -81,20 +95,25 @@ TOOLS = [
 
 
 async def _read_from_github(path: str) -> str:
+    try:
+        path = _validar_path(path)
+    except ValueError as e:
+        return str(e)
+
     token = os.getenv("GITHUB_TOKEN")
     repo = os.getenv("GITHUB_REPO", "Gustpbbr/Gus")
 
     if not token:
         return "GITHUB_TOKEN não configurado."
 
-    url = f"https://api.github.com/repos/{repo}/contents/{path.lstrip('/')}"
+    url = f"https://api.github.com/repos/{repo}/contents/{path}"
     headers = {
         "Authorization": f"token {token}",
         "Accept": "application/vnd.github.v3+json",
         "X-GitHub-Api-Version": "2022-11-28"
     }
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=30) as client:
         response = await client.get(url, headers=headers)
 
     if response.status_code == 404:
@@ -115,6 +134,7 @@ async def _search_web(query: str) -> str:
     try:
         results = await asyncio.to_thread(_run)
     except Exception as e:
+        logger.error(f"Falha na busca web: {e}")
         return f"Erro na busca: {e}"
 
     if not results:
@@ -127,13 +147,21 @@ async def _search_web(query: str) -> str:
 
 
 async def _save_to_github(filename: str, content: str, folder: str) -> str:
+    if "/" in filename or ".." in filename:
+        return f"Nome de arquivo inválido: {filename}"
+
+    try:
+        folder = _validar_path(folder)
+    except ValueError as e:
+        return str(e)
+
     token = os.getenv("GITHUB_TOKEN")
     repo = os.getenv("GITHUB_REPO", "Gustpbbr/Gus")
 
     if not token:
         return "GITHUB_TOKEN não configurado. Adicione a variável no Railway."
 
-    path = f"{folder.strip('/')}/{filename}.md"
+    path = f"{folder}/{filename}.md"
     url = f"https://api.github.com/repos/{repo}/contents/{path}"
     headers = {
         "Authorization": f"token {token}",
@@ -142,7 +170,7 @@ async def _save_to_github(filename: str, content: str, folder: str) -> str:
     }
     encoded = base64.b64encode(content.encode()).decode()
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=30) as client:
         # Verifica se arquivo já existe (pega sha para update)
         sha = None
         check = await client.get(url, headers=headers)

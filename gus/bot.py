@@ -20,7 +20,9 @@ conversation_histories: dict[str, list] = {}
 
 
 def _autorizado(chat_id: str) -> bool:
-    return not AUTHORIZED_CHAT_ID or chat_id == AUTHORIZED_CHAT_ID
+    if not AUTHORIZED_CHAT_ID:
+        return False  # nega tudo até configurar TELEGRAM_CHAT_ID
+    return chat_id == AUTHORIZED_CHAT_ID
 
 
 async def _verificar_limite(update: Update) -> bool:
@@ -57,10 +59,16 @@ async def _responder(update: Update, chat_id: str, content: list[dict], texto_pr
 
         history.append({"role": "assistant", "content": resposta})
 
-        asyncio.create_task(salvar_memorias([
-            {"role": "user", "content": texto_preview or "[mídia]"},
-            {"role": "assistant", "content": resposta}
-        ]))
+        async def _salvar_com_log():
+            try:
+                await salvar_memorias([
+                    {"role": "user", "content": texto_preview or "[mídia]"},
+                    {"role": "assistant", "content": resposta}
+                ])
+            except Exception as e:
+                logger.warning(f"Mem0 save falhou: {e}")
+
+        asyncio.create_task(_salvar_com_log())
 
         for i in range(0, len(resposta), 4096):
             await update.message.reply_text(resposta[i:i + 4096])
@@ -84,14 +92,19 @@ async def _responder(update: Update, chat_id: str, content: list[dict], texto_pr
 
 
 async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    chat_id = update.effective_chat.id
-    await update.message.reply_text(
-        f"Oi, sou o Gus.\n\n"
-        f"Seu chat_id é: `{chat_id}`\n\n"
-        f"Se você ainda não configurou o TELEGRAM\\_CHAT\\_ID no Railway, "
-        f"cole esse número lá e faça redeploy.",
-        parse_mode="Markdown"
-    )
+    chat_id = str(update.effective_chat.id)
+    if _autorizado(chat_id):
+        await update.message.reply_text("Oi, Gus online e pronto.")
+    elif not AUTHORIZED_CHAT_ID:
+        # Primeiro uso — mostra chat_id pra configurar
+        await update.message.reply_text(
+            f"Seu chat\\_id é: `{chat_id}`\n\n"
+            f"Configure TELEGRAM\\_CHAT\\_ID no Railway com esse número "
+            f"e faça redeploy.",
+            parse_mode="Markdown"
+        )
+    else:
+        await update.message.reply_text("Bot privado.")
 
 
 async def handle_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
