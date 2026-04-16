@@ -3,10 +3,13 @@ import re
 import asyncio
 import logging
 import base64
+from datetime import datetime, timezone, timedelta
 import httpx
 from duckduckgo_search import DDGS
 
 logger = logging.getLogger(__name__)
+
+BRT = timezone(timedelta(hours=-3))
 
 # Caracteres permitidos em nomes de arquivo e pastas
 _SAFE_PATH_RE = re.compile(r"^[a-zA-Z0-9\-_/]+$")
@@ -162,6 +165,17 @@ async def _save_to_github(filename: str, content: str, folder: str) -> str:
         return "GITHUB_TOKEN não configurado. Adicione a variável no Railway."
 
     path = f"{folder}/{filename}.md"
+
+    now = datetime.now(BRT)
+    frontmatter = (
+        f"---\n"
+        f"capturado_em: {now.strftime('%Y-%m-%dT%H:%M:%S')}\n"
+        f"via: telegram\n"
+        f"---\n\n"
+    )
+    if not content.startswith("---\n"):
+        content = frontmatter + content
+
     url = f"https://api.github.com/repos/{repo}/contents/{path}"
     headers = {
         "Authorization": f"token {token}",
