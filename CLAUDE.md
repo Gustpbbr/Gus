@@ -6,46 +6,54 @@ Este arquivo é lido automaticamente no início de cada sessão neste repositór
 
 ## Quem és tu
 
-Você é uma nova instância do Claude, abrindo este repositório pela primeira vez. Outra instância — em outro repositório, numa sessão anterior — construiu tudo isso aqui e escreveu este briefing pra você. Gustavo não programa diretamente, então a continuidade depende deste documento.
+Você é uma instância do Claude Code trabalhando no repositório do Gus. Você tem acesso à memória do Gustavo via Mem0 (MCP server) — **use-a**. Antes de responder sobre projetos, preferências ou contexto pessoal, busque memórias relevantes.
+
+Você não é "o Gus" com personalidade definida — isso é pro bot do Telegram. Aqui você é um engenheiro com contexto. Sabe quem é o Gustavo, o que ele faz, como ele trabalha. Mas o foco é técnico.
+
+Para a identidade completa do Gustavo e do Gus, veja `gus/gus-identity.md`.
 
 ---
 
 ## Quem é Gustavo
 
-Pesquisador independente brasileiro, anestesiologista. Trabalha exclusivamente via conversa com LLMs — não escreve código, não usa terminal. Toda implementação é feita pela IA, ele valida e executa instruções passo a passo (colar texto, preencher formulários, configurar serviços).
+Pesquisador independente brasileiro, anestesiologista. Trabalha exclusivamente via conversa com LLMs — não escreve código, não usa terminal. Toda implementação é feita pela IA, ele valida e executa instruções passo a passo.
 
 Preferências de comunicação: português brasileiro informal, direto, sem formatação excessiva, sem superlativos vazios. Crítica direta é bem-vinda.
 
 ---
 
-## O que é este repositório
+## O que é o Gus
 
-**Gus** é um agente pessoal do Gustavo que roda como bot no Telegram. A ideia central: Gustavo manda qualquer coisa pelo Telegram (texto, foto, PDF) e o Gus analisa, responde com contexto, salva no Mem0 como memória e escreve no GitHub como arquivo Markdown estruturado.
+Gus é um sistema de agente pessoal com **múltiplas portas de acesso**:
 
-Não é um chatbot genérico. É uma camada de memória e organização pessoal que funciona 24/7 na nuvem, sem depender de computador ligado ou GitHub aberto.
+- **Telegram** (bot Railway) — captura rápida, foto, áudio, PDF. Personalidade do Gus completa.
+- **Claude Code** (esta sessão) — desenvolvimento, manutenção, evolução do sistema. Contexto do Gustavo sem personalidade forçada.
+- **Claude Chat** (app) — reflexão, análise, conversa longa. Lê do Google Drive.
+
+Todas as portas compartilham:
+- **Mem0** — memória relacional do Gustavo
+- **GitHub** — arquivos .md estruturados por pasta
+- **Google Drive** — espelho dos .md como Google Docs (sync automático via GitHub Action)
 
 ---
 
 ## Arquitetura
 
 ```
-Gustavo (celular, Telegram)
-        ↓
-Bot Telegram (python-telegram-bot)
-        ↓
-Claude API (Anthropic) — com tool use
-        ↓
-┌───────────────────┬──────────────────┬──────────────────┐
-│   Mem0 (memória)  │  GitHub (storage) │  DuckDuckGo (web) │
-│ fragmentos da     │ arquivos .md por  │ busca de fatos    │
-│ identidade e      │ pasta e categoria │ atuais quando     │
-│ conversas         │ (escrita e leitura│ necessário        │
-└───────────────────┴──────────────────┴──────────────────┘
-        ↓
-Resposta no Telegram
+              GUS (identidade + memória + arquivo)
+              ┌─────────────────────────────────┐
+              │  Mem0         → memória viva     │
+              │  GitHub .md   → conhecimento     │
+              │  gus-identity.md → identidade    │
+              └──────────┬──────────────────────┘
+                         │
+         ┌───────────────┼───────────────────┐
+         │               │                   │
+    Telegram        Claude Code         Claude Chat
+    (bot Railway)   (MCP: Mem0+GitHub)  (Project + Drive)
 ```
 
-**Deploy:** Railway (servidor na nuvem, 24/7, sem custo de máquina local)
+**Deploy do bot:** Railway (24/7, sem custo de máquina local)
 
 ---
 
@@ -53,132 +61,92 @@ Resposta no Telegram
 
 ```
 gus/
-├── main.py          ← entry point, inicializa o bot Telegram
-├── bot.py           ← handlers: texto, foto, PDF, /start, /reset
-├── llm.py           ← chama Claude API com loop de tool use
-├── memory.py        ← busca e salva no Mem0
-├── tools.py         ← 3 tools: search_web, save_to_github, read_from_github
-├── media.py         ← processa imagens (visão) e PDFs (extração de texto)
-├── logger.py        ← log de custos e latência
-└── system_prompt.md ← personalidade do Gus + estrutura de pastas do repo
+├── main.py            ← entry point, inicializa o bot Telegram
+├── bot.py             ← handlers: texto, foto, PDF, /start, /reset
+├── llm.py             ← chama Claude API com loop de tool use (max 10 rounds)
+├── memory.py          ← busca e salva no Mem0
+├── tools.py           ← 3 tools: search_web, save_to_github, read_from_github
+├── media.py           ← processa imagens (visão) e PDFs (extração de texto)
+├── logger.py          ← log de custos e latência (JSONL)
+├── system_prompt.md   ← personalidade do Gus (só Telegram)
+└── gus-identity.md    ← identidade compartilhada (todas as portas)
+
+.claude/mcp/
+└── mem0_server.py     ← MCP server: expõe Mem0 como ferramenta do Claude Code
+
+.github/
+├── scripts/sync_to_drive.py   ← sincroniza .md → Google Drive
+├── scripts/export_mem0.py     ← exporta memórias do Mem0 → GitHub/Drive
+└── workflows/                 ← GitHub Actions (sync, export)
 ```
 
 ---
 
-## As 3 tools do Gus
+## As 3 tools do Gus (bot Telegram)
 
 **`search_web`** — busca no DuckDuckGo. Claude chama quando precisa de informação atual.
 
-**`save_to_github`** — cria ou atualiza arquivo .md no repositório GitHub do Gustavo. Claude decide a pasta automaticamente pelo conteúdo. Parâmetros: `filename`, `content`, `folder`.
+**`save_to_github`** — cria ou atualiza .md no repositório. Inclui frontmatter automático com data/hora (Brasília) e `via: telegram`.
 
-**`read_from_github`** — lê um arquivo .md do repositório por path. Claude chama antes de responder sobre saúde, projetos, finanças — sempre que o conteúdo pode estar salvo. Parâmetro: `path`.
+**`read_from_github`** — lê .md do repositório por path. Claude chama antes de responder sobre saúde, projetos, finanças.
 
 ---
 
-## Estrutura de pastas do repositório GitHub (onde os MDs são salvos)
+## Ferramentas do Claude Code (esta sessão)
+
+**Mem0 MCP** — `buscar_memorias`, `salvar_memoria`, `listar_memorias`. Acessa a mesma base de memória do bot Telegram.
+
+**GitHub MCP** — ferramentas `mcp__github__*` para gerenciar o repositório.
+
+---
+
+## Estrutura de pastas do repositório (onde os MDs são salvos)
 
 ```
 pessoal/saude/          ← exames, consultas, historico-saude.md (mestre)
 pessoal/financeiro/     ← extratos, resumo-financeiro.md (mestre)
 pessoal/diario/         ← reflexões pessoais
-dimagem/protocolos/     ← protocolos da clínica de anestesia
+dimagem/protocolos/     ← protocolos da clínica
 dimagem/casos/          ← casos interessantes
 dimagem/admin/          ← pendências administrativas
-receitas/doces/         ← receitas de doces (com subpastas: tortas, bolos...)
-receitas/salgadas/      ← receitas salgadas (massas, carnes...)
+receitas/doces/         ← receitas (com subpastas)
+receitas/salgadas/
 esportes/treinos/       ← registros de treinos
-esportes/              ← evolucao.md (mestre de progresso)
-leituras/livros/        ← livros lidos
-leituras/papers/        ← papers lidos
-projetos/phronesis-bench/
-projetos/mge/
-projetos/ter/
-projetos/axon/
-projetos/gus/           ← notas sobre o próprio sistema
-capturado/links/        ← artigos e posts salvos
+esportes/               ← evolucao.md (mestre)
+leituras/livros/
+leituras/papers/
+projetos/               ← phronesis-bench, mge, ter, axon, gus
+capturado/links/        ← artigos salvos
 capturado/ideias/       ← insights soltos
-capturado/misc/         ← qualquer coisa sem categoria
+capturado/misc/
 ```
-
-Pastas são criadas automaticamente quando um arquivo é salvo — não precisa criar antes.
 
 ---
 
-## O que já está pronto
+## O que está pronto
 
-- [x] Código completo do bot (main, bot, llm, memory, tools, media, logger)
-- [x] Tool `save_to_github` — escreve MDs no repo
-- [x] Tool `read_from_github` — lê MDs do repo por path
-- [x] Tool `search_web` — busca na web via DuckDuckGo
-- [x] Integração Mem0 — busca antes de responder, salva depois
+- [x] Código completo do bot (7 módulos Python)
+- [x] 3 tools funcionais (web, read, save) com validação de segurança
+- [x] Integração Mem0 (busca + salva)
 - [x] Suporte a texto, fotos e PDFs no Telegram
-- [x] System prompt com personalidade, estrutura de pastas e regras de nomenclatura
-- [x] Dockerfile + railway.toml prontos para deploy
-- [x] Repositório no GitHub: https://github.com/Gustpbbr/Gus
+- [x] Mapa de preços dinâmico (Opus 4.7 / Sonnet / Haiku)
+- [x] Timeouts, path traversal protection, auth deny-all
+- [x] Frontmatter automático com data/hora nos MDs
+- [x] Sync GitHub → Google Drive via GitHub Action
+- [x] MCP server Mem0 pro Claude Code
+- [x] Identidade unificada (gus-identity.md)
+- [x] Dockerfile + railway.toml
+
+## O que falta
+
+- [ ] Deploy no Railway (Gustavo configura pelo navegador)
+- [ ] Configurar Google Drive sync (Service Account + secrets)
+- [ ] Configurar MCP server Mem0 no Claude Code (MEM0_API_KEY)
+- [ ] Entrevista de boas-vindas via Telegram
+- [ ] Export diário do Mem0 pro Drive (GitHub Action cron)
 
 ---
 
-## O que falta fazer
+## Regra de ouro
 
-- [ ] **Deploy no Railway** ← próximo passo imediato
-- [ ] Configurar variáveis de ambiente no Railway (lista abaixo)
-- [ ] Testar: mandar `/start` pro bot e confirmar que responde
-- [ ] Fazer a entrevista de boas-vindas (ver `docs/gus-entrevista-boas-vindas.md`)
-- [ ] Criar o `pessoal/saude/historico-saude.md` mestre com condições atuais do Gustavo
-- [ ] Popular Mem0 com contexto inicial (opcional, cresce organicamente pelo uso)
-
----
-
-## Deploy no Railway — passo a passo
-
-Gustavo não usa terminal. Todo o processo é pelo navegador do celular.
-
-**1.** Acessa railway.app → "Start a New Project" → "Login with GitHub"
-
-**2.** "New Project" → "Deploy from GitHub repo" → seleciona `Gustpbbr/Gus`
-
-**3.** Railway detecta o Dockerfile automaticamente e inicia o build
-
-**4.** No painel do projeto → "Variables" → adicionar estas variáveis:
-
-```
-TELEGRAM_BOT_TOKEN     = token do BotFather
-TELEGRAM_CHAT_ID       = chat_id pessoal do Gustavo
-ANTHROPIC_API_KEY      = sk-ant-...
-MEM0_API_KEY           = m0-...
-GITHUB_TOKEN           = Personal Access Token com permissão repo
-GITHUB_REPO            = Gustpbbr/Gus
-MODEL_DEFAULT          = claude-sonnet-4-6
-MAX_TOKENS_RESPONSE    = 2048
-HARD_LIMIT_USD_MONTH   = 30
-```
-
-**5.** Após deploy → abrir Telegram → mandar `/start` pro bot → ele responde com o chat_id
-
-**6.** Se o chat_id mostrado for diferente do configurado, atualizar `TELEGRAM_CHAT_ID` no Railway
-
----
-
-## Variáveis que Gustavo precisa ter em mãos
-
-- **TELEGRAM_BOT_TOKEN** — criado no BotFather (Telegram). Se não tiver: buscar `@BotFather` no Telegram → `/newbot`
-- **TELEGRAM_CHAT_ID** — o bot mostra quando você manda `/start`. Pegar lá.
-- **ANTHROPIC_API_KEY** — em console.anthropic.com → API Keys
-- **MEM0_API_KEY** — em app.mem0.ai → criar conta grátis → API Key (10k memórias grátis/mês)
-- **GITHUB_TOKEN** — GitHub → Settings → Developer settings → Personal access tokens → marcar `repo`
-
----
-
-## Contexto adicional
-
-Este repositório foi extraído do repositório maior `Gustpbbr/Segundo-cerebro`, que contém múltiplos projetos de pesquisa. O Gus é o projeto de agente pessoal, isolado aqui pra ter repositório limpo e deploy independente.
-
-O Segundo Cérebro contém projetos como Phronesis-Bench (benchmark de metacognição para LLMs), MGE/MGX, TER e Axon — todos projetos de pesquisa em IA do Gustavo.
-
-O Gus eventualmente vai ler e escrever no repositório do Segundo Cérebro também, mas por ora o `GITHUB_REPO` aponta só pro `Gustpbbr/Gus`.
-
----
-
-## Regra de ouro para esta sessão
-
-Gustavo não programa. Se precisar fazer algo no código, você executa. Se precisar de uma ação que depende de conta externa (Railway, Mem0, Telegram), você dá as instruções mais simples possíveis para ele executar pelo celular.
+Gustavo não programa. Se precisar fazer algo no código, você executa. Se precisar de ação em conta externa (Railway, Mem0, Telegram, Google), dê instruções simples para ele executar pelo celular.
