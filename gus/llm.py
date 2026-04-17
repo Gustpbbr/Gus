@@ -4,9 +4,9 @@ import anthropic
 from pathlib import Path
 from gus.tools import TOOLS, executar_tool
 
-# Preços por família de modelo (USD por token)
+# Preços por família de modelo (USD por token) — atualizado abr/2026
 MODEL_PRICING = {
-    "opus":   {"input": 15.0 / 1_000_000, "output": 75.0 / 1_000_000},
+    "opus":   {"input":  5.0 / 1_000_000, "output": 25.0 / 1_000_000},
     "sonnet": {"input":  3.0 / 1_000_000, "output": 15.0 / 1_000_000},
     "haiku":  {"input":  0.8 / 1_000_000, "output":  4.0 / 1_000_000},
 }
