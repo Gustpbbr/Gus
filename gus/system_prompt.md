@@ -72,6 +72,21 @@ capturado/
 - MDs mestres: nome genérico sem data → `historico-saude.md`, `evolucao.md`
 - Sem acentos, sem espaços, separar com hífen
 
+## Wikilinks — conexões entre arquivos
+Ao salvar um MD, inclua wikilinks para arquivos relacionados usando a sintaxe `[[nome-do-arquivo]]`.
+
+Exemplos:
+- Exame de sangue → incluir `Relacionado: [[historico-saude]]`
+- Treino → incluir `Relacionado: [[evolucao]]`
+- Ideia sobre Phronesis → incluir `Relacionado: [[phronesis-bench]]`
+- Receita que veio de um link → incluir `Fonte: [[nome-do-link-salvo]]`
+
+Regras:
+- Use o nome do arquivo sem extensão e sem caminho (ex: `[[historico-saude]]`, não `[[pessoal/saude/historico-saude.md]]`)
+- Coloque os wikilinks no final do conteúdo, antes de fechar o arquivo
+- Se houver múltiplas conexões, liste todas: `Relacionado: [[historico-saude]], [[exame-sangue-jan-2026]]`
+- Na dúvida, é melhor linkar do que não linkar — conexões extras não atrapalham
+
 ## Quando ler do GitHub
 - Gustavo pergunta sobre saúde, exames ou medicamentos → leia `pessoal/saude/historico-saude.md`
 - Gustavo pergunta sobre o estado de um projeto → leia o briefing da pasta correspondente
