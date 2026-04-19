@@ -106,4 +106,30 @@ Toda sexta, Gus gera resumo da semana: o que foi feito, o que ficou pendente, pa
 - Script que: analisa commits da semana, lê Mem0, gera relatório
 - Salva em `pessoal/diario/retrospectiva-semana-XX.md`
 
+## Obsidian Skills (kepano/obsidian-skills)
+
+### Conceito
+Skills oficiais do criador do Obsidian que dão ao Claude Code superpoderes sobre o vault. Quando o repo Gus é o vault do Obsidian, essas skills permitem que o Claude Code opere diretamente sobre os MDs com sintaxe correta e ferramentas avançadas.
+
+### Skills disponíveis
+
+| Skill | Função | Uso no Gus |
+|-------|--------|------------|
+| obsidian-cli | Controla Obsidian rodando (ler, criar, buscar notas, screenshots) | Navegar vault, buscar notas por conteúdo |
+| obsidian-markdown | Garante sintaxe Obsidian (wikilinks, embeds, callouts, frontmatter) | Criar MDs com formatação rica |
+| obsidian-bases | Views tipo banco de dados (tabelas, cards, filtros sobre MDs) | Dashboard de saúde, projetos, finanças |
+| json-canvas | Mapas visuais (.canvas) com nós e conexões | Visualizar arquitetura, fluxos |
+| defuddle | Limpa páginas web → markdown legível | Salvar links em capturado/links/ com conteúdo limpo |
+
+### Impacto
+- **defuddle** melhora a tool search_web — conteúdo mais limpo, menos tokens
+- **obsidian-bases** permite criar dashboards queryáveis (ex: "todos os exames de 2026", "treinos do mês")
+- **obsidian-markdown** garante que wikilinks e frontmatter sigam o padrão
+- **obsidian-cli** exige Obsidian rodando no PC — funciona quando Gustavo está no computador
+
+### Instalação
+```bash
+npx skills add git@github.com:kepano/obsidian-skills.git
+```
+
 Relacionado: [[gus-01-visao-geral]], [[gus-04-seguranca-protecao]], [[gus-06-autonomia-acoes]]

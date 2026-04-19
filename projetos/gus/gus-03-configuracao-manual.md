@@ -73,6 +73,16 @@ Passos que o Gustavo precisa fazer pelo computador/celular. Não são código �
 - [ ] Instalar plugin "Obsidian Git" (Community Plugins → Browse)
 - [ ] Configurar auto-pull a cada 10 minutos
 - [ ] Abrir Graph View (Ctrl+G) para ver conexões via wikilinks
+- [ ] Instalar Obsidian Skills do kepano (no terminal, na raiz do vault):
+```bash
+npx skills add git@github.com:kepano/obsidian-skills.git
+```
+- [ ] Skills instaladas (pasta `/.claude` do vault):
+  - **obsidian-cli** — controla o Obsidian rodando (ler, criar, buscar notas)
+  - **obsidian-markdown** — garante sintaxe correta (wikilinks, embeds, callouts, frontmatter)
+  - **obsidian-bases** — cria views tipo banco de dados sobre os MDs (tabelas, filtros)
+  - **json-canvas** — cria mapas visuais (.canvas) com nós e conexões
+  - **defuddle** — limpa páginas web e converte pra markdown (alternativa ao WebFetch)
 
 ### 7. Configurar Claude Chat (app)
 - [ ] Criar Project no Claude com nome "Gus"
@@ -88,7 +98,7 @@ Passos que o Gustavo precisa fazer pelo computador/celular. Não são código �
 | 3 | Testar bot | Telegram | 5min |
 | 4 | Google Drive sync | Google Cloud, GitHub | 30min |
 | 5 | MCP Mem0 | .claude/mcp.json | 5min |
-| 6 | Obsidian | Desktop | 15min |
+| 6 | Obsidian + Skills | Desktop | 20min |
 | 7 | Claude Chat | App Claude | 5min |
 
 Relacionado: [[gus-01-visao-geral]], [[gus-02-implementado]], [[gus-04-seguranca-protecao]]
