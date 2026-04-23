@@ -1,8 +1,12 @@
 import os
 import functools
 import anthropic
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from gus.tools import TOOLS, executar_tool
+
+BRT = timezone(timedelta(hours=-3))
+DIAS_SEMANA = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
 
 # Preços por família de modelo (USD por token) — atualizado abr/2026
 MODEL_PRICING = {
@@ -38,6 +42,12 @@ async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tupl
     max_tokens = int(os.getenv("MAX_TOKENS_RESPONSE", "2048"))
 
     system_prompt = _load_system_prompt()
+    agora = datetime.now(BRT)
+    dia_semana = DIAS_SEMANA[agora.weekday()]
+    system_prompt += (
+        f"\n\n## Data e hora atuais\n"
+        f"Hoje é {dia_semana}, {agora.strftime('%d/%m/%Y')}, {agora.strftime('%H:%M')} (horário de Brasília)."
+    )
     if memory_context:
         system_prompt += f"\n\n## Memórias relevantes\n{memory_context}"
 
