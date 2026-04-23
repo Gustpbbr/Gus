@@ -2,10 +2,10 @@
 criado_em: 2026-04-18
 tipo: documentacao-projeto
 status: pendente
-fase: 3
+fase: 3-5
 ---
 
-# Gus — Novas Portas e Capacidades (Fase 3)
+# Gus — Novas Portas e Capacidades (Fases 3 e 5)
 
 Expansões planejadas após deploy e segurança estarem estáveis.
 
@@ -131,5 +131,63 @@ Skills oficiais do criador do Obsidian que dão ao Claude Code superpoderes sobr
 ```bash
 npx skills add git@github.com:kepano/obsidian-skills.git
 ```
+
+## Alexa como porta de voz (Fase 5)
+
+### Conceito
+Alexa funciona como microfone e alto-falante — só captura e reproduz. A inteligência é Claude API com o mesmo Mem0 e GitHub do Gus. Uso principal: mãos livres em casa (cozinhando, acordando, etc.) para pedidos pontuais e conversa contextual.
+
+### Arquitetura
+
+```
+Voz do Gustavo
+    ↓
+Alexa (transcreve voz → texto)
+    ↓
+AWS Lambda (orquestrador)
+    ↓
+Claude API + Mem0 + GitHub (mesmos do Gus)
+    ↓
+Lambda formata resposta
+    ↓
+Alexa fala a resposta
+```
+
+### Como implementar
+1. Criar Alexa Skill custom (console Amazon Developer)
+2. Lambda em Python como backend — basicamente `llm.py` + `tools.py` adaptados
+3. Conectar ao mesmo Mem0 (user_id "gustavo") e GitHub (Gustpbbr/Gus)
+4. System prompt: carregar gus-identity.md
+5. Histórico de sessão: DynamoDB ou Mem0 (evitar duplicar memória)
+
+### Componentes AWS
+- **Alexa Skill** — configuração JSON, define intents e slots
+- **Lambda** — código Python, recebe texto da Alexa, chama Claude, retorna resposta
+- **DynamoDB** (opcional) — histórico de sessão de voz (se Mem0 não cobrir)
+- **IAM** — permissões entre serviços
+
+### Latência esperada
+- Alexa transcreve: ~1s
+- Lambda → Claude API: 2-5s
+- Tool use (se houver): +2-3s por tool
+- Alexa fala resposta: ~1-2s
+- **Total: 5-10s** — aceitável pra pedidos pontuais, não pra diálogo rápido
+
+### Casos de uso
+- "Alexa, pergunta pro Gus como tá o Phronesis-Bench"
+- "Alexa, pede pro Gus marcar consulta com endocrinologista dia 25"
+- "Alexa, fala pro Gus salvar que mudei o tapazol pra 10mg"
+- Conversa mais longa tipo ChatGPT voice — possível mas com pausas maiores
+
+### Pré-requisitos
+- [ ] Custom GPT funcionando (valida que Mem0 + GitHub via API externa funciona)
+- [ ] Conta AWS + conta Amazon Developer
+- [ ] Whisper já implementado no Telegram (valida transcrição pt-BR)
+
+### Por que Fase 5 (última)
+- Maior complexidade de infra (AWS Lambda, IAM, Alexa console, certificação)
+- Custom GPT por voz no celular resolve 80% do caso de uso com 10% do esforço
+- Telegram + Whisper resolve áudio sem infra nova
+- Alexa é o "luxo" — mãos livres em casa, pra quando todo o resto já funciona
 
 Relacionado: [[gus-01-visao-geral]], [[gus-04-seguranca-protecao]], [[gus-06-autonomia-acoes]]
