@@ -22,10 +22,12 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
 fi
 
 # --- 1. Instala deps do MCP Mem0 (silencioso, idempotente) ---
+# Aspas em "mcp>=1.0.0" — sem aspas, shell interpreta '>' como redirect e cria
+# um arquivo chamado '=1.0.0' na cwd. Bug pegado 2026-04-24 em produção.
 pip install -q --user \
-    mem0ai==0.1.29 \
-    mcp>=1.0.0 \
-    2>/dev/null || true
+    "mem0ai==0.1.29" \
+    "mcp>=1.0.0" \
+    >/dev/null 2>&1 || true
 
 # --- 2. Monta contexto dinâmico pra injetar no Claude ---
 DATA_BRT=$(TZ="America/Sao_Paulo" date '+%Y-%m-%d %H:%M' 2>/dev/null || date -u -d '3 hours ago' '+%Y-%m-%d %H:%M' 2>/dev/null || date '+%Y-%m-%d %H:%M')
