@@ -1,0 +1,42 @@
+name: Retrospectiva semanal
+
+on:
+  schedule:
+    - cron: '0 23 * * 5'   # sexta 20h BRT
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  retrospectiva:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # histórico completo pra git log funcionar
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install mem0ai==0.1.29 anthropic==0.40.0 httpx==0.27.0
+
+      - name: Gerar retrospectiva
+        env:
+          MEM0_API_KEY: ${{ secrets.MEM0_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python .github/scripts/retrospectiva_semanal.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "gus-bot"
+          git config user.email "gus-bot@users.noreply.github.com"
+          git add pessoal/diario/
+          git diff --staged --quiet || git commit -m "auto: retrospectiva semanal ($(date +%Y-W%V))"
+          git push
