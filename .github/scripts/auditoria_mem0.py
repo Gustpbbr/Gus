@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Auditoria do Mem0 — gera `_indices/_meta-memoria.md` com visão curada do estado
+Auditoria do Mem0 — gera `_indices/_auditoria-mem0.md` com visão curada do estado
 da memória do Gus. Base pra SELF-1 e pra perguntas diretas do bot.
 
 Computa:
@@ -24,7 +24,10 @@ from mem0 import MemoryClient
 
 USER_ID = "gustavo"
 BRT = timezone(timedelta(hours=-3))
-OUTPUT_PATH = "_indices/_meta-memoria.md"
+OUTPUT_PATH = "_indices/_auditoria-mem0.md"
+# Nota: este arquivo NÃO é meta-memória do Gus. É auditoria do armazém de
+# memórias SOBRE O GUSTAVO (Mem0). Meta-memória (do próprio Gus) mora em
+# gus/meta-memoria.md.
 DIAS_JANELAS = [1, 7, 30]
 
 # Mapeamento área → keywords. Determinístico, não perfeito — o propósito é
@@ -160,8 +163,10 @@ def main():
             f"atualizado: {datetime.now(BRT).isoformat()}\n"
             "mem0_total: 0\n"
             "---\n\n"
-            "# Meta-memória do Gus\n\n"
-            "Nenhuma memória no Mem0 ainda. Capture coisas via Telegram e o bot vai alimentando.\n"
+            "# Auditoria do Mem0 (memórias sobre o Gustavo)\n\n"
+            "Nenhuma memória no Mem0 ainda. Capture coisas via Telegram e o bot vai alimentando.\n\n"
+            "*Nota: este arquivo é auditoria do Mem0 (memórias sobre o Gustavo). "
+            "Para auto-conhecimento do Gus, ver `gus/meta-memoria.md`.*\n"
         )
         os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
         Path(OUTPUT_PATH).write_text(conteudo, encoding="utf-8")
@@ -234,11 +239,15 @@ def main():
         f"mem0_total: {total}",
         "---",
         "",
-        "# Meta-memória do Gus",
+        "# Auditoria do Mem0 (memórias sobre o Gustavo)",
         "",
-        "Análise automática e determinística do estado do Mem0. "
-        "Gerada diariamente via GitHub Action (`auditoria_mem0.py`). "
-        "Sem LLM — heurística baseada em keywords e similaridade Jaccard.",
+        "Análise automática e determinística do estado do armazém de memórias "
+        "SOBRE O GUSTAVO (Mem0). Gerada diariamente via GitHub Action "
+        "(`auditoria_mem0.py`). Sem LLM — heurística baseada em keywords e "
+        "similaridade Jaccard.",
+        "",
+        "**Não confundir com meta-memória do Gus** (`gus/meta-memoria.md`), "
+        "que é o auto-conhecimento do próprio Gus.",
         "",
         "## Estatísticas gerais",
         f"- **Total:** {total} memórias",
@@ -306,8 +315,9 @@ def main():
     linhas += [
         "",
         "## Uso",
-        "- Bot consulta este arquivo via tool `meta_memoria()` quando o Gustavo pergunta sobre o Mem0.",
-        "- SELF-1 (reflexão quinzenal) usa este arquivo pra contextualizar Nosis e Thymos.",
+        "- Bot consulta este arquivo via tool `auditoria_mem0()` quando o Gustavo pergunta sobre o estado das suas próprias memórias no Mem0.",
+        "- Não confundir com `meta_memoria()`, que retorna `gus/meta-memoria.md` (auto-conhecimento do Gus).",
+        "- SELF-1 (reflexão quinzenal) usa este arquivo pra contextualizar Nosis e Thymos com o estado do armazém de memórias sobre o Gustavo.",
         "- Atualização automática — não editar manualmente.",
     ]
 

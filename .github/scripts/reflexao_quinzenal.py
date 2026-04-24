@@ -195,9 +195,9 @@ def buscar_arquivos_novos() -> str:
 
 
 def carregar_meta_memoria() -> str:
-    """Lê _indices/_meta-memoria.md se existir. Contexto pra Nosis/Thymos
+    """Lê _indices/_auditoria-mem0.md se existir. Contexto pra Nosis/Thymos
     distinguir padrões reais de duplicatas e gaps reais de lacunas de classificação."""
-    caminho = "_indices/_meta-memoria.md"
+    caminho = "_indices/_auditoria-mem0.md"
     try:
         with open(caminho, "r", encoding="utf-8") as f:
             return f.read()

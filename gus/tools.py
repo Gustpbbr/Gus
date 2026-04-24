@@ -187,11 +187,28 @@ TOOLS = [
     {
         "name": "meta_memoria",
         "description": (
-            "Retorna a meta-análise atualizada do Mem0 do Gustavo — estatísticas, "
-            "densidade por área, frescor, duplicatas suspeitas e gaps. Use quando o "
-            "usuário perguntar sobre o estado das memórias, quantas tem, o que está "
-            "faltando, se há duplicatas, etc. Dados vêm de "
-            "`_indices/_meta-memoria.md` atualizado diariamente por auditoria automática."
+            "Retorna a META-MEMÓRIA DO GUS — o auto-conhecimento do próprio agente sobre "
+            "si mesmo (quem é, como evolui, o que aprendeu sobre si, limitações conscientes, "
+            "reflexões). Use quando o Gustavo perguntar sobre o Gus enquanto entidade, "
+            "identidade do bot, capacidades com nuances, aprendizados. Não confundir "
+            "com `auditoria_mem0()` (stats das memórias sobre o Gustavo). Dados vêm de "
+            "`gus/meta-memoria.md`."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+        }
+    },
+    {
+        "name": "auditoria_mem0",
+        "description": (
+            "Retorna a auditoria do armazém Mem0 — estatísticas das memórias SOBRE O "
+            "GUSTAVO (quantas, por área, frescor, duplicatas suspeitas, gaps). Use "
+            "quando o Gustavo perguntar sobre o estado do Mem0 dele, do que tem "
+            "registrado, se há duplicatas, onde tem gap. Não confundir com `meta_memoria()` "
+            "(auto-conhecimento do Gus). Dados vêm de `_indices/_auditoria-mem0.md` "
+            "atualizado diariamente."
         ),
         "input_schema": {
             "type": "object",
@@ -666,7 +683,9 @@ async def executar_tool(name: str, inputs: dict) -> str:
             bool(inputs.get("alto_risco", False))
         )
     elif name == "meta_memoria":
-        return await _read_from_github("_indices/_meta-memoria.md")
+        return await _read_from_github("gus/meta-memoria.md")
+    elif name == "auditoria_mem0":
+        return await _read_from_github("_indices/_auditoria-mem0.md")
     elif name == "disparar_workflow":
         return await _disparar_workflow(
             inputs["workflow_name"],

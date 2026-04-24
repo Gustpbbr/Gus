@@ -1,4 +1,4 @@
-name: Meta-memória diária
+name: Auditoria Mem0 diária
 
 on:
   schedule:
@@ -30,6 +30,6 @@ jobs:
         run: |
           git config user.name "gus-bot"
           git config user.email "gus-bot@users.noreply.github.com"
-          git add _indices/_meta-memoria.md
-          git diff --staged --quiet || git commit -m "auto: meta-memória ($(date +%Y-%m-%d))"
+          git add _indices/_auditoria-mem0.md
+          git diff --staged --quiet || git commit -m "auto: auditoria Mem0 ($(date +%Y-%m-%d))"
           git push
