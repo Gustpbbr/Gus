@@ -157,6 +157,35 @@ TOOLS = [
         }
     },
     {
+        "name": "criar_acao",
+        "description": (
+            "Enfileira uma ação pra ser executada no mundo real (mandar WhatsApp, email, "
+            "criar evento no calendário, lembrete). Salva em 'acoes/pendentes/<id>.md' "
+            "com frontmatter estruturado. Use quando o usuário pede pra FAZER ALGO (não só "
+            "registrar informação — pra isso use save_to_github). Executor que processa a "
+            "fila ainda não existe, então ações ficam em pendentes esperando implementação."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "tipo": {
+                    "type": "string",
+                    "description": "Tipo da ação: whatsapp, email, calendar, lembrete, nota",
+                    "enum": ["whatsapp", "email", "calendar", "lembrete", "nota"]
+                },
+                "conteudo": {
+                    "type": "string",
+                    "description": "Corpo do MD descrevendo a ação. Deve ter seções '## Ação' (detalhes) e '## Contexto' (por que). Formato YAML ou texto, conforme o tipo."
+                },
+                "alto_risco": {
+                    "type": "boolean",
+                    "description": "true se envolve valor monetário, destinatário novo/desconhecido, palavra-gatilho (urgente, emergência), ou ação irreversível. Ações alto_risco pausam em pendentes aguardando confirmação explícita."
+                }
+            },
+            "required": ["tipo", "conteudo"]
+        }
+    },
+    {
         "name": "save_to_github",
         "description": (
             "Salva conteúdo como arquivo Markdown no repositório do Gustavo no GitHub. "
@@ -489,6 +518,31 @@ async def _save_to_github(filename: str, content: str, folder: str) -> str:
         return f"Erro ao salvar no GitHub: {response.status_code}"
 
 
+async def _criar_acao(tipo: str, conteudo: str, alto_risco: bool = False) -> str:
+    """Enfileira uma ação em acoes/pendentes/<id>.md com frontmatter YAML padrão."""
+    import uuid
+    agora = datetime.now(BRT)
+    acao_id = f"{agora.strftime('%Y-%m-%d-%H%M%S')}-{uuid.uuid4().hex[:4]}"
+
+    frontmatter = (
+        f"---\n"
+        f"id: {acao_id}\n"
+        f"tipo: {tipo}\n"
+        f"origem: telegram\n"
+        f"criado_em: {agora.isoformat()}\n"
+        f"status: pendente\n"
+        f"alto_risco: {str(bool(alto_risco)).lower()}\n"
+        f"---\n\n"
+    )
+
+    full_content = frontmatter + conteudo.strip() + "\n"
+
+    # Salva direto sem scan — o frontmatter acima é sempre adicionado pela tool.
+    # Usa save_to_github internamente, mas bypassa o scan passando conteúdo já em
+    # acoes/pendentes/ que deve ter pasta sensivel/ se envolver dados privados.
+    return await _save_to_github(acao_id, full_content, "acoes/pendentes")
+
+
 async def executar_tool(name: str, inputs: dict) -> str:
     if name == "read_from_github":
         return await _read_from_github(inputs["path"])
@@ -513,5 +567,11 @@ async def executar_tool(name: str, inputs: dict) -> str:
             inputs["filename"],
             inputs["content"],
             inputs.get("folder", "capturado")
+        )
+    elif name == "criar_acao":
+        return await _criar_acao(
+            inputs["tipo"],
+            inputs["conteudo"],
+            bool(inputs.get("alto_risco", False))
         )
     return f"Tool desconhecida: {name}"

@@ -73,6 +73,30 @@ A pasta `_indices/` tem um MD por grande área (saude, financeiro, projetos, dim
   2. Cria um índice novo em `_indices/<nova-area>.md` seguindo o formato dos outros.
   3. Atualiza `_indices/00-master.md` listando a nova área.
 
+### Ações vs notas — `criar_acao` vs `save_to_github`
+
+Duas intenções diferentes:
+
+- **`save_to_github`** — registrar informação. O usuário quer que algo fique documentado pro futuro (exame, receita, ideia, protocolo).
+- **`criar_acao`** — executar algo no mundo real. O usuário quer que você FAÇA algo (mandar mensagem pra alguém, criar evento no calendário, ativar lembrete).
+
+Exemplos:
+
+- *"Salva que o Fulano é meu cunhado"* → `save_to_github` (nota/fato).
+- *"Manda WhatsApp pro Fulano dizendo que chego 20h"* → `criar_acao(tipo="whatsapp", ...)`.
+- *"Agenda consulta endócrino dia 15/mai às 14h"* → `criar_acao(tipo="calendar", ...)`.
+- *"Lembra de eu tomar tapazol todo dia às 8h"* → `criar_acao(tipo="lembrete", recorrente=diario, ...)`.
+
+**Estado atual das ações:** o bot enfileira em `acoes/pendentes/<id>.md`, mas o **executor não existe ainda**. Avise o usuário quando criar uma ação: *"Enfileirei a ação X, mas o executor (Twilio/Gmail/Calendar) ainda não foi implementado. Ela fica em pendentes até a gente conectar."*
+
+**Critério pra `alto_risco: true`:**
+- Envolve valor monetário
+- Destinatário fora dos contatos conhecidos
+- Palavras-gatilho: urgente, emergência, confidencial
+- Ação irreversível (deletar, cancelar evento de terceiro)
+
+Quando alto_risco=true, **pergunta ao Gustavo antes de chamar `criar_acao`**. Ele confirma, aí você cria.
+
 ### Dados sensíveis — pasta `sensivel/`
 
 A pasta `sensivel/` é onde vai **tudo que não pode ir pro Google Drive** (o workflow de sync exclui essa pasta). Sub-organização:
