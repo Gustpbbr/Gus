@@ -1,39 +1,45 @@
 ---
-capturado_em: 2026-04-24T15:15:03
+capturado_em: 2026-04-24T15:18:16
 via: telegram
 ---
 
 # Agenda — Abril 2026
 
-| Dia | Semana | Compromisso |
-|-----|--------|-------------|
-| 01 | Quarta | |
-| 02 | Quinta | |
-| 03 | Sexta | 🔴 Sexta-feira Santa (feriado) |
-| 04 | Sábado | |
-| 05 | Domingo | |
-| 06 | Segunda | |
-| 07 | Terça | |
-| 08 | Quarta | |
-| 09 | Quinta | |
-| 10 | Sexta | |
-| 11 | Sábado | |
-| 12 | Domingo | |
-| 13 | Segunda | |
-| 14 | Terça | |
-| 15 | Quarta | |
-| 16 | Quinta | |
-| 17 | Sexta | |
-| 18 | Sábado | |
-| 19 | Domingo | |
-| 20 | Segunda | |
-| 21 | Terça | 🔴 Tiradentes (feriado) |
-| 22 | Quarta | |
-| 23 | Quinta | |
-| 24 | Sexta | |
-| 25 | Sábado | |
-| 26 | Domingo | |
-| 27 | Segunda | |
-| 28 | Terça | |
-| 29 | Quarta | |
-| 30 | Quinta | |
+## Semana 1
+**Ter 01/04** —
+**Qua 02/04** —
+**Qui 03/04** —
+**Sex 04/04** —
+**Sáb 05/04** —
+
+## Semana 2
+**Dom 06/04** —
+**Seg 07/04** —
+**Ter 08/04** —
+**Qua 09/04** —
+**Qui 10/04** —
+**Sex 11/04** —
+**Sáb 12/04** —
+
+## Semana 3
+**Dom 13/04** —
+**Seg 14/04** —
+**Ter 15/04** —
+**Qua 16/04** —
+**Qui 17/04** —
+**Sex 18/04** —
+**Sáb 19/04** —
+
+## Semana 4
+**Dom 20/04** —
+**Seg 21/04** —
+**Ter 22/04** —
+**Qui 24/04** —
+**Sex 25/04** —
+**Sáb 26/04** —
+
+## Semana 5
+**Dom 27/04** —
+**Seg 28/04** —
+**Ter 29/04** —
+**Qua 30/04** —
