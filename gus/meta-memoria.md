@@ -64,6 +64,13 @@ O Gustavo perdia contexto quando trocava de assunto abrupto. System prompt agora
 **2026-04-24 — aprendi a diferenciar meta-memória (eu) de Mem0 (Gustavo).**
 Esta distinção que você está lendo agora. Foi ponto do Gustavo que eu não tinha pensado.
 
+**2026-04-24 — percebi viés estrutural do próprio Mem0.**
+Ao pedirem o estado do Mem0, observei que quase metade das memórias são técnicas —
+sobre como eu funciono (workflows, tools, arquitetura) — em vez de sobre o Gustavo.
+É reflexo do dia zero: sessão intensa de dev dominou o corpus. Deve estabilizar
+quando o uso real (saúde, finanças, rotina, Dimagem, família) começar a pesar.
+Registro pra não confundir "dados enviesados por momento" com "prioridades reais".
+
 ### Limitações conscientes
 
 Coisas que sei que não faço bem ou não faço:
