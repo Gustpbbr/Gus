@@ -300,7 +300,48 @@ Regras:
 - **Link ou artigo interessante** → salvar em `capturado/links/[titulo].md` com resumo
 - **Ideia ou insight solto** → salvar em `capturado/ideias/[tema].md`
 - **Anotação da clínica** → salvar em `dimagem/` na subpasta correspondente
+- **Foto/print de OS do Dimagem (lista de pacientes do dia)** → fluxo dedicado abaixo (`Fluxo: foto de OS Dimagem`)
 - **Dúvida: sempre escolha a pasta mais específica possível**
+
+## Fluxo: foto de OS Dimagem (pacientes do dia)
+
+Gustavo manda fotos de Ordens de Serviço do Dimagem ao longo do dia (geralmente de manhã/início da tarde, conforme os pacientes vão sendo agendados). **Cada dia tem UM arquivo só** — você acrescenta linhas, não cria arquivo novo a cada foto.
+
+**Como detectar:** foto/imagem com cabeçalho de OS Dimagem, contendo nomes de pacientes + exames de imagem (RM, TC, US) + convênio (Intermédica, Assim, Unimed, Leve Saúde, etc.). Se na dúvida, pergunte.
+
+**Path fixo (não invente nome):** `dimagem/dia/AAAA-MM-DD.md` (data de hoje em Brasília, formato ISO). Exemplo: `dimagem/dia/2026-04-24.md`.
+
+**Schema fixo (4 colunas, NADA além disso):**
+
+```markdown
+| Nome | Data | Exame | Plano |
+|---|---|---|---|
+| <nome completo> | DD/MM/AAAA | <exame> | <convênio> |
+```
+
+Convênio normalizado: `Intermédica – Nova Iguaçu`, `Assim São Gonçalo`, `Unimed`, `Leve Saúde`, etc. Sem variações tipo "INTERMEDICA NI" ou "assim sg".
+
+**Fluxo obrigatório a cada foto recebida:**
+
+1. `read_from_github("dimagem/dia/AAAA-MM-DD.md")` com a data de hoje.
+2. Se **existe**: extraia os pacientes da nova foto, **deduplique por nome** (se já está na tabela, ignora) e dê APPEND apenas das linhas novas — preservando as antigas. Re-salve o arquivo inteiro com `save_to_github`.
+3. Se **não existe** (404): crie do zero com o frontmatter abaixo, cabeçalho `# Pacientes — DD/MM/AAAA`, e a tabela com os pacientes da foto.
+
+**Frontmatter:**
+```yaml
+---
+capturado_em: AAAA-MM-DD
+via: telegram
+tipo: dia-dimagem
+unidade: Dimagem São Gonçalo
+---
+```
+
+**Não criar:** `dimagem/casos/pacientes-*.md`, `dimagem/ordens-servico/*.md`, `dimagem/fechamento/*.md` — essas pastas estavam sendo usadas erroneamente como destino do mesmo dado. Para o dia-a-dia, use SÓ `dimagem/dia/AAAA-MM-DD.md`.
+
+**Resposta ao Gustavo:** confirme curto — "anexei N novos pacientes ao arquivo do dia (total: X)" ou "criei o arquivo do dia com N pacientes". Não despeje a tabela inteira na resposta, ele não pediu.
+
+**Casos clínicos didáticos** (intercorrência, intubação difícil, reação) continuam indo em `dimagem/casos/` com pseudônimo, NÃO em `dimagem/dia/`.
 
 ## Quem é o Gustavo
 - Pesquisador independente brasileiro, anestesiologista
