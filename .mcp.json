@@ -1,11 +1,11 @@
 {
   "mcpServers": {
     "mem0-gus": {
-      "command": "python3",
-      "args": [".claude/mcp/mem0_server.py"],
-      "env": {
-        "MEM0_API_KEY": "${MEM0_API_KEY}"
-      }
+      "command": "sh",
+      "args": [
+        "-c",
+        "export MEM0_API_KEY=\"$(cat ~/.claude/mem0.key 2>/dev/null)\" && exec python3 .claude/mcp/mem0_server.py"
+      ]
     }
   }
 }
