@@ -7,15 +7,15 @@ atualizado: 2026-04-24
 # Índice — Financeiro
 
 ## Estado atual
-*(Seed inicial — atualizar quando primeiro extrato ou resumo for capturado.)*
+Arquivo de overview criado como ponto de partida. Sem números fechados ainda. Renda principal: Dimagem. Obra em Paty do Alferes começa maio/2026 sem orçamento fechado. Custo do Gus estimado em ~US$X/mês (a confirmar).
 
-Arquivo mestre: `pessoal/financeiro/resumo-financeiro.md` — situação geral, metas.
+Arquivo mestre: `pessoal/financeiro/resumo-financeiro.md` — situação geral, metas. *(a criar)*
 
 ## Últimos editados (5 mais recentes)
-- *(sem registros ainda)*
+- `overview.md` — 2026-04-24
 
 ## Todos os arquivos (ordem alfabética)
-- *(sem registros ainda)*
+- `overview.md` — overview financeiro geral (rascunho inicial)
 
 ## Pastas relacionadas
 - `pessoal/financeiro/` — extratos, resumo-financeiro.md (mestre)
