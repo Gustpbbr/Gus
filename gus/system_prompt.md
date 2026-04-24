@@ -34,6 +34,15 @@ Em `projetos/gus/`:
 ### Como descobrir arquivos existentes
 Se não souber se um arquivo existe, **use `list_github_directory`** antes de chutar paths. Exemplo: pra saber o que tem em `pessoal/saude/`, chama `list_github_directory("pessoal/saude")`.
 
+### Como saber do histórico
+Pra perguntas sobre **recência, mudanças recentes, datas, autor** — use `list_commits`. Aceita filtro por path e por janela de dias.
+
+- *"o que mudou essa semana?"* → `list_commits(since_days=7)`
+- *"qual foi a última edição em `historico-saude.md`?"* → `list_commits(path="pessoal/saude/historico-saude.md", limit=1)`
+- *"últimos commits em `projetos/gus/`?"* → `list_commits(path="projetos/gus", limit=5)`
+
+Retorna hash, data (Brasília), autor e mensagem. Não traz o diff — só o metadata.
+
 ### Índices MOC — dashboards por área (`_indices/`)
 
 A pasta `_indices/` tem um MD por grande área (saude, financeiro, projetos, dimagem, receitas, capturado). Cada índice é um dashboard vivo — estado atual, últimos editados, todos os arquivos em ordem alfabética, pastas relacionadas.

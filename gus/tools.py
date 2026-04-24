@@ -87,6 +87,34 @@ TOOLS = [
         }
     },
     {
+        "name": "list_commits",
+        "description": (
+            "Lista commits recentes do repositório. Use quando o usuário perguntar sobre "
+            "histórico, o que mudou, quando foi editado, quem modificou — qualquer coisa "
+            "temporal ou de autoria. Pode filtrar por path (pasta ou arquivo) e por janela "
+            "de dias. Retorna hash curto, data em horário de Brasília, autor e mensagem de "
+            "cada commit."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "Path do arquivo ou pasta pra filtrar. Ex: 'projetos/gus', 'pessoal/saude/historico-saude.md'. Vazio pra commits do repo inteiro."
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Quantidade máxima de commits a retornar (1 a 30). Default 10."
+                },
+                "since_days": {
+                    "type": "integer",
+                    "description": "Filtrar só commits dos últimos N dias. 0 ou omitido pra sem filtro temporal."
+                }
+            },
+            "required": []
+        }
+    },
+    {
         "name": "search_web",
         "description": (
             "Busca informações atuais na web. Use quando não tiver certeza sobre fatos recentes, "
@@ -218,6 +246,91 @@ async def _list_github_directory(path: str) -> str:
         linhas.extend(f"- {a}" for a in arquivos)
     if not pastas and not arquivos:
         linhas.append("(vazio)")
+    return "\n".join(linhas)
+
+
+async def _list_commits(path: str = "", limit: int = 10, since_days: int = 0) -> str:
+    """Lista commits recentes, opcionalmente filtrados por path e período."""
+    path = (path or "").strip().strip("/")
+    if path and path != ".":
+        try:
+            path = _validar_path(path)
+        except ValueError as e:
+            return str(e)
+    else:
+        path = ""
+
+    try:
+        limit = max(1, min(int(limit), 30))
+    except (TypeError, ValueError):
+        limit = 10
+
+    try:
+        since_days = int(since_days) if since_days else 0
+    except (TypeError, ValueError):
+        since_days = 0
+
+    token = os.getenv("GITHUB_TOKEN")
+    repo = os.getenv("GITHUB_REPO", "Gustpbbr/Gus")
+
+    if not token:
+        return "GITHUB_TOKEN não configurado."
+
+    params: dict = {"per_page": limit}
+    if path:
+        params["path"] = path
+    if since_days > 0:
+        since_dt = datetime.now(BRT) - timedelta(days=since_days)
+        params["since"] = since_dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    url = f"https://api.github.com/repos/{repo}/commits"
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json",
+        "X-GitHub-Api-Version": "2022-11-28"
+    }
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        response = await client.get(url, params=params, headers=headers)
+
+    if response.status_code == 404:
+        return f"Path não encontrado no repo: `{path}`" if path else "Repositório não encontrado."
+    if response.status_code != 200:
+        return f"Erro ao listar commits: {response.status_code}"
+
+    commits = response.json()
+    if not commits:
+        contexto = []
+        if path:
+            contexto.append(f"em `{path}`")
+        if since_days:
+            contexto.append(f"nos últimos {since_days} dia(s)")
+        return f"Nenhum commit encontrado {' '.join(contexto)}.".strip()
+
+    cabecalho = "Últimos "
+    if path and since_days:
+        cabecalho = f"Commits em `{path}` nos últimos {since_days} dia(s):"
+    elif path:
+        cabecalho = f"Últimos {len(commits)} commits em `{path}`:"
+    elif since_days:
+        cabecalho = f"Commits dos últimos {since_days} dia(s):"
+    else:
+        cabecalho = f"Últimos {len(commits)} commits do repositório:"
+
+    linhas = [cabecalho]
+    for c in commits:
+        sha_curto = c.get("sha", "")[:7]
+        commit = c.get("commit", {})
+        mensagem = commit.get("message", "").split("\n")[0]
+        autor = commit.get("author", {}).get("name", "?")
+        data_iso = commit.get("author", {}).get("date", "")
+        try:
+            dt_utc = datetime.fromisoformat(data_iso.replace("Z", "+00:00"))
+            data_fmt = dt_utc.astimezone(BRT).strftime("%Y-%m-%d %H:%M")
+        except Exception:
+            data_fmt = data_iso[:16]
+        linhas.append(f"- `{sha_curto}` {data_fmt} — {autor} — {mensagem}")
+
     return "\n".join(linhas)
 
 
@@ -357,6 +470,12 @@ async def executar_tool(name: str, inputs: dict) -> str:
         return await _read_from_github(inputs["path"])
     elif name == "list_github_directory":
         return await _list_github_directory(inputs.get("path", ""))
+    elif name == "list_commits":
+        return await _list_commits(
+            inputs.get("path", ""),
+            inputs.get("limit", 10),
+            inputs.get("since_days", 0)
+        )
     elif name == "search_web":
         return await _search_web(inputs["query"])
     elif name == "save_to_github":
