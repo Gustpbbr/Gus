@@ -25,12 +25,12 @@ Dimagem é a clínica de anestesia onde Gustavo trabalha — sustento principal.
 
 - **Dia (lista de pacientes):** `dimagem/dia/AAAA-MM-DD.md`. UM arquivo por dia, atualizado por append. Schema fixo: `Nome | Data | Exame | Plano`. Ver `gus/system_prompt.md → Fluxo: foto de OS Dimagem`.
 - **Protocolo:** `dimagem/protocolos/protocolo-[nome].md`. Ex: `protocolo-sedacao.md`.
-- **Caso:** `dimagem/casos/caso-[descricao-curta]-[mes]-[ano].md`. Ex: `caso-intubacao-dificil-mar-2026.md`. Pseudônimo ou iniciais — não nome real.
+- **Caso:** `dimagem/casos/caso-[descricao-curta]-[mes]-[ano].md`. Ex: `caso-intubacao-dificil-mar-2026.md`.
 - **Admin:** `dimagem/admin/pendencias.md` (mestre) + `dimagem/admin/[assunto].md` pra itens específicos.
 
-## Sobre dados identificáveis
+## Dados de paciente
 
-A pasta `dimagem/dia/` contém nomes completos de pacientes — decisão operacional do Gustavo (visibilidade rápida pro dia-a-dia). Se em algum momento ele optar por LGPD-strict, mover toda `dimagem/dia/` pra `sensivel/dimagem/dia/` e ajustar o path no `system_prompt.md`. Casos didáticos (`dimagem/casos/`) continuam com pseudônimo.
+Nome do paciente pode ser salvo nos arquivos do Dimagem — Gustavo precisa pra trabalhar. **Não salvar CPF, RG nem documentos identificáveis** (esses, se aparecerem, vão pra `sensivel/dimagem/`). O scan automático do `save_to_github` já bloqueia CPF/CNPJ/cartão.
 
 ## Fluxo quando chegar foto de OS
 
