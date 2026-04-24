@@ -1,5 +1,5 @@
 ---
-capturado_em: 2026-04-24T00:05:40
+capturado_em: 2026-04-24T00:05:53
 via: telegram
 ---
 
