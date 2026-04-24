@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 AUTHORIZED_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 HARD_LIMIT = float(os.getenv("HARD_LIMIT_USD_MONTH", "30"))
-MAX_HISTORY = int(os.getenv("MAX_HISTORY_MESSAGES", "20"))  # 10 turnos
+MAX_HISTORY = int(os.getenv("MAX_HISTORY_MESSAGES", "40"))  # 20 turnos
 TURNOS_PARA_RESUMO = int(os.getenv("TURNOS_PARA_RESUMO", "5"))
 RATE_LIMIT_MSG_PER_MINUTE = int(os.getenv("RATE_LIMIT_MSG_PER_MINUTE", "20"))
 
@@ -23,6 +23,37 @@ conversation_histories: dict[str, list] = {}
 turn_counters: dict[str, int] = {}
 last_saved_turn: dict[str, int] = {}
 message_timestamps: dict[str, deque] = {}
+
+
+def _texto_de_content(content) -> str:
+    """Extrai as partes de texto de um content (str ou list multimodal)."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        partes = []
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "text":
+                t = block.get("text", "")
+                if t:
+                    partes.append(t)
+        return " ".join(partes).strip()
+    return ""
+
+
+def _query_mem0_contextual(history: list[dict], fallback: str) -> str:
+    """Monta query do Mem0 a partir das últimas 3 mensagens do Gustavo.
+    Ajuda a busca semântica quando a mensagem atual é curta ou referencial."""
+    textos_user = []
+    for msg in reversed(history):
+        if msg.get("role") != "user":
+            continue
+        t = _texto_de_content(msg.get("content"))
+        if t:
+            textos_user.append(t)
+        if len(textos_user) >= 3:
+            break
+    textos_user.reverse()
+    return " ".join(textos_user) if textos_user else fallback
 
 
 async def _resumir_e_salvar(chat_id: str, trecho: list[dict]) -> None:
@@ -86,7 +117,8 @@ async def _responder(update: Update, chat_id: str, content: list[dict], texto_pr
 
     memory_context = ""
     try:
-        query = texto_preview if texto_preview else "imagem ou documento enviado"
+        # Query combina últimas 3 msgs do usuário + preview atual pra melhorar recall
+        query = _query_mem0_contextual(history, texto_preview or "imagem ou documento")
         memory_context = await buscar_memorias(query)
     except Exception as mem_err:
         logger.warning(f"Mem0 search falhou: {mem_err}")
