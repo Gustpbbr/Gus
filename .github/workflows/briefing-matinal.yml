@@ -1,0 +1,29 @@
+name: Briefing matinal
+
+on:
+  schedule:
+    - cron: '0 10 * * 1-5'   # 7h BRT segunda a sexta
+  workflow_dispatch:
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install mem0ai==0.1.29 anthropic==0.40.0 httpx==0.27.0
+
+      - name: Gerar e enviar briefing
+        env:
+          MEM0_API_KEY: ${{ secrets.MEM0_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python .github/scripts/briefing_matinal.py
