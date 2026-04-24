@@ -1,39 +1,46 @@
 ---
-capturado_em: 2026-04-24T15:16:37
+capturado_em: 2026-04-24T15:19:27
 via: telegram
 ---
 
 # Agenda — Junho 2026
 
-| Dia | Semana | Compromisso |
-|-----|--------|-------------|
-| 01 | Segunda | |
-| 02 | Terça | |
-| 03 | Quarta | |
-| 04 | Quinta | 🔴 Corpus Christi (feriado) |
-| 05 | Sexta | |
-| 06 | Sábado | |
-| 07 | Domingo | |
-| 08 | Segunda | |
-| 09 | Terça | |
-| 10 | Quarta | |
-| 11 | Quinta | |
-| 12 | Sexta | |
-| 13 | Sábado | |
-| 14 | Domingo | |
-| 15 | Segunda | |
-| 16 | Terça | — 2ª quinzena começa — |
-| 17 | Quarta | |
-| 18 | Quinta | |
-| 19 | Sexta | |
-| 20 | Sábado | |
-| 21 | Domingo | |
-| 22 | Segunda | |
-| 23 | Terça | |
-| 24 | Quarta | |
-| 25 | Quinta | |
-| 26 | Sexta | |
-| 27 | Sábado | |
-| 28 | Domingo | |
-| 29 | Segunda | |
-| 30 | Terça | |
+## Semana 1
+**Seg 01/06** —
+**Ter 02/06** —
+**Qua 03/06** —
+**Qui 04/06** —
+**Sex 05/06** —
+**Sáb 06/06** —
+
+## Semana 2
+**Dom 07/06** —
+**Seg 08/06** —
+**Ter 09/06** —
+**Qua 10/06** —
+**Qui 11/06** —
+**Sex 12/06** —
+**Sáb 13/06** —
+
+## Semana 3
+**Dom 14/06** —
+**Seg 15/06** —
+**Ter 16/06** —
+**Qua 17/06** —
+**Qui 18/06** —
+**Sex 19/06** —
+**Sáb 20/06** —
+
+## Semana 4
+**Dom 21/06** —
+**Seg 22/06** —
+**Ter 23/06** —
+**Qua 24/06** —
+**Qui 25/06** —
+**Sex 26/06** —
+**Sáb 27/06** —
+
+## Semana 5
+**Dom 28/06** —
+**Seg 29/06** —
+**Ter 30/06** —
