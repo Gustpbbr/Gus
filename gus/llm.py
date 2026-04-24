@@ -53,7 +53,7 @@ async def _chamar_claude_com_retry(
     Re-lança a última APIStatusError se tudo falhar.
     """
     modelos = [model]
-    fallback = os.getenv("MODEL_FALLBACK", "claude-haiku-4-5-20251001")
+    fallback = os.getenv("MODEL_FALLBACK", "claude-haiku-4-5")
     if fallback and fallback != model:
         modelos.append(fallback)
 
@@ -73,8 +73,13 @@ async def _chamar_claude_com_retry(
             except (anthropic.APIStatusError, anthropic.APIConnectionError, anthropic.APITimeoutError) as e:
                 ultima_excecao = e
                 status = getattr(e, "status_code", None)
-                # 4xx (exceto 429) — não adianta retry
+                # 4xx (exceto 429) — não adianta retry; loga detalhes antes de propagar
                 if status and status < 500 and status != 429:
+                    body = getattr(e, "body", None)
+                    msg = str(body) if body else str(e)
+                    logger.error(
+                        f"Claude {modelo_atual} erro não-retryable (status={status}): {msg[:500]}"
+                    )
                     raise
                 if tentativa < max_tentativas - 1:
                     espera = 2 ** tentativa  # 1, 2, 4, 8
@@ -118,7 +123,7 @@ async def gerar_resumo_turnos(messages: list[dict]) -> str:
         linhas.append(f"{role}: {content}")
 
     conversa = "\n\n".join(linhas)
-    model = os.getenv("MODEL_RESUMO", "claude-haiku-4-5-20251001")
+    model = os.getenv("MODEL_RESUMO", "claude-haiku-4-5")
 
     response = await _chamar_claude_com_retry(
         model=model,
