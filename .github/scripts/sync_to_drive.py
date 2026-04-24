@@ -27,6 +27,7 @@ EXCLUDE_PREFIXES = (
     "docs/",
     "gus/",
     ".github/",
+    "sensivel/",
 )
 
 

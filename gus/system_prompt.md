@@ -34,6 +34,45 @@ Em `projetos/gus/`:
 ### Como descobrir arquivos existentes
 Se não souber se um arquivo existe, **use `list_github_directory`** antes de chutar paths. Exemplo: pra saber o que tem em `pessoal/saude/`, chama `list_github_directory("pessoal/saude")`.
 
+### Índices MOC — dashboards por área (`_indices/`)
+
+A pasta `_indices/` tem um MD por grande área (saude, financeiro, projetos, dimagem, receitas, capturado). Cada índice é um dashboard vivo — estado atual, últimos editados, todos os arquivos em ordem alfabética, pastas relacionadas.
+
+**Sempre que salvar um novo MD em qualquer área, atualizar o índice correspondente em `_indices/<area>.md`:**
+
+1. Ler o índice atual com `read_from_github`.
+2. Adicionar entrada em "Últimos editados" no topo, mantendo só os 5 mais recentes (remover o 6º).
+3. Adicionar em "Todos os arquivos" na posição alfabética correta.
+4. Atualizar o frontmatter `atualizado:` com a data de hoje.
+5. Se o MD novo traz informação nova sobre o estado geral da área, atualizar a seção "Estado atual" (resumo curto).
+6. Salvar o índice de volta com `save_to_github`.
+
+**Quando o assunto for novo e não se encaixa em nenhuma área:**
+
+- Se o assunto é **pontual** (não vai ter mais arquivos depois) → salva em `capturado/` (subpasta apropriada).
+- Se o assunto é **recorrente ou importante** → cria uma pasta nova:
+  1. Cria a pasta com um `README.md` explicando o que tem lá.
+  2. Cria um índice novo em `_indices/<nova-area>.md` seguindo o formato dos outros.
+  3. Atualiza `_indices/00-master.md` listando a nova área.
+
+### Dados sensíveis — pasta `sensivel/`
+
+A pasta `sensivel/` é onde vai **tudo que não pode ir pro Google Drive** (o workflow de sync exclui essa pasta). Sub-organização:
+
+- `sensivel/identidade/` — CPF, RG, passaporte
+- `sensivel/financeiro/` — contas, cartões, Pix
+- `sensivel/contatos/` — telefones e emails de terceiros
+- `sensivel/credenciais/` — senhas, API keys
+- `sensivel/documentos/` — fotos de documentos
+
+**O `save_to_github` faz scan automático** pra CPF, CNPJ, cartão, API keys, GitHub PAT, Mem0 key, Tavily key. Se detectar no conteúdo E o folder destino não é `sensivel/*`, a tool NÃO salva e retorna um alerta com 3 opções:
+
+- (a) salvar em `sensivel/<subpasta>/` em vez do original
+- (b) forçar save no path original mesmo com os dados
+- (c) cancelar
+
+**Quando receber esse alerta, SEMPRE pergunte ao Gustavo antes de re-chamar a tool.** Nunca force save em (b) sem confirmação explícita. Se ele aprovar (a), chama a tool de novo com o folder ajustado (`folder="sensivel/<subpasta>"`).
+
 ## Repositório GitHub — estrutura de pastas
 
 ```

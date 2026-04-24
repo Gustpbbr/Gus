@@ -14,6 +14,18 @@ BRT = timezone(timedelta(hours=-3))
 # Caracteres permitidos em nomes de arquivo e pastas
 _SAFE_PATH_RE = re.compile(r"^[a-zA-Z0-9\-_/]+$")
 
+# Padrões de dados sensíveis pra escaneamento antes de salvar
+_PATTERNS_SENSIVEIS = {
+    "CPF":              re.compile(r"\b\d{3}[.\s]?\d{3}[.\s]?\d{3}[-\s]?\d{2}\b"),
+    "CNPJ":             re.compile(r"\b\d{2}[.\s]?\d{3}[.\s]?\d{3}/?\d{4}[-\s]?\d{2}\b"),
+    "cartão":           re.compile(r"\b(?:\d[ -]?){13,19}\b"),
+    "API key Anthropic":re.compile(r"\bsk-ant-[\w-]{20,}\b"),
+    "API key OpenAI":   re.compile(r"\bsk-[A-Za-z0-9]{40,}\b"),
+    "GitHub PAT":       re.compile(r"\b(?:ghp_|github_pat_)[\w]{20,}\b"),
+    "Mem0 key":         re.compile(r"\bm0-[\w]{20,}\b"),
+    "Tavily key":       re.compile(r"\btvly-[\w]{20,}\b"),
+}
+
 
 def _validar_path(path: str) -> str:
     """Valida path contra traversal e caracteres perigosos."""
@@ -23,6 +35,15 @@ def _validar_path(path: str) -> str:
     if not _SAFE_PATH_RE.match(path.replace(".md", "")):
         raise ValueError(f"Path contém caracteres não permitidos: {path}")
     return path
+
+
+def _escanear_sensivel(content: str) -> list[str]:
+    """Retorna lista dos tipos de dados sensíveis encontrados no texto."""
+    encontrados = []
+    for nome, padrao in _PATTERNS_SENSIVEIS.items():
+        if padrao.search(content):
+            encontrados.append(nome)
+    return encontrados
 
 TOOLS = [
     {
@@ -265,6 +286,20 @@ async def _save_to_github(filename: str, content: str, folder: str) -> str:
         folder = _validar_path(folder)
     except ValueError as e:
         return str(e)
+
+    # Scan de dados sensíveis — só alerta se path NÃO for sensivel/*
+    if not folder.startswith("sensivel"):
+        flags = _escanear_sensivel(content)
+        if flags:
+            return (
+                f"ATENÇÃO — dados sensíveis detectados: {', '.join(flags)}.\n"
+                f"Este conteúdo NÃO foi salvo. Pergunte ao Gustavo como prosseguir:\n"
+                f"  (a) salvar em 'sensivel/{folder}/' ou subpasta de 'sensivel/' (não espelha no Drive)\n"
+                f"  (b) forçar o save no path original '{folder}/' mesmo com dados sensíveis\n"
+                f"  (c) cancelar\n"
+                f"Se (a) ou (b), chamar save_to_github de novo com o folder ajustado. "
+                f"Se vier nova confirmação explícita, pode salvar."
+            )
 
     token = os.getenv("GITHUB_TOKEN")
     repo = os.getenv("GITHUB_REPO", "Gustpbbr/Gus")
