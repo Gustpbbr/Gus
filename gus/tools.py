@@ -159,6 +159,32 @@ TOOLS = [
         }
     },
     {
+        "name": "disparar_workflow",
+        "description": (
+            "Dispara manualmente um GitHub Action via workflow_dispatch. Use quando o "
+            "Gustavo pedir pra rodar algo agora sem esperar o cron. Só funciona pra "
+            "workflows que têm `workflow_dispatch:` no trigger (todos os 6 workflows "
+            "atuais têm). Requer GITHUB_TOKEN com escopo 'Actions: Write'. "
+            "Workflows disponíveis: `meta-memoria.yml`, `briefing-matinal.yml`, "
+            "`retrospectiva-semanal.yml`, `reflexao-quinzenal.yml`, `export-mem0.yml`, "
+            "`sync-to-drive.yml`."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "workflow_name": {
+                    "type": "string",
+                    "description": "Nome do arquivo do workflow (ex: 'meta-memoria.yml', 'briefing-matinal.yml'). Deve terminar em .yml ou .yaml."
+                },
+                "branch": {
+                    "type": "string",
+                    "description": "Branch pra executar. Default 'main'."
+                }
+            },
+            "required": ["workflow_name"]
+        }
+    },
+    {
         "name": "meta_memoria",
         "description": (
             "Retorna a meta-análise atualizada do Mem0 do Gustavo — estatísticas, "
@@ -535,6 +561,54 @@ async def _save_to_github(filename: str, content: str, folder: str) -> str:
         return f"Erro ao salvar no GitHub: {response.status_code}"
 
 
+async def _disparar_workflow(workflow_name: str, branch: str = "main") -> str:
+    """Dispara um workflow via GitHub Actions API (workflow_dispatch)."""
+    if not re.match(r"^[a-z0-9\-]+\.ya?ml$", workflow_name):
+        return f"Nome inválido: `{workflow_name}`. Use formato tipo 'meta-memoria.yml'."
+
+    token = os.getenv("GITHUB_TOKEN")
+    repo = os.getenv("GITHUB_REPO", "Gustpbbr/Gus")
+    if not token:
+        return "GITHUB_TOKEN não configurado."
+
+    url = f"https://api.github.com/repos/{repo}/actions/workflows/{workflow_name}/dispatches"
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    payload = {"ref": branch or "main"}
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(url, json=payload, headers=headers)
+    except Exception as e:
+        return f"Erro de rede ao disparar workflow: {e}"
+
+    if response.status_code == 204:
+        return (
+            f"Workflow `{workflow_name}` disparado em branch `{branch}`. "
+            f"Acompanhe em https://github.com/{repo}/actions."
+        )
+    if response.status_code == 404:
+        return (
+            f"Workflow `{workflow_name}` não encontrado. Confirme o nome em "
+            f"`.github/workflows/` via list_github_directory."
+        )
+    if response.status_code == 403:
+        return (
+            f"Sem permissão pra disparar workflow (HTTP 403). "
+            f"O GITHUB_TOKEN precisa de escopo 'Actions: Read and write'. "
+            f"Gustavo atualiza em github.com/settings/tokens editando o PAT existente."
+        )
+    if response.status_code == 422:
+        return (
+            f"GitHub rejeitou o dispatch (422). Normalmente significa que o workflow "
+            f"não tem `workflow_dispatch:` no trigger, ou o branch `{branch}` não existe."
+        )
+    return f"Erro inesperado {response.status_code}: {response.text[:200]}"
+
+
 async def _criar_acao(tipo: str, conteudo: str, alto_risco: bool = False) -> str:
     """Enfileira uma ação em acoes/pendentes/<id>.md com frontmatter YAML padrão."""
     import uuid
@@ -593,4 +667,9 @@ async def executar_tool(name: str, inputs: dict) -> str:
         )
     elif name == "meta_memoria":
         return await _read_from_github("_indices/_meta-memoria.md")
+    elif name == "disparar_workflow":
+        return await _disparar_workflow(
+            inputs["workflow_name"],
+            inputs.get("branch", "main")
+        )
     return f"Tool desconhecida: {name}"
