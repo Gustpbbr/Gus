@@ -12,8 +12,10 @@ logger = logging.getLogger(__name__)
 
 BRT = timezone(timedelta(hours=-3))
 
-# Caracteres permitidos em nomes de arquivo e pastas
-_SAFE_PATH_RE = re.compile(r"^[a-zA-Z0-9\-_/]+$")
+# Caracteres permitidos em nomes de arquivo e pastas.
+# Ponto permitido pra pastas hidden legítimas (.github/, .claude/, .env.example).
+# Traversal (..) bloqueado explicitamente em _validar_path.
+_SAFE_PATH_RE = re.compile(r"^[a-zA-Z0-9\-_./]+$")
 
 # Padrões de dados sensíveis pra escaneamento antes de salvar
 _PATTERNS_SENSIVEIS = {
