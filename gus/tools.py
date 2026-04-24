@@ -46,6 +46,26 @@ TOOLS = [
         }
     },
     {
+        "name": "list_github_directory",
+        "description": (
+            "Lista o conteúdo (arquivos e subpastas) de uma pasta do repositório do Gustavo "
+            "no GitHub. Use ANTES de chutar paths — quando o usuário perguntar o que existe "
+            "em uma área, ou quando você não tem certeza se um arquivo específico existe. "
+            "Retorna nomes de arquivos e pastas. Para listar a raiz do repo, passe path vazio "
+            "ou '.'."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "path": {
+                    "type": "string",
+                    "description": "Caminho da pasta no repositório (ex: 'pessoal/saude', 'projetos/gus'). Vazio ou '.' para a raiz."
+                }
+            },
+            "required": ["path"]
+        }
+    },
+    {
         "name": "search_web",
         "description": (
             "Busca informações atuais na web. Use quando não tiver certeza sobre fatos recentes, "
@@ -127,6 +147,57 @@ async def _read_from_github(path: str) -> str:
     data = response.json()
     content = base64.b64decode(data["content"]).decode("utf-8")
     return content
+
+
+async def _list_github_directory(path: str) -> str:
+    """Lista arquivos e pastas de um diretório no repositório GitHub."""
+    path = (path or "").strip().strip("/")
+    if path and path != ".":
+        try:
+            path = _validar_path(path)
+        except ValueError as e:
+            return str(e)
+    else:
+        path = ""
+
+    token = os.getenv("GITHUB_TOKEN")
+    repo = os.getenv("GITHUB_REPO", "Gustpbbr/Gus")
+
+    if not token:
+        return "GITHUB_TOKEN não configurado."
+
+    url = f"https://api.github.com/repos/{repo}/contents/{path}"
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json",
+        "X-GitHub-Api-Version": "2022-11-28"
+    }
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        response = await client.get(url, headers=headers)
+
+    if response.status_code == 404:
+        return f"Pasta não encontrada: `{path or '.'}`"
+    if response.status_code != 200:
+        return f"Erro ao listar GitHub: {response.status_code}"
+
+    items = response.json()
+    if not isinstance(items, list):
+        return f"`{path}` é um arquivo, não uma pasta. Use read_from_github pra ler."
+
+    pastas = sorted([i["name"] for i in items if i["type"] == "dir"])
+    arquivos = sorted([i["name"] for i in items if i["type"] == "file"])
+
+    linhas = [f"Conteúdo de `{path or '(raiz)'}`:"]
+    if pastas:
+        linhas.append("\n**Pastas:**")
+        linhas.extend(f"- {p}/" for p in pastas)
+    if arquivos:
+        linhas.append("\n**Arquivos:**")
+        linhas.extend(f"- {a}" for a in arquivos)
+    if not pastas and not arquivos:
+        linhas.append("(vazio)")
+    return "\n".join(linhas)
 
 
 async def _search_tavily(query: str) -> str | None:
@@ -249,6 +320,8 @@ async def _save_to_github(filename: str, content: str, folder: str) -> str:
 async def executar_tool(name: str, inputs: dict) -> str:
     if name == "read_from_github":
         return await _read_from_github(inputs["path"])
+    elif name == "list_github_directory":
+        return await _list_github_directory(inputs.get("path", ""))
     elif name == "search_web":
         return await _search_web(inputs["query"])
     elif name == "save_to_github":
