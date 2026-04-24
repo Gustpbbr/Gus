@@ -6,6 +6,7 @@ import base64
 from datetime import datetime, timezone, timedelta
 import httpx
 from duckduckgo_search import DDGS
+from gus.memory import buscar_memorias_detalhada
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +113,29 @@ TOOLS = [
                 }
             },
             "required": []
+        }
+    },
+    {
+        "name": "search_memory",
+        "description": (
+            "Busca memórias do Gustavo no Mem0 de forma ativa (por query específica). "
+            "Use quando o usuário perguntar sobre memórias recentes, ou quando você precisar "
+            "de contexto adicional além do que já foi injetado passivamente no início da "
+            "conversa. Retorna as memórias mais semanticamente próximas da query."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Busca em linguagem natural (ex: 'projetos ativos', 'saúde recente', 'decisões sobre o Gus', 'construção da casa')"
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Número máximo de memórias a retornar (1 a 20). Default 10."
+                }
+            },
+            "required": ["query"]
         }
     },
     {
@@ -476,6 +500,12 @@ async def executar_tool(name: str, inputs: dict) -> str:
             inputs.get("limit", 10),
             inputs.get("since_days", 0)
         )
+    elif name == "search_memory":
+        try:
+            limit = max(1, min(int(inputs.get("limit", 10)), 20))
+        except (TypeError, ValueError):
+            limit = 10
+        return await buscar_memorias_detalhada(inputs["query"], limit)
     elif name == "search_web":
         return await _search_web(inputs["query"])
     elif name == "save_to_github":
