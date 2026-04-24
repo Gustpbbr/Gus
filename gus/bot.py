@@ -4,7 +4,7 @@ import asyncio
 import logging
 from telegram import Update
 from telegram.ext import ContextTypes
-from gus.llm import gerar_resposta
+from gus.llm import gerar_resposta, gerar_resumo_turnos
 from gus.logger import registrar, custo_mes_atual
 from gus.memory import buscar_memorias, salvar_memorias
 from gus.media import processar_imagem, processar_pdf
@@ -14,9 +14,25 @@ logger = logging.getLogger(__name__)
 AUTHORIZED_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 HARD_LIMIT = float(os.getenv("HARD_LIMIT_USD_MONTH", "30"))
 MAX_HISTORY = int(os.getenv("MAX_HISTORY_MESSAGES", "20"))  # 10 turnos
+TURNOS_PARA_RESUMO = int(os.getenv("TURNOS_PARA_RESUMO", "5"))
 
-# Histórico em memória por chat_id (reseta no redeploy)
+# Estado em memória por chat_id (reseta no redeploy)
 conversation_histories: dict[str, list] = {}
+turn_counters: dict[str, int] = {}
+last_saved_turn: dict[str, int] = {}
+
+
+async def _resumir_e_salvar(chat_id: str, trecho: list[dict]) -> None:
+    """Gera resumo extrativo do trecho e salva no Mem0. Silencioso em falhas."""
+    try:
+        resumo = await gerar_resumo_turnos(trecho)
+        if resumo and resumo.strip().lower() != "sem conteúdo relevante":
+            await salvar_memorias([{"role": "user", "content": resumo}])
+            logger.info(f"Resumo salvo no Mem0 (chat {chat_id}, {len(resumo)} chars)")
+        else:
+            logger.info(f"Resumo vazio ou sem conteúdo relevante (chat {chat_id})")
+    except Exception as e:
+        logger.warning(f"Resumo falhou (chat {chat_id}): {e}")
 
 
 def _autorizado(chat_id: str) -> bool:
@@ -44,6 +60,9 @@ async def _responder(update: Update, chat_id: str, content: list[dict], texto_pr
     if len(history) > MAX_HISTORY:
         history[:] = history[-MAX_HISTORY:]
 
+    turn = turn_counters.get(chat_id, 0) + 1
+    turn_counters[chat_id] = turn
+
     start = time.time()
 
     memory_context = ""
@@ -59,16 +78,12 @@ async def _responder(update: Update, chat_id: str, content: list[dict], texto_pr
 
         history.append({"role": "assistant", "content": resposta})
 
-        async def _salvar_com_log():
-            try:
-                await salvar_memorias([
-                    {"role": "user", "content": texto_preview or "[mídia]"},
-                    {"role": "assistant", "content": resposta}
-                ])
-            except Exception as e:
-                logger.warning(f"Mem0 save falhou: {e}")
-
-        asyncio.create_task(_salvar_com_log())
+        # A cada TURNOS_PARA_RESUMO (default 5) turnos do usuário, gera resumo extrativo
+        # do trecho recente e salva no Mem0 como memória curada.
+        if turn - last_saved_turn.get(chat_id, 0) >= TURNOS_PARA_RESUMO:
+            trecho = list(history[-(TURNOS_PARA_RESUMO * 2):])
+            last_saved_turn[chat_id] = turn
+            asyncio.create_task(_resumir_e_salvar(chat_id, trecho))
 
         for i in range(0, len(resposta), 4096):
             await update.message.reply_text(resposta[i:i + 4096])
@@ -111,7 +126,17 @@ async def handle_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = str(update.effective_chat.id)
     if not _autorizado(chat_id):
         return
+
+    # Se houve turnos desde o último resumo, salva o que acumulou antes de zerar
+    turn = turn_counters.get(chat_id, 0)
+    if turn > last_saved_turn.get(chat_id, 0):
+        trecho = list(conversation_histories.get(chat_id, []))
+        if trecho:
+            asyncio.create_task(_resumir_e_salvar(chat_id, trecho))
+
     conversation_histories.pop(chat_id, None)
+    turn_counters.pop(chat_id, None)
+    last_saved_turn.pop(chat_id, None)
     await update.message.reply_text("Histórico limpo. Começando do zero.")
 
 

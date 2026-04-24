@@ -30,6 +30,51 @@ client = anthropic.AsyncAnthropic(
     timeout=120.0,  # 2 minutos — evita ficar pendurado se a API travar
 )
 
+RESUMO_SYSTEM_PROMPT = """Você analisa um trecho de conversa entre Gustavo e o Gus (seu agente pessoal) e extrai o que vale ser gravado no Mem0 como memória de longo prazo.
+
+Extraia APENAS:
+- Decisões tomadas e o porquê
+- Preferências reveladas (comunicação, hábitos, gostos)
+- Fatos novos sobre Gustavo (saúde, projetos, pessoas, rotina, compromissos)
+- Ações prometidas ou combinadas
+- Contexto técnico relevante pra futuras conversas (arquitetura, bugs resolvidos, caminhos)
+
+Ignore:
+- Saudações e confirmações curtas
+- Conversa pequena sem conteúdo
+- Informação genérica que qualquer um saberia
+- Repetição do que já é óbvio pelo system prompt
+
+Formato: lista numerada. Cada item um fato curto e direto, em português. Se não houver nada relevante, responde exatamente: sem conteúdo relevante.
+"""
+
+
+async def gerar_resumo_turnos(messages: list[dict]) -> str:
+    """Gera resumo extrativo dos turnos pra salvar no Mem0."""
+    linhas = []
+    for msg in messages:
+        role = "Gustavo" if msg["role"] == "user" else "Gus"
+        content = msg["content"]
+        if isinstance(content, list):
+            partes = [c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text"]
+            content = " ".join(p for p in partes if p).strip() or "[mídia]"
+        linhas.append(f"{role}: {content}")
+
+    conversa = "\n\n".join(linhas)
+    model = os.getenv("MODEL_RESUMO", "claude-haiku-4-5-20251001")
+
+    response = await client.messages.create(
+        model=model,
+        max_tokens=1024,
+        system=RESUMO_SYSTEM_PROMPT,
+        messages=[{
+            "role": "user",
+            "content": f"Trecho de conversa pra analisar:\n\n{conversa}\n\nExtraia o que vale gravar como memória:"
+        }],
+    )
+    texto = next((b.text for b in response.content if hasattr(b, "text")), "")
+    return texto.strip()
+
 
 @functools.lru_cache(maxsize=1)
 def _load_system_prompt() -> str:
