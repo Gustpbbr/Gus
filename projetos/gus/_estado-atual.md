@@ -36,19 +36,53 @@ Documento vivo. Atualizar no final de cada sessão que deixa algo no meio.
 - `mem0ai==0.1.29` pinado em `.claude/mcp/requirements.txt`.
 - Harness desta sessão cacheou a config antiga no boot — mudanças no `.mcp.json` durante a sessão só surtem efeito na próxima.
 
-**Sincronia de branches:** `main` e `claude/initial-setup-iWTfL` sincronizadas no commit `1370d2e`. Commit `26fd5d0` só em `main` (é auto do bot; próxima sessão faz sync se precisar).
+**Bot descobre arquivos e sabe o nome do repo (commit `0360f80`):**
+- Adicionado tool `list_github_directory(path)` — bot pode explorar o repo em vez de chutar paths.
+- `system_prompt.md` atualizado com: nome explícito `Gustpbbr/Gus`, instrução pra ler `_estado-atual.md` antes de responder sobre estado do projeto, índice dos 7 MDs de documentação.
+- Validado em conversa real: bot listou os 8 arquivos em `projetos/gus/`, confirmou repo e deu resumo correto do estado.
+
+**Tentativa de Drive sync abortada nesta sessão:**
+- Política da organização `iam.disableServiceAccountKeyCreation` bloqueia criação de JSON keys no Google Cloud (security-by-default pro org `gustavo-pratti-org`).
+- Não tentamos Workload Identity Federation (overkill por agora).
+- Drive sync fica **parado** até Gustavo desligar a política OU migrar pra WIF.
+
+**Obsidian adiado:**
+- Conceitualmente aceito, mas Gustavo prefere não instalar no PC por agora.
+- Volta em outra sessão quando quiser visualização local.
+
+**Claude Chat Project parcialmente feito:**
+- Criado Project "Gus" em `claude.ai`.
+- Os 4 testes de validação (projetos ativos, estilo de comunicação, ferramentas, o que é o Gus) **falharam** — possivelmente o conteúdo do `gus-identity.md` não foi colado corretamente no campo **Project instructions**. Precisa refazer.
+- Integração Drive no Project depende de Drive sync estar vivo (bloqueado acima).
+
+**Sincronia de branches:** `main` e `claude/initial-setup-iWTfL` sincronizadas no commit `0360f80`.
 
 ### O que ficou pendente pra próxima sessão
 
-**Validar MCP Mem0** — primeira coisa pra fazer na próxima sessão. Testar chamando `mcp__mem0-gus__listar_memorias`. Resposta esperada: lista das 12 memórias do Gustavo (mesmo conteúdo que tá em `gus-memoria-export.md`). Se der erro "Invalid API Key": ler `~/.claude/mem0.key`, comparar prefixo com a chave do Railway; se estiver diferente, tem dessincronia.
+Em ordem de desbloqueio:
+
+1. **Validar MCP Mem0 no Claude Code** (teste rápido) — chamar `mcp__mem0-gus__listar_memorias`, deve retornar 12+ memórias.
+2. **Refazer Claude Chat Project** — garantir que `gus/gus-identity.md` foi colado no campo **Project instructions** (não como anexo), rodar os 4 testes novamente.
+3. **Decidir destino do Drive sync** — desligar política org, tentar WIF, ou ficar sem Drive (e sem Projeto integrado com arquivos vivos).
+
+### Ideias em discussão (não implementadas)
+
+- **Índices MOC** (Map of Content) em `_indices/` — um `.md` por área (saúde, financeiro, projetos, etc) funcionando como dashboard vivo com estado atual + timeline + wikilinks pros arquivos detalhados. Pressupõe o bot atualizar esses índices automaticamente quando salvar algo novo. Discutido nesta sessão; **não criado ainda**. Requer Drive sync funcionando pra fazer sentido pro Claude Chat.
 
 ### Próximos passos em aberto (Fase 1)
 
-Depois de validar MCP:
+- ✅ Passo 4 (MCP Claude Code) — configurado; falta teste em nova sessão.
+- 🚧 Passo 3 (Drive sync) — bloqueado por política Google.
+- ⏸️ Passo 5 (Obsidian) — adiado por decisão.
+- 🚧 Passo 6 (Claude Chat Project) — config parcial, retestar.
 
-- **Passo 3 — Google Drive sync** (30min, precisa criar Service Account no Google Cloud + secrets `GOOGLE_CREDENTIALS` e `DRIVE_ROOT_FOLDER_ID` no GitHub). Detalhes em `gus-03-configuracao-manual.md` seção 3.
-- **Passo 5 — Obsidian local** (20min, fora do Claude Code)
-- **Passo 6 — Claude Chat Project** (5min, fora do Claude Code)
+### Bugs fechados nesta sessão
+
+- ✅ Bug 1: data atual alucinada → fix injetando `datetime.now(BRT)` no system prompt (commit `3b8178f`).
+- ✅ Bug 2: DuckDuckGo rate-limited em IPs cloud → Tavily primário (commit `5d82769`).
+- ✅ Bug 3: bot não sabia o nome do repo → declarado no system prompt (commit `0360f80`).
+- ✅ Bug 4: bot não conseguia descobrir arquivos → novo tool `list_github_directory` (commit `0360f80`).
+- ✅ Bug workflow `export-mem0`: pin mem0ai (`2a3829b`) + permissions write (`1370d2e`). Validado com 12 memórias exportadas.
 
 ### Bugs conhecidos em aberto
 
@@ -56,7 +90,8 @@ Nenhum crítico. Observações:
 
 - Gus usa emojis em respostas ocasionalmente (não proibido no system prompt; decisão aberta).
 - DDG pode falhar quando Tavily estourar limite mensal; fallback reativo apenas.
-- Telegram bot silencia falhas de Mem0 (bot.py:52-55) — se chave ficar inválida, conversas seguem sem memória mas sem erro visível. Monitorar.
+- Telegram bot silencia falhas de Mem0 (`bot.py:52-55`) — se chave ficar inválida, conversas seguem sem memória mas sem erro visível. Monitorar.
+- Bot não conhece histórico de commits (não há tool `list_commits` ainda). Se perguntado "o que mudou essa semana" ele não tem resposta precisa sem consultar múltiplos arquivos.
 
 ### Decisões pendentes (não bloqueiam)
 
