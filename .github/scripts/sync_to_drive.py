@@ -7,12 +7,11 @@ Roda via GitHub Actions a cada push em main.
 Só sincroniza arquivos de conteúdo (exclui código e docs do projeto).
 """
 
-import json
 import os
 import subprocess
 import sys
 
-from google.oauth2 import service_account
+from google.auth import default
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
@@ -32,10 +31,7 @@ EXCLUDE_PREFIXES = (
 
 
 def get_drive_service():
-    creds_dict = json.loads(os.environ["GOOGLE_CREDENTIALS"])
-    credentials = service_account.Credentials.from_service_account_info(
-        creds_dict, scopes=SCOPES
-    )
+    credentials, _ = default(scopes=SCOPES)
     return build("drive", "v3", credentials=credentials)
 
 
@@ -148,11 +144,8 @@ def sync_file(service, local_path, root_folder_id):
 
 
 def main():
-    # Skip silencioso se secrets ainda não configurados — evita email de falha
-    # a cada push em main. Quando Gustavo configurar GOOGLE_CREDENTIALS e
-    # DRIVE_ROOT_FOLDER_ID nos secrets do repo, volta a rodar automático.
-    if not os.environ.get("GOOGLE_CREDENTIALS") or not os.environ.get("DRIVE_ROOT_FOLDER_ID"):
-        print("GOOGLE_CREDENTIALS ou DRIVE_ROOT_FOLDER_ID não configurados. Sync pulado.")
+    if not os.environ.get("DRIVE_ROOT_FOLDER_ID"):
+        print("DRIVE_ROOT_FOLDER_ID não configurado. Sync pulado.")
         sys.exit(0)
 
     root_folder_id = os.environ["DRIVE_ROOT_FOLDER_ID"]
