@@ -2,6 +2,7 @@ import os
 import time
 import asyncio
 import logging
+from collections import deque
 from telegram import Update
 from telegram.ext import ContextTypes
 from gus.llm import gerar_resposta, gerar_resumo_turnos
@@ -15,11 +16,13 @@ AUTHORIZED_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 HARD_LIMIT = float(os.getenv("HARD_LIMIT_USD_MONTH", "30"))
 MAX_HISTORY = int(os.getenv("MAX_HISTORY_MESSAGES", "20"))  # 10 turnos
 TURNOS_PARA_RESUMO = int(os.getenv("TURNOS_PARA_RESUMO", "5"))
+RATE_LIMIT_MSG_PER_MINUTE = int(os.getenv("RATE_LIMIT_MSG_PER_MINUTE", "20"))
 
 # Estado em memória por chat_id (reseta no redeploy)
 conversation_histories: dict[str, list] = {}
 turn_counters: dict[str, int] = {}
 last_saved_turn: dict[str, int] = {}
+message_timestamps: dict[str, deque] = {}
 
 
 async def _resumir_e_salvar(chat_id: str, trecho: list[dict]) -> None:
@@ -49,6 +52,22 @@ async def _verificar_limite(update: Update) -> bool:
             f"Desligando chamadas até o próximo mês."
         )
         return False
+    return True
+
+
+async def _verificar_rate_limit(update: Update, chat_id: str) -> bool:
+    """Rate limit: até RATE_LIMIT_MSG_PER_MINUTE por janela de 60s."""
+    agora = time.time()
+    timestamps = message_timestamps.setdefault(chat_id, deque())
+    while timestamps and timestamps[0] < agora - 60:
+        timestamps.popleft()
+    if len(timestamps) >= RATE_LIMIT_MSG_PER_MINUTE:
+        await update.message.reply_text(
+            f"Tô recebendo muito rápido ({len(timestamps)}+ msgs no último minuto). "
+            f"Aguenta uns segundos e manda de novo."
+        )
+        return False
+    timestamps.append(agora)
     return True
 
 
@@ -145,6 +164,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not _autorizado(chat_id):
         logger.warning(f"Mensagem ignorada de chat_id não autorizado: {chat_id}")
         return
+    if not await _verificar_rate_limit(update, chat_id):
+        return
     if not await _verificar_limite(update):
         return
 
@@ -156,6 +177,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = str(update.effective_chat.id)
     if not _autorizado(chat_id):
+        return
+    if not await _verificar_rate_limit(update, chat_id):
         return
     if not await _verificar_limite(update):
         return
@@ -177,6 +200,8 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = str(update.effective_chat.id)
     if not _autorizado(chat_id):
+        return
+    if not await _verificar_rate_limit(update, chat_id):
         return
     if not await _verificar_limite(update):
         return
