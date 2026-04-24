@@ -6,7 +6,7 @@ import base64
 from datetime import datetime, timezone, timedelta
 import httpx
 from duckduckgo_search import DDGS
-from gus.memory import buscar_memorias_detalhada
+from gus.memory import buscar_memorias_detalhada, salvar_observacao_gus, buscar_memorias_gus
 
 logger = logging.getLogger(__name__)
 
@@ -198,6 +198,50 @@ TOOLS = [
             "type": "object",
             "properties": {},
             "required": []
+        }
+    },
+    {
+        "name": "salvar_memoria_gus",
+        "description": (
+            "Salva uma observação no SEU PRÓPRIO brain do Mem0 (user_id='gus', "
+            "separado das memórias sobre o Gustavo). Use quando perceber: "
+            "(a) um padrão operacional sobre o Gustavo que afeta como você deve agir, "
+            "(b) um aprendizado tático sobre você mesmo (caveat de tool, comportamento), "
+            "(c) um princípio que emergiu da conversa e vale lembrar. "
+            "NÃO usar pra fatos sobre o Gustavo (esses ficam no Mem0 padrão automaticamente)."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "observacao": {
+                    "type": "string",
+                    "description": "Observação curta e direta. Ex: 'Gustavo prefere crítica sem suavizar', 'Verificar antes de afirmar ausência'."
+                }
+            },
+            "required": ["observacao"]
+        }
+    },
+    {
+        "name": "buscar_memoria_gus",
+        "description": (
+            "Busca nas SUAS PRÓPRIAS memórias (Mem0 user_id='gus'). Brain separado do "
+            "Mem0 do Gustavo. Use pra recuperar padrões operacionais, aprendizados sobre si, "
+            "princípios que você acumulou. NÃO traz fatos sobre o Gustavo — pra isso use "
+            "search_memory."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Query semântica (ex: 'como devo agir', 'padrões observados', 'princípios')"
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Número máximo de memórias (1 a 20). Default 10."
+                }
+            },
+            "required": ["query"]
         }
     },
     {
@@ -686,6 +730,14 @@ async def executar_tool(name: str, inputs: dict) -> str:
         return await _read_from_github("gus/meta-memoria.md")
     elif name == "auditoria_mem0":
         return await _read_from_github("_indices/_auditoria-mem0.md")
+    elif name == "salvar_memoria_gus":
+        return await salvar_observacao_gus(inputs["observacao"])
+    elif name == "buscar_memoria_gus":
+        try:
+            limit = max(1, min(int(inputs.get("limit", 10)), 20))
+        except (TypeError, ValueError):
+            limit = 10
+        return await buscar_memorias_gus(inputs["query"], limit)
     elif name == "disparar_workflow":
         return await _disparar_workflow(
             inputs["workflow_name"],
