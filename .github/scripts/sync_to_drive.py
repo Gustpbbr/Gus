@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """
-Sincroniza arquivos .md do repositório para o Google Drive,
-convertendo para Google Docs e preservando estrutura de pastas.
-
-Roda via GitHub Actions a cada push em main.
-Só sincroniza arquivos de conteúdo (exclui código e docs do projeto).
+Sincroniza arquivos .md do repositório para o Google Drive.
+Modo incremental: roda a cada push em main (só arquivos alterados).
+Modo full sync: roda via workflow_dispatch, sobe todos os .md de conteúdo.
 """
 
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -44,6 +43,10 @@ def get_drive_service():
     return build("drive", "v3", credentials=creds)
 
 
+def _is_excluded(filepath):
+    return filepath in EXCLUDE_PATHS or filepath.startswith(EXCLUDE_PREFIXES)
+
+
 def get_changed_md_files():
     result = subprocess.run(
         ["git", "diff", "--name-only", "--diff-filter=ACM", "HEAD~1", "HEAD"],
@@ -52,14 +55,18 @@ def get_changed_md_files():
     )
     files = result.stdout.strip().split("\n")
     return [
-        f
-        for f in files
-        if f.endswith(".md")
-        and f
-        and os.path.exists(f)
-        and f not in EXCLUDE_PATHS
-        and not f.startswith(EXCLUDE_PREFIXES)
+        f for f in files
+        if f.endswith(".md") and f and os.path.exists(f) and not _is_excluded(f)
     ]
+
+
+def get_all_md_files():
+    result = []
+    for path in Path(".").rglob("*.md"):
+        filepath = str(path).replace("\\", "/").lstrip("./")
+        if filepath and os.path.exists(filepath) and not _is_excluded(filepath):
+            result.append(filepath)
+    return sorted(result)
 
 
 def get_or_create_folder(service, folder_name, parent_id):
@@ -70,21 +77,13 @@ def get_or_create_folder(service, folder_name, parent_id):
         f"and mimeType = 'application/vnd.google-apps.folder' "
         f"and trashed = false"
     )
-    results = service.files().list(
-        q=query, fields="files(id, name)", pageSize=1
-    ).execute()
+    results = service.files().list(q=query, fields="files(id, name)", pageSize=1).execute()
     files = results.get("files", [])
-
     if files:
         return files[0]["id"]
-
-    folder_metadata = {
-        "name": folder_name,
-        "mimeType": "application/vnd.google-apps.folder",
-        "parents": [parent_id],
-    }
     folder = service.files().create(
-        body=folder_metadata, fields="id"
+        body={"name": folder_name, "mimeType": "application/vnd.google-apps.folder", "parents": [parent_id]},
+        fields="id"
     ).execute()
     print(f"  Pasta criada: {folder_name}")
     return folder["id"]
@@ -92,8 +91,7 @@ def get_or_create_folder(service, folder_name, parent_id):
 
 def ensure_folder_path(service, path, root_folder_id):
     current_parent = root_folder_id
-    parts = [p for p in path.split("/") if p]
-    for part in parts:
+    for part in [p for p in path.split("/") if p]:
         current_parent = get_or_create_folder(service, part, current_parent)
     return current_parent
 
@@ -105,71 +103,62 @@ def find_existing_file(service, file_name, parent_id):
         f"and '{parent_id}' in parents "
         f"and trashed = false"
     )
-    results = service.files().list(
-        q=query, fields="files(id, name)", pageSize=1
-    ).execute()
+    results = service.files().list(q=query, fields="files(id, name)", pageSize=1).execute()
     files = results.get("files", [])
     return files[0]["id"] if files else None
 
 
 def upsert_file(service, local_path, file_name, parent_id):
-    media = MediaFileUpload(local_path, mimetype="text/markdown", resumable=True)
-
+    media = MediaFileUpload(local_path, mimetype="text/plain", resumable=True)
     existing_id = find_existing_file(service, file_name, parent_id)
-
     if existing_id:
-        updated = service.files().update(
+        service.files().update(
             fileId=existing_id,
             media_body=media,
-            fields="id, name, modifiedTime",
+            fields="id, name",
         ).execute()
         print(f"  Atualizado: {file_name}")
-        return updated
-
-    file_metadata = {
-        "name": file_name,
-        "mimeType": "application/vnd.google-apps.document",
-        "parents": [parent_id],
-    }
-    created = service.files().create(
-        body=file_metadata,
-        media_body=media,
-        fields="id, name",
-    ).execute()
-    print(f"  Criado: {file_name}")
-    return created
+    else:
+        service.files().create(
+            body={"name": file_name, "parents": [parent_id]},
+            media_body=media,
+            fields="id, name",
+        ).execute()
+        print(f"  Criado: {file_name}")
 
 
 def sync_file(service, local_path, root_folder_id):
     dir_path = os.path.dirname(local_path)
     file_name = os.path.basename(local_path)
-
-    if dir_path:
-        parent_id = ensure_folder_path(service, dir_path, root_folder_id)
-    else:
-        parent_id = root_folder_id
-
+    parent_id = ensure_folder_path(service, dir_path, root_folder_id) if dir_path else root_folder_id
     upsert_file(service, local_path, file_name, parent_id)
 
 
 def main():
     if not os.environ.get("GOOGLE_REFRESH_TOKEN") or not os.environ.get("DRIVE_ROOT_FOLDER_ID"):
-        print("Credenciais OAuth ou DRIVE_ROOT_FOLDER_ID não configurados. Sync pulado.")
+        print("Credenciais ou DRIVE_ROOT_FOLDER_ID não configurados. Sync pulado.")
         sys.exit(0)
 
     root_folder_id = os.environ["DRIVE_ROOT_FOLDER_ID"]
     service = get_drive_service()
+    full_sync = os.environ.get("FULL_SYNC", "").lower() == "true"
 
-    changed_files = get_changed_md_files()
+    if full_sync:
+        files = get_all_md_files()
+        print(f"Modo full sync: {len(files)} arquivo(s) encontrados.")
+    else:
+        files = get_changed_md_files()
+        if not files:
+            print("Nenhum .md de conteúdo alterado. Nada a sincronizar.")
+            sys.exit(0)
+        print(f"Sincronizando {len(files)} arquivo(s) alterado(s)...")
 
-    if not changed_files:
-        print("Nenhum .md de conteúdo alterado. Nada a sincronizar.")
-        sys.exit(0)
-
-    print(f"Sincronizando {len(changed_files)} arquivo(s)...")
-    for file_path in changed_files:
+    for file_path in files:
         print(f"\n→ {file_path}")
-        sync_file(service, file_path, root_folder_id)
+        try:
+            sync_file(service, file_path, root_folder_id)
+        except Exception as e:
+            print(f"  ERRO: {e}")
 
     print("\nSync completo.")
 
