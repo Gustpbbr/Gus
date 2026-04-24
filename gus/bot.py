@@ -141,6 +141,19 @@ async def handle_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Bot privado.")
 
 
+async def handle_custo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = str(update.effective_chat.id)
+    if not _autorizado(chat_id):
+        return
+    total = custo_mes_atual()
+    pct = 100 * total / HARD_LIMIT if HARD_LIMIT > 0 else 0
+    await update.message.reply_text(
+        f"Custo do mês atual: US${total:.4f} de US${HARD_LIMIT:.2f} ({pct:.1f}%).\n\n"
+        f"Obs: tracking reseta em cada redeploy do Railway. "
+        f"Pra histórico confiável precisa de volume persistente em /app/logs."
+    )
+
+
 async def handle_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = str(update.effective_chat.id)
     if not _autorizado(chat_id):
