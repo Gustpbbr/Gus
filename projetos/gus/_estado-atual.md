@@ -7,77 +7,101 @@ atualizado: 2026-04-24
 
 Documento vivo. Atualizar no final de cada sessão que deixa algo no meio.
 
-## Última sessão (2026-04-23/24) — maratona Fase 1 + reforços
+## Última sessão (2026-04-23/24) — maratona até caminho pra Alexa
 
-### Deploy e bot vivo
-- Railway com todas as variáveis. `TELEGRAM_CHAT_ID=495256549`. Bot responde, usa Mem0, salva/lê no GitHub.
+### Infraestrutura base (sessão 23/abr → madrugada 24)
+- Deploy Railway com todas variáveis. `TELEGRAM_CHAT_ID=495256549`. Bot responde, usa Mem0, salva/lê GitHub.
 - 12 testes funcionais validados em produção via Telegram.
 
-### Correções críticas
-- **Bug 1 (data):** `datetime.now(BRT)` injetado no system prompt a cada chamada (`3b8178f`).
-- **Bug 2 (busca):** Tavily primário + DuckDuckGo fallback (`5d82769`).
-- **Bug 3 (repo):** nome `Gustpbbr/Gus` declarado no system prompt (`0360f80`).
-- **Bug 4 (descoberta):** tool `list_github_directory` adicionada (`0360f80`).
-- **Bug workflow export-mem0:** pin `mem0ai==0.1.29` (`2a3829b`) + `permissions: contents: write` (`1370d2e`). Validado, 12 memórias exportadas (`26fd5d0`).
+### Bugs críticos corrigidos
+- **Bug 1 (data):** `datetime.now(BRT)` injetado no system prompt a cada chamada
+- **Bug 2 (busca):** Tavily primário + DuckDuckGo fallback
+- **Bug 3 (repo):** nome `Gustpbbr/Gus` declarado no system prompt
+- **Bug 4 (descoberta):** `list_github_directory` adicionada
+- **Bug workflow export-mem0:** pin `mem0ai==0.1.29` + `permissions: contents: write`
 
-### Features novas (8 tools no total)
-- `read_from_github` (original)
-- `list_github_directory` (descoberta, `0360f80`)
-- `list_commits` (histórico/datas/autoria, `71e27b8`)
-- `search_memory` (busca ativa Mem0, `009d25b` → `f69f71b` pós-rebase)
-- `search_web` (Tavily + DDG)
-- `save_to_github` com scan de dados sensíveis (`0b3a31e`)
+### Features novas — 13 tools totais no bot
+- `read_from_github`, `list_github_directory`, `list_commits`, `search_memory`, `meta_memoria`, `auditoria_mem0`, `salvar_memoria_gus`, `buscar_memoria_gus`, `search_web`, `save_to_github`, `criar_acao`, `disparar_workflow`
+- Processamento multimídia: imagens (resize + formato detectado), PDFs (Claude nativo), Word, Excel, **áudio/voz via Whisper** ← concluído hoje
 
-### Infraestrutura de memória e documentação
-- **7 MDs de documentação** em `projetos/gus/gus-01` a `gus-07` (`6edbec5`).
-- **`gus-08-plano-proximos-passos.md`** — detalhamento técnico de 8 itens pendentes (`358cc5f`).
-- **`_estado-atual.md`** — este handoff, atualizado no fim de cada sessão.
-- **`_indices/`** — 7 índices MOC por área (master, saude, financeiro, projetos, dimagem, receitas, capturado) + README com regras de manutenção (`0b3a31e`).
-- **`sensivel/`** — pasta excluída do Drive sync com README de regras (`0b3a31e`).
-- **`system_prompt.md`** orquestra: ler `_estado-atual.md` primeiro, manter índices sincronizados, proteger dados sensíveis, quando usar cada tool.
+### Arquitetura de memória — 2 cérebros + narrativa
+- Mem0 brain `user_id="gustavo"` — fatos sobre o Gustavo
+- Mem0 brain `user_id="gus"` — auto-observações do bot (começou vazio 24/04)
+- `gus/meta-memoria.md` — narrativa reflexiva do Gus
+- `_indices/_auditoria-mem0.md` — auditoria diária do brain `gustavo`
+- Resumo extrativo a cada 3 turnos (era 5)
 
-### Mem0
-- Chave rotacionada: antiga `m0-obYXul...` revogada, nova `m0-cfOtGO...` ativa em Railway + GitHub Secrets + `~/.claude/mem0.key`.
-- **Resumo extrativo a cada 5 turnos** (commit `5f4ffe8`) — sistema chama Claude Haiku pra extrair só decisões/preferências/fatos novos dos últimos 10 msgs e salva curado no Mem0.
-- MCP server `mem0-gus` configurado via `.mcp.json` lê chave de `~/.claude/mem0.key`. Testado nesta sessão: listar_memorias, buscar_memorias, salvar_memoria disponíveis.
+### Princípios fundamentais (topo do system prompt)
+1. Não alucinar
+2. Buscar antes de afirmar (Tavily primeiro)
+3. Citar fonte quando buscou
+4. Verificar antes de afirmar ausência
+
+### SELF-1 validado em produção
+- Primeira reflexão quinzenal (forced run) gerou observações reais e acionáveis sobre viés do Mem0 e drift de foco
+- Ciclo natural: sábado semanas pares 10h BRT
+
+### Protocolo `dialogos-tiogu-claude/`
+- Canal bidirecional entre bot Telegram e Claude Code via commits versionados
+- MD por semana (nomeado pela segunda-feira)
+- Gus escreve demandas → Claude Code responde com feito/não feito/por quê
+- Inaugurado 24/04 com demanda da própria criação do protocolo
 
 ### Resiliência
-- Retry exponencial (1s, 2s, 4s, 8s) para erros Anthropic 5xx/529 (`0e964e0`).
-- Fallback pro Haiku quando Sonnet overloaded (`0e964e0`), alias curto `claude-haiku-4-5` (`d89c7c1`).
-- Logging detalhado de erros 4xx não-retryables antes de propagar.
-- Mensagem amigável ao usuário quando tudo falha: *"A API tá sobrecarregada agora (status X). Tenta em 1-2 min."*
+- Retry exponencial em 5xx/529 Anthropic
+- Fallback Sonnet → Haiku
+- Mensagens de erro PT específicas (sem créditos, chave inválida, etc)
+- Rate limit 20 msg/min
+- Scan de dados sensíveis + pasta `sensivel/` excluída do Drive
+- Recovery de contexto em redeploy (system prompt instrui bot a usar search_memory/list_commits quando histórico vazio)
 
-### Bloqueios e decisões
-- **Drive sync:** política da organização `iam.disableServiceAccountKeyCreation` no Google Cloud barra criação de JSON keys. Alternativas: desligar policy (requer `roles/orgpolicy.policyAdmin`) ou Workload Identity Federation. Não atacado nesta sessão.
-- **Obsidian:** adiado por decisão do Gustavo (Windows, único usuário, mas sem tempo).
-- **Claude Chat Project:** criado, mas os 4 testes de validação falharam — provavelmente `gus-identity.md` não foi colado em Project Instructions. Precisa refazer.
+### Workflows GitHub Actions ativos
+- `export-mem0.yml` (3h BRT) — `.md` + `.json`
+- `auditoria-mem0.yml` (6h BRT) — `_indices/_auditoria-mem0.md`
+- `briefing-matinal.yml` (7h BRT dias úteis) — msg no Telegram
+- `retrospectiva-semanal.yml` (sexta 20h BRT) — `pessoal/diario/semana-*`
+- `reflexao-quinzenal.yml` (sábado 10h BRT semanas pares) — SELF-1
+- `sync-to-drive.yml` — bloqueado por policy Google Cloud
 
-### Sincronia
-`main` e `claude/initial-setup-iWTfL` alinhadas no commit `358cc5f`.
+### Futuros mapeados
+- `projetos/gus/futuro/` com 14 ideias (fut-01 a fut-14)
+- `fut-14-criar-demanda-automatica.md` registrou gap do protocolo (bot não commita demandas sozinho)
+
+### Plano consolidado até Alexa
+- **Novo MD criado:** `projetos/gus/gus-10-caminho-alexa.md` — plano atualizado, caminho crítico, esforços estimados, decisões em aberto
 
 ## Pendente pra próxima sessão
 
-### Combo 1 — local (recomendado começar aqui)
-Itens que **não dependem de ação externa**: atualizar doc (**G** — ✅ feito agora), rate limit (**A**), backup JSON Mem0 (**B**), guia de uso (**H**), esqueleto fila ações (**F**), comando `/custo` (**E**). Ver [[gus-08-plano-proximos-passos]].
+### Prioridade 1 — **Custom GPT no ChatGPT** (próximo passo do caminho Alexa)
+- Meu trabalho: 3-4h (FastAPI, endpoints, OpenAPI, auth, integração com main.py)
+- Tua ação: 20min (Railway secret, criação do GPT em ChatGPT Builder, teste em voz)
+- Ver detalhes em `gus-10-caminho-alexa.md` Passo 1
 
-### Combo 2 — automações proativas
-Briefing matinal (**C**) + retrospectiva semanal (**D**). Requer adicionar 3 secrets no GitHub: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `ANTHROPIC_API_KEY` (mesma key da Anthropic).
+### Prioridade 2 — Volume Railway (paralelo ou depois)
+- Meu trabalho: 30min código
+- Tua ação: 5min no Railway
 
-### Decisões pendentes de Gustavo
-1. **Drive sync:** desligar policy, usar WIF, ou ficar sem? Impacta Claude Chat Project vivo.
-2. **Claude Chat Project:** refazer validação com `gus-identity.md` colado corretamente.
-3. **Volume Railway pra `logs/`:** sem isso, `HARD_LIMIT_USD_MONTH` pode ser burlado em redeploy e tracking de custo fica resetado.
+### Pendências menores
+- Claude Chat Project — refazer validação com identity.md colado
+- Drive sync — aguardar decisão sobre Google Cloud policy OU ativar Drive nativo no ChatGPT depois de trocar assinatura Plus
+- `fut-06-voz-telegram.md` pode ser marcado como concluído (Whisper entregue)
+
+## Decisões tomadas hoje
+
+- **ChatGPT Plus atual (`gustavo.pratti84@`)** serve pro Custom GPT. Troca de assinatura pro email principal fica pra depois.
+- **Drive nativo no ChatGPT** é nice-to-have mas não bloqueia — ativar quando trocar Plus.
+- **Executor da fila:** ainda não decidido qual primeiro (Twilio vs Calendar vs Gmail).
+- **Protocolo `dialogos-tiogu-claude/`** tem gap conhecido (bot não registra sozinho) — fut-14 captura a solução, implementar quando o protocolo for usado ativamente.
 
 ## Bugs em aberto (não bloqueantes)
-- Gus ocasionalmente usa emojis apesar do tom do system prompt.
-- DDG pode falhar se Tavily estourar limite mensal (fallback reativo).
-- Mem0 falhas são silenciadas no bot (`bot.py` logger.warning) — sem alerta visível se chave fica inválida.
+- Mem0 tem latência de indexação (minutos) — memórias recém-salvas podem não aparecer em busca imediata
+- DDG pode falhar se Tavily estourar limite mensal
+- Tracking de custo reseta em redeploy (resolve com volume Railway)
 
 ## Como usar este arquivo
 
-1. Próxima sessão: ler este MD primeiro, depois [[gus-08-plano-proximos-passos]] se tiver intenção clara de avançar.
-2. Se precisar de contexto amplo, puxa [[gus-01-visao-geral]].
-3. Ao final da sessão: atualizar seção "Última sessão" com o que rolou.
-4. Commit + push antes de encerrar.
+1. Próxima sessão: ler PRIMEIRO, depois `gus-10-caminho-alexa.md` se for sessão de dev rumo à Alexa
+2. Ao fim da sessão: atualizar "Última sessão" + "Pendente"
+3. Commit + push antes de encerrar
 
-Relacionado: [[gus-01-visao-geral]], [[gus-02-implementado]], [[gus-03-configuracao-manual]], [[gus-08-plano-proximos-passos]]
+Relacionado: [[gus-01-visao-geral]], [[gus-10-caminho-alexa]], [[gus-02-implementado]], [[gus-08-plano-proximos-passos]]
