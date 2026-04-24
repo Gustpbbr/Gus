@@ -1,5 +1,172 @@
 [
   {
+    "id": "7cc4dd86-a886-442c-a64b-a818f757d649",
+    "memory": "Gustavo is still configuring the Gus system and considers the current state normal.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-24T02:20:33-07:00",
+    "updated_at": "2026-04-24T02:20:44.417336-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 24,
+      "hour": 9,
+      "year": 2026,
+      "month": 4,
+      "minute": 19,
+      "quarter": 2,
+      "is_weekend": false,
+      "day_of_week": "friday",
+      "day_of_year": 114,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "22e03eb5-577a-49d6-ae62-23545bf9931e",
+    "memory": "Gus's known limitations include a non-existent action executor (queues but not connected), lack of audio/voice processing, inability to see commit diffs, Mem0 latency, and cost reset on redeploy.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-24T02:20:33-07:00",
+    "updated_at": "2026-04-24T02:20:44.801739-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 24,
+      "hour": 9,
+      "year": 2026,
+      "month": 4,
+      "minute": 19,
+      "quarter": 2,
+      "is_weekend": false,
+      "day_of_week": "friday",
+      "day_of_year": 114,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "1b801b37-fa1f-4748-98a8-14322dd4744c",
+    "memory": "Gus is a personal agent with its own identity, persistent memory, and action capability, running on Telegram and designed to expand to Alexa, ChatGPT mobile, and other platforms.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-24T02:20:33-07:00",
+    "updated_at": "2026-04-24T02:20:43.503259-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 24,
+      "hour": 9,
+      "year": 2026,
+      "month": 4,
+      "minute": 19,
+      "quarter": 2,
+      "is_weekend": false,
+      "day_of_week": "friday",
+      "day_of_year": 114,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "d928c939-38d5-40eb-becf-84be11e74f6d",
+    "memory": "A system prompt rule was added: 'Verify before asserting absence', to correct Gus's hallucination about meta‑memory, and Gus learned that hidden folders exist, topic changes require a ritual, Mem0 is semantic not chronological, and searching by date does not work.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-24T02:20:32-07:00",
+    "updated_at": "2026-04-24T02:20:42.681779-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "c885c394-f9ce-451b-a51d-dbae58b031bf",
+    "memory": "User has integrated Mem0, which is in a skeleton state with approximately 30–40 raw memories, high overlap, a maximum of 10 results per search, and has critical gaps: one health memory, zero finance memories, zero work/Dimagem memories, and almost none personal relationship memories; the user is now using Telegram, and Mem0 contains detailed information on garden/plants but is shallow or lacking in health, family, clinical work, finances, personal projects, routine, and habits.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology",
+      "hobbies",
+      "health",
+      "family",
+      "professional_details",
+      "user_preferences",
+      "health",
+      "family"
+    ],
+    "created_at": "2026-04-24T02:20:32-07:00",
+    "updated_at": "2026-04-24T02:20:48.706227-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 12,
+      "hour": 2,
+      "year": 2026,
+      "month": 4,
+      "minute": 26,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 102,
+      "week_of_year": 15
+    }
+  },
+  {
+    "id": "bda1d0af-ea1c-4a0e-9bf8-abb7246bc1d0",
+    "memory": "Gustavo has six GitHub Actions workflows: briefing-matinal, export-mem0, meta-memoria, reflexao-quinzenal, retrospectiva-semanal, sync-to-drive. Sync-to-drive is blocked due to missing Google Drive Service Account. All cron schedules match the documentation in gus-02-implementado.md and run in BRT: export-mem0 3h, meta-memoria 6h, briefing-matinal 7h weekdays, retrospectiva-semanal Friday 20h, reflexao-quinzenal Saturday 10h. The GitHub PAT must have Actions: Read and write permissions for Gus to execute workflows such as export-mem0.yml.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology",
+      "professional_details"
+    ],
+    "created_at": "2026-04-24T02:20:32-07:00",
+    "updated_at": "2026-04-24T02:20:42.910210-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 24,
+      "hour": 4,
+      "year": 2026,
+      "month": 4,
+      "minute": 45,
+      "quarter": 2,
+      "is_weekend": false,
+      "day_of_week": "friday",
+      "day_of_year": 114,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "1910f629-a844-41bd-a3e6-c2fbf3f9bf05",
+    "memory": "The SELF‑1 MVP has been implemented, featuring a biweekly reflection system combining Nosis, Thymos, and Síntese, along with a daily meta‑memory, starting 2026-04-24.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology",
+      "milestones"
+    ],
+    "created_at": "2026-04-24T02:20:31-07:00",
+    "updated_at": "2026-04-24T02:20:45.060568-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 24,
+      "hour": 4,
+      "year": 2026,
+      "month": 4,
+      "minute": 45,
+      "quarter": 2,
+      "is_weekend": false,
+      "day_of_week": "friday",
+      "day_of_year": 114,
+      "week_of_year": 17
+    }
+  },
+  {
     "id": "b853ea04-fa9e-4a93-aac1-2116d1fb1614",
     "memory": "Gustavo did not know how the meta‑memory system works and asked for an explanation.",
     "user_id": "gustavo",
@@ -98,43 +265,6 @@
     }
   },
   {
-    "id": "d928c939-38d5-40eb-becf-84be11e74f6d",
-    "memory": "A system prompt rule was added: 'Verify before asserting absence', to correct Gus's hallucination about meta‑memory.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "technology"
-    ],
-    "created_at": "2026-04-23T21:55:18-07:00",
-    "updated_at": "2026-04-23T21:55:24.218788-07:00",
-    "expiration_date": null,
-    "structured_attributes": null
-  },
-  {
-    "id": "bda1d0af-ea1c-4a0e-9bf8-abb7246bc1d0",
-    "memory": "New features added to Gus include MVC continuity for topic change detection, an action queue, a morning briefing, a weekly retrospective, a `/custo` command, native Claude processing for PDF/Word/Excel, and a fix for short memories with extended history; the documentation was updated from 3 tools and PDF via pypdf to 9 tools, 6 workflows, and native Claude processing for PDF/Word/Excel.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "technology"
-    ],
-    "created_at": "2026-04-23T21:55:18-07:00",
-    "updated_at": "2026-04-23T21:55:23.839442-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 24,
-      "hour": 4,
-      "year": 2026,
-      "month": 4,
-      "minute": 45,
-      "quarter": 2,
-      "is_weekend": false,
-      "day_of_week": "friday",
-      "day_of_year": 114,
-      "week_of_year": 17
-    }
-  },
-  {
     "id": "2d18aa97-086e-4968-8c50-2d07477e6d42",
     "memory": "The recipe 'Romeu e Julieta Cremoso' has been saved, though the commit appears duplicated.",
     "user_id": "gustavo",
@@ -145,30 +275,6 @@
     ],
     "created_at": "2026-04-23T21:46:40-07:00",
     "updated_at": "2026-04-23T21:46:46.074349-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 24,
-      "hour": 4,
-      "year": 2026,
-      "month": 4,
-      "minute": 45,
-      "quarter": 2,
-      "is_weekend": false,
-      "day_of_week": "friday",
-      "day_of_year": 114,
-      "week_of_year": 17
-    }
-  },
-  {
-    "id": "1910f629-a844-41bd-a3e6-c2fbf3f9bf05",
-    "memory": "The SELF‑1 MVP has been implemented, featuring a biweekly reflection system combining Nosis, Thymos, and Síntese, along with a daily meta‑memory.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "technology"
-    ],
-    "created_at": "2026-04-23T21:46:40-07:00",
-    "updated_at": "2026-04-23T21:46:44.630672-07:00",
     "expiration_date": null,
     "structured_attributes": {
       "day": 24,
@@ -200,33 +306,6 @@
       "year": 2026,
       "month": 4,
       "minute": 44,
-      "quarter": 2,
-      "is_weekend": true,
-      "day_of_week": "sunday",
-      "day_of_year": 102,
-      "week_of_year": 15
-    }
-  },
-  {
-    "id": "c885c394-f9ce-451b-a51d-dbae58b031bf",
-    "memory": "User has integrated Mem0, which is in a skeleton state with approximately 30–40 raw memories, high overlap, a maximum of 10 results per search, and has critical gaps: one health memory, zero finance memories, zero work/Dimagem memories, and almost none personal relationship memories; the user is now using Telegram.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "technology",
-      "health",
-      "professional_details",
-      "misc"
-    ],
-    "created_at": "2026-04-23T21:46:39-07:00",
-    "updated_at": "2026-04-23T21:46:46.140191-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 12,
-      "hour": 2,
-      "year": 2026,
-      "month": 4,
-      "minute": 26,
       "quarter": 2,
       "is_weekend": true,
       "day_of_week": "sunday",
