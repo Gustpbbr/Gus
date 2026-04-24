@@ -1,12 +1,19 @@
 import os
+import asyncio
+import logging
 import functools
 import anthropic
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from gus.tools import TOOLS, executar_tool
 
+logger = logging.getLogger(__name__)
+
 BRT = timezone(timedelta(hours=-3))
 DIAS_SEMANA = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
+
+# Erros de servidor Anthropic que valem retry
+_STATUS_RETRY = {500, 502, 503, 504, 529}
 
 # Preços por família de modelo (USD por token) — atualizado abr/2026
 MODEL_PRICING = {
@@ -29,6 +36,56 @@ client = anthropic.AsyncAnthropic(
     api_key=os.getenv("ANTHROPIC_API_KEY"),
     timeout=120.0,  # 2 minutos — evita ficar pendurado se a API travar
 )
+
+
+async def _chamar_claude_com_retry(
+    model: str,
+    max_tokens: int,
+    system_prompt: str,
+    messages: list,
+    tools: list | None = None,
+    max_tentativas: int = 4,
+):
+    """Chama Claude com backoff exponencial (1s, 2s, 4s, 8s) e fallback de modelo.
+
+    Tenta o modelo primário até max_tentativas vezes em erros 5xx/529.
+    Se esgotar, tenta o MODEL_FALLBACK (default Haiku) com mesma política.
+    Re-lança a última APIStatusError se tudo falhar.
+    """
+    modelos = [model]
+    fallback = os.getenv("MODEL_FALLBACK", "claude-haiku-4-5-20251001")
+    if fallback and fallback != model:
+        modelos.append(fallback)
+
+    ultima_excecao: Exception | None = None
+    for modelo_atual in modelos:
+        for tentativa in range(max_tentativas):
+            try:
+                kwargs: dict = {
+                    "model": modelo_atual,
+                    "max_tokens": max_tokens,
+                    "system": system_prompt,
+                    "messages": messages,
+                }
+                if tools is not None:
+                    kwargs["tools"] = tools
+                return await client.messages.create(**kwargs)
+            except (anthropic.APIStatusError, anthropic.APIConnectionError, anthropic.APITimeoutError) as e:
+                ultima_excecao = e
+                status = getattr(e, "status_code", None)
+                # 4xx (exceto 429) — não adianta retry
+                if status and status < 500 and status != 429:
+                    raise
+                if tentativa < max_tentativas - 1:
+                    espera = 2 ** tentativa  # 1, 2, 4, 8
+                    logger.warning(
+                        f"Claude {modelo_atual} falhou (status={status}, "
+                        f"tentativa {tentativa+1}/{max_tentativas}), aguardando {espera}s"
+                    )
+                    await asyncio.sleep(espera)
+        logger.warning(f"Desistindo de {modelo_atual} após {max_tentativas} tentativas")
+
+    raise ultima_excecao if ultima_excecao else RuntimeError("Claude indisponível")
 
 RESUMO_SYSTEM_PROMPT = """Você analisa um trecho de conversa entre Gustavo e o Gus (seu agente pessoal) e extrai o que vale ser gravado no Mem0 como memória de longo prazo.
 
@@ -63,10 +120,10 @@ async def gerar_resumo_turnos(messages: list[dict]) -> str:
     conversa = "\n\n".join(linhas)
     model = os.getenv("MODEL_RESUMO", "claude-haiku-4-5-20251001")
 
-    response = await client.messages.create(
+    response = await _chamar_claude_com_retry(
         model=model,
         max_tokens=1024,
-        system=RESUMO_SYSTEM_PROMPT,
+        system_prompt=RESUMO_SYSTEM_PROMPT,
         messages=[{
             "role": "user",
             "content": f"Trecho de conversa pra analisar:\n\n{conversa}\n\nExtraia o que vale gravar como memória:"
@@ -103,13 +160,28 @@ async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tupl
 
     # Loop de tool calling — continua até Claude retornar texto final
     for _ in range(max_tool_rounds):
-        response = await client.messages.create(
-            model=model,
-            max_tokens=max_tokens,
-            system=system_prompt,
-            messages=current_messages,
-            tools=TOOLS
-        )
+        try:
+            response = await _chamar_claude_com_retry(
+                model=model,
+                max_tokens=max_tokens,
+                system_prompt=system_prompt,
+                messages=current_messages,
+                tools=TOOLS,
+            )
+        except anthropic.APIStatusError as e:
+            status = getattr(e, "status_code", None)
+            if status in _STATUS_RETRY:
+                pricing = _get_pricing(model)
+                cost_usd = round((total_in * pricing["input"]) + (total_out * pricing["output"]), 6)
+                return (
+                    "A API da IA tá sobrecarregada agora (status {}). Tentei várias vezes sem sucesso. "
+                    "Tenta de novo em 1-2 minutos.".format(status)
+                ), {
+                    "model": model, "tokens_in": total_in,
+                    "tokens_out": total_out, "cost_usd": cost_usd,
+                    "error": f"api_overload_{status}"
+                }
+            raise
 
         total_in += response.usage.input_tokens
         total_out += response.usage.output_tokens
