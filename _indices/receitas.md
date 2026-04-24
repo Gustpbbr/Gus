@@ -7,13 +7,13 @@ atualizado: 2026-04-24
 # Índice — Receitas
 
 ## Estado atual
-*(Seed inicial — atualizar quando primeira receita for capturada.)*
+1 receita salva. Área iniciada com doce — Romeu e Julieta Cremoso capturado do Instagram.
 
 ## Últimos editados (5 mais recentes)
-- *(sem registros ainda)*
+- `receitas/doces/romeu-e-julieta-cremoso.md` — 2026-04-24
 
 ## Todos os arquivos (ordem alfabética)
-- *(sem registros ainda)*
+- `receitas/doces/romeu-e-julieta-cremoso.md` — Romeu e Julieta Cremoso (sobremesa, @receitas_de_peso)
 
 ## Pastas relacionadas
 - `receitas/doces/` — com subpastas (tortas, bolos, sobremesas)
