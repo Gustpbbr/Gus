@@ -92,6 +92,58 @@ async def _chamar_claude_com_retry(
 
     raise ultima_excecao if ultima_excecao else RuntimeError("Claude indisponível")
 
+
+def _mensagem_erro_amigavel(e: Exception) -> str:
+    """Converte erro da API Anthropic em mensagem clara em português pro Gustavo."""
+    status = getattr(e, "status_code", None)
+    body = getattr(e, "body", None) or {}
+
+    api_msg = ""
+    error_type = ""
+    if isinstance(body, dict):
+        err = body.get("error", {})
+        if isinstance(err, dict):
+            api_msg = err.get("message", "") or ""
+            error_type = err.get("type", "") or ""
+    msg_lower = api_msg.lower()
+
+    # Sem créditos — caso mais comum quando para de funcionar do nada
+    if any(tok in msg_lower for tok in ["credit balance", "insufficient credit", "out of credit", "usage credits", "disabled because"]):
+        return (
+            "A conta Anthropic tá sem créditos. Pra voltar, o Gustavo precisa "
+            "adicionar saldo em console.anthropic.com/settings/billing (ativar auto-reload "
+            "evita interrupção futura)."
+        )
+
+    if status == 401 or "authentication" in error_type.lower():
+        return (
+            "Chave da Anthropic inválida ou expirada. Checa ANTHROPIC_API_KEY "
+            "no Railway (pode ter sido rotacionada sem atualizar aqui)."
+        )
+
+    if status == 403 or "permission" in error_type.lower():
+        return f"Sem permissão na API Anthropic. Detalhe: {api_msg[:200] or error_type}"
+
+    if status == 413 or "too_large" in error_type.lower():
+        return (
+            "A requisição ficou grande demais (histórico longo ou anexo pesado). "
+            "Manda /reset pra limpar o histórico e tenta de novo com conteúdo menor."
+        )
+
+    if status == 429:
+        return "Bati limite de rate na Anthropic. Aguenta ~30s e tenta de novo."
+
+    if status and status < 500:
+        return f"Erro da API Anthropic (status {status}): {api_msg[:200] or error_type}"
+
+    if isinstance(e, anthropic.APITimeoutError):
+        return "A API da Anthropic demorou demais pra responder. Tenta de novo em 1 min."
+
+    if isinstance(e, anthropic.APIConnectionError):
+        return "Não consegui conectar na API da Anthropic. Pode ser rede ou serviço fora. Tenta em 1 min."
+
+    return f"Problema inesperado com a API Anthropic: {str(e)[:200]}"
+
 RESUMO_SYSTEM_PROMPT = """Você analisa um trecho de conversa entre Gustavo e o Gus (seu agente pessoal) e extrai o que vale ser gravado no Mem0 como memória de longo prazo.
 
 Extraia APENAS:
@@ -173,20 +225,28 @@ async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tupl
                 messages=current_messages,
                 tools=TOOLS,
             )
-        except anthropic.APIStatusError as e:
+        except (anthropic.APIStatusError, anthropic.APIConnectionError, anthropic.APITimeoutError) as e:
             status = getattr(e, "status_code", None)
+            pricing = _get_pricing(model)
+            cost_usd = round((total_in * pricing["input"]) + (total_out * pricing["output"]), 6)
+
+            # 5xx/529 — sobrecarga, mensagem padrão
             if status in _STATUS_RETRY:
-                pricing = _get_pricing(model)
-                cost_usd = round((total_in * pricing["input"]) + (total_out * pricing["output"]), 6)
-                return (
-                    "A API da IA tá sobrecarregada agora (status {}). Tentei várias vezes sem sucesso. "
-                    "Tenta de novo em 1-2 minutos.".format(status)
-                ), {
-                    "model": model, "tokens_in": total_in,
-                    "tokens_out": total_out, "cost_usd": cost_usd,
-                    "error": f"api_overload_{status}"
-                }
-            raise
+                texto = (
+                    f"A API da IA tá sobrecarregada agora (status {status}). "
+                    "Tentei várias vezes sem sucesso. Tenta de novo em 1-2 minutos."
+                )
+                err_label = f"api_overload_{status}"
+            else:
+                # 4xx ou erro de conexão — usa classificador específico
+                texto = _mensagem_erro_amigavel(e)
+                err_label = f"api_error_{status or 'conn'}"
+
+            return texto, {
+                "model": model, "tokens_in": total_in,
+                "tokens_out": total_out, "cost_usd": cost_usd,
+                "error": err_label
+            }
 
         total_in += response.usage.input_tokens
         total_out += response.usage.output_tokens
