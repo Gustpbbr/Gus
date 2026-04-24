@@ -148,6 +148,13 @@ def sync_file(service, local_path, root_folder_id):
 
 
 def main():
+    # Skip silencioso se secrets ainda não configurados — evita email de falha
+    # a cada push em main. Quando Gustavo configurar GOOGLE_CREDENTIALS e
+    # DRIVE_ROOT_FOLDER_ID nos secrets do repo, volta a rodar automático.
+    if not os.environ.get("GOOGLE_CREDENTIALS") or not os.environ.get("DRIVE_ROOT_FOLDER_ID"):
+        print("GOOGLE_CREDENTIALS ou DRIVE_ROOT_FOLDER_ID não configurados. Sync pulado.")
+        sys.exit(0)
+
     root_folder_id = os.environ["DRIVE_ROOT_FOLDER_ID"]
     service = get_drive_service()
 

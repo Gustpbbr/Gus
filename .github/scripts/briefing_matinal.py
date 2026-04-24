@@ -145,6 +145,14 @@ def enviar_telegram(texto: str) -> bool:
 
 
 def main():
+    # Skip silencioso se secrets essenciais estão ausentes — evita email de falha
+    # no cron diário até o Gustavo configurar os 3 secrets no GitHub.
+    essenciais = ["ANTHROPIC_API_KEY", "MEM0_API_KEY", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"]
+    faltando = [k for k in essenciais if not os.environ.get(k)]
+    if faltando:
+        print(f"Secrets faltando: {', '.join(faltando)}. Briefing pulado.")
+        sys.exit(0)
+
     print("Coletando contexto...")
     memorias = buscar_memorias()
     commits = buscar_commits_24h()

@@ -200,6 +200,15 @@ def enviar_aviso_telegram(caminho: str) -> None:
 
 
 def main():
+    # Skip silencioso se secrets essenciais estão ausentes — evita falha no cron
+    # semanal até Gustavo configurar secrets. TELEGRAM_* é opcional (só pra aviso);
+    # ANTHROPIC_API_KEY e MEM0_API_KEY são obrigatórios pra gerar a retro.
+    essenciais = ["ANTHROPIC_API_KEY", "MEM0_API_KEY"]
+    faltando = [k for k in essenciais if not os.environ.get(k)]
+    if faltando:
+        print(f"Secrets faltando: {', '.join(faltando)}. Retrospectiva pulada.")
+        sys.exit(0)
+
     print("Coletando dados da semana...")
     memorias = buscar_memorias_recentes()
     commits = buscar_commits_semana()
