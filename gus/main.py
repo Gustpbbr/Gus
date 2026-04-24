@@ -2,7 +2,7 @@ import logging
 import os
 from dotenv import load_dotenv
 from telegram.ext import Application, MessageHandler, CommandHandler, filters
-from gus.bot import handle_message, handle_start, handle_reset, handle_photo, handle_document, handle_custo, handle_foco
+from gus.bot import handle_message, handle_start, handle_reset, handle_photo, handle_document, handle_custo, handle_foco, handle_voice
 
 load_dotenv()
 
@@ -26,7 +26,8 @@ def main():
     app.add_handler(CommandHandler("foco", handle_foco))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
-    app.add_handler(MessageHandler(filters.Document.PDF, handle_document))
+    app.add_handler(MessageHandler(filters.Document.ALL, handle_document))
+    app.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, handle_voice))
 
     logger.info("Gus iniciado. Aguardando mensagens...")
     app.run_polling(drop_pending_updates=True)

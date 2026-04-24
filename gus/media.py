@@ -2,6 +2,7 @@ import base64
 import asyncio
 import hashlib
 import logging
+import os
 from io import BytesIO
 
 import httpx
@@ -16,8 +17,12 @@ JPEG_QUALITY = 85
 # Claude native PDF: até 100 páginas, 32MB por arquivo
 PDF_MAX_SIZE_MB = 32
 
+# Whisper: até 25MB por arquivo
+AUDIO_MAX_SIZE_MB = 25
+
 # Cache por hash SHA-256 do arquivo — evita re-processar a mesma mídia
 _media_cache: dict[str, list[dict]] = {}
+_audio_cache: dict[str, str] = {}  # transcrições cacheadas separadamente
 _CACHE_MAX = 50  # limite de entradas; LRU simples por insertion order
 
 
@@ -160,6 +165,64 @@ async def processar_docx(file_url: str, caption: str = "") -> list[dict]:
     texto = "\n\n".join(linhas) if linhas else "(documento sem texto extraível)"
     prompt = caption or "Analise este documento Word."
     return [{"type": "text", "text": f"{prompt}\n\n---\n\n{texto}"}]
+
+
+async def transcrever_audio(file_url: str) -> str:
+    """Baixa áudio do Telegram e transcreve via Whisper API (pt-BR).
+    Retorna o texto transcrito ou mensagem de erro prefixada por '(erro...'"""
+    data = await _download(file_url)
+    tamanho_mb = len(data) / 1024 / 1024
+
+    if tamanho_mb > AUDIO_MAX_SIZE_MB:
+        return f"(áudio de {tamanho_mb:.1f}MB excede limite de {AUDIO_MAX_SIZE_MB}MB do Whisper)"
+
+    file_hash = _hash_bytes(data)
+    if file_hash in _audio_cache:
+        logger.info(f"Cache hit áudio {file_hash}")
+        return _audio_cache[file_hash]
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return "(OPENAI_API_KEY não configurada no Railway — Whisper indisponível)"
+
+    files = {
+        "file": ("audio.ogg", data, "audio/ogg"),
+        "model": (None, "whisper-1"),
+        "language": (None, "pt"),
+    }
+    headers = {"Authorization": f"Bearer {api_key}"}
+
+    try:
+        async with httpx.AsyncClient(timeout=120) as client:
+            response = await client.post(
+                "https://api.openai.com/v1/audio/transcriptions",
+                files=files,
+                headers=headers,
+            )
+    except Exception as e:
+        logger.error(f"Whisper request falhou: {e}")
+        return f"(erro de rede na transcrição: {e})"
+
+    if response.status_code == 401:
+        return "(Whisper rejeitou a chave — OPENAI_API_KEY inválida)"
+    if response.status_code == 429:
+        return "(Whisper rate limited — tenta de novo em 30s)"
+    if response.status_code != 200:
+        logger.error(f"Whisper {response.status_code}: {response.text[:200]}")
+        return f"(erro Whisper {response.status_code})"
+
+    try:
+        transcricao = (response.json().get("text") or "").strip()
+    except Exception as e:
+        return f"(resposta inválida do Whisper: {e})"
+
+    if not transcricao:
+        return "(áudio sem fala detectável)"
+
+    if len(_audio_cache) >= _CACHE_MAX:
+        _audio_cache.pop(next(iter(_audio_cache)))
+    _audio_cache[file_hash] = transcricao
+    return transcricao
 
 
 async def processar_xlsx(file_url: str, caption: str = "") -> list[dict]:
