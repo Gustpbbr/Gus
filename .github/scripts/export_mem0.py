@@ -15,6 +15,7 @@ from mem0 import MemoryClient
 USER_ID = "gustavo"
 BRT = timezone(timedelta(hours=-3))
 OUTPUT_PATH = "gus-memoria-export.md"
+OUTPUT_JSON = "gus-memoria-export.json"
 
 
 def main():
@@ -57,7 +58,11 @@ def main():
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write(content)
 
-    print(f"Exportado: {len(memories)} memórias → {OUTPUT_PATH}")
+    # Backup estruturado — preserva IDs, metadata e timestamps pra restore
+    with open(OUTPUT_JSON, "w", encoding="utf-8") as f:
+        json.dump(memories, f, ensure_ascii=False, indent=2, default=str)
+
+    print(f"Exportado: {len(memories)} memórias → {OUTPUT_PATH} + {OUTPUT_JSON}")
 
 
 if __name__ == "__main__":
