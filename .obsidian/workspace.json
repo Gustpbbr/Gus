@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "pessoal/financeiro/overview.md",
+                "file": "gus/gus-identity.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "overview"
+              "title": "gus-identity"
             }
           }
         ]
@@ -183,6 +183,15 @@
   },
   "active": "6b1af8df6d22ed63",
   "lastOpenFiles": [
+    "pessoal/financeiro/overview.md",
+    "dimagem/ordens-servico/ordens-servico-24-04-2026.md",
+    "dimagem/casos/os-24abr-2026.md",
+    "dimagem/casos/pacientes-24-04-2026.md",
+    "dimagem/fechamento/os-24-04-2026.md",
+    "dimagem/fechamento/os-24042026.md",
+    "receitas/doces/romeu-e-julieta-cremoso.md",
+    "receitas/salgadas/feijoada-cha-de-cravo.md",
+    "_indices/receitas.md",
     "docs/drive-sync-setup.md",
     "get_token.py",
     "get_token.py.txt",
@@ -190,15 +199,9 @@
     "capturado/misc/teste-drive-sync.md",
     "capturado/misc",
     "capturado",
-    "receitas/salgadas/feijoada-cha-de-cravo.md",
     "receitas/salgadas",
-    "dimagem/fechamento/os-24042026.md",
-    "dimagem/fechamento/os-24-04-2026.md",
     "dimagem/fechamento",
-    "dimagem/casos/pacientes-24-04-2026.md",
-    "dimagem/casos/os-24abr-2026.md",
     "dimagem/casos",
-    "dimagem/ordens-servico/ordens-servico-24-04-2026.md",
     "resumo-financeiro.md",
     "CLAUDE.md",
     "_indices/dimagem.md",
