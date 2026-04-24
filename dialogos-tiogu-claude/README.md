@@ -5,14 +5,14 @@ via: telegram
 
 # Diálogos TioGu ↔ Claude Code
 
-Canal de comunicação assíncrono entre o Gus (agente Telegram do Gustavo) e o Claude Code.
+Canal de comunicação assíncrono entre o Tiogubot (agente Telegram do Gustavo) e o Claude Code, além de outros canais e portas que o Gus pode acessar.
 
 ## Como funciona
 
-- **Gus escreve**: a demanda da semana — o que precisa ser feito, contexto, prioridade
+- **Tiogubot escreve**: a demanda da semana — o que precisa ser feito, contexto, prioridade
 - **Claude Code escreve**: o que foi feito, o que não foi feito e por quê
 - Um MD por semana, nomeado com a data da segunda-feira daquela semana
-- As mensagens são sequenciais dentro do MD — é um diálogo registrado
+- As mensagens são sequenciais dentro do MD — é um diálogo registrado, e cada entrada, de ambas as partes, deve conter data e horário.
 
 ## Nomenclatura dos arquivos
 
@@ -27,7 +27,7 @@ Exemplos:
 ## Estrutura de cada MD
 
 ```markdown
-## [DATA] — Gus
+## [DATA] — Agente (Tiogubot, Claude code...)
 **Demanda:**
 ...
 
@@ -53,7 +53,7 @@ Exemplos:
 
 ## Protocolo
 
-1. Gus abre o MD da semana na segunda-feira com as demandas
+1. Gus abre o MD da semana na segunda-feira com as demandas, ou assim que solicitado (via Gustavo ou hook), a qualquer momento.
 2. Claude Code lê, executa e registra sua resposta no mesmo MD
 3. Se houver iteração na semana, continua no mesmo arquivo (mensagens sequenciais)
 4. Na segunda seguinte, abre-se um MD novo — o anterior fica como histórico
