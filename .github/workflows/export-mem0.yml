@@ -5,6 +5,9 @@ on:
     - cron: '0 6 * * *'  # 3h de Brasília (6h UTC)
   workflow_dispatch:       # permite rodar manualmente
 
+permissions:
+  contents: write
+
 jobs:
   export:
     runs-on: ubuntu-latest
