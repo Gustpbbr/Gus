@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 AUTHORIZED_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 HARD_LIMIT = float(os.getenv("HARD_LIMIT_USD_MONTH", "30"))
 MAX_HISTORY = int(os.getenv("MAX_HISTORY_MESSAGES", "40"))  # 20 turnos
-TURNOS_PARA_RESUMO = int(os.getenv("TURNOS_PARA_RESUMO", "5"))
+TURNOS_PARA_RESUMO = int(os.getenv("TURNOS_PARA_RESUMO", "3"))
 RATE_LIMIT_MSG_PER_MINUTE = int(os.getenv("RATE_LIMIT_MSG_PER_MINUTE", "20"))
 
 # Estado em memória por chat_id (reseta no redeploy)
@@ -184,6 +184,34 @@ async def handle_custo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"Obs: tracking reseta em cada redeploy do Railway. "
         f"Pra histórico confiável precisa de volume persistente em /app/logs."
     )
+
+
+async def handle_foco(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Registra foco atual da sessão no Mem0. Uso: /foco <descrição livre>"""
+    chat_id = str(update.effective_chat.id)
+    if not _autorizado(chat_id):
+        return
+
+    texto = update.message.text.removeprefix("/foco").strip()
+    if not texto:
+        await update.message.reply_text(
+            "Pra definir o foco da sessão, usa: `/foco estou trabalhando em X`\n\n"
+            "Isso vira uma memória prioritária no Mem0 e serve de contexto nas próximas sessões.",
+            parse_mode="Markdown"
+        )
+        return
+
+    try:
+        await salvar_memorias([
+            {"role": "user", "content": f"[FOCO-ATUAL] {texto}"}
+        ])
+        await update.message.reply_text(
+            f"Foco registrado: _{texto}_\n\nVou priorizar esse contexto nas próximas interações.",
+            parse_mode="Markdown"
+        )
+    except Exception as e:
+        logger.warning(f"Falha ao salvar foco: {e}")
+        await update.message.reply_text("Não consegui registrar o foco agora. Tenta de novo em instantes.")
 
 
 async def handle_reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
