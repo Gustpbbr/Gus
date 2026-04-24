@@ -11,7 +11,8 @@ import os
 import subprocess
 import sys
 
-from google.auth import default
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
@@ -31,8 +32,16 @@ EXCLUDE_PREFIXES = (
 
 
 def get_drive_service():
-    credentials, _ = default(scopes=SCOPES)
-    return build("drive", "v3", credentials=credentials)
+    creds = Credentials(
+        token=None,
+        refresh_token=os.environ["GOOGLE_REFRESH_TOKEN"],
+        client_id=os.environ["GOOGLE_CLIENT_ID"],
+        client_secret=os.environ["GOOGLE_CLIENT_SECRET"],
+        token_uri="https://oauth2.googleapis.com/token",
+        scopes=SCOPES,
+    )
+    creds.refresh(Request())
+    return build("drive", "v3", credentials=creds)
 
 
 def get_changed_md_files():
@@ -144,8 +153,8 @@ def sync_file(service, local_path, root_folder_id):
 
 
 def main():
-    if not os.environ.get("DRIVE_ROOT_FOLDER_ID"):
-        print("DRIVE_ROOT_FOLDER_ID não configurado. Sync pulado.")
+    if not os.environ.get("GOOGLE_REFRESH_TOKEN") or not os.environ.get("DRIVE_ROOT_FOLDER_ID"):
+        print("Credenciais OAuth ou DRIVE_ROOT_FOLDER_ID não configurados. Sync pulado.")
         sys.exit(0)
 
     root_folder_id = os.environ["DRIVE_ROOT_FOLDER_ID"]
