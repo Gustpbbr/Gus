@@ -7,7 +7,31 @@ atualizado: 2026-04-24
 
 Documento vivo. Atualizar no final de cada sessão que deixa algo no meio.
 
-## Última sessão (2026-04-24 tarde) — Obsidian + Drive sync
+## Última sessão (2026-04-24 fim de tarde) — Drive Inbox + regras de save + agendas
+
+### Apps Script Drive Inbox → GitHub
+- Claude Projetos (e qualquer app com Drive) pode salvar `.md` em `Gus-Sync/Inbox/`
+- Apps Script varre a pasta a cada 5min, empurra pro GitHub via API, move pra `Inbox/Processado/`
+- Código: `.github/scripts/drive_inbox_to_github.gs`
+- Guia passo-a-passo: `docs/drive-inbox-setup.md`
+- Extrai path destino do frontmatter `github_path:`; fallback `capturado/misc/`
+- **Próximo passo externo do Gustavo:** configurar o trigger `processInbox` a cada 5min no script.google.com (em andamento nesta sessão)
+
+### Fix no sync de ida (GitHub → Drive)
+- Antes: `.md` virava Google Doc convertido (perdia formato puro)
+- Agora: salva como texto puro (`mimetype="text/plain"`), sem conversão
+- Adicionado workflow `sync-to-drive-full.yml` (dispatch manual) pra re-subir tudo quando precisar
+
+### 3 regras obrigatórias de comportamento ao salvar (system_prompt.md)
+- **Regra 1** — salvar direto, sem perguntar "posso salvar?"; exceção é scan de sensível
+- **Regra 2** — confirmar imediatamente após sucesso com path + 1 linha do conteúdo
+- **Regra 3** — antes de re-salvar, usar `list_commits(path=..., since_days=1)` pra ver se já tem commit recente
+
+### Agendas mensais capturadas (estrutura vazia)
+- `agenda/abril-2026.md`, `agenda/maio-2026.md`, `agenda/junho-2026.md`
+- Semanas e dias prontos, eventos a preencher via bot
+
+## Sessão 2026-04-24 tarde — Obsidian + Drive sync
 
 ### Obsidian configurado no PC
 - Vault aberto em `C:\Gus\Gus` apontando pro repo clonado via GitHub Desktop
@@ -40,8 +64,12 @@ Documento vivo. Atualizar no final de cada sessão que deixa algo no meio.
 - `retrospectiva-semanal.yml` (sexta 20h BRT)
 - `reflexao-quinzenal.yml` (sábado 10h BRT semanas pares)
 - `sync-to-drive.yml` — **funcionando via OAuth2** ✅
+- `sync-to-drive-full.yml` — dispatch manual, re-sincroniza todos os `.md`
 
 ## Pendente pra próxima sessão
+
+### Em andamento (ação Gustavo)
+- **Apps Script `processInbox`** — criar trigger time-based a cada 5min no script.google.com pra fechar o fluxo Drive Inbox → GitHub
 
 ### Prioridade 1 — **Custom GPT no ChatGPT** (próximo passo do caminho Alexa)
 - Meu trabalho: ~3-4h (FastAPI, endpoints, OpenAPI, auth, integração com main.py)

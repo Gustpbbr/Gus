@@ -16,7 +16,8 @@ Plano consolidado de onde estamos até o objetivo final: **skill da Alexa funcio
 **Infraestrutura:**
 - Bot Telegram rodando 24/7 no Railway
 - 13 tools ativas no bot (`read_from_github`, `list_github_directory`, `list_commits`, `search_memory`, `meta_memoria`, `auditoria_mem0`, `salvar_memoria_gus`, `buscar_memoria_gus`, `search_web`, `save_to_github`, `criar_acao`, `disparar_workflow`, + processamento multimídia)
-- 6 workflows GitHub Actions (export Mem0, auditoria Mem0, briefing matinal, retrospectiva semanal, reflexão quinzenal SELF-1, sync Drive bloqueado)
+- 7 workflows GitHub Actions (export Mem0, auditoria Mem0, briefing matinal, retrospectiva semanal, reflexão quinzenal SELF-1, sync Drive OAuth2 ✅, full sync manual)
+- Drive Inbox bidirecional: Apps Script `.gs` varrendo `Gus-Sync/Inbox/` a cada 5min → push GitHub → sync volta (Claude Projetos consegue salvar `.md` no repo sem interação direta)
 
 **Multimídia:**
 - Imagens (resize automático, formato detectado)
@@ -54,11 +55,11 @@ Plano consolidado de onde estamos até o objetivo final: **skill da Alexa funcio
 |------|---------|-------|
 | Volume Railway (`/app/data`) | 5min | Persiste logs + histórico de conversa |
 | Claude Chat Project (refazer com identity.md) | 10min | 4ª porta ativa |
-| Drive sync — resolver bloqueio Google Cloud | 20min+ | Fallback de leitura + integração GPT/Gemini |
+| Trigger Apps Script `processInbox` (5min) | 2min | Fecha fluxo Drive Inbox → GitHub |
 
 ### 🚧 Bloqueios conhecidos
 
-- **Google Cloud policy** bloqueia Service Account JSON keys → Drive sync e Calendar tool parados até desligar policy ou migrar pra Workload Identity Federation
+- **Google Cloud policy** bloqueia Service Account JSON keys — Drive sync **resolvido via OAuth2 com refresh token** ✅ (conta Gustavo, não SA). Calendar tool ainda bloqueado pela mesma policy se tentar SA; alternativa é mesmo padrão OAuth2.
 - **Twilio WhatsApp Business** tem prazo de aprovação de número (dias) — se escolhermos WhatsApp como primeiro executor
 
 ## Caminho crítico até Alexa
