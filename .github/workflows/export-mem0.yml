@@ -16,7 +16,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install mem0ai
+        run: pip install mem0ai==0.1.29
 
       - name: Export Mem0 memories
         env:
