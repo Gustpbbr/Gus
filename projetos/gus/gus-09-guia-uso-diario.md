@@ -35,10 +35,13 @@ Bot decide onde salvar. Se o tema já tem pasta, vai pra lá. Se for novo mas im
 ```
 Busca o conteúdo, gera resumo, salva em `capturado/links/<titulo>.md` com `fonte:` no frontmatter.
 
-### Transcrever PDF
-Manda o PDF direto no Telegram (arrastando). Bot processa:
-- Com texto: extrai e salva como MD
-- Escaneado/visual: renderiza como imagens e analisa com Vision
+### Transcrever documento
+Manda direto no Telegram (arrastando):
+- **PDF** — usa suporte nativo do Claude (texto + OCR em escaneados + layout preservado, até 100 páginas, 32MB)
+- **Word (.docx)** — texto + tabelas extraídos automaticamente
+- **Excel (.xlsx)** — dados tabulares por planilha
+- **Imagem** — otimizada (resize até 1568px + JPEG 85%), formato detectado automaticamente (JPG, PNG, WebP, HEIC, etc.)
+- Cache por hash: mandar o mesmo arquivo duas vezes não reprocessa.
 
 ## Consultas
 
@@ -175,7 +178,9 @@ Mandou mais de 20 msgs em 60s. Espera uns segundos. `RATE_LIMIT_MSG_PER_MINUTE` 
 
 - **Só branch main:** não lê/escreve em outras branches.
 - **Sem diff de commits:** vê o commit mas não o que mudou linha-a-linha. Se precisar, acessa GitHub web.
-- **Sem áudio** (ainda).
+- **PDF acima de 32MB ou 100 páginas:** recusado pelo Claude. Divida o arquivo.
+- **Sem áudio** (ainda — depende de chave OpenAI Whisper).
+- **Sem vídeo** (fase futura).
 - **Sem Drive** (ainda — bloqueado por política Google).
 - **Sem Calendar** (Fase 3).
 

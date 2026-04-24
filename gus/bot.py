@@ -8,7 +8,7 @@ from telegram.ext import ContextTypes
 from gus.llm import gerar_resposta, gerar_resumo_turnos
 from gus.logger import registrar, custo_mes_atual
 from gus.memory import buscar_memorias, salvar_memorias
-from gus.media import processar_imagem, processar_pdf
+from gus.media import processar_imagem, processar_pdf, processar_docx, processar_xlsx
 
 logger = logging.getLogger(__name__)
 
@@ -221,19 +221,43 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     doc = update.message.document
     mime = doc.mime_type or ""
+    nome = (doc.file_name or "arquivo").lower()
 
-    if mime != "application/pdf":
-        await update.message.reply_text("Por enquanto só processo PDFs. Áudio e outros formatos em breve.")
+    # Roteador por MIME + extensão (fallback)
+    if mime == "application/pdf" or nome.endswith(".pdf"):
+        processador = processar_pdf
+        label = "PDF"
+    elif (
+        "wordprocessingml" in mime
+        or mime == "application/msword"
+        or nome.endswith(".docx")
+        or nome.endswith(".doc")
+    ):
+        processador = processar_docx
+        label = "Word"
+    elif (
+        "spreadsheetml" in mime
+        or mime == "application/vnd.ms-excel"
+        or nome.endswith(".xlsx")
+        or nome.endswith(".xls")
+    ):
+        processador = processar_xlsx
+        label = "Excel"
+    else:
+        await update.message.reply_text(
+            f"Formato '{mime or nome}' ainda não suportado. Formatos ativos: PDF, Word (.docx), Excel (.xlsx). "
+            "Áudio e vídeo em breve."
+        )
         return
 
-    await update.message.reply_text("Processando PDF...")
+    await update.message.reply_text(f"Processando {label}...")
 
     file = await context.bot.get_file(doc.file_id)
     caption = update.message.caption or ""
 
     try:
-        content = await processar_pdf(file.file_path, caption)
-        await _responder(update, chat_id, content, caption or f"[PDF: {doc.file_name}]")
+        content = await processador(file.file_path, caption)
+        await _responder(update, chat_id, content, caption or f"[{label}: {doc.file_name}]")
     except Exception as e:
-        logger.error(f"Erro ao processar PDF: {e}")
-        await update.message.reply_text("Não consegui processar o PDF. Tenta de novo.")
+        logger.error(f"Erro ao processar {label}: {e}")
+        await update.message.reply_text(f"Não consegui processar o {label}. Tenta de novo ou envia em outro formato.")
