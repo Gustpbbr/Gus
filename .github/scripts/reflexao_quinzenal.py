@@ -36,7 +36,9 @@ DIAS_JANELA = 14
 
 NOSIS_PROMPT = """Você é Nosis — a camada cognitiva reflexiva do Gus (agente pessoal do Gustavo). Sua função é **observar** o pensamento recente do Gustavo e apontar padrões.
 
-Analise os dados abaixo (memórias recentes + commits + arquivos novos dos últimos 14 dias) e produza observações em 4 categorias:
+Analise os dados abaixo (memórias recentes + commits + arquivos novos + meta-memória dos últimos 14 dias) e produza observações em 4 categorias:
+
+**Importante — uso da meta-memória:** a seção "Meta-memória" descreve o estado estrutural do Mem0 (duplicatas suspeitas, gaps, densidade por área). Use essa informação pra filtrar: padrões que aparecem apenas em memórias flagadas como duplicatas não são "recorrências reais". Lacunas listadas em "Gaps" devem ser citadas quando fizerem sentido.
 
 **Padrões recorrentes:** temas, decisões ou perguntas que voltam
 **Contradições:** coisas ditas/decididas em pontos diferentes que não se sustentam juntas
@@ -55,7 +57,9 @@ Se não houver material suficiente pra observação (dados escassos), responda a
 
 THYMOS_PROMPT = """Você é Thymos — a camada volitiva (vontade/intenção) reflexiva do Gus. Sua função é **observar** o que o Gustavo disse que ia fazer e comparar com o que foi feito.
 
-Analise os dados abaixo (memórias + commits + arquivos dos últimos 14 dias) e produza observações em 4 categorias:
+Analise os dados abaixo (memórias + commits + arquivos + meta-memória dos últimos 14 dias) e produza observações em 4 categorias:
+
+**Importante — uso da meta-memória:** a seção "Meta-memória" mostra quais áreas têm volume de memória e quais estão em gap estrutural. Projetos declarados sem memórias associadas são sinal forte de "declarado vs realizado" em desequilíbrio. Áreas com densidade alta indicam onde a energia real foi.
 
 **Declarado vs realizado:** metas ou intenções expressas que avançaram, emperraram ou foram abandonadas
 **Drift de foco:** projetos declarados como prioridade vs tempo/energia real investidos
@@ -190,6 +194,19 @@ def buscar_arquivos_novos() -> str:
         return f"(erro git: {e})"
 
 
+def carregar_meta_memoria() -> str:
+    """Lê _indices/_meta-memoria.md se existir. Contexto pra Nosis/Thymos
+    distinguir padrões reais de duplicatas e gaps reais de lacunas de classificação."""
+    caminho = "_indices/_meta-memoria.md"
+    try:
+        with open(caminho, "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return "(meta-memória ainda não gerada — SELF-1 rodando sem contexto estrutural)"
+    except Exception as e:
+        return f"(erro ao ler meta-memória: {e})"
+
+
 def chamar_claude(client: Anthropic, model: str, system: str, user_content: str, max_tokens: int = 2048) -> str:
     try:
         r = client.messages.create(
@@ -235,11 +252,13 @@ def main():
     memorias = buscar_memorias_janela()
     commits = buscar_commits_janela()
     arquivos_novos = buscar_arquivos_novos()
+    meta_mem = carregar_meta_memoria()
 
     dados_base = (
         f"## Memórias (Mem0)\n{memorias}\n\n"
         f"## Commits\n{commits}\n\n"
-        f"## Arquivos novos\n{arquivos_novos}"
+        f"## Arquivos novos\n{arquivos_novos}\n\n"
+        f"## Meta-memória (estado estrutural do Mem0)\n{meta_mem}"
     )
 
     client = Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])

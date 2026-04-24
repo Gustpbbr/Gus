@@ -157,6 +157,21 @@ TOOLS = [
         }
     },
     {
+        "name": "meta_memoria",
+        "description": (
+            "Retorna a meta-análise atualizada do Mem0 do Gustavo — estatísticas, "
+            "densidade por área, frescor, duplicatas suspeitas e gaps. Use quando o "
+            "usuário perguntar sobre o estado das memórias, quantas tem, o que está "
+            "faltando, se há duplicatas, etc. Dados vêm de "
+            "`_indices/_meta-memoria.md` atualizado diariamente por auditoria automática."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
+        }
+    },
+    {
         "name": "criar_acao",
         "description": (
             "Enfileira uma ação pra ser executada no mundo real (mandar WhatsApp, email, "
@@ -574,4 +589,6 @@ async def executar_tool(name: str, inputs: dict) -> str:
             inputs["conteudo"],
             bool(inputs.get("alto_risco", False))
         )
+    elif name == "meta_memoria":
+        return await _read_from_github("_indices/_meta-memoria.md")
     return f"Tool desconhecida: {name}"

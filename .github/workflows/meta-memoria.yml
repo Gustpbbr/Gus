@@ -1,0 +1,35 @@
+name: Meta-memória diária
+
+on:
+  schedule:
+    - cron: '0 9 * * *'   # 6h BRT, depois do export Mem0 das 3h
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  auditoria:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install mem0ai==0.1.29
+
+      - name: Rodar auditoria Mem0
+        env:
+          MEM0_API_KEY: ${{ secrets.MEM0_API_KEY }}
+        run: python .github/scripts/auditoria_mem0.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "gus-bot"
+          git config user.email "gus-bot@users.noreply.github.com"
+          git add _indices/_meta-memoria.md
+          git diff --staged --quiet || git commit -m "auto: meta-memória ($(date +%Y-%m-%d))"
+          git push
