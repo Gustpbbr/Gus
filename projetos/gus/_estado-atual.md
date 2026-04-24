@@ -70,16 +70,41 @@ Documento vivo. Atualizar no final de cada sessão que deixa algo no meio.
 ### Plano consolidado até Alexa
 - **Novo MD criado:** `projetos/gus/gus-10-caminho-alexa.md` — plano atualizado, caminho crítico, esforços estimados, decisões em aberto
 
+### Extras que entraram depois (ainda 2026-04-24, turno final da manhã)
+
+**Ontologia "Gus = entidade, bot = porta" (commit `eb85526`):**
+- Antes, `system_prompt.md` e `.claude/hooks/session-start.sh` tinham linguagem ambígua ("Gus rodando como bot no Telegram", "Gus desenvolvedor") que tratava o bot como sinônimo de Gus.
+- Agora explicitamente: Gus é a entidade única; Telegram, Claude Code, Claude Chat, Custom GPT, Alexa são **portas**. Todas compartilham identidade/memória/princípios/arquivos.
+- Refletido em 3 arquivos: `system_prompt.md`, `meta-memoria.md`, `.claude/hooks/session-start.sh`.
+
+**SessionStart hook (commit `0b25ab0`):**
+- `.claude/hooks/session-start.sh` + `.claude/settings.json` criados.
+- Injeta contexto dinâmico (~2000 chars) a cada nova sessão Claude Code: data/hora BRT, identidade do Gus nesta porta, princípios, ponteiros pros MDs-chave, info MCP Mem0.
+- Também instala `mem0ai==0.1.29` + `mcp` no boot — MCP server sobe sem erro de versão.
+- Rodada só em ambiente remoto (`CLAUDE_CODE_REMOTE=true`).
+
+**Volume Railway persistente (commit `c573cae`):**
+- Gustavo criou volume 5GB em `/app/data` (região US East, mesma do serviço).
+- `logger.py` auto-detect: se `/app/data` existe, usa `/app/data/logs/`; senão fallback pra `logs/` local.
+- `bot.py` auto-detect: se `/app/data` existe, persiste `conversation_histories`, `turn_counters`, `last_saved_turn`, `message_timestamps` em `/app/data/bot_state.json`.
+- Write atômico (`tmp + os.replace`). Salva após cada `_responder()` e em `/reset`.
+- Resolve: custo mensal real (HARD_LIMIT confiável), sem "Sim solto" em redeploy, contador de turnos preservado.
+
 ## Pendente pra próxima sessão
 
-### Prioridade 1 — **Custom GPT no ChatGPT** (próximo passo do caminho Alexa)
+### Prioridade 1 — **Obsidian no PC** (próximo passo declarado pelo Gustavo)
+- Tua ação: instalar Obsidian no Windows, clonar repo via GitHub Desktop em `C:\Users\Gustavo\Documents\Gus`, abrir como vault, instalar plugins Obsidian Git + Dataview
+- Eu acompanho: orientação passo-a-passo se travar em algum ponto
+- Ver detalhes em `gus-03-configuracao-manual.md` seção 5
+
+### Prioridade 2 — **Custom GPT no ChatGPT** (próximo passo do caminho Alexa, depois do Obsidian)
 - Meu trabalho: 3-4h (FastAPI, endpoints, OpenAPI, auth, integração com main.py)
 - Tua ação: 20min (Railway secret, criação do GPT em ChatGPT Builder, teste em voz)
 - Ver detalhes em `gus-10-caminho-alexa.md` Passo 1
 
-### Prioridade 2 — Volume Railway (paralelo ou depois)
-- Meu trabalho: 30min código
-- Tua ação: 5min no Railway
+### ✅ Já resolvido — Volume Railway
+- Volume `gus-volume` criado com 5GB em `/app/data`.
+- Código auto-detect implementado (commit `c573cae`). Sem ação adicional necessária.
 
 ### Pendências menores
 - Claude Chat Project — refazer validação com identity.md colado
