@@ -5,3 +5,5 @@ builder = "DOCKERFILE"
 startCommand = "python -m gus.main"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 5
+healthcheckPath = "/health"
+healthcheckTimeout = 30

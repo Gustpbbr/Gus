@@ -840,7 +840,7 @@ async def _search_web(query: str) -> str:
     return await _search_ddg(query)
 
 
-async def _save_to_github(filename: str, content: str, folder: str) -> str:
+async def _save_to_github(filename: str, content: str, folder: str, via: str = "telegram") -> str:
     if "/" in filename or ".." in filename:
         return f"Nome de arquivo inválido: {filename}"
 
@@ -875,7 +875,7 @@ async def _save_to_github(filename: str, content: str, folder: str) -> str:
     frontmatter = (
         f"---\n"
         f"capturado_em: {now.strftime('%Y-%m-%dT%H:%M:%S')}\n"
-        f"via: telegram\n"
+        f"via: {via}\n"
         f"---\n\n"
     )
     if not content.startswith("---\n"):
