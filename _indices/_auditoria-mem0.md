@@ -1,7 +1,7 @@
 ---
 tipo: meta-memoria
-atualizado: 2026-04-24T06:45:49.649170-03:00
-mem0_total: 42
+atualizado: 2026-04-25T06:40:10.918805-03:00
+mem0_total: 128
 ---
 
 # Auditoria do Mem0 (memórias sobre o Gustavo)
@@ -11,31 +11,33 @@ Análise automática e determinística do estado do armazém de memórias SOBRE 
 **Não confundir com meta-memória do Gus** (`gus/meta-memoria.md`), que é o auto-conhecimento do próprio Gus.
 
 ## Estatísticas gerais
-- **Total:** 42 memórias
+- **Total:** 128 memórias
 - **Mais antiga:** 2026-04-11 — *"User wants to edit, sign, and share PDF files from any location and is directed ..."*
-- **Mais recente:** 2026-04-24 — *"Gustavo is still configuring the Gus system and considers the current state norm..."*
+- **Mais recente:** 2026-04-24 — *"Gustavo prefers structured dialogues, approving content before deciding where to..."*
 
 ## Frescor
-- **Últimas 24h:** 34 (81.0%)
-- **Últimos 7 dias:** 0 (0.0%)
-- **Últimos 30 dias:** 8 (19.0%)
+- **Últimas 24h:** 93 (72.7%)
+- **Últimos 7 dias:** 27 (21.1%)
+- **Últimos 30 dias:** 8 (6.2%)
 - **Mais de 30 dias:** 0 (0.0%)
 
 ## Densidade por área
 Estimativa via keywords (uma memória pode contar em múltiplas áreas):
 
-- **capturado:** 25 (59.5%)
-- **projetos:** 12 (28.6%)
-- **construcao:** 3 (7.1%)
-- **dimagem:** 2 (4.8%)
-- **saude:** 2 (4.8%)
-- **financeiro:** 1 (2.4%)
-- **receitas:** 1 (2.4%)
+- **capturado:** 69 (53.9%)
+- **projetos:** 38 (29.7%)
+- **dimagem:** 21 (16.4%)
+- **saude:** 6 (4.7%)
+- **construcao:** 3 (2.3%)
+- **receitas:** 2 (1.6%)
+- **financeiro:** 2 (1.6%)
 
 ## Duplicatas suspeitas
 Pares com similaridade Jaccard ≥ 0.5. Revisar manualmente — não são duplicatas garantidas, são candidatas.
 
-- Nenhuma duplicata suspeita identificada.
+### Similaridade 0.53
+- **A** (2026-04-24): *"Isabela Barros de Souza has a cranial MRI at Assim São Gonçalo with fasting confirmed +8h...."*
+- **B** (2026-04-24): *"Theo Silva Alvarenga has a cranial MRI at Assim São Gonçalo with fasting confirmed at 8am...."*
 
 ## Gaps (áreas com índice mas sem memória)
 
