@@ -8,6 +8,7 @@ import httpx
 from duckduckgo_search import DDGS
 from gus.memory import buscar_memorias_detalhada, salvar_observacao_gus, buscar_memorias_gus
 from gus.integrations.railway import logs_railway as _logs_railway
+from gus.integrations.diagnostico import auto_diagnostico as _auto_diagnostico
 
 logger = logging.getLogger(__name__)
 
@@ -183,6 +184,22 @@ TOOLS = [
                 }
             },
             "required": ["workflow_name"]
+        }
+    },
+    {
+        "name": "auto_diagnostico",
+        "description": (
+            "Roda health check paralelo em todos os componentes externos do Gus: "
+            "GitHub PAT, Mem0 (com frescor da última memória), Anthropic API, Tavily, "
+            "volume Railway (/app/data writable), workflows GH (últimos 5 runs). "
+            "Retorna tabela markdown com ✅/⚠️/❌. Use quando o Gustavo perguntar "
+            "'tá tudo funcionando?', 'que está quebrado?', 'roda o /check', ou quando "
+            "você suspeitar que algo travou silenciosamente. Sem inputs."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
         }
     },
     {
@@ -779,4 +796,6 @@ async def executar_tool(name: str, inputs: dict) -> str:
             inputs.get("filtro"),
             inputs.get("since_min"),
         )
+    elif name == "auto_diagnostico":
+        return await _auto_diagnostico()
     return f"Tool desconhecida: {name}"
