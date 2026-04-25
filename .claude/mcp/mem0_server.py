@@ -40,6 +40,12 @@ from mcp.types import Tool, TextContent
 USER_GUSTAVO = "gustavo"
 USER_GUS = "gus"
 
+# Tag de origem — identifica que esta porta gerou a memória.
+# Default 'claude-code' porque este MCP roda dentro do Claude Code.
+# Pode ser sobrescrito via MEM0_VIA_TAG no env (ex: 'claude-code-web' vs
+# 'claude-code-local' se quiser distinguir). Veja gus-12-portas-futuras.md.
+VIA_TAG = os.environ.get("MEM0_VIA_TAG", "claude-code")
+
 server = Server("mem0-gus")
 _client = None
 
@@ -254,8 +260,9 @@ async def call_tool(name: str, arguments: dict):
             client.add,
             [{"role": "user", "content": conteudo}],
             user_id=USER_GUSTAVO,
+            metadata={"via": VIA_TAG},
         )
-        return [TextContent(type="text", text=f"Salvo no brain `gustavo`: {conteudo[:120]}")]
+        return [TextContent(type="text", text=f"Salvo no brain `gustavo` (via={VIA_TAG}): {conteudo[:120]}")]
 
     if name == "listar_memorias":
         limit = max(1, min(int(arguments.get("limit", 50)), 100))
@@ -281,8 +288,9 @@ async def call_tool(name: str, arguments: dict):
             client.add,
             [{"role": "user", "content": observacao}],
             user_id=USER_GUS,
+            metadata={"via": VIA_TAG},
         )
-        return [TextContent(type="text", text=f"Salvo no brain `gus`: {observacao[:120]}")]
+        return [TextContent(type="text", text=f"Salvo no brain `gus` (via={VIA_TAG}): {observacao[:120]}")]
 
     if name == "listar_memorias_gus":
         limit = max(1, min(int(arguments.get("limit", 50)), 100))

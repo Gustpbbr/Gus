@@ -1,7 +1,7 @@
 ---
 tipo: roadmap
 area: gus
-atualizado: 2026-04-25T15:15-03:00
+atualizado: 2026-04-25T16:05-03:00
 ---
 
 # Roadmap de Tools — Tiogubot
@@ -168,6 +168,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | Data | Mudança |
 |---|---|
+| 2026-04-25 16:05 | **Tagueamento canônico fechado** + **MCP local também tagueia**. `.claude/mcp/mem0_server.py:VIA_TAG` lê `MEM0_VIA_TAG` (default `claude-code`); `client.add` em ambos os brains agora carrega `metadata={"via": VIA_TAG}`. Doc canônico criado: `projetos/gus/gus-13-tags-canonicas.md` — contrato dos 2 brains (gustavo/gus) + 7 tags ativas/reservadas pra portas + 4 pra automações. Lista também o que NÃO é memória (meta-memoria.md, system_prompt.md, exports, índices). Workflows GH continuam sem salvar — quando começarem, usar `workflow-<nome>` conforme tabela. |
 | 2026-04-25 15:20 | **Metadata `via` no Mem0 + diretriz de portas futuras**. `gus/memory.py:salvar_memorias` aceita `via` opcional (default `MEM0_VIA_TAG=telegram-claude`). Cada nova porta seta sua tag (telegram-gpt, alexa, custom-gpt, etc.) e fica auto-tagueada. Search default ignora filtro — visibilidade cruzada total entre portas. Doc de diretriz arquitetural criado em `projetos/gus/gus-12-portas-futuras.md` (não é roadmap de execução, é contrato pra quando crescer). |
 | 2026-04-25 15:15 | **`gus/dimagem.py` ATIVADO com salvaguarda A+B** (decisão Gustavo). (B) Haiku recebe MD do dia como contexto pra manter convênios consistentes e detectar duplicata. (A) Bot mostra preview com lista atual + nova linha e aguarda confirmação 'sim'/'ok' antes de salvar. State `dimagem_pending` persistido em bot_state.json. Mensagem fora do padrão expira pending pra Sonnet pegar. Após 1-2 semanas estável, considerar tirar A. |
 | 2026-04-25 15:05 | **Sprint 2 parcial — `pesquisar_pubmed` + `pesquisar_arxiv` implementados** (`gus/integrations/pesquisa.py`, 220 linhas). Custo zero (APIs públicas), sem auth, retornam markdown formatado com título/autores/ano/link. Bot agora em 20 tools. system_prompt orienta routing: clínica→PubMed, IA→arXiv, factual atual→search_web. |
