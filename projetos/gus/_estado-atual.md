@@ -1,67 +1,77 @@
 ---
 tipo: estado-atual-sessao
-atualizado: 2026-04-24
+atualizado: 2026-04-25T17:15-03:00
 ---
 
 # Estado atual — handoff entre sessões
 
 Documento vivo. Atualizar no final de cada sessão que deixa algo no meio.
 
-## Última sessão (2026-04-24 tarde) — Obsidian + Drive sync
+## Última sessão (2026-04-25 — dia inteiro, várias rodadas)
 
-### Obsidian configurado no PC
-- Vault aberto em `C:\Gus\Gus` apontando pro repo clonado via GitHub Desktop
-- Plugins ativos: **Obsidian Git** (auto commit-and-sync 10min, pull on startup, signs visuais) e **Dataview**
-- Grafo de conexões visível — wikilinks entre MDs funcionando
-- Author configurado: Gustavo + email GitHub
-- `.gitignore` atualizado com `get_token.py`
+Maratona de implementações. Detalhes completos em `dialogos-tiogu-claude/semana-2026-04-21.md`.
 
-### Drive sync funcionando ✅
-- **3 tentativas até dar certo** — documentado em `docs/drive-sync-setup.md`
-- Tentativa 1: service account key JSON — bloqueada por `iam.disableServiceAccountKeyCreation`
-- Tentativa 2: Workload Identity Federation — autenticação ok, mas service account não tem Drive storage quota
-- Tentativa 3: OAuth2 com refresh token — **funcionou** ✅
-- Arquivos `.md` de conteúdo no main → aparecem em `Gus-Sync/` no Drive como Google Docs
-- Secrets configurados: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, `DRIVE_ROOT_FOLDER_ID`
-- `get_token.py` salvo localmente em `C:\Gus\Gus` (não commitado — têm credenciais)
+### Hoje (resumo)
+- **Sprint 1 fechado**: `auto_diagnostico` ✅ produção, `logs_railway` 🚧 (aguarda PC)
+- **Sprint 2 parcial**: `pesquisar_pubmed` + `pesquisar_arxiv` ✅, `perguntar_gpt` ✅
+- **Wikilinks** `sugerir_wikilinks` ✅ produção
+- **Dimagem A+B ativado** com confirmação prévia + contexto Haiku (state em bot_state.json)
+- **Tagueamento `via` no Mem0** fechado — bot Telegram (`telegram-claude`) e MCP local (`claude-code`) ambos taggam `metadata.via`
+- **MCP server local** (`.claude/mcp/mem0_server.py` + `.claude/mcp/gus_server.py`) com 9 tools nas duas pontas
+- **Hook `scan_sensivel.py`** PreToolUse no Claude Code (espelha defesa do bot)
+- **Cron `check-saude.yml`** novo (07:30 BRT, alerta Telegram só se autodiagnóstico falhar)
+- **Documentação arquitetural**:
+  - `gus-11-tools-roadmap.md` — inventário oficial vivo (~40 tools, status, histórico)
+  - `gus-12-portas-futuras.md` — diretriz de portas futuras (Telegram-GPT, Custom GPT, Alexa, carro)
+  - `gus-13-tags-canonicas.md` — contrato canônico dos brains/tags
+- **Análise dashboard Mem0**: brain `gustavo` real é 164 (não 128); brain `gus` ~4; quota 37%; 3 entities; 4+ memórias poluídas identificadas
+- **Decisão Alexa = porta complementar, não destino final**. Conversa fluida real é Custom GPT mobile + eventualmente Claude voice. Alexa V1 sem câmera, sem ações (Sprint 3 pulado).
 
-### Infraestrutura base (sessão 23/abr → madrugada 24)
-- Deploy Railway com todas variáveis. `TELEGRAM_CHAT_ID=495256549`. Bot responde, usa Mem0, salva/lê GitHub.
-- 12 testes funcionais validados em produção via Telegram.
+### Bot agora em 21 tools
 
-### Features ativas — 13 tools totais no bot
-- `read_from_github`, `list_github_directory`, `list_commits`, `search_memory`, `meta_memoria`, `auditoria_mem0`, `salvar_memoria_gus`, `buscar_memoria_gus`, `search_web`, `save_to_github`, `criar_acao`, `disparar_workflow`
-- Multimídia: imagens, PDFs, Word, Excel, **áudio/voz via Whisper**
-
-### Workflows GitHub Actions ativos
-- `export-mem0.yml` (3h BRT)
-- `auditoria-mem0.yml` (6h BRT)
-- `briefing-matinal.yml` (7h BRT dias úteis)
-- `retrospectiva-semanal.yml` (sexta 20h BRT)
-- `reflexao-quinzenal.yml` (sábado 10h BRT semanas pares)
-- `sync-to-drive.yml` — **funcionando via OAuth2** ✅
+`read_from_github`, `list_github_directory`, `list_branches`, `list_commits`, `search_memory`, `meta_memoria`, `auditoria_mem0`, `salvar_memoria_gus`, `buscar_memoria_gus`, `deletar_memoria`, `search_web`, `pesquisar_pubmed`, `pesquisar_arxiv`, `save_to_github`, `criar_acao`, `disparar_workflow`, `logs_railway` (🚧), `auto_diagnostico`, `sugerir_wikilinks`, **`perguntar_gpt` (NOVO)**, + processamento implícito (imagens, PDFs, Word, Excel, áudio Whisper).
 
 ## Pendente pra próxima sessão
 
 ### Prioridade 1 — **Custom GPT no ChatGPT** (próximo passo do caminho Alexa)
-- Meu trabalho: ~3-4h (FastAPI, endpoints, OpenAPI, auth, integração com main.py)
-- Ação do Gustavo: ~20min (Railway secret, criação do GPT no ChatGPT Builder, teste em voz)
-- Conta a usar: `gustavo.pratti84@gmail.com` (já tem ChatGPT Plus)
-- Ver detalhes em `gus-10-caminho-alexa.md` Passo 1
+- **Validado como objetivo em si** (não só ensaio pra Alexa) — é a porta de "conversa fluida em voz" via app ChatGPT mobile.
+- Meu trabalho: ~3-4h (FastAPI em pasta `api/`, endpoints REST espelhando subset de tools, OpenAPI 3.0 schema, Bearer token auth, integração com `main.py` rodando bot + FastAPI em paralelo via asyncio, ajustes Dockerfile/railway.toml pra expor `$PORT`)
+- Ação do Gustavo: ~20min (gerar `CUSTOM_GPT_TOKEN`, criar GPT no chatgpt.com/gpts/editor, importar OpenAPI, testar voz)
+- Conta: `gustavo.pratti84@gmail.com` (já tem ChatGPT Plus)
+- Doc detalhada em `gus-10-caminho-alexa.md` Passo 1
+
+### Prioridade 2 — Quando Gustavo voltar pro PC
+- Criar `~/.claude/gus.env` (4 keys: MEM0, ANTHROPIC, GITHUB, TAVILY) — destrava MCP daqui
+- Limpar 4+ memórias poluídas via MCP (depende de gus.env)
+- Token novo Railway + `scripts/test_railway_logs.py` cascata diagnóstica → valida `logs_railway`
+- Investigar 3ª entity no Mem0
+
+### Prioridade 3 — Em sequência
+- Volume Railway (`/app/data` 1GB, ~30min meu + 5min Gustavo) — persiste logs/históricos
+- Decidir se Sprint 3 volta (email/calendar/TTS) ou pula direto pra Alexa V1
+- Alexa Skill V1 (Dot 3, Polly, voz pura) — depois do Custom GPT
+- Termux + wake word "Gus" no S8 (pós-Alexa) — Opção B aprovada
 
 ### Pendentes menores
 - Claude Chat Project — refazer validação com identity.md colado
 - `fut-06-voz-telegram.md` pode ser marcado como concluído (Whisper entregue)
 - Apagar arquivo de teste `capturado/misc/teste-drive-sync.md` quando quiser
+- Workflow YAML do `enrich_mem0_export.py` — script existe, sem cron
+- Observar dimagem A+B em produção 1-2 semanas, depois decidir tirar A
 
-## Decisões tomadas
-- Drive sync via OAuth2 (não service account) — única opção viável com Gmail pessoal sem Workspace
-- Refresh token não expira enquanto app não for desautorizado — manutenção baixa
-- WIF configurado no Google Cloud mas não usado (não atrapalha)
+## Decisões importantes tomadas hoje
+
+- **Alexa não é o destino final** — é porta complementar pra comandos curtos em casa. Conversa fluida = mobile (Custom GPT primeiro, Claude voice depois)
+- **Câmera no Echo Show é inviável via Skill** — Skills custom não acessam câmera. Caminho real é câmera IP separada (S8 velho com IP Webcam = R$ 0)
+- **Wake word "Gus" no S8** = Termux + openWakeWord (Opção B), futuro pós-Alexa
+- **Sprint 2 = só GPT-5 mini** (Perplexity adiado, Gemini não priorizado)
+- **Sprint 3 pulado nesta rodada** — Alexa V1 será leitura/captura/pergunta apenas
 
 ## Bugs em aberto (não bloqueantes)
-- Mem0 tem latência de indexação (minutos)
-- DDG pode falhar se Tavily esgotar limite mensal
+- Mem0 latência de indexação (minutos)
+- DDG fallback se Tavily esgotar
+- Quota Retrieval API Mem0 em 37% no dia 25 — monitorar
+- 4+ memórias poluídas no brain `gustavo` aguardando MCP local pra deletar
 
 ## Como usar este arquivo
 
@@ -69,4 +79,4 @@ Documento vivo. Atualizar no final de cada sessão que deixa algo no meio.
 2. Ao fim da sessão: atualizar "Última sessão" + "Pendente"
 3. Commit + push antes de encerrar
 
-Relacionado: [[gus-01-visao-geral]], [[gus-10-caminho-alexa]], [[gus-02-implementado]], [[gus-08-plano-proximos-passos]]
+Relacionado: [[gus-01-visao-geral]], [[gus-10-caminho-alexa]], [[gus-11-tools-roadmap]], [[gus-12-portas-futuras]], [[gus-13-tags-canonicas]]
