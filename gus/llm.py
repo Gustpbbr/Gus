@@ -70,8 +70,15 @@ async def _chamar_claude_com_retry(
                     "system": system_prompt,
                     "messages": messages,
                 }
+                # Beta header token-efficient-tools: comprime os schemas das tools
+                # no contexto enviado ao modelo. Reduz ~30-40% dos tokens dos tools.
+                # Só faz sentido quando há tools — em chamadas sem tools (resumo de
+                # turnos via Haiku), o header é dispensável.
                 if tools is not None:
                     kwargs["tools"] = tools
+                    kwargs["extra_headers"] = {
+                        "anthropic-beta": "token-efficient-tools-2025-02-19"
+                    }
                 return await client.messages.create(**kwargs)
             except (anthropic.APIStatusError, anthropic.APIConnectionError, anthropic.APITimeoutError) as e:
                 ultima_excecao = e
