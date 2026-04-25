@@ -8,7 +8,7 @@ from pathlib import Path
 from telegram import Update
 from telegram.ext import ContextTypes
 from gus.llm import gerar_resposta, gerar_resumo_turnos
-from gus.logger import registrar, custo_mes_atual
+from gus.logger import registrar, custo_mes_atual, stats_mes_atual
 from gus.memory import buscar_memorias, salvar_memorias
 from gus.media import processar_imagem, processar_pdf, processar_docx, processar_xlsx, transcrever_audio
 from gus.resumo_log import append_resumo_async
@@ -199,13 +199,25 @@ async def _responder(update: Update, chat_id: str, content: list[dict], texto_pr
         for i in range(0, len(resposta), 4096):
             await update.message.reply_text(resposta[i:i + 4096])
 
+        # Tokens de cache: se cache_read > 0, prompt caching pegou e a economia
+        # real foi maior que o cost_usd sugere (cost já reflete desconto).
+        # cache_hit_ratio = leitura cache / (leitura cache + criação cache + input fresh)
+        cache_read = metadata.get("cache_read", 0) or 0
+        cache_creation = metadata.get("cache_creation", 0) or 0
+        tokens_in = metadata.get("tokens_in", 0) or 0
+        denom = cache_read + cache_creation + tokens_in
+        cache_hit_ratio = round(cache_read / denom, 3) if denom > 0 else 0.0
+
         registrar(
             direction="out",
             text_preview=texto_preview[:80],
             latency_seconds=latency,
             model=metadata.get("model"),
-            tokens_in=metadata.get("tokens_in"),
+            tokens_in=tokens_in,
             tokens_out=metadata.get("tokens_out"),
+            cache_creation=cache_creation,
+            cache_read=cache_read,
+            cache_hit_ratio=cache_hit_ratio,
             cost_usd=metadata.get("cost_usd"),
             status="ok"
         )
@@ -241,13 +253,23 @@ async def handle_custo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = str(update.effective_chat.id)
     if not _autorizado(chat_id):
         return
-    total = custo_mes_atual()
+    s = stats_mes_atual()
+    total = s["cost_usd"]
     pct = 100 * total / HARD_LIMIT if HARD_LIMIT > 0 else 0
-    await update.message.reply_text(
-        f"Custo do mês atual: US${total:.4f} de US${HARD_LIMIT:.2f} ({pct:.1f}%).\n\n"
-        f"Obs: tracking reseta em cada redeploy do Railway. "
-        f"Pra histórico confiável precisa de volume persistente em /app/logs."
+
+    # Cache hit ratio agregado do mês
+    cache_total = s["cache_creation"] + s["cache_read"] + s["tokens_in"]
+    hit_ratio = (s["cache_read"] / cache_total * 100) if cache_total > 0 else 0
+
+    msg = (
+        f"*Custo do mês:* US${total:.4f} de US${HARD_LIMIT:.2f} ({pct:.1f}%)\n"
+        f"*Calls:* {s['calls']}\n"
+        f"*Tokens:* {s['tokens_in']:,} in / {s['tokens_out']:,} out\n"
+        f"*Cache:* {s['cache_read']:,} read + {s['cache_creation']:,} created "
+        f"(hit ratio {hit_ratio:.1f}%)\n\n"
+        f"_Obs: tracking reseta em redeploy se /app/data não tiver volume persistente._"
     )
+    await update.message.reply_text(msg, parse_mode="Markdown")
 
 
 async def handle_foco(update: Update, context: ContextTypes.DEFAULT_TYPE):

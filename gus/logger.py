@@ -19,17 +19,47 @@ def registrar(**kwargs):
 
 
 def custo_mes_atual() -> float:
+    """Retrocompat: só o total. Pra detalhes (cache, tokens), use stats_mes_atual()."""
+    return stats_mes_atual()["cost_usd"]
+
+
+def stats_mes_atual() -> dict:
+    """Retorna agregado do mês: custo, tokens, cache hits.
+
+    Útil pra /custo (interativo) e pra dashboards futuros. Lê o jsonl,
+    agrega por mês corrente.
+    """
+    base = {
+        "cost_usd": 0.0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "cache_creation": 0,
+        "cache_read": 0,
+        "calls": 0,
+    }
     if not LOG_FILE.exists():
-        return 0.0
+        return base
+
     now = datetime.now()
-    total = 0.0
+    for k in ("tokens_in", "tokens_out", "cache_creation", "cache_read", "calls"):
+        base[k] = 0
+    base["cost_usd"] = 0.0
+
     with open(LOG_FILE, "r", encoding="utf-8") as f:
         for line in f:
             try:
                 entry = json.loads(line)
                 ts = datetime.fromisoformat(entry["timestamp"])
-                if ts.year == now.year and ts.month == now.month:
-                    total += entry.get("cost_usd", 0.0)
+                if ts.year != now.year or ts.month != now.month:
+                    continue
+                base["cost_usd"] += entry.get("cost_usd", 0.0) or 0.0
+                base["tokens_in"] += entry.get("tokens_in", 0) or 0
+                base["tokens_out"] += entry.get("tokens_out", 0) or 0
+                base["cache_creation"] += entry.get("cache_creation", 0) or 0
+                base["cache_read"] += entry.get("cache_read", 0) or 0
+                base["calls"] += 1
             except Exception:
                 continue
-    return round(total, 4)
+
+    base["cost_usd"] = round(base["cost_usd"], 4)
+    return base

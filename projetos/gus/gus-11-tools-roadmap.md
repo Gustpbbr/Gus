@@ -1,7 +1,7 @@
 ---
 tipo: roadmap
 area: gus
-atualizado: 2026-04-25T14:10-03:00
+atualizado: 2026-04-25T14:20-03:00
 ---
 
 # Roadmap de Tools — Tiogubot
@@ -168,6 +168,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | Data | Mudança |
 |---|---|
+| 2026-04-25 14:20 | **B1 — Cache logging implementado**. `gus/logger.py:stats_mes_atual()` agrega `cache_creation`, `cache_read`, `cache_hit_ratio` do JSONL. `bot.py:_responder` registra os campos novos por turno. `/custo` reformulado pra mostrar tokens + cache hit ratio % além do custo. Não dependia de A2 — Gustavo agora vê economia direto pelo Telegram sem precisar Anthropic Console. |
 | 2026-04-25 14:10 | **MCP `mem0-gus` atualizado pra paridade com TioGu** (`.claude/mcp/mem0_server.py`): de 3 tools simples (só brain `gustavo`, sem IDs, sem delete) pra 7 tools — 3 brain `gustavo` + 3 brain `gus` + `deletar_memoria` universal. Todas retornam IDs no formato `[uuid] texto`. Próximo: Gustavo configura `~/.claude/mem0.key` pra ativar daqui. |
 | 2026-04-25 13:55 | **Tool `deletar_memoria` criada** (18ª tool). Aceita `memory_id` (UUID) e `user_id` opcional (default 'gustavo'). Search_memory atualizado pra retornar IDs no formato `[uuid] texto`. Regra de confirmação obrigatória no system_prompt antes de chamar. Motivado por memória poluída do bug `meta-memoria.yml` detectada nos logs. |
 | 2026-04-25 13:42 | **Bug fix**: lista de workflows na tool `disparar_workflow` estava com 6 entradas desatualizadas (incluindo `meta-memoria.yml` inexistente, sem `check-saude.yml`). Corrigido pra 8 reais. Bug introduzido quando criei `check-saude.yml` sem atualizar a lista — o TioGu memorizou a info errada e gerou primeiro 'check-saude.yml não existe'. |
