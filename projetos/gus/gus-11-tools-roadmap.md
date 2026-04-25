@@ -1,7 +1,7 @@
 ---
 tipo: roadmap
 area: gus
-atualizado: 2026-04-25T11:40-03:00
+atualizado: 2026-04-25T12:34-03:00
 ---
 
 # Roadmap de Tools — Tiogubot
@@ -34,7 +34,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 | 4b | `criar_evento_calendario` | ⚪ | Sprint 3. Mesmo OAuth do email |
 | 5 | `perguntar_gemini` | ⚪ | Sprint 2. Requer `GEMINI_API_KEY` (Gustavo cria em aistudio.google.com) |
 | 6 | `texto_para_voz` (ElevenLabs) | ⚪ | Sprint 3. Requer conta ElevenLabs + voice clone opcional |
-| 7 | `sugerir_wikilinks(arquivo, branch?)` | 🚧 | Tool generalizada criada em `gus/integrations/wikilinks.py`. Aguarda merge pro main + teste em produção. Não escreve no arquivo — só retorna sugestões. |
+| 7 | `sugerir_wikilinks(arquivo, branch?)` | ✅ | Mergeado em main `988a222`, testado em produção 25/04 12:30 BRT. Funcional. Nuance: Haiku eventualmente sugere conexão temporal (mesma data) em vez de temática. Se aparecer muito, apertar prompt em `wikilinks.py`. |
 
 ## Tools extras concluídas fora das 7 originais
 
@@ -116,7 +116,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 | `deletar_memoria(id)` | ⭐⭐ | ⚪ |
 | `fundir_memorias(id_a, id_b)` | ⭐⭐ | ⚪ |
 | `criar_wikilink(arquivo_a, arquivo_b)` | ⭐⭐⭐ | ⚪ |
-| `sugerir_wikilinks(arquivo, branch?)` | ⭐⭐⭐ | 🚧 — generalizada, aguarda merge + teste |
+| `sugerir_wikilinks(arquivo, branch?)` | ⭐⭐⭐ | ✅ |
 | `commitar_resumo_dia(formato='briefing')` | ⭐⭐ | ⚪ |
 
 ### G. Domínio Dimagem
@@ -165,6 +165,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | Data | Mudança |
 |---|---|
+| 2026-04-25 12:34 | `sugerir_wikilinks`: 🚧 → ✅ (testada em produção, retorna sugestões substantivas; nuance: TioGu pode sugerir conexão temporal, prompt pode ser apertado se virar problema). Sprint 1 fechado (exceto `logs_railway` que aguarda config). |
 | 2026-04-25 11:40 | `sugerir_wikilinks(arquivo, branch?)`: ⚪ → 🚧 (criada `gus/integrations/wikilinks.py`, plugada em `tools.py` como 17ª tool, aguarda merge) |
 | 2026-04-25 11:13 | `auto_diagnostico` + `list_branches` + branch param: ⚪ → ✅ (mergeados em main `741380e`, testados em produção) |
 | 2026-04-25 11:00 | `logs_railway`: ⚪ → 🚧 (mergeado em main `7266a65`, mas sem token válido — Gustavo expôs token de teste no chat) |
