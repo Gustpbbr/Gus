@@ -12,6 +12,13 @@ USER_ID_GUSTAVO = "gustavo"
 USER_ID_GUS = "gus"
 USER_ID = USER_ID_GUSTAVO  # default retrocompatível
 
+# Tag de origem default — identifica que porta gerou essa memória.
+# Outras portas usam: 'telegram-gpt', 'claude-code', 'alexa', 'custom-gpt',
+# 'carro-audio'. Permite filtrar por origem em search se quiser comparar
+# perspectivas, mas search default vê TUDO (visibilidade cruzada).
+# Veja projetos/gus/gus-12-portas-futuras.md.
+VIA_DEFAULT = os.getenv("MEM0_VIA_TAG", "telegram-claude")
+
 _client = None
 
 
@@ -37,11 +44,21 @@ async def buscar_memorias(query: str, user_id: str = USER_ID_GUSTAVO) -> str:
     return "\n".join(lines)
 
 
-async def salvar_memorias(messages: list[dict], user_id: str = USER_ID_GUSTAVO) -> None:
-    """Salva o par user/assistant no Mem0 para memória futura."""
+async def salvar_memorias(
+    messages: list[dict],
+    user_id: str = USER_ID_GUSTAVO,
+    via: str | None = None,
+) -> None:
+    """Salva o par user/assistant no Mem0 para memória futura.
+
+    Adiciona metadata `via` em cada memória pra rastrear qual porta gerou
+    (telegram-claude, telegram-gpt, claude-code, alexa, etc.). Search
+    default ignora o filtro — todas as portas veem todas as memórias.
+    """
     client = _get_client()
+    metadata = {"via": via or VIA_DEFAULT}
     await asyncio.to_thread(
-        client.add, messages, user_id=user_id
+        client.add, messages, user_id=user_id, metadata=metadata
     )
 
 
@@ -88,7 +105,7 @@ async def deletar_memoria(memory_id: str, user_id: str = USER_ID_GUSTAVO) -> str
         return f"Erro ao deletar memória `{memory_id}`: {e}"
 
 
-async def salvar_observacao_gus(observacao: str) -> str:
+async def salvar_observacao_gus(observacao: str, via: str | None = None) -> str:
     """Salva uma observação do próprio Gus sobre si ou padrões operacionais."""
     if not observacao or not observacao.strip():
         return "Observação vazia, não salvei."
@@ -96,6 +113,7 @@ async def salvar_observacao_gus(observacao: str) -> str:
         await salvar_memorias(
             [{"role": "user", "content": observacao.strip()}],
             user_id=USER_ID_GUS,
+            via=via,
         )
         return f"Observação salva no brain `gus` do Mem0: \"{observacao[:80]}\""
     except Exception as e:
