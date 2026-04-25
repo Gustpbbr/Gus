@@ -46,7 +46,11 @@ async def salvar_memorias(messages: list[dict], user_id: str = USER_ID_GUSTAVO) 
 
 
 async def buscar_memorias_detalhada(query: str, limit: int = 10, user_id: str = USER_ID_GUSTAVO) -> str:
-    """Busca memórias no Mem0 com limite configurável, formatada pra retorno como tool."""
+    """Busca memórias no Mem0 com limite configurável, formatada pra retorno como tool.
+
+    Inclui o `id` de cada memória pra facilitar uso de `deletar_memoria` em
+    seguida (Gustavo escolhe qual ID confirmar).
+    """
     try:
         client = _get_client()
         results = await asyncio.to_thread(
@@ -61,9 +65,27 @@ async def buscar_memorias_detalhada(query: str, limit: int = 10, user_id: str = 
     linhas = [f"Encontradas {len(results)} memória(s) em `{user_id}` pra `{query}`:"]
     for i, r in enumerate(results, 1):
         mem = (r.get("memory") or "").strip()
+        mem_id = r.get("id") or "?"
         if mem:
-            linhas.append(f"{i}. {mem}")
+            linhas.append(f"{i}. [{mem_id}] {mem}")
     return "\n".join(linhas)
+
+
+async def deletar_memoria(memory_id: str, user_id: str = USER_ID_GUSTAVO) -> str:
+    """Deleta uma memória do Mem0 pelo ID. IRREVERSÍVEL.
+
+    Use só após confirmação explícita do Gustavo. O ID vem do
+    `buscar_memorias_detalhada` (formatado como `[id] texto`).
+    """
+    if not memory_id or not memory_id.strip():
+        return "memory_id vazio, não dá pra deletar."
+
+    try:
+        client = _get_client()
+        await asyncio.to_thread(client.delete, memory_id=memory_id.strip())
+        return f"Memória `{memory_id}` deletada do brain `{user_id}`."
+    except Exception as e:
+        return f"Erro ao deletar memória `{memory_id}`: {e}"
 
 
 async def salvar_observacao_gus(observacao: str) -> str:

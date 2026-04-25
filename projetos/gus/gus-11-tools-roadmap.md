@@ -1,7 +1,7 @@
 ---
 tipo: roadmap
 area: gus
-atualizado: 2026-04-25T13:35-03:00
+atualizado: 2026-04-25T13:55-03:00
 ---
 
 # Roadmap de Tools — Tiogubot
@@ -113,7 +113,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 | Tool | Prioridade | Status |
 |---|---|---|
 | `editar_memoria(id, novo_texto)` | ⭐⭐ | ⚪ |
-| `deletar_memoria(id)` | ⭐⭐ | ⚪ |
+| `deletar_memoria(memory_id, user_id?)` | ⭐⭐ | ✅ |
 | `fundir_memorias(id_a, id_b)` | ⭐⭐ | ⚪ |
 | `criar_wikilink(arquivo_a, arquivo_b)` | ⭐⭐⭐ | ⚪ |
 | `sugerir_wikilinks(arquivo, branch?)` | ⭐⭐⭐ | ✅ |
@@ -168,6 +168,8 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | Data | Mudança |
 |---|---|
+| 2026-04-25 13:55 | **Tool `deletar_memoria` criada** (18ª tool). Aceita `memory_id` (UUID) e `user_id` opcional (default 'gustavo'). Search_memory atualizado pra retornar IDs no formato `[uuid] texto`. Regra de confirmação obrigatória no system_prompt antes de chamar. Motivado por memória poluída do bug `meta-memoria.yml` detectada nos logs. |
+| 2026-04-25 13:42 | **Bug fix**: lista de workflows na tool `disparar_workflow` estava com 6 entradas desatualizadas (incluindo `meta-memoria.yml` inexistente, sem `check-saude.yml`). Corrigido pra 8 reais. Bug introduzido quando criei `check-saude.yml` sem atualizar a lista — o TioGu memorizou a info errada e gerou primeiro 'check-saude.yml não existe'. |
 | 2026-04-25 13:35 | **Token-Efficient Tool Use ativado** (`anthropic-beta: token-efficient-tools-2025-02-19`) em `gus/llm.py:_chamar_claude_com_retry`. Beta header só passado quando tools presentes. Soma ao prompt caching: schemas de tool comprimidos pelo backend Anthropic antes de cachear. |
 | 2026-04-25 13:25 | **Prompt caching ativado em `gus/llm.py`**: system prompt + 17 tools com `cache_control: ephemeral`. Economia projetada ~70% no custo de input após primeira call de uma janela de 5min. Metadata agora inclui `cache_creation` e `cache_read`. Prompt do `wikilinks.py` apertado (proíbe explicitamente conexão temporal). Regra de format literal no system_prompt reforçada (não condensar mesmo com 1 sugestão, não substituir tabela por prosa). |
 | 2026-04-25 12:50 | `sugerir_wikilinks`: trocado Haiku → Sonnet 4.6 (custo de errar > economia, decisão Gustavo). Token Railway de teste revogado. Cron diário `auto_diagnostico` implementado (`.github/workflows/check-saude.yml`, 7h30 BRT, alerta Telegram só se ⚠️/❌). Log auditável de resumos pro Mem0 implementado (`gus/resumo_log.py` → `_log/resumos-mem0/AAAA-MM-DD.md`). |

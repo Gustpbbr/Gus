@@ -6,7 +6,12 @@ import base64
 from datetime import datetime, timezone, timedelta
 import httpx
 from duckduckgo_search import DDGS
-from gus.memory import buscar_memorias_detalhada, salvar_observacao_gus, buscar_memorias_gus
+from gus.memory import (
+    buscar_memorias_detalhada,
+    salvar_observacao_gus,
+    buscar_memorias_gus,
+    deletar_memoria as _deletar_memoria,
+)
 from gus.integrations.railway import logs_railway as _logs_railway
 from gus.integrations.diagnostico import auto_diagnostico as _auto_diagnostico
 from gus.integrations.wikilinks import sugerir_wikilinks as _sugerir_wikilinks
@@ -341,6 +346,33 @@ TOOLS = [
                 }
             },
             "required": ["query"]
+        }
+    },
+    {
+        "name": "deletar_memoria",
+        "description": (
+            "DELETA uma memória do Mem0 pelo ID. AÇÃO IRREVERSÍVEL — não dá pra desfazer. "
+            "Use SOMENTE após o Gustavo confirmar explicitamente qual memória deletar. "
+            "Fluxo obrigatório: (1) `search_memory(query)` retorna memórias com IDs no "
+            "formato `[id] texto`; (2) você mostra ao Gustavo e PERGUNTA qual deletar; "
+            "(3) só após resposta clara dele (ex: 'deleta a 2', 'pode apagar a do "
+            "workflow'), você chama `deletar_memoria(memory_id=...)` com o ID exato. "
+            "NUNCA chame essa tool sem confirmação explícita. NUNCA chame em loop sem "
+            "perguntar entre cada uma. Se houver dúvida sobre qual ID, pergunte."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "memory_id": {
+                    "type": "string",
+                    "description": "ID exato da memória (UUID retornado por search_memory entre colchetes)."
+                },
+                "user_id": {
+                    "type": "string",
+                    "description": "Brain alvo: 'gustavo' (default) ou 'gus' (auto-observações). Use 'gustavo' a menos que o Gustavo peça especificamente pra apagar do brain do Gus."
+                }
+            },
+            "required": ["memory_id"]
         }
     },
     {
@@ -911,6 +943,11 @@ async def executar_tool(name: str, inputs: dict) -> str:
         except (TypeError, ValueError):
             limit = 10
         return await buscar_memorias_gus(inputs["query"], limit)
+    elif name == "deletar_memoria":
+        return await _deletar_memoria(
+            inputs["memory_id"],
+            inputs.get("user_id", "gustavo"),
+        )
     elif name == "disparar_workflow":
         return await _disparar_workflow(
             inputs["workflow_name"],
