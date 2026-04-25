@@ -191,11 +191,11 @@ TOOLS = [
         "description": (
             "Dispara manualmente um GitHub Action via workflow_dispatch. Use quando o "
             "Gustavo pedir pra rodar algo agora sem esperar o cron. Só funciona pra "
-            "workflows que têm `workflow_dispatch:` no trigger (todos os 6 workflows "
+            "workflows que têm `workflow_dispatch:` no trigger (todos os 8 workflows "
             "atuais têm). Requer GITHUB_TOKEN com escopo 'Actions: Write'. "
-            "Workflows disponíveis: `meta-memoria.yml`, `briefing-matinal.yml`, "
-            "`retrospectiva-semanal.yml`, `reflexao-quinzenal.yml`, `export-mem0.yml`, "
-            "`sync-to-drive.yml`."
+            "Workflows disponíveis: `auditoria-mem0.yml`, `briefing-matinal.yml`, "
+            "`check-saude.yml`, `export-mem0.yml`, `reflexao-quinzenal.yml`, "
+            "`retrospectiva-semanal.yml`, `sync-to-drive.yml`, `sync-to-drive-full.yml`."
         ),
         "input_schema": {
             "type": "object",

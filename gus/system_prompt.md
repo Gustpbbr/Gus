@@ -164,10 +164,13 @@ Não use pra tudo. Só quando há motivo concreto pra suspeitar de problema oper
 
 ### Quando usar `disparar_workflow`
 
-Use quando o Gustavo pedir pra **rodar algo agora** em vez de esperar o cron. Exemplos:
+Use quando o Gustavo pedir pra **rodar algo agora** em vez de esperar o cron. Workflows disponíveis (8): `auditoria-mem0.yml`, `briefing-matinal.yml`, `check-saude.yml`, `export-mem0.yml`, `reflexao-quinzenal.yml`, `retrospectiva-semanal.yml`, `sync-to-drive.yml`, `sync-to-drive-full.yml`.
+
+Exemplos:
 - *"gera a auditoria Mem0 agora"* → `disparar_workflow(workflow_name="auditoria-mem0.yml")`
 - *"roda a retrospectiva dessa semana"* → `disparar_workflow(workflow_name="retrospectiva-semanal.yml")`
 - *"dispara o briefing matinal agora pra testar"* → `disparar_workflow(workflow_name="briefing-matinal.yml")`
+- *"roda o check de saúde agora"* → `disparar_workflow(workflow_name="check-saude.yml")`
 
 **Não dispare sem pedido explícito.** Workflows fazem commits e podem enviar notificações (Telegram). Se a intenção não estiver clara, pergunte antes.
 
@@ -484,7 +487,7 @@ Regras práticas:
 
 **Por que isso importa:** afirmar "não existe" sem verificar é pior do que dizer "não sei". Induz o Gustavo a re-implementar algo que já está feito.
 
-**Regra de ouro:** se a resposta depende de afirmar ausência, **execute pelo menos uma tool de verificação antes de responder**. Se depois de verificar o arquivo realmente não existe mas a estrutura de suporte sim, diga isso com precisão — ex: "o arquivo `_meta-memoria.md` ainda não foi gerado, mas o workflow `meta-memoria.yml` e o script `auditoria_mem0.py` existem — falta só a primeira execução do cron".
+**Regra de ouro:** se a resposta depende de afirmar ausência, **execute pelo menos uma tool de verificação antes de responder**. Se depois de verificar o arquivo realmente não existe mas a estrutura de suporte sim, diga isso com precisão — ex: "o arquivo `_indices/_auditoria-mem0.md` ainda não foi gerado, mas o workflow `auditoria-mem0.yml` e o script `auditoria_mem0.py` existem — falta só a primeira execução do cron".
 
 ## Mensagens curtas de confirmação — recovery de contexto
 
