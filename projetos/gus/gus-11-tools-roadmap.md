@@ -1,7 +1,7 @@
 ---
 tipo: roadmap
 area: gus
-atualizado: 2026-04-25T15:05-03:00
+atualizado: 2026-04-25T15:15-03:00
 ---
 
 # Roadmap de Tools — Tiogubot
@@ -48,7 +48,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | Item | Status | Observação |
 |---|---|---|
-| `gus/dimagem.py` (fluxo OS determinístico) | 🚧 | Rascunho refinado (`4b99df6`). NÃO ativado em `bot.py`. Snippet de integração no docstring quando Gustavo aprovar. |
+| `gus/dimagem.py` (fluxo OS determinístico) | ✅ ativado com salvaguarda A+B | Modo confirmação prévia: foto OS → Haiku extrai (com contexto do MD do dia) → bot mostra preview com lista atual + nova linha → aguarda 'sim'/'ok' → salva. State em `dimagem_pending` persistido em bot_state.json. Mensagem fora do padrão expira pending. |
 | `dimagem/convenios.json` | ✅ no repo | 19 entradas. Ativa quando `dimagem.py` for ativado. |
 | `.github/scripts/enrich_mem0_export.py` | 🚧 | Rascunho (`a5e086a`). Sem workflow YAML, sem teste manual. |
 | `scripts/test_railway_logs.py` | ✅ pronto | Pra Gustavo rodar local quando voltar pro PC, validar schema Railway GraphQL. |
@@ -156,7 +156,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 |---|---|
 | Cron diário do `auto_diagnostico` que avisa Telegram só se quebrar | ✅ implementado (`.github/workflows/check-saude.yml`, 7h30 BRT) |
 | Log auditável de resumos pro Mem0 | ✅ implementado (`gus/resumo_log.py` → `_log/resumos-mem0/AAAA-MM-DD.md`) |
-| Ativar `gus/dimagem.py` em `bot.py` (handler de foto) | ❓ aguarda revisão do rascunho |
+| Ativar `gus/dimagem.py` em `bot.py` (handler de foto) | ✅ ativado 25/04 15:15 BRT com salvaguarda A+B (confirmação prévia + contexto Haiku). Após 1-2 semanas estável, considerar tirar a confirmação A. |
 | Workflow YAML do `enrich_mem0_export.py` | ❓ aguarda primeiro teste manual |
 | Validação `logs_railway` schema GraphQL via PC | ⏳ aguarda Gustavo voltar ao PC |
 | Modelo do `gerar_resumo_turnos` (Haiku vs Sonnet) | ✅ Haiku mantido — log auditável compensa |
@@ -168,6 +168,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | Data | Mudança |
 |---|---|
+| 2026-04-25 15:15 | **`gus/dimagem.py` ATIVADO com salvaguarda A+B** (decisão Gustavo). (B) Haiku recebe MD do dia como contexto pra manter convênios consistentes e detectar duplicata. (A) Bot mostra preview com lista atual + nova linha e aguarda confirmação 'sim'/'ok' antes de salvar. State `dimagem_pending` persistido em bot_state.json. Mensagem fora do padrão expira pending pra Sonnet pegar. Após 1-2 semanas estável, considerar tirar A. |
 | 2026-04-25 15:05 | **Sprint 2 parcial — `pesquisar_pubmed` + `pesquisar_arxiv` implementados** (`gus/integrations/pesquisa.py`, 220 linhas). Custo zero (APIs públicas), sem auth, retornam markdown formatado com título/autores/ano/link. Bot agora em 20 tools. system_prompt orienta routing: clínica→PubMed, IA→arXiv, factual atual→search_web. |
 | 2026-04-25 14:50 | **C — Scan sensível automático** (`.claude/hooks/scan_sensivel.py`). PreToolUse hook em Write/Edit/NotebookEdit espelha `gus/tools.py:_PATTERNS_SENSIVEIS` (CPF, CNPJ, cartão, 5 tipos de API key). Bloqueia escrita em path não-`sensivel/` se detectar — exit 2 com mensagem em stderr. Defesa de profundidade: agora o Claude Code tem a mesma proteção que o `save_to_github` do bot. Testado com 3 cenários OK. |
 | 2026-04-25 14:35 | **B2 — MCP `gus` criado** (`.claude/mcp/gus_server.py`): expõe `auto_diagnostico` e `sugerir_wikilinks` daqui no Claude Code, reusando `gus/integrations/*`. `.mcp.json` padronizado pra carregar `~/.claude/gus.env` (formato KEY=VALUE), com fallback retrocompat pro `~/.claude/mem0.key`. Total agora: 2 MCP servers (`mem0-gus` 7 tools + `gus` 2 tools) = 9 tools daqui quando configurado. |

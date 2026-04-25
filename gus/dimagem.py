@@ -127,6 +127,16 @@ Regras:
 - unidade: identifique pelo cabeçalho/endereço se aparecer. Caso contrário, null.
 - Campos não legíveis: null."""
 
+CONTEXTO_TEMPLATE = """
+
+CONTEXTO ADICIONAL — pacientes já registrados no MD de hoje ({hoje_str}):
+{lista_atual}
+
+Use isso pra:
+- Manter convênios consistentes com a grafia já usada no dia
+- Detectar se a OS na imagem já foi registrada (nome+exame+data iguais)
+- Manter padrões de unidade do dia"""
+
 
 # ---------------------------------------------------------------------------
 # DETECÇÃO
@@ -189,17 +199,49 @@ async def _e_os_dimagem(image_bytes: bytes, caption: str) -> bool:
 # EXTRAÇÃO
 # ---------------------------------------------------------------------------
 
-async def _extrair_os(image_bytes: bytes) -> dict | None:
-    """Chama Haiku Vision com prompt fixo. Retorna dict parseado ou None."""
+def _extrair_pacientes_atual(md: str) -> str:
+    """Extrai linhas de paciente do MD pra usar como contexto pro Haiku.
+    Formato compacto: cada linha = uma row da tabela."""
+    if not md:
+        return ""
+    linhas = []
+    for line in md.splitlines():
+        s = line.strip()
+        if not s.startswith("|"):
+            continue
+        if s.startswith("|--") or "---" in s:
+            continue
+        if "Nome" in s and "Exame" in s:  # cabeçalho
+            continue
+        if s.count("|") >= 4:
+            linhas.append(s)
+    return "\n".join(linhas[:25])  # limita pra 25 pacientes (custo)
+
+
+async def _extrair_os(image_bytes: bytes, contexto_md: str = "") -> dict | None:
+    """Chama Haiku Vision com prompt fixo + contexto opcional do MD do dia.
+
+    Quando `contexto_md` é passado (lista de pacientes já registrados hoje),
+    o prompt do Haiku ganha referência pra: manter grafia de convênio,
+    detectar duplicata, e padronizar unidade.
+    """
     api_key = os.getenv("ANTHROPIC_API_KEY")
     if not api_key:
         return None
+
+    system_prompt = PROMPT_EXTRACAO
+    if contexto_md.strip():
+        hoje_str = datetime.now(BRT).strftime("%d/%m/%Y")
+        system_prompt += CONTEXTO_TEMPLATE.format(
+            hoje_str=hoje_str,
+            lista_atual=contexto_md.strip()[:1500],
+        )
 
     img_b64 = base64.b64encode(image_bytes).decode()
     payload = {
         "model": MODEL,
         "max_tokens": 800,
-        "system": PROMPT_EXTRACAO,
+        "system": system_prompt,
         "messages": [{
             "role": "user",
             "content": [
@@ -447,4 +489,119 @@ async def processar_os_dimagem(image_bytes: bytes, caption: str = "") -> str | N
     return (
         f"✅ {nome}: {' + '.join(exames)} ({convenio_norm}{valor_str}) "
         f"registrado em `{path}`."
+    )
+
+
+# ---------------------------------------------------------------------------
+# MODO COM CONFIRMAÇÃO PRÉVIA (split entre analisar + salvar)
+# ---------------------------------------------------------------------------
+
+async def analisar_os_dimagem(image_bytes: bytes, caption: str = "") -> dict | None:
+    """Modo PREVIEW: extrai dados, lê MD do dia, monta mensagem pro Telegram
+    com (a) novo paciente extraído, (b) lista atual do dia, (c) pergunta de
+    confirmação. NÃO salva — quem salva é `salvar_os_dimagem(pending)`.
+
+    Returns:
+        dict com {preview_text, dados, convenio_norm, exames, nome} pra
+        guardar como state pendente, OU None se imagem não é OS Dimagem ou
+        extração falhou (caller cai no fluxo Sonnet normal).
+    """
+    if not await _e_os_dimagem(image_bytes, caption):
+        return None
+
+    hoje_iso = datetime.now(BRT).strftime("%Y-%m-%d")
+    hoje_str = datetime.now(BRT).strftime("%d/%m/%Y")
+    path = f"dimagem/dia/{hoje_iso}.md"
+
+    md_existente = await _read_from_github(path)
+    arquivo_existe = bool(md_existente) and not md_existente.startswith("Arquivo não encontrado")
+    contexto = _extrair_pacientes_atual(md_existente) if arquivo_existe else ""
+
+    # Extrai com contexto (B do plano A+B)
+    dados = await _extrair_os(image_bytes, contexto_md=contexto)
+    if not dados:
+        return None
+
+    nome = (dados.get("nome_paciente") or "").strip()
+    exames = [
+        e for e in (dados.get("exames") or [])
+        if e and "ANESTESIA" not in e.upper()
+    ]
+    convenio_raw = (dados.get("convenio") or "").strip()
+
+    if not nome or not exames or not convenio_raw:
+        return None
+
+    dicionario = await _carregar_convenios()
+    convenio_norm = _normalizar_convenio(convenio_raw, dicionario)
+
+    valor = dados.get("valor_brl")
+    valor_str = f"R$ {valor}" if isinstance(valor, (int, float)) else "—"
+    exames_str = " + ".join(exames)
+
+    # Preview (A do plano A+B)
+    preview = f"OS Dimagem detectada ({hoje_str}):\n"
+    preview += f"  + {nome} · {exames_str} · {convenio_norm} · {valor_str}\n\n"
+    if contexto:
+        n_existentes = len(contexto.splitlines())
+        preview += f"Pacientes já no MD do dia ({n_existentes}):\n{contexto}\n\n"
+    else:
+        preview += "Primeiro paciente do dia.\n\n"
+    preview += "Confirma o save? Responda: sim/ok/manda  —  ou: não/cancela."
+
+    return {
+        "preview_text": preview,
+        "dados": dados,
+        "convenio_norm": convenio_norm,
+        "exames": exames,
+        "nome": nome,
+        "hoje_iso": hoje_iso,
+        "hoje_str": hoje_str,
+    }
+
+
+async def salvar_os_dimagem(pending: dict) -> str:
+    """Executa o save com dados já extraídos e validados em `analisar_os_dimagem`.
+    Aplica as mesmas verificações de dedup que `processar_os_dimagem`."""
+    dados = pending["dados"]
+    nome = pending["nome"]
+    exames = pending["exames"]
+    convenio_norm = pending["convenio_norm"]
+    hoje_iso = pending.get("hoje_iso") or datetime.now(BRT).strftime("%Y-%m-%d")
+    hoje_str = pending.get("hoje_str") or datetime.now(BRT).strftime("%d/%m/%Y")
+
+    numero_os = (dados.get("numero_os") or "").strip()
+    processadas = _carregar_os_processadas()
+    do_dia = set(processadas.get(hoje_iso, []))
+    if numero_os and numero_os in do_dia:
+        return f"OS {numero_os} ({nome}) já registrada hoje. Ignorada."
+
+    path = f"dimagem/dia/{hoje_iso}.md"
+    md_existente = await _read_from_github(path)
+    arquivo_existe = bool(md_existente) and not md_existente.startswith("Arquivo não encontrado")
+
+    if arquivo_existe:
+        if _ja_existe_paciente(md_existente, nome):
+            return f"{nome} já está no arquivo do dia. Ignorado."
+        linha = _formatar_linha(dados, convenio_norm)
+        novo_md = _append_linha_no_md(md_existente, linha)
+    else:
+        linha = _formatar_linha(dados, convenio_norm)
+        unidade = _inferir_unidade(dados, convenio_norm)
+        novo_md = _criar_md_inicial(hoje_iso, hoje_str, linha, unidade)
+
+    resultado = await _save_to_github(hoje_iso, novo_md, "dimagem/dia")
+    if "Erro" in resultado or "ATENÇÃO" in resultado:
+        return resultado
+
+    if numero_os:
+        do_dia.add(numero_os)
+        processadas[hoje_iso] = sorted(do_dia)
+        _salvar_os_processadas(processadas)
+
+    valor = dados.get("valor_brl")
+    valor_str = f" — R$ {valor}" if isinstance(valor, (int, float)) else ""
+    return (
+        f"✅ {nome}: {' + '.join(exames)} ({convenio_norm}{valor_str}) "
+        f"salvo em `{path}`."
     )

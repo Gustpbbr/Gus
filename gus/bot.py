@@ -12,6 +12,9 @@ from gus.logger import registrar, custo_mes_atual, stats_mes_atual
 from gus.memory import buscar_memorias, salvar_memorias
 from gus.media import processar_imagem, processar_pdf, processar_docx, processar_xlsx, transcrever_audio
 from gus.resumo_log import append_resumo_async
+from gus.dimagem import analisar_os_dimagem, salvar_os_dimagem
+import re as _re_bot
+import httpx as _httpx_bot
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +34,19 @@ turn_counters: dict[str, int] = {}
 last_saved_turn: dict[str, int] = {}
 message_timestamps: dict[str, deque] = {}
 
+# Fluxo dimagem: OS extraídas aguardando confirmação ("sim"/"ok") do Gustavo.
+# Persistido em bot_state.json pra sobreviver redeploy do Railway.
+dimagem_pending: dict[str, dict] = {}
+
+_DIMAGEM_CONFIRMA_RE = _re_bot.compile(
+    r"^\s*(sim|s|ok|okay|confirma|confirme|confirmo|manda|pode|salva|salve|vai|bora|positivo|1|👍)\s*[!.]*\s*$",
+    _re_bot.IGNORECASE,
+)
+_DIMAGEM_CANCELA_RE = _re_bot.compile(
+    r"^\s*(n[ãa]o|cancela|ignora|esquece|deixa\s+pr[ao]\s+l[áa]|aborta?)",
+    _re_bot.IGNORECASE,
+)
+
 
 def _load_state() -> None:
     """Carrega state persistido do disco (se volume Railway está montado)."""
@@ -44,10 +60,12 @@ def _load_state() -> None:
         last_saved_turn.update(data.get("last_saved_turn", {}))
         for chat_id, ts_list in data.get("message_timestamps", {}).items():
             message_timestamps[chat_id] = deque(ts_list)
+        dimagem_pending.update(data.get("dimagem_pending", {}))
         logger.info(
             f"State carregado de {STATE_FILE}: "
             f"{len(conversation_histories)} chats, "
-            f"{sum(turn_counters.values())} turnos acumulados"
+            f"{sum(turn_counters.values())} turnos acumulados, "
+            f"{len(dimagem_pending)} OS dimagem pendentes"
         )
     except Exception as e:
         logger.warning(f"Falha ao carregar state de {STATE_FILE}: {e}")
@@ -64,6 +82,7 @@ def _save_state() -> None:
             "turn_counters": dict(turn_counters),
             "last_saved_turn": dict(last_saved_turn),
             "message_timestamps": {cid: list(ts) for cid, ts in message_timestamps.items()},
+            "dimagem_pending": dict(dimagem_pending),
         }
         # Write atômico via tmp + replace pra não corromper em caso de kill
         tmp = STATE_FILE + ".tmp"
@@ -330,7 +349,32 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await _verificar_limite(update):
         return
 
-    texto = update.message.text
+    texto = update.message.text or ""
+
+    # Se há OS dimagem pendente de confirmação, intercepta antes do Sonnet
+    pending = dimagem_pending.get(chat_id)
+    if pending:
+        if _DIMAGEM_CONFIRMA_RE.match(texto):
+            del dimagem_pending[chat_id]
+            _save_state()
+            try:
+                resultado = await salvar_os_dimagem(pending)
+            except Exception as e:
+                logger.error(f"Erro ao salvar OS confirmada: {e}")
+                resultado = f"Erro ao salvar: {str(e)[:200]}"
+            await update.message.reply_text(resultado)
+            return
+        if _DIMAGEM_CANCELA_RE.match(texto):
+            del dimagem_pending[chat_id]
+            _save_state()
+            await update.message.reply_text("OS cancelada — não salvei.")
+            return
+        # Mensagem que não é confirmação nem cancelamento → expira o pending
+        # e segue pro fluxo Sonnet (Gustavo mudou de assunto).
+        del dimagem_pending[chat_id]
+        _save_state()
+        await update.message.reply_text("(OS pendente expirada — você falou de outro assunto.)")
+
     content = [{"type": "text", "text": texto}]
     await _responder(update, chat_id, content, texto)
 
@@ -349,6 +393,22 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     photo = update.message.photo[-1]  # maior resolução disponível
     file = await context.bot.get_file(photo.file_id)
     caption = update.message.caption or ""
+
+    # Fluxo dimagem (modo confirmação prévia): se foto é OS Dimagem, extrai
+    # via Haiku, mostra preview com lista atual + nova linha, espera 'sim'
+    # do Gustavo. Se não for OS ou extração falhar, cai no fluxo Sonnet.
+    try:
+        async with _httpx_bot.AsyncClient(timeout=30) as _c:
+            _img_resp = await _c.get(file.file_path)
+        if _img_resp.status_code == 200:
+            _preview = await analisar_os_dimagem(_img_resp.content, caption)
+            if _preview:
+                dimagem_pending[chat_id] = _preview
+                _save_state()
+                await update.message.reply_text(_preview["preview_text"])
+                return
+    except Exception as _dim_err:
+        logger.warning(f"Fluxo dimagem falhou ({_dim_err}); caindo pro Sonnet.")
 
     try:
         content = await processar_imagem(file.file_path, caption)
