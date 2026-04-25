@@ -1,6 +1,6 @@
 ---
 tipo: estado-atual-sessao
-atualizado: 2026-04-25T17:15-03:00
+atualizado: 2026-04-25T19:50-03:00
 ---
 
 # Estado atual — handoff entre sessões
@@ -33,29 +33,34 @@ Maratona de implementações. Detalhes completos em `dialogos-tiogu-claude/seman
 
 ## Pendente pra próxima sessão
 
-### Prioridade 1 — **Custom GPT no ChatGPT** (próximo passo do caminho Alexa)
-- **Validado como objetivo em si** (não só ensaio pra Alexa) — é a porta de "conversa fluida em voz" via app ChatGPT mobile.
-- Meu trabalho: ~3-4h (FastAPI em pasta `api/`, endpoints REST espelhando subset de tools, OpenAPI 3.0 schema, Bearer token auth, integração com `main.py` rodando bot + FastAPI em paralelo via asyncio, ajustes Dockerfile/railway.toml pra expor `$PORT`)
-- Ação do Gustavo: ~20min (gerar `CUSTOM_GPT_TOKEN`, criar GPT no chatgpt.com/gpts/editor, importar OpenAPI, testar voz)
-- Conta: `gustavo.pratti84@gmail.com` (já tem ChatGPT Plus)
-- Doc detalhada em `gus-10-caminho-alexa.md` Passo 1
+### Prioridade 1 — **Configurar Action do Custom GPT (DESKTOP obrigatório)**
+- Código `api/` em produção: `https://gus-production-58a7.up.railway.app/health` retorna 200 OK ✅
+- GPT criado no Builder (mobile, identidade Gus, capabilities desmarcadas, GPT-5.3 Instant, Only me) ✅
+- **Falta configurar Actions** — só aparece no Builder DESKTOP (não no mobile)
+- Passo-a-passo completo em `projetos/gus/gus-14-custom-gpt-setup.md` (atualizado com aviso crítico mobile/desktop)
+- Sem isso o GPT alucina tool calls (testado 25/04 — inventou `merge_branch`, `create_branch`, JSON simulado)
 
 ### Prioridade 2 — Quando Gustavo voltar pro PC
-- Criar `~/.claude/gus.env` (4 keys: MEM0, ANTHROPIC, GITHUB, TAVILY) — destrava MCP daqui
-- Limpar 4+ memórias poluídas via MCP (depende de gus.env)
-- Token novo Railway + `scripts/test_railway_logs.py` cascata diagnóstica → valida `logs_railway`
+- **Configurar Action do Custom GPT** (Builder no desktop):
+  - Importar OpenAPI URL: `https://gus-production-58a7.up.railway.app/openapi.json`
+  - Auth: API Key + Bearer + colar `CUSTOM_GPT_TOKEN`
+  - Testar uma operation (`read_from_github` com `path: "README.md"`)
+  - Colar Instructions V2 anti-alucinação (texto pronto em `gus-14-custom-gpt-setup.md`)
+- Criar `~/.claude/gus.env` (5 keys: MEM0, ANTHROPIC, OPENAI, GITHUB, TAVILY) — destrava MCP daqui
+- Limpar 4+ memórias poluídas via MCP (depende gus.env)
+- Adicionar `Railway_diagnostic` no Railway Variables → testar `logs_railway`
 - Investigar 3ª entity no Mem0
 
 ### Prioridade 3 — Em sequência
-- Volume Railway (`/app/data` 1GB, ~30min meu + 5min Gustavo) — persiste logs/históricos
+- ~~Volume Railway~~ ✅ Gustavo configurou (5GB, 25/04)
 - Decidir se Sprint 3 volta (email/calendar/TTS) ou pula direto pra Alexa V1
-- Alexa Skill V1 (Dot 3, Polly, voz pura) — depois do Custom GPT
+- Alexa Skill V1 (Dot 3, Polly, voz pura) — depois do Custom GPT funcionando
 - Termux + wake word "Gus" no S8 (pós-Alexa) — Opção B aprovada
 
 ### Pendentes menores
 - Claude Chat Project — refazer validação com identity.md colado
-- `fut-06-voz-telegram.md` pode ser marcado como concluído (Whisper entregue)
-- Apagar arquivo de teste `capturado/misc/teste-drive-sync.md` quando quiser
+- ~~`fut-06-voz-telegram.md` marcar concluído~~ (arquivo não existe nesse path; Whisper já entregue, não precisa marcar)
+- ~~Apagar `capturado/misc/teste-drive-sync.md`~~ ✅ feito 25/04 noite
 - Workflow YAML do `enrich_mem0_export.py` — script existe, sem cron
 - Observar dimagem A+B em produção 1-2 semanas, depois decidir tirar A
 
@@ -66,6 +71,8 @@ Maratona de implementações. Detalhes completos em `dialogos-tiogu-claude/seman
 - **Wake word "Gus" no S8** = Termux + openWakeWord (Opção B), futuro pós-Alexa
 - **Sprint 2 = só GPT-5 mini** (Perplexity adiado, Gemini não priorizado)
 - **Sprint 3 pulado nesta rodada** — Alexa V1 será leitura/captura/pergunta apenas
+- **GPT Builder mobile não tem Actions** — descoberto na noite do 25/04 testando criação. Causa alucinação de tool calls quando a Action não foi configurada. Documentado em `gus-14-custom-gpt-setup.md` com aviso crítico no topo
+- **Conector GitHub nativo do ChatGPT recusado** — bypass das proteções LGPD. Custom GPT acessa GitHub APENAS via nossa Action REST
 
 ## Bugs em aberto (não bloqueantes)
 - Mem0 latência de indexação (minutos)
