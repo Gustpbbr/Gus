@@ -7,9 +7,12 @@ on:
       - '**.md'
       - '!.github/**'
       - '!gus/**'
+      - 'gus/gus-bootstrap.md'
+      - 'gus/gus-identity.md'
       - '!docs/**'
       - '!CLAUDE.md'
       - '!README.md'
+  workflow_dispatch:
 
 permissions:
   contents: read

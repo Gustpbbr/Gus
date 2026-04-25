@@ -28,6 +28,13 @@ EXCLUDE_PREFIXES = (
     ".github/",
     "sensivel/",
 )
+# Precedência sobre EXCLUDE_*. Mesmo em pastas excluídas (gus/), estes
+# arquivos sincronizam — porque Claude Chat precisa ler do Drive pra
+# assumir identidade Gus via bootstrap.
+INCLUDE_OVERRIDES = {
+    "gus/gus-bootstrap.md",
+    "gus/gus-identity.md",
+}
 
 
 def get_drive_service():
@@ -44,6 +51,8 @@ def get_drive_service():
 
 
 def _is_excluded(filepath):
+    if filepath in INCLUDE_OVERRIDES:
+        return False
     return filepath in EXCLUDE_PATHS or filepath.startswith(EXCLUDE_PREFIXES)
 
 
