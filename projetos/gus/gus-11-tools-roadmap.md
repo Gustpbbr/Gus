@@ -1,7 +1,7 @@
 ---
 tipo: roadmap
 area: gus
-atualizado: 2026-04-25T14:35-03:00
+atualizado: 2026-04-25T14:50-03:00
 ---
 
 # Roadmap de Tools — Tiogubot
@@ -168,6 +168,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | Data | Mudança |
 |---|---|
+| 2026-04-25 14:50 | **C — Scan sensível automático** (`.claude/hooks/scan_sensivel.py`). PreToolUse hook em Write/Edit/NotebookEdit espelha `gus/tools.py:_PATTERNS_SENSIVEIS` (CPF, CNPJ, cartão, 5 tipos de API key). Bloqueia escrita em path não-`sensivel/` se detectar — exit 2 com mensagem em stderr. Defesa de profundidade: agora o Claude Code tem a mesma proteção que o `save_to_github` do bot. Testado com 3 cenários OK. |
 | 2026-04-25 14:35 | **B2 — MCP `gus` criado** (`.claude/mcp/gus_server.py`): expõe `auto_diagnostico` e `sugerir_wikilinks` daqui no Claude Code, reusando `gus/integrations/*`. `.mcp.json` padronizado pra carregar `~/.claude/gus.env` (formato KEY=VALUE), com fallback retrocompat pro `~/.claude/mem0.key`. Total agora: 2 MCP servers (`mem0-gus` 7 tools + `gus` 2 tools) = 9 tools daqui quando configurado. |
 | 2026-04-25 14:20 | **B1 — Cache logging implementado**. `gus/logger.py:stats_mes_atual()` agrega `cache_creation`, `cache_read`, `cache_hit_ratio` do JSONL. `bot.py:_responder` registra os campos novos por turno. `/custo` reformulado pra mostrar tokens + cache hit ratio % além do custo. Não dependia de A2 — Gustavo agora vê economia direto pelo Telegram sem precisar Anthropic Console. |
 | 2026-04-25 14:10 | **MCP `mem0-gus` atualizado pra paridade com TioGu** (`.claude/mcp/mem0_server.py`): de 3 tools simples (só brain `gustavo`, sem IDs, sem delete) pra 7 tools — 3 brain `gustavo` + 3 brain `gus` + `deletar_memoria` universal. Todas retornam IDs no formato `[uuid] texto`. Próximo: Gustavo configura `~/.claude/mem0.key` pra ativar daqui. |
