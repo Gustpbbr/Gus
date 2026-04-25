@@ -4,7 +4,14 @@
       "command": "sh",
       "args": [
         "-c",
-        "export MEM0_API_KEY=\"$(cat ~/.claude/mem0.key 2>/dev/null)\" && exec python3 .claude/mcp/mem0_server.py"
+        "if [ -f ~/.claude/gus.env ]; then set -a; . ~/.claude/gus.env; set +a; fi; if [ -z \"$MEM0_API_KEY\" ] && [ -f ~/.claude/mem0.key ]; then export MEM0_API_KEY=\"$(cat ~/.claude/mem0.key)\"; fi; exec python3 .claude/mcp/mem0_server.py"
+      ]
+    },
+    "gus": {
+      "command": "sh",
+      "args": [
+        "-c",
+        "if [ -f ~/.claude/gus.env ]; then set -a; . ~/.claude/gus.env; set +a; fi; if [ -z \"$MEM0_API_KEY\" ] && [ -f ~/.claude/mem0.key ]; then export MEM0_API_KEY=\"$(cat ~/.claude/mem0.key)\"; fi; exec python3 .claude/mcp/gus_server.py"
       ]
     }
   }
