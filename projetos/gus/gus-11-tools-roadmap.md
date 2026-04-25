@@ -1,7 +1,7 @@
 ---
 tipo: roadmap
 area: gus
-atualizado: 2026-04-25T13:55-03:00
+atualizado: 2026-04-25T14:10-03:00
 ---
 
 # Roadmap de Tools — Tiogubot
@@ -168,6 +168,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | Data | Mudança |
 |---|---|
+| 2026-04-25 14:10 | **MCP `mem0-gus` atualizado pra paridade com TioGu** (`.claude/mcp/mem0_server.py`): de 3 tools simples (só brain `gustavo`, sem IDs, sem delete) pra 7 tools — 3 brain `gustavo` + 3 brain `gus` + `deletar_memoria` universal. Todas retornam IDs no formato `[uuid] texto`. Próximo: Gustavo configura `~/.claude/mem0.key` pra ativar daqui. |
 | 2026-04-25 13:55 | **Tool `deletar_memoria` criada** (18ª tool). Aceita `memory_id` (UUID) e `user_id` opcional (default 'gustavo'). Search_memory atualizado pra retornar IDs no formato `[uuid] texto`. Regra de confirmação obrigatória no system_prompt antes de chamar. Motivado por memória poluída do bug `meta-memoria.yml` detectada nos logs. |
 | 2026-04-25 13:42 | **Bug fix**: lista de workflows na tool `disparar_workflow` estava com 6 entradas desatualizadas (incluindo `meta-memoria.yml` inexistente, sem `check-saude.yml`). Corrigido pra 8 reais. Bug introduzido quando criei `check-saude.yml` sem atualizar a lista — o TioGu memorizou a info errada e gerou primeiro 'check-saude.yml não existe'. |
 | 2026-04-25 13:35 | **Token-Efficient Tool Use ativado** (`anthropic-beta: token-efficient-tools-2025-02-19`) em `gus/llm.py:_chamar_claude_com_retry`. Beta header só passado quando tools presentes. Soma ao prompt caching: schemas de tool comprimidos pelo backend Anthropic antes de cachear. |
