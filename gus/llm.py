@@ -41,7 +41,7 @@ client = anthropic.AsyncAnthropic(
 async def _chamar_claude_com_retry(
     model: str,
     max_tokens: int,
-    system_prompt: str,
+    system_prompt,  # str OU lista de blocos (pra prompt caching)
     messages: list,
     tools: list | None = None,
     max_tentativas: int = 4,
@@ -51,6 +51,9 @@ async def _chamar_claude_com_retry(
     Tenta o modelo primário até max_tentativas vezes em erros 5xx/529.
     Se esgotar, tenta o MODEL_FALLBACK (default Haiku) com mesma política.
     Re-lança a última APIStatusError se tudo falhar.
+
+    `system_prompt` pode ser str (uso simples) ou lista de blocos
+    (pra prompt caching com cache_control: ephemeral).
     """
     modelos = [model]
     fallback = os.getenv("MODEL_FALLBACK", "claude-haiku-4-5")
@@ -196,22 +199,62 @@ def _load_system_prompt() -> str:
     return path.read_text(encoding="utf-8")
 
 
+def _build_system_blocks(system_estavel: str, suffix_var: str) -> list[dict]:
+    """Monta system como 2 blocos: estável (cacheado) + variável (fresh).
+
+    O bloco estável é o conteúdo do system_prompt.md — não muda entre calls,
+    cacheia por 5min via cache_control: ephemeral. Em chamadas subsequentes
+    o custo cai pra 10% dos tokens cacheados (input).
+
+    O bloco variável (data/hora atual + memórias relevantes) muda a cada call,
+    fica fresh.
+    """
+    blocks = [
+        {
+            "type": "text",
+            "text": system_estavel,
+            "cache_control": {"type": "ephemeral"},
+        }
+    ]
+    if suffix_var:
+        blocks.append({"type": "text", "text": suffix_var})
+    return blocks
+
+
+def _build_tools_cached(tools: list[dict]) -> list[dict]:
+    """Marca o último tool com cache_control — Anthropic cacheia toda a lista
+    de tools até o ponto do cache_control. Tools são estáticas no projeto,
+    então cache hit é praticamente garantido entre calls."""
+    if not tools:
+        return tools
+    cached = list(tools)
+    cached[-1] = {**cached[-1], "cache_control": {"type": "ephemeral"}}
+    return cached
+
+
+_TOOLS_CACHED = _build_tools_cached(TOOLS)
+
+
 async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tuple[str, dict]:
     model = os.getenv("MODEL_DEFAULT", "claude-sonnet-4-6")
     max_tokens = int(os.getenv("MAX_TOKENS_RESPONSE", "2048"))
 
-    system_prompt = _load_system_prompt()
+    system_estavel = _load_system_prompt()
     agora = datetime.now(BRT)
     dia_semana = DIAS_SEMANA[agora.weekday()]
-    system_prompt += (
+    suffix_var = (
         f"\n\n## Data e hora atuais\n"
         f"Hoje é {dia_semana}, {agora.strftime('%d/%m/%Y')}, {agora.strftime('%H:%M')} (horário de Brasília)."
     )
     if memory_context:
-        system_prompt += f"\n\n## Memórias relevantes\n{memory_context}"
+        suffix_var += f"\n\n## Memórias relevantes\n{memory_context}"
+
+    system_blocks = _build_system_blocks(system_estavel, suffix_var)
 
     total_in = 0
     total_out = 0
+    cache_creation = 0
+    cache_read = 0
     current_messages = list(messages)
     max_tool_rounds = 10
 
@@ -221,14 +264,19 @@ async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tupl
             response = await _chamar_claude_com_retry(
                 model=model,
                 max_tokens=max_tokens,
-                system_prompt=system_prompt,
+                system_prompt=system_blocks,
                 messages=current_messages,
-                tools=TOOLS,
+                tools=_TOOLS_CACHED,
             )
         except (anthropic.APIStatusError, anthropic.APIConnectionError, anthropic.APITimeoutError) as e:
             status = getattr(e, "status_code", None)
             pricing = _get_pricing(model)
-            cost_usd = round((total_in * pricing["input"]) + (total_out * pricing["output"]), 6)
+            cost_input = (
+                total_in * pricing["input"]
+                + cache_creation * pricing["input"] * 1.25
+                + cache_read * pricing["input"] * 0.10
+            )
+            cost_usd = round(cost_input + total_out * pricing["output"], 6)
 
             # 5xx/529 — sobrecarga, mensagem padrão
             if status in _STATUS_RETRY:
@@ -250,6 +298,9 @@ async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tupl
 
         total_in += response.usage.input_tokens
         total_out += response.usage.output_tokens
+        # Cache stats — só presentes se prompt caching estiver ativo
+        cache_creation += getattr(response.usage, "cache_creation_input_tokens", 0) or 0
+        cache_read += getattr(response.usage, "cache_read_input_tokens", 0) or 0
 
         if response.stop_reason == "tool_use":
             # Executa as tools e continua o loop
@@ -274,19 +325,37 @@ async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tupl
                 ""
             )
             pricing = _get_pricing(model)
-            cost_usd = round((total_in * pricing["input"]) + (total_out * pricing["output"]), 6)
+            # Custo: input fresh full + cache creation 25% extra + cache read 10%.
+            # response.usage.input_tokens já EXCLUI cache_read e cache_creation,
+            # então somamos separado.
+            cost_input = (
+                total_in * pricing["input"]
+                + cache_creation * pricing["input"] * 1.25
+                + cache_read * pricing["input"] * 0.10
+            )
+            cost_usd = round(cost_input + total_out * pricing["output"], 6)
             metadata = {
                 "model": model,
                 "tokens_in": total_in,
                 "tokens_out": total_out,
-                "cost_usd": cost_usd
+                "cache_creation": cache_creation,
+                "cache_read": cache_read,
+                "cost_usd": cost_usd,
             }
             return text, metadata
 
     # Saída de segurança se o loop de tools esgotar
     pricing = _get_pricing(model)
-    cost_usd = round((total_in * pricing["input"]) + (total_out * pricing["output"]), 6)
+    cost_input = (
+        total_in * pricing["input"]
+        + cache_creation * pricing["input"] * 1.25
+        + cache_read * pricing["input"] * 0.10
+    )
+    cost_usd = round(cost_input + total_out * pricing["output"], 6)
     return "Desculpa, entrei em loop interno. Tenta reformular.", {
         "model": model, "tokens_in": total_in,
-        "tokens_out": total_out, "cost_usd": cost_usd
+        "tokens_out": total_out,
+        "cache_creation": cache_creation,
+        "cache_read": cache_read,
+        "cost_usd": cost_usd
     }

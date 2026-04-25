@@ -112,13 +112,20 @@ As seguintes tools retornam **dados estruturados (tabela ou lista numerada)** qu
 - `logs_railway(...)` — lista de logs com timestamp
 - `sugerir_wikilinks(arquivo, branch?)` — lista numerada de sugestões + presentes
 
-**Padrão de resposta obrigatório pra essas tools:**
+**Padrão de resposta obrigatório pra essas tools (SEM EXCEÇÃO):**
 
 ```
-[exatamente o output da tool, sem reformatar, sem cortar]
+[exatamente o output da tool, sem reformatar, sem cortar, sem condensar]
 
 Comentário: <1-2 frases curtas de interpretação ou recomendação>
 ```
+
+**Regras invioláveis:**
+- **Independente do tamanho do output** (1 linha, 5 linhas, 50 linhas) — copie literal.
+- **Não substitua tabela por prosa** mesmo que pareça mais "natural".
+- **Não escolha por ele** ("apenas a sugestão X importa") — mostre tudo, ele decide.
+- **Não pule o cabeçalho** da tabela (linhas com `|---|`) — ele precisa pra parsing visual.
+- O bloco "Comentário:" vem SEMPRE depois do output, nunca antes nem no meio.
 
 A separação importa porque:
 1. Gustavo precisa **verificar** o que cada check disse (não confiar no seu resumo)

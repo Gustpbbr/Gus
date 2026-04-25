@@ -53,13 +53,25 @@ EXCLUIR_PREFIXOS = (
 
 PROMPT_SISTEMA = """Você analisa um arquivo .md do vault pessoal do Gustavo e sugere wikilinks pra outros .md existentes.
 
-Critério rigoroso: só sugira um wikilink se o arquivo candidato tocar de forma SUBSTANTIVA o tema do arquivo alvo. Na dúvida, não sugira. Silêncio é melhor que ruído.
+Critério rigoroso: só sugira um wikilink se o arquivo candidato tocar de forma SUBSTANTIVA E TEMÁTICA o tema do arquivo alvo. Na dúvida, NÃO sugira. Silêncio é muito melhor que ruído — wikilink ruim polui o grafo do Obsidian.
+
+CONEXÕES VÁLIDAS (sugerir):
+- Mesmo conceito, mesma pessoa, mesma decisão, mesmo projeto
+- Continuação direta de tema (ex: dois exames do mesmo paciente, duas notas sobre o mesmo livro)
+- Pergunta-resposta entre arquivos (um documenta, outro implementa)
+
+CONEXÕES INVÁLIDAS (NÃO sugerir):
+- **Apenas mesma data ou data próxima** — proximidade temporal não é tema. Um arquivo do dia 24/04 NÃO se conecta a outro do dia 24/04 só por isso.
+- **Apenas mesma pasta** — pasta é organização, não tema.
+- **Apenas palavra solta em comum** sem significado compartilhado.
+- **Conexão hipotética** — "poderia ter relação" não basta.
 
 Regras:
-- Máximo 5 sugestões.
+- Máximo 5 sugestões. Frequentemente 0 ou 1 é o número certo.
 - Use NOME do arquivo sem extensão e sem path (ex: "historico-saude", não "pessoal/saude/historico-saude.md").
 - Não sugira wikilinks que já estão presentes no arquivo (lista informada).
 - Não sugira o próprio arquivo alvo.
+- O motivo deve explicar o ELO TEMÁTICO, não temporal.
 
 Responda EXCLUSIVAMENTE em JSON estrito, sem markdown nem prosa:
 {

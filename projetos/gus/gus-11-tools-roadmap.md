@@ -1,7 +1,7 @@
 ---
 tipo: roadmap
 area: gus
-atualizado: 2026-04-25T12:50-03:00
+atualizado: 2026-04-25T13:25-03:00
 ---
 
 # Roadmap de Tools — Tiogubot
@@ -168,6 +168,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | Data | Mudança |
 |---|---|
+| 2026-04-25 13:25 | **Prompt caching ativado em `gus/llm.py`**: system prompt + 17 tools com `cache_control: ephemeral`. Economia projetada ~70% no custo de input após primeira call de uma janela de 5min. Metadata agora inclui `cache_creation` e `cache_read`. Prompt do `wikilinks.py` apertado (proíbe explicitamente conexão temporal). Regra de format literal no system_prompt reforçada (não condensar mesmo com 1 sugestão, não substituir tabela por prosa). |
 | 2026-04-25 12:50 | `sugerir_wikilinks`: trocado Haiku → Sonnet 4.6 (custo de errar > economia, decisão Gustavo). Token Railway de teste revogado. Cron diário `auto_diagnostico` implementado (`.github/workflows/check-saude.yml`, 7h30 BRT, alerta Telegram só se ⚠️/❌). Log auditável de resumos pro Mem0 implementado (`gus/resumo_log.py` → `_log/resumos-mem0/AAAA-MM-DD.md`). |
 | 2026-04-25 12:34 | `sugerir_wikilinks`: 🚧 → ✅ (testada em produção, retorna sugestões substantivas; nuance: TioGu pode sugerir conexão temporal, prompt pode ser apertado se virar problema). Sprint 1 fechado (exceto `logs_railway` que aguarda config). |
 | 2026-04-25 11:40 | `sugerir_wikilinks(arquivo, branch?)`: ⚪ → 🚧 (criada `gus/integrations/wikilinks.py`, plugada em `tools.py` como 17ª tool, aguarda merge) |
