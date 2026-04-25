@@ -1,7 +1,7 @@
 ---
 tipo: roadmap
 area: gus
-atualizado: 2026-04-25T16:05-03:00
+atualizado: 2026-04-25T16:55-03:00
 ---
 
 # Roadmap de Tools — Tiogubot
@@ -32,7 +32,9 @@ Inventário completo das tools propostas, status de implementação, e decisões
 | 3b | `pesquisar_arxiv` | ✅ | arXiv Atom feed, sem auth, custo zero. Categorias úteis: cs.AI, cs.CL, cs.LG, cs.HC, q-bio.NC. |
 | 4a | `enviar_email` | ⚪ | Sprint 3. Requer adicionar escopo `gmail.send` ao OAuth Google existente |
 | 4b | `criar_evento_calendario` | ⚪ | Sprint 3. Mesmo OAuth do email |
-| 5 | `perguntar_gemini` | ⚪ | Sprint 2. Requer `GEMINI_API_KEY` (Gustavo cria em aistudio.google.com) |
+| 5a | `perguntar_gpt` | ✅ | Sprint 2 implementado 25/04 16:55 BRT. Reusa `OPENAI_API_KEY` (mesma do Whisper). Default `gpt-5-mini`. System prompt instrui usar com moderação por custo. |
+| 5b | `perguntar_perplexity` | ⚪ | Sprint 2 adiado (decisão Gustavo). Volta quando search-com-fonte virar dor real. |
+| 5c | `perguntar_gemini` | ⚪ | Não priorizado. Só se aparecer caso de uso pra context >200k. |
 | 6 | `texto_para_voz` (ElevenLabs) | ⚪ | Sprint 3. Requer conta ElevenLabs + voice clone opcional |
 | 7 | `sugerir_wikilinks(arquivo, branch?)` | ✅ | Mergeado em main `988a222`, testado em produção 25/04 12:30 BRT. Funcional. Nuance: Haiku eventualmente sugere conexão temporal (mesma data) em vez de temática. Se aparecer muito, apertar prompt em `wikilinks.py`. |
 
@@ -72,8 +74,8 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | Tool | API | Prioridade | Status |
 |---|---|---|---|
-| `perguntar_gemini(query, contexto_longo?)` | Gemini 2.x | ⭐⭐⭐ | ⚪ |
-| `perguntar_gpt(query, modelo='gpt-5')` | OpenAI | ⭐⭐ | ⚪ |
+| `perguntar_gemini(query, contexto_longo?)` | Gemini 2.x | ⭐⭐ | ⚪ |
+| `perguntar_gpt(query, modelo='gpt-5-mini')` | OpenAI | ⭐⭐⭐ | ✅ |
 | `perguntar_perplexity(query)` | Perplexity Sonar | ⭐⭐⭐ | ⚪ |
 | `traduzir(texto, alvo='en')` | DeepL | ⭐⭐ | ⚪ |
 
@@ -168,6 +170,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | Data | Mudança |
 |---|---|
+| 2026-04-25 16:55 | **Sprint 2 — `perguntar_gpt` implementado** (`gus/integrations/openai_chat.py`, ~110 linhas). Reusa `OPENAI_API_KEY` que já existe pro Whisper — zero key nova. Default `gpt-5-mini` (barato, ~$0.25/M input + $2/M output). Aceita também `gpt-5` (caro, só decisões críticas) e `gpt-5-nano` (trivialidades). System prompt orienta routing: "decisão ambígua / second opinion / Gustavo pediu explicitamente" → `perguntar_gpt`; brainstorm/criativo → Sonnet sozinho; busca/fato → search_web. Bot sobe pra 21 tools. Perplexity adiado (decisão Gustavo: pular nesta rodada). |
 | 2026-04-25 16:05 | **Tagueamento canônico fechado** + **MCP local também tagueia**. `.claude/mcp/mem0_server.py:VIA_TAG` lê `MEM0_VIA_TAG` (default `claude-code`); `client.add` em ambos os brains agora carrega `metadata={"via": VIA_TAG}`. Doc canônico criado: `projetos/gus/gus-13-tags-canonicas.md` — contrato dos 2 brains (gustavo/gus) + 7 tags ativas/reservadas pra portas + 4 pra automações. Lista também o que NÃO é memória (meta-memoria.md, system_prompt.md, exports, índices). Workflows GH continuam sem salvar — quando começarem, usar `workflow-<nome>` conforme tabela. |
 | 2026-04-25 15:20 | **Metadata `via` no Mem0 + diretriz de portas futuras**. `gus/memory.py:salvar_memorias` aceita `via` opcional (default `MEM0_VIA_TAG=telegram-claude`). Cada nova porta seta sua tag (telegram-gpt, alexa, custom-gpt, etc.) e fica auto-tagueada. Search default ignora filtro — visibilidade cruzada total entre portas. Doc de diretriz arquitetural criado em `projetos/gus/gus-12-portas-futuras.md` (não é roadmap de execução, é contrato pra quando crescer). |
 | 2026-04-25 15:15 | **`gus/dimagem.py` ATIVADO com salvaguarda A+B** (decisão Gustavo). (B) Haiku recebe MD do dia como contexto pra manter convênios consistentes e detectar duplicata. (A) Bot mostra preview com lista atual + nova linha e aguarda confirmação 'sim'/'ok' antes de salvar. State `dimagem_pending` persistido em bot_state.json. Mensagem fora do padrão expira pending pra Sonnet pegar. Após 1-2 semanas estável, considerar tirar A. |

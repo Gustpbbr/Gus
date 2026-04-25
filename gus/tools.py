@@ -19,6 +19,7 @@ from gus.integrations.pesquisa import (
     pesquisar_pubmed as _pesquisar_pubmed,
     pesquisar_arxiv as _pesquisar_arxiv,
 )
+from gus.integrations.openai_chat import perguntar_gpt as _perguntar_gpt
 
 logger = logging.getLogger(__name__)
 
@@ -246,6 +247,34 @@ TOOLS = [
                 "categoria": {
                     "type": "string",
                     "description": "Filtro de categoria arXiv (ex: 'cs.AI', 'cs.LG'). Omita pra buscar em todas."
+                }
+            },
+            "required": ["query"]
+        }
+    },
+    {
+        "name": "perguntar_gpt",
+        "description": (
+            "Pergunta ao GPT-5 (OpenAI) pra obter segunda opinião divergente. "
+            "USE quando: decisão ambígua onde vale ouvir família de modelo diferente "
+            "do Claude (vieses distintos), ou quando o Gustavo pedir explicitamente "
+            "'pergunta pro GPT'. NÃO USE pra: busca/fato atual (use search_web), "
+            "literatura científica (use pesquisar_pubmed/arxiv), brainstorm criativo "
+            "(faz sozinho). Custo médio-alto, use com moderação. Default modelo "
+            "`gpt-5-mini` (barato e rápido); use `gpt-5` (caro) só pra decisões "
+            "críticas; `gpt-5-nano` pra coisas triviais."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Pergunta + contexto necessário, em string única. Inclua o que Sonnet já pensou pra GPT poder divergir com base."
+                },
+                "modelo": {
+                    "type": "string",
+                    "enum": ["gpt-5", "gpt-5-mini", "gpt-5-nano"],
+                    "description": "Default 'gpt-5-mini'. Use 'gpt-5' só pra decisões críticas (caro)."
                 }
             },
             "required": ["query"]
@@ -990,6 +1019,11 @@ async def executar_tool(name: str, inputs: dict) -> str:
             inputs["query"],
             inputs.get("max_n", 10),
             inputs.get("categoria"),
+        )
+    elif name == "perguntar_gpt":
+        return await _perguntar_gpt(
+            inputs["query"],
+            inputs.get("modelo", "gpt-5-mini"),
         )
     elif name == "save_to_github":
         return await _save_to_github(
