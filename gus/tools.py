@@ -9,6 +9,7 @@ from duckduckgo_search import DDGS
 from gus.memory import buscar_memorias_detalhada, salvar_observacao_gus, buscar_memorias_gus
 from gus.integrations.railway import logs_railway as _logs_railway
 from gus.integrations.diagnostico import auto_diagnostico as _auto_diagnostico
+from gus.integrations.wikilinks import sugerir_wikilinks as _sugerir_wikilinks
 
 logger = logging.getLogger(__name__)
 
@@ -209,6 +210,31 @@ TOOLS = [
                 }
             },
             "required": ["workflow_name"]
+        }
+    },
+    {
+        "name": "sugerir_wikilinks",
+        "description": (
+            "Lê um arquivo .md do repo e sugere wikilinks pra outros arquivos relacionados, "
+            "via Haiku. Não modifica o arquivo — só retorna sugestões pro Gustavo aprovar. "
+            "Use quando o Gustavo perguntar 'que arquivos têm a ver com X?', 'sugere conexões "
+            "pra esse MD', ou após salvar um arquivo novo querendo conectar ao grafo do "
+            "Obsidian. Output: lista numerada com [[wikilinks]] + motivo de cada um, mais "
+            "lista dos já presentes (preservados). Custo ~$0.005 por chamada."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "arquivo": {
+                    "type": "string",
+                    "description": "Path do arquivo no repo (ex: 'dimagem/dia/2026-04-25.md', 'pessoal/saude/historico-saude.md'). Pode omitir extensão .md."
+                },
+                "branch": {
+                    "type": "string",
+                    "description": "Nome do branch. Omita pra ler do main."
+                }
+            },
+            "required": ["arquivo"]
         }
     },
     {
@@ -897,4 +923,9 @@ async def executar_tool(name: str, inputs: dict) -> str:
         )
     elif name == "auto_diagnostico":
         return await _auto_diagnostico()
+    elif name == "sugerir_wikilinks":
+        return await _sugerir_wikilinks(
+            inputs["arquivo"],
+            inputs.get("branch"),
+        )
     return f"Tool desconhecida: {name}"

@@ -1,7 +1,7 @@
 ---
 tipo: roadmap
 area: gus
-atualizado: 2026-04-25T11:24-03:00
+atualizado: 2026-04-25T11:40-03:00
 ---
 
 # Roadmap de Tools — Tiogubot
@@ -34,7 +34,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 | 4b | `criar_evento_calendario` | ⚪ | Sprint 3. Mesmo OAuth do email |
 | 5 | `perguntar_gemini` | ⚪ | Sprint 2. Requer `GEMINI_API_KEY` (Gustavo cria em aistudio.google.com) |
 | 6 | `texto_para_voz` (ElevenLabs) | ⚪ | Sprint 3. Requer conta ElevenLabs + voice clone opcional |
-| 7 | `sugerir_wikilinks(arquivo)` | 🚧 parcial | Existe `enrich_mem0_export.py` (`a5e086a`) que faz isso pro export do Mem0. Falta generalizar pra qualquer .md + virar tool do bot |
+| 7 | `sugerir_wikilinks(arquivo, branch?)` | 🚧 | Tool generalizada criada em `gus/integrations/wikilinks.py`. Aguarda merge pro main + teste em produção. Não escreve no arquivo — só retorna sugestões. |
 
 ## Tools extras concluídas fora das 7 originais
 
@@ -116,7 +116,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 | `deletar_memoria(id)` | ⭐⭐ | ⚪ |
 | `fundir_memorias(id_a, id_b)` | ⭐⭐ | ⚪ |
 | `criar_wikilink(arquivo_a, arquivo_b)` | ⭐⭐⭐ | ⚪ |
-| `sugerir_wikilinks(arquivo)` | ⭐⭐⭐ | 🚧 parcial — existe pra Mem0 export apenas |
+| `sugerir_wikilinks(arquivo, branch?)` | ⭐⭐⭐ | 🚧 — generalizada, aguarda merge + teste |
 | `commitar_resumo_dia(formato='briefing')` | ⭐⭐ | ⚪ |
 
 ### G. Domínio Dimagem
@@ -165,6 +165,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | Data | Mudança |
 |---|---|
+| 2026-04-25 11:40 | `sugerir_wikilinks(arquivo, branch?)`: ⚪ → 🚧 (criada `gus/integrations/wikilinks.py`, plugada em `tools.py` como 17ª tool, aguarda merge) |
 | 2026-04-25 11:13 | `auto_diagnostico` + `list_branches` + branch param: ⚪ → ✅ (mergeados em main `741380e`, testados em produção) |
 | 2026-04-25 11:00 | `logs_railway`: ⚪ → 🚧 (mergeado em main `7266a65`, mas sem token válido — Gustavo expôs token de teste no chat) |
 | 2026-04-25 00:30 | `enrich_mem0_export.py`, `gus/dimagem.py`: ⚪ → 🚧 (rascunhos `a5e086a` e `4b99df6`) |
