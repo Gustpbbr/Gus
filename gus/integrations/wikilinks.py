@@ -17,7 +17,11 @@ ESTRATÉGIA:
 6. Valida: só aceita wikilinks que mapeiam pra .md real
 7. Formata pro Telegram
 
-CUSTO: ~1 call Haiku por sugestão. ~3k tokens input + 500 output ~ $0.005.
+CUSTO: ~1 call Sonnet por sugestão. ~3k tokens input + 500 output ~ $0.017.
+Sonnet (e não Haiku) porque o custo de errar é alto: wikilink ruim polui o
+grafo do Obsidian e cria conexão fraca permanente. Sonnet identifica conexão
+temática real com mais precisão que Haiku, e a diferença ($0.012/call) é
+desprezível.
 """
 
 import base64
@@ -31,7 +35,7 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-MODEL = "claude-haiku-4-5"
+MODEL = "claude-sonnet-4-6"
 
 PASTAS_CONTEUDO = (
     "pessoal/", "dimagem/", "projetos/", "receitas/", "esportes/",

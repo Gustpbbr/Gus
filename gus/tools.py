@@ -216,11 +216,12 @@ TOOLS = [
         "name": "sugerir_wikilinks",
         "description": (
             "Lê um arquivo .md do repo e sugere wikilinks pra outros arquivos relacionados, "
-            "via Haiku. Não modifica o arquivo — só retorna sugestões pro Gustavo aprovar. "
+            "via Sonnet. Não modifica o arquivo — só retorna sugestões pro Gustavo aprovar. "
             "Use quando o Gustavo perguntar 'que arquivos têm a ver com X?', 'sugere conexões "
             "pra esse MD', ou após salvar um arquivo novo querendo conectar ao grafo do "
             "Obsidian. Output: lista numerada com [[wikilinks]] + motivo de cada um, mais "
-            "lista dos já presentes (preservados). Custo ~$0.005 por chamada."
+            "lista dos já presentes (preservados). Custo ~$0.017 por chamada (Sonnet, não "
+            "Haiku — qualidade da conexão importa mais que economia)."
         ),
         "input_schema": {
             "type": "object",
