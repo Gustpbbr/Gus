@@ -227,7 +227,7 @@ async def logs_railway(
     if not deployment_id:
         return (
             "Não consegui localizar deployment ativo. "
-            "Confere que o RAILWAY_API_TOKEN tem permissão de leitura do projeto."
+            "Confere que o Railway_diagnostic tem permissão de leitura do projeto."
         )
 
     logs = await _puxar_logs(token, deployment_id, linhas)

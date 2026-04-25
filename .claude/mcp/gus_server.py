@@ -10,6 +10,7 @@ do TioGu.
 2 tools expostas inicialmente:
   - auto_diagnostico() — health check de 6 componentes
   - sugerir_wikilinks(arquivo, branch?) — Sonnet propõe wikilinks
+  - perguntar_gpt(query, modelo?) — second opinion via GPT-5
 
 CONFIGURAÇÃO:
   As tools precisam de várias env vars. O .mcp.json injeta a partir do
@@ -17,6 +18,7 @@ CONFIGURAÇÃO:
 
     MEM0_API_KEY=m0-...
     ANTHROPIC_API_KEY=sk-ant-...
+    OPENAI_API_KEY=sk-...              # pra perguntar_gpt e Whisper
     GITHUB_TOKEN=ghp_...
     TAVILY_API_KEY=tvly-...           # opcional
     GITHUB_REPO=Gustpbbr/Gus          # opcional, default Gustpbbr/Gus
@@ -39,6 +41,7 @@ sys.path.insert(0, str(_REPO_ROOT))
 
 from gus.integrations.diagnostico import auto_diagnostico
 from gus.integrations.wikilinks import sugerir_wikilinks
+from gus.integrations.openai_chat import perguntar_gpt
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
@@ -89,6 +92,34 @@ async def list_tools():
                 "required": ["arquivo"],
             },
         ),
+        Tool(
+            name="perguntar_gpt",
+            description=(
+                "Pergunta ao GPT-5 da OpenAI pra obter segunda opinião divergente. "
+                "Use quando: decisão técnica ambígua, suspeita de viés Claude, ou "
+                "Gustavo pedir explicitamente. NÃO use pra busca/fato (existe "
+                "search_web no bot) ou paper (PubMed/arXiv). Custo médio-alto, "
+                "use com moderação. Default 'gpt-5-mini' (~$0.001 por call). "
+                "Reusa OPENAI_API_KEY (mesma do Whisper). Padrão de uso: incluir "
+                "na query o que VOCÊ já pensou pra GPT divergir com base. Sempre "
+                "citar GPT como fonte ao reportar."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "Pergunta + contexto do que já foi pensado, em string única.",
+                    },
+                    "modelo": {
+                        "type": "string",
+                        "enum": ["gpt-5", "gpt-5-mini", "gpt-5-nano"],
+                        "description": "Default 'gpt-5-mini'. 'gpt-5' (caro) só pra decisão crítica.",
+                    },
+                },
+                "required": ["query"],
+            },
+        ),
     ]
 
 
@@ -111,6 +142,17 @@ async def call_tool(name: str, arguments: dict):
             return [TextContent(type="text", text=resultado)]
         except Exception as e:
             return [TextContent(type="text", text=f"Erro em sugerir_wikilinks: {e}")]
+
+    if name == "perguntar_gpt":
+        query = arguments.get("query", "").strip()
+        modelo = arguments.get("modelo", "gpt-5-mini")
+        if not query:
+            return [TextContent(type="text", text="argumento `query` vazio.")]
+        try:
+            resultado = await perguntar_gpt(query, modelo)
+            return [TextContent(type="text", text=resultado)]
+        except Exception as e:
+            return [TextContent(type="text", text=f"Erro em perguntar_gpt: {e}")]
 
     return [TextContent(type="text", text=f"Tool desconhecida: {name}")]
 
