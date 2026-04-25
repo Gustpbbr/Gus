@@ -7,6 +7,7 @@ from datetime import datetime, timezone, timedelta
 import httpx
 from duckduckgo_search import DDGS
 from gus.memory import buscar_memorias_detalhada, salvar_observacao_gus, buscar_memorias_gus
+from gus.integrations.railway import logs_railway as _logs_railway
 
 logger = logging.getLogger(__name__)
 
@@ -182,6 +183,35 @@ TOOLS = [
                 }
             },
             "required": ["workflow_name"]
+        }
+    },
+    {
+        "name": "logs_railway",
+        "description": (
+            "Puxa logs recentes do bot Gus rodando em produção no Railway. Use quando o "
+            "Gustavo perguntar sobre erros, comportamento estranho, se algum salvamento no "
+            "Mem0 ou GitHub falhou silenciosamente, ou quando precisar auditar a operação "
+            "do bot. Filtra por substring (case-insensitive) na mensagem e por janela "
+            "temporal em minutos. Requer RAILWAY_API_TOKEN configurado nas Variables do "
+            "Railway."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "linhas": {
+                    "type": "integer",
+                    "description": "Máximo de logs a retornar (1-500). Default 50."
+                },
+                "filtro": {
+                    "type": "string",
+                    "description": "Substring pra filtrar mensagens. Ex: 'Mem0', 'Resumo', 'error', 'salvar'."
+                },
+                "since_min": {
+                    "type": "integer",
+                    "description": "Só logs dos últimos N minutos. Ex: 60 = última hora, 1440 = últimas 24h."
+                }
+            },
+            "required": []
         }
     },
     {
@@ -742,5 +772,11 @@ async def executar_tool(name: str, inputs: dict) -> str:
         return await _disparar_workflow(
             inputs["workflow_name"],
             inputs.get("branch", "main")
+        )
+    elif name == "logs_railway":
+        return await _logs_railway(
+            inputs.get("linhas", 50),
+            inputs.get("filtro"),
+            inputs.get("since_min"),
         )
     return f"Tool desconhecida: {name}"
