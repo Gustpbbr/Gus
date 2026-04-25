@@ -58,7 +58,9 @@ TOOLS = [
             "Use quando precisar de contexto específico de um projeto, histórico de saúde, "
             "exames anteriores, decisões passadas, ou qualquer informação estruturada salva. "
             "Exemplos de paths: 'pessoal/saude/historico-saude.md', "
-            "'phronesis-bench/semantico/phronesis-00-briefing.md', 'capturado/insight-x.md'."
+            "'phronesis-bench/semantico/phronesis-00-briefing.md', 'capturado/insight-x.md'. "
+            "Por default lê do branch main. Para ler de outro branch (ex: branch de "
+            "desenvolvimento, rascunho ainda não merged), passe `branch`."
         ),
         "input_schema": {
             "type": "object",
@@ -66,6 +68,10 @@ TOOLS = [
                 "path": {
                     "type": "string",
                     "description": "Caminho completo do arquivo no repositório, incluindo extensão (ex: 'pessoal/saude/historico-saude.md')"
+                },
+                "branch": {
+                    "type": "string",
+                    "description": "Nome do branch (ex: 'claude/get-patient-health-data-5rXVB'). Omita pra ler do main."
                 }
             },
             "required": ["path"]
@@ -78,7 +84,7 @@ TOOLS = [
             "no GitHub. Use ANTES de chutar paths — quando o usuário perguntar o que existe "
             "em uma área, ou quando você não tem certeza se um arquivo específico existe. "
             "Retorna nomes de arquivos e pastas. Para listar a raiz do repo, passe path vazio "
-            "ou '.'."
+            "ou '.'. Por default lista do branch main; passe `branch` pra outro."
         ),
         "input_schema": {
             "type": "object",
@@ -86,9 +92,28 @@ TOOLS = [
                 "path": {
                     "type": "string",
                     "description": "Caminho da pasta no repositório (ex: 'pessoal/saude', 'projetos/gus'). Vazio ou '.' para a raiz."
+                },
+                "branch": {
+                    "type": "string",
+                    "description": "Nome do branch. Omita pra listar do main."
                 }
             },
             "required": ["path"]
+        }
+    },
+    {
+        "name": "list_branches",
+        "description": (
+            "Lista todas as branches existentes no repositório (com indicador de qual é a "
+            "default — main). Use ANTES de tentar ler de uma branch específica quando o "
+            "Gustavo mencionar trabalho em andamento, rascunho, ou pedir pra ver 'em qual "
+            "branch tá o X'. Cada branch retorna nome + commit SHA curto + autor do último "
+            "commit + data. Não recebe input."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
         }
     },
     {
@@ -370,7 +395,7 @@ TOOLS = [
 ]
 
 
-async def _read_from_github(path: str) -> str:
+async def _read_from_github(path: str, branch: str | None = None) -> str:
     try:
         path = _validar_path(path)
     except ValueError as e:
@@ -388,12 +413,14 @@ async def _read_from_github(path: str) -> str:
         "Accept": "application/vnd.github.v3+json",
         "X-GitHub-Api-Version": "2022-11-28"
     }
+    params = {"ref": branch} if branch else None
 
     async with httpx.AsyncClient(timeout=30) as client:
-        response = await client.get(url, headers=headers)
+        response = await client.get(url, headers=headers, params=params)
 
     if response.status_code == 404:
-        return f"Arquivo não encontrado: `{path}`"
+        ref_msg = f" (branch={branch})" if branch else ""
+        return f"Arquivo não encontrado: `{path}`{ref_msg}"
     if response.status_code != 200:
         return f"Erro ao ler do GitHub: {response.status_code}"
 
@@ -402,7 +429,7 @@ async def _read_from_github(path: str) -> str:
     return content
 
 
-async def _list_github_directory(path: str) -> str:
+async def _list_github_directory(path: str, branch: str | None = None) -> str:
     """Lista arquivos e pastas de um diretório no repositório GitHub."""
     path = (path or "").strip().strip("/")
     if path and path != ".":
@@ -425,12 +452,14 @@ async def _list_github_directory(path: str) -> str:
         "Accept": "application/vnd.github.v3+json",
         "X-GitHub-Api-Version": "2022-11-28"
     }
+    params = {"ref": branch} if branch else None
 
     async with httpx.AsyncClient(timeout=30) as client:
-        response = await client.get(url, headers=headers)
+        response = await client.get(url, headers=headers, params=params)
 
     if response.status_code == 404:
-        return f"Pasta não encontrada: `{path or '.'}`"
+        ref_msg = f" (branch={branch})" if branch else ""
+        return f"Pasta não encontrada: `{path or '.'}`{ref_msg}"
     if response.status_code != 200:
         return f"Erro ao listar GitHub: {response.status_code}"
 
@@ -441,7 +470,8 @@ async def _list_github_directory(path: str) -> str:
     pastas = sorted([i["name"] for i in items if i["type"] == "dir"])
     arquivos = sorted([i["name"] for i in items if i["type"] == "file"])
 
-    linhas = [f"Conteúdo de `{path or '(raiz)'}`:"]
+    branch_label = f" @ `{branch}`" if branch else ""
+    linhas = [f"Conteúdo de `{path or '(raiz)'}`{branch_label}:"]
     if pastas:
         linhas.append("\n**Pastas:**")
         linhas.extend(f"- {p}/" for p in pastas)
@@ -450,6 +480,73 @@ async def _list_github_directory(path: str) -> str:
         linhas.extend(f"- {a}" for a in arquivos)
     if not pastas and not arquivos:
         linhas.append("(vazio)")
+    return "\n".join(linhas)
+
+
+async def _list_branches() -> str:
+    """Lista todas as branches do repositório com info do último commit."""
+    token = os.getenv("GITHUB_TOKEN")
+    repo = os.getenv("GITHUB_REPO", "Gustpbbr/Gus")
+
+    if not token:
+        return "GITHUB_TOKEN não configurado."
+
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    url_branches = f"https://api.github.com/repos/{repo}/branches"
+    url_repo = f"https://api.github.com/repos/{repo}"
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        resp_b, resp_r = await asyncio.gather(
+            client.get(url_branches, headers=headers, params={"per_page": 100}),
+            client.get(url_repo, headers=headers),
+        )
+
+    if resp_b.status_code != 200:
+        return f"Erro ao listar branches: {resp_b.status_code}"
+
+    default_branch = "main"
+    if resp_r.status_code == 200:
+        default_branch = resp_r.json().get("default_branch", "main")
+
+    branches = resp_b.json()
+    if not branches:
+        return "Nenhuma branch encontrada."
+
+    # Pra cada branch, busca info do último commit em paralelo
+    async def _commit_info(branch_name: str) -> dict:
+        url_commit = f"https://api.github.com/repos/{repo}/commits/{branch_name}"
+        async with httpx.AsyncClient(timeout=15) as c:
+            r = await c.get(url_commit, headers=headers)
+        if r.status_code != 200:
+            return {"branch": branch_name, "sha": "?", "autor": "?", "data": "?", "msg": "(erro)"}
+        d = r.json()
+        autor = d.get("commit", {}).get("author", {})
+        return {
+            "branch": branch_name,
+            "sha": d.get("sha", "")[:7],
+            "autor": autor.get("name", "?"),
+            "data": (autor.get("date") or "")[:10],
+            "msg": (d.get("commit", {}).get("message") or "").splitlines()[0][:60],
+        }
+
+    infos = await asyncio.gather(
+        *(_commit_info(b["name"]) for b in branches),
+        return_exceptions=True,
+    )
+
+    linhas = [f"**{len(branches)} branches** (default: `{default_branch}`)\n"]
+    for info in infos:
+        if isinstance(info, Exception):
+            continue
+        marker = " ⭐" if info["branch"] == default_branch else ""
+        linhas.append(
+            f"- `{info['branch']}`{marker} — {info['sha']} · "
+            f"{info['data']} · {info['autor']} · {info['msg']}"
+        )
     return "\n".join(linhas)
 
 
@@ -744,9 +841,11 @@ async def _criar_acao(tipo: str, conteudo: str, alto_risco: bool = False) -> str
 
 async def executar_tool(name: str, inputs: dict) -> str:
     if name == "read_from_github":
-        return await _read_from_github(inputs["path"])
+        return await _read_from_github(inputs["path"], inputs.get("branch"))
     elif name == "list_github_directory":
-        return await _list_github_directory(inputs.get("path", ""))
+        return await _list_github_directory(inputs.get("path", ""), inputs.get("branch"))
+    elif name == "list_branches":
+        return await _list_branches()
     elif name == "list_commits":
         return await _list_commits(
             inputs.get("path", ""),
