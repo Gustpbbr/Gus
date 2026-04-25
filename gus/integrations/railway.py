@@ -2,8 +2,9 @@
 Railway logs — puxa logs do bot Gus em produção via Railway GraphQL API.
 
 CONFIGURAÇÃO (env vars no Railway):
-- RAILWAY_API_TOKEN (obrigatório): Account/Project token criado no dashboard.
+- Railway_diagnostic (obrigatório): Account/Project token criado no dashboard.
   → Account Settings → Tokens → Create token (ou Project → Settings → Tokens).
+  Nome NÃO segue convenção UPPERCASE por escolha do Gustavo.
 
 - RAILWAY_PROJECT_ID, RAILWAY_SERVICE_ID, RAILWAY_ENVIRONMENT_ID (opcionais):
   Railway INJETA AUTOMATICAMENTE essas variáveis no container do bot — não
@@ -26,6 +27,10 @@ logger = logging.getLogger(__name__)
 
 BRT = timezone(timedelta(hours=-3))
 RAILWAY_GRAPHQL_URL = "https://backboard.railway.app/graphql/v2"
+
+# Nome da env var que guarda o token. Não segue convenção UPPERCASE por
+# escolha do Gustavo no dashboard do Railway.
+TOKEN_ENV = "Railway_diagnostic"
 
 
 async def _railway_graphql(query: str, variables: dict, token: str) -> dict | None:
@@ -191,13 +196,13 @@ async def logs_railway(
     Returns:
         Texto pronto pro Telegram, ou mensagem de erro com instruções de setup.
     """
-    token = os.getenv("RAILWAY_API_TOKEN")
+    token = os.getenv(TOKEN_ENV)
     if not token:
         return (
-            "RAILWAY_API_TOKEN não configurado. Pra ativar:\n"
-            "1. Railway → Account Settings → Tokens → Create token\n"
-            "2. Railway → seu projeto → Variables → RAILWAY_API_TOKEN=<token>\n"
-            "3. Redeploy"
+            f"Variável {TOKEN_ENV} não configurada. Pra ativar:\n"
+            f"1. Railway → Account Settings → Tokens → Create token\n"
+            f"2. Railway → seu projeto → Variables → {TOKEN_ENV}=<token>\n"
+            f"3. Redeploy"
         )
 
     try:
