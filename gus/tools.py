@@ -15,6 +15,10 @@ from gus.memory import (
 from gus.integrations.railway import logs_railway as _logs_railway
 from gus.integrations.diagnostico import auto_diagnostico as _auto_diagnostico
 from gus.integrations.wikilinks import sugerir_wikilinks as _sugerir_wikilinks
+from gus.integrations.pesquisa import (
+    pesquisar_pubmed as _pesquisar_pubmed,
+    pesquisar_arxiv as _pesquisar_arxiv,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -186,6 +190,62 @@ TOOLS = [
                 "query": {
                     "type": "string",
                     "description": "Termos de busca em português ou inglês"
+                }
+            },
+            "required": ["query"]
+        }
+    },
+    {
+        "name": "pesquisar_pubmed",
+        "description": (
+            "Busca artigos no PubMed (NCBI) — base mundial de literatura biomédica. "
+            "Use pra dúvidas clínicas, anestesia, medicina interna, qualquer coisa que "
+            "demande evidência científica revisada por pares. Retorna até `max_n` "
+            "resultados com título, autores, journal, ano e link DOI/PMID. Sem custo "
+            "(API NCBI grátis)."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Termos de busca (ex: 'sevoflurane pediatric MRI', 'phronesis bench medical AI')."
+                },
+                "max_n": {
+                    "type": "integer",
+                    "description": "Máximo de resultados (1 a 20). Default 10."
+                },
+                "since_year": {
+                    "type": "integer",
+                    "description": "Filtra só artigos a partir desse ano (ex: 2020)."
+                }
+            },
+            "required": ["query"]
+        }
+    },
+    {
+        "name": "pesquisar_arxiv",
+        "description": (
+            "Busca preprints no arXiv — repositório de artigos em IA, ML, física, "
+            "matemática, etc. Use pra papers em IA (relevante pro Phronesis-Bench, MGE, "
+            "TER, Axon). Categorias úteis: 'cs.AI' (IA geral), 'cs.CL' (NLP), 'cs.LG' "
+            "(Machine Learning), 'cs.HC' (interação humano-computador), 'q-bio.NC' "
+            "(neurociência computacional). Sem custo."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Termos de busca (ex: 'LLM metacognition', 'wisdom benchmark', 'neurodivergent reasoning')."
+                },
+                "max_n": {
+                    "type": "integer",
+                    "description": "Máximo de resultados (1 a 20). Default 10."
+                },
+                "categoria": {
+                    "type": "string",
+                    "description": "Filtro de categoria arXiv (ex: 'cs.AI', 'cs.LG'). Omita pra buscar em todas."
                 }
             },
             "required": ["query"]
@@ -919,6 +979,18 @@ async def executar_tool(name: str, inputs: dict) -> str:
         return await buscar_memorias_detalhada(inputs["query"], limit)
     elif name == "search_web":
         return await _search_web(inputs["query"])
+    elif name == "pesquisar_pubmed":
+        return await _pesquisar_pubmed(
+            inputs["query"],
+            inputs.get("max_n", 10),
+            inputs.get("since_year"),
+        )
+    elif name == "pesquisar_arxiv":
+        return await _pesquisar_arxiv(
+            inputs["query"],
+            inputs.get("max_n", 10),
+            inputs.get("categoria"),
+        )
     elif name == "save_to_github":
         return await _save_to_github(
             inputs["filename"],

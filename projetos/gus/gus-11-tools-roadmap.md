@@ -1,7 +1,7 @@
 ---
 tipo: roadmap
 area: gus
-atualizado: 2026-04-25T14:50-03:00
+atualizado: 2026-04-25T15:05-03:00
 ---
 
 # Roadmap de Tools — Tiogubot
@@ -28,8 +28,8 @@ Inventário completo das tools propostas, status de implementação, e decisões
 |---|---|---|---|
 | 1 | `logs_railway` | 🚧 | Código no main (`741380e`). Token de teste revogado. Falta: criar novo token + validar schema GraphQL com `scripts/test_railway_logs.py` no PC. |
 | 2 | `auto_diagnostico` | ✅ | Testado em produção 25/04 11:23 BRT. TioGu confirmou retorno correto (Mem0 OK há 6min, workflows OK). |
-| 3a | `pesquisar_pubmed` | ⚪ | Sprint 2 |
-| 3b | `pesquisar_arxiv` | ⚪ | Sprint 2 |
+| 3a | `pesquisar_pubmed` | ✅ | NCBI E-utilities, sem auth, custo zero. Tools 19 e 20 do bot. |
+| 3b | `pesquisar_arxiv` | ✅ | arXiv Atom feed, sem auth, custo zero. Categorias úteis: cs.AI, cs.CL, cs.LG, cs.HC, q-bio.NC. |
 | 4a | `enviar_email` | ⚪ | Sprint 3. Requer adicionar escopo `gmail.send` ao OAuth Google existente |
 | 4b | `criar_evento_calendario` | ⚪ | Sprint 3. Mesmo OAuth do email |
 | 5 | `perguntar_gemini` | ⚪ | Sprint 2. Requer `GEMINI_API_KEY` (Gustavo cria em aistudio.google.com) |
@@ -81,8 +81,8 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | Tool | API | Prioridade | Status |
 |---|---|---|---|
-| `pesquisar_pubmed(query, max_n=10)` | NCBI E-utilities (grátis) | ⭐⭐⭐ | ⚪ |
-| `pesquisar_arxiv(query)` | arXiv API (grátis) | ⭐⭐⭐ | ⚪ |
+| `pesquisar_pubmed(query, max_n, since_year?)` | NCBI E-utilities (grátis) | ⭐⭐⭐ | ✅ |
+| `pesquisar_arxiv(query, max_n, categoria?)` | arXiv API (grátis) | ⭐⭐⭐ | ✅ |
 | `consultar_doi(doi)` | CrossRef (grátis) | ⭐⭐ | ⚪ |
 | `consultar_anvisa(medicamento)` | DataSUS/Anvisa | ⭐ | ⚪ |
 | `cid10(termo)` | DataSUS | ⭐ | ⚪ |
@@ -168,6 +168,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | Data | Mudança |
 |---|---|
+| 2026-04-25 15:05 | **Sprint 2 parcial — `pesquisar_pubmed` + `pesquisar_arxiv` implementados** (`gus/integrations/pesquisa.py`, 220 linhas). Custo zero (APIs públicas), sem auth, retornam markdown formatado com título/autores/ano/link. Bot agora em 20 tools. system_prompt orienta routing: clínica→PubMed, IA→arXiv, factual atual→search_web. |
 | 2026-04-25 14:50 | **C — Scan sensível automático** (`.claude/hooks/scan_sensivel.py`). PreToolUse hook em Write/Edit/NotebookEdit espelha `gus/tools.py:_PATTERNS_SENSIVEIS` (CPF, CNPJ, cartão, 5 tipos de API key). Bloqueia escrita em path não-`sensivel/` se detectar — exit 2 com mensagem em stderr. Defesa de profundidade: agora o Claude Code tem a mesma proteção que o `save_to_github` do bot. Testado com 3 cenários OK. |
 | 2026-04-25 14:35 | **B2 — MCP `gus` criado** (`.claude/mcp/gus_server.py`): expõe `auto_diagnostico` e `sugerir_wikilinks` daqui no Claude Code, reusando `gus/integrations/*`. `.mcp.json` padronizado pra carregar `~/.claude/gus.env` (formato KEY=VALUE), com fallback retrocompat pro `~/.claude/mem0.key`. Total agora: 2 MCP servers (`mem0-gus` 7 tools + `gus` 2 tools) = 9 tools daqui quando configurado. |
 | 2026-04-25 14:20 | **B1 — Cache logging implementado**. `gus/logger.py:stats_mes_atual()` agrega `cache_creation`, `cache_read`, `cache_hit_ratio` do JSONL. `bot.py:_responder` registra os campos novos por turno. `/custo` reformulado pra mostrar tokens + cache hit ratio % além do custo. Não dependia de A2 — Gustavo agora vê economia direto pelo Telegram sem precisar Anthropic Console. |
