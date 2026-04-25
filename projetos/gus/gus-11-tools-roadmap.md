@@ -1,7 +1,7 @@
 ---
 tipo: roadmap
 area: gus
-atualizado: 2026-04-25T12:34-03:00
+atualizado: 2026-04-25T12:50-03:00
 ---
 
 # Roadmap de Tools — Tiogubot
@@ -26,7 +26,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | # | Tool | Status | Observação |
 |---|---|---|---|
-| 1 | `logs_railway` | 🚧 + ⏳ | Código no main (`741380e`). Token `Railway_diagnostic` configurado mas exposto no chat de hoje; Gustavo deve revogar e criar novo. Schema GraphQL é especulação — validar com `scripts/test_railway_logs.py` no PC antes de confiar. |
+| 1 | `logs_railway` | 🚧 | Código no main (`741380e`). Token de teste revogado. Falta: criar novo token + validar schema GraphQL com `scripts/test_railway_logs.py` no PC. |
 | 2 | `auto_diagnostico` | ✅ | Testado em produção 25/04 11:23 BRT. TioGu confirmou retorno correto (Mem0 OK há 6min, workflows OK). |
 | 3a | `pesquisar_pubmed` | ⚪ | Sprint 2 |
 | 3b | `pesquisar_arxiv` | ⚪ | Sprint 2 |
@@ -154,10 +154,13 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | Decisão | Estado |
 |---|---|
-| Cron diário do `auto_diagnostico` que avisa Telegram só se quebrar | ❓ não decidido (recomendação: sim) |
+| Cron diário do `auto_diagnostico` que avisa Telegram só se quebrar | ✅ implementado (`.github/workflows/check-saude.yml`, 7h30 BRT) |
+| Log auditável de resumos pro Mem0 | ✅ implementado (`gus/resumo_log.py` → `_log/resumos-mem0/AAAA-MM-DD.md`) |
 | Ativar `gus/dimagem.py` em `bot.py` (handler de foto) | ❓ aguarda revisão do rascunho |
 | Workflow YAML do `enrich_mem0_export.py` | ❓ aguarda primeiro teste manual |
 | Validação `logs_railway` schema GraphQL via PC | ⏳ aguarda Gustavo voltar ao PC |
+| Modelo do `gerar_resumo_turnos` (Haiku vs Sonnet) | ✅ Haiku mantido — log auditável compensa |
+| Modelo do `gus/dimagem.py` extração | ✅ Haiku mantido (decisão Gustavo 25/04) |
 
 ---
 
@@ -165,6 +168,7 @@ Inventário completo das tools propostas, status de implementação, e decisões
 
 | Data | Mudança |
 |---|---|
+| 2026-04-25 12:50 | `sugerir_wikilinks`: trocado Haiku → Sonnet 4.6 (custo de errar > economia, decisão Gustavo). Token Railway de teste revogado. Cron diário `auto_diagnostico` implementado (`.github/workflows/check-saude.yml`, 7h30 BRT, alerta Telegram só se ⚠️/❌). Log auditável de resumos pro Mem0 implementado (`gus/resumo_log.py` → `_log/resumos-mem0/AAAA-MM-DD.md`). |
 | 2026-04-25 12:34 | `sugerir_wikilinks`: 🚧 → ✅ (testada em produção, retorna sugestões substantivas; nuance: TioGu pode sugerir conexão temporal, prompt pode ser apertado se virar problema). Sprint 1 fechado (exceto `logs_railway` que aguarda config). |
 | 2026-04-25 11:40 | `sugerir_wikilinks(arquivo, branch?)`: ⚪ → 🚧 (criada `gus/integrations/wikilinks.py`, plugada em `tools.py` como 17ª tool, aguarda merge) |
 | 2026-04-25 11:13 | `auto_diagnostico` + `list_branches` + branch param: ⚪ → ✅ (mergeados em main `741380e`, testados em produção) |

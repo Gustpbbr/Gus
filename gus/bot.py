@@ -11,6 +11,7 @@ from gus.llm import gerar_resposta, gerar_resumo_turnos
 from gus.logger import registrar, custo_mes_atual
 from gus.memory import buscar_memorias, salvar_memorias
 from gus.media import processar_imagem, processar_pdf, processar_docx, processar_xlsx, transcrever_audio
+from gus.resumo_log import append_resumo_async
 
 logger = logging.getLogger(__name__)
 
@@ -109,16 +110,23 @@ def _query_mem0_contextual(history: list[dict], fallback: str) -> str:
 
 
 async def _resumir_e_salvar(chat_id: str, trecho: list[dict]) -> None:
-    """Gera resumo extrativo do trecho e salva no Mem0. Silencioso em falhas."""
+    """Gera resumo extrativo do trecho e salva no Mem0. Silencioso em falhas.
+
+    Também registra cada evento (salvo/descartado/erro) no log auditável
+    em _log/resumos-mem0/AAAA-MM-DD.md (Gustavo fiscaliza no Obsidian).
+    """
     try:
         resumo = await gerar_resumo_turnos(trecho)
         if resumo and resumo.strip().lower() != "sem conteúdo relevante":
             await salvar_memorias([{"role": "user", "content": resumo}])
             logger.info(f"Resumo salvo no Mem0 (chat {chat_id}, {len(resumo)} chars)")
+            append_resumo_async(resumo, len(trecho), "salvo")
         else:
             logger.info(f"Resumo vazio ou sem conteúdo relevante (chat {chat_id})")
+            append_resumo_async("(sem conteúdo relevante)", len(trecho), "descartado")
     except Exception as e:
         logger.warning(f"Resumo falhou (chat {chat_id}): {e}")
+        append_resumo_async(f"(erro: {str(e)[:120]})", len(trecho), "erro")
 
 
 def _autorizado(chat_id: str) -> bool:
