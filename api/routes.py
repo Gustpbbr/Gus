@@ -21,6 +21,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from api.auth import verify_bearer
 from api.schemas import (
+    CameraAnalyseReq,
     DeleteMemoryReq,
     ListGitHubReq,
     PesquisarArxivReq,
@@ -44,6 +45,7 @@ from gus.memory import (
 )
 from gus.integrations.pesquisa import pesquisar_arxiv, pesquisar_pubmed
 from gus.integrations.wikilinks import sugerir_wikilinks
+from api.camera import analisar_imagem, salvar_captura
 from gus.tools import (
     _list_github_directory,
     _read_from_github,
@@ -240,3 +242,60 @@ async def r_sugerir_wikilinks(payload: SugerirWikilinksReq):
             f"_Sugestões também salvas em `acoes/wikilinks-pendentes/{filename_pendente}.md` pra curadoria do Claude/TioGu._"
         )
     )
+
+
+# ====================== Câmera / Visão (PROJETO FUTURO) ======================
+#
+# Endpoints para integração com câmera do S8 via PWA.
+# Fluxo: S8 (PWA /camera) → POST /analise_camera → Claude Vision → GitHub
+#        Custom GPT → GET /ver_ultima_captura → lê _ultimo.md
+#
+# Status atual: implementado e funcional, mas NÃO exposto no OpenAPI do Custom
+# GPT (include_in_schema=False em ambos). Será ativado quando o Custom GPT
+# estiver funcionando com Actions configuradas e o S8 estiver como terminal fixo.
+#
+# Para ativar no Custom GPT: remover include_in_schema=False dos dois endpoints
+# e fazer redeploy no Railway.
+
+
+@router.post(
+    "/analise_camera",
+    operation_id="analise_camera",
+    response_model=TextResp,
+    include_in_schema=False,  # FUTURO — oculto do OpenAPI/Custom GPT por ora
+)
+async def r_analise_camera(payload: CameraAnalyseReq):
+    """Analisa imagem com Claude Vision, salva JPG + MD em capturado/visual/.
+
+    Recebido pela PWA do S8 a cada 30s (modo auto) ou sob demanda.
+    A análise fica disponível em /ver_ultima_captura pra o Custom GPT ler.
+    """
+    timestamp = datetime.now(BRT).strftime("%Y-%m-%d-%H%M%S")
+
+    b64 = payload.image_base64
+    if "," in b64:
+        b64 = b64.split(",", 1)[1]
+
+    analise = await analisar_imagem(b64, payload.contexto)
+    salvos = await salvar_captura(b64, analise, timestamp)
+
+    paths = [p for p in [salvos.get("img_path"), salvos.get("md_path")] if p]
+    status = f"Salvo em: {', '.join(paths)}" if paths else "Análise feita, erro ao salvar no GitHub"
+    return TextResp(result=f"{analise}\n\n---\n_{status}_")
+
+
+@router.get(
+    "/ver_ultima_captura",
+    operation_id="ver_ultima_captura",
+    response_model=TextResp,
+    include_in_schema=False,  # FUTURO — oculto do OpenAPI/Custom GPT por ora
+)
+async def r_ver_ultima_captura():
+    """Lê a última captura visual registrada pela câmera do S8.
+
+    Custom GPT chama este endpoint quando o Gustavo perguntar
+    'o que você está vendo?', 'o que eu estava fazendo?', etc.
+    Retorna o conteúdo de capturado/visual/_ultimo.md.
+    """
+    result = await _read_from_github("capturado/visual/_ultimo.md")
+    return TextResp(result=result)
