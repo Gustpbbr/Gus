@@ -17,10 +17,17 @@ dialogos/
 ├── inbox-custom-gpt/         ← demandas pra Custom GPT processar
 ├── archive/                  ← demandas concluídas (move pra cá quando done)
 ├── processados-erro/         ← demandas com frontmatter inválido (pra debug)
-└── streams/                  ← cronológico semanal (legado pré-25/04 noite)
-    ├── semana-2026-04-21.md
-    └── README-legado.md
+├── streams/                  ← cronológico semanal (legado pré-25/04 noite)
+│   ├── semana-2026-04-21.md
+│   └── README-legado.md
+└── <qualquer-pasta-livre>/   ← Claude Chat ou outras portas podem criar aqui
+                                no Drive; vira mirror automático no GitHub
+                                (ver "Modo mirror" abaixo)
 ```
+
+A varredura do `import-from-drive.yml` é **recursiva** dentro de `dialogos/`
+no Drive — qualquer arquivo de texto criado em qualquer subpasta vem pro
+GitHub. A única exceção é `dialogos/processados/`, ignorada no scan.
 
 ## Fluxo de uma demanda
 
@@ -41,6 +48,33 @@ dialogos/
 
 5. Destino move arquivo pra archive/ quando concluído
 ```
+
+## Modo mirror (qualquer outra subpasta de `dialogos/`)
+
+Desde 26/04/2026, o `import-from-drive.yml` varre **toda** a árvore de
+`Gus-Sync/dialogos/` no Drive (recursivo), não só as 4 inboxes. Regras:
+
+| Localização no Drive | Modo | Validação | Move pra processados |
+|---|---|---|---|
+| `dialogos/inbox-*/<arquivo>` (profundidade 1) | demanda | frontmatter rígido | sim |
+| `dialogos/<qualquer outro path>` | mirror | nenhuma | não |
+| `dialogos/processados/...` | (skipped) | — | — |
+
+Em modo mirror, o arquivo é copiado **raw** pro mesmo path em `dialogos/` no
+GitHub e fica vivo nos dois lados. Idempotência: a cada execução, o conteúdo
+é comparado byte-a-byte com o que já existe no GitHub — se idêntico, nada
+é commitado.
+
+Como `sync-to-drive.yml` faz o caminho oposto (GitHub → Drive) também com
+comparação byte-a-byte, o loop não acontece: depois de um round-trip os dois
+lados ficam idênticos e os scripts param de escrever.
+
+**Casos de uso do modo mirror:**
+- Claude Chat cria pastas livres dentro de `dialogos/` no Drive (ex:
+  `dialogos/portas/`, `dialogos/projetos-vivos/`) e elas aparecem no GitHub
+- Notas longas que não cabem no formato demanda mas que todas as portas
+  precisam ver
+- Arquivos compartilhados entre portas sem fluxo de status
 
 ## Frontmatter padrão (obrigatório)
 

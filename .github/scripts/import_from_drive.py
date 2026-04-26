@@ -1,18 +1,21 @@
 #!/usr/bin/env python3
 """
-Import demandas de Gus-Sync/dialogos/inbox-*/ no Drive pra dialogos/inbox-*/ no GitHub.
+Import recursivo de Gus-Sync/dialogos/ no Drive pra dialogos/ no GitHub.
 
 Fluxo por execução (cron 15min):
-  1. Lista arquivos em cada pasta inbox-*/ no Drive
-  2. Pra cada arquivo:
-     a. Baixa conteúdo (Google Doc → exporta como text/markdown; .md → baixa direto)
-     b. Valida frontmatter YAML
-     c. Se válido: commita no GitHub via API + move arquivo no Drive pra processados/
-     d. Se inválido: skip (deixa no Drive pro Gustavo corrigir)
-     e. Se inbox-tiogu: notifica Telegram (opcional, só se secrets configurados)
+  1. Varre Gus-Sync/dialogos/ recursivo no Drive (skip processados/)
+  2. Pra cada arquivo de texto encontrado:
+     a. Baixa conteúdo (Google Doc → exporta markdown; .md/text → baixa direto)
+     b. Decide modo pelo path relativo:
+        - Profundidade 1 dentro de inbox-*/  →  modo demanda:
+            valida frontmatter, commita, move arquivo no Drive pra processados/
+        - Qualquer outro caminho dentro de dialogos/  →  modo mirror:
+            commita raw no GitHub no path correspondente, idempotente
+            (não move, não valida, não notifica)
+     c. Se inbox-tiogu (modo demanda): notifica Telegram
 
-Idempotência: se arquivo já existe no GitHub com mesmo path, faz update via PUT
-sha. Se mesmo conteúdo, GitHub retorna 200 sem mudança real.
+Idempotência (modo mirror): antes de cada PUT, compara com conteúdo já no GitHub.
+Se idêntico, skip — quebra o loop com sync-to-drive (que mirrora o caminho oposto).
 """
 
 import base64
@@ -39,6 +42,11 @@ BRT = timezone(timedelta(hours=-3))
 PORTAS_VALIDAS = {"claude-chat", "tiogu", "claude-code", "custom-gpt", "gustavo"}
 INBOXES = ["inbox-tiogu", "inbox-claude-code", "inbox-claude-chat", "inbox-custom-gpt"]
 PROCESSADOS_FOLDER = "processados"
+
+# Mimes considerados texto pra mirror raw. Outros tipos (imagens, binários) são
+# ignorados com warning — Drive pode ter qualquer coisa, repo só aceita texto.
+TEXT_MIMES_PREFIX = ("text/",)
+TEXT_MIMES_EXTRA = {"application/vnd.google-apps.document"}
 
 
 def get_drive():
@@ -96,6 +104,38 @@ def list_files_in_folder(drive, folder_id):
     fields = "files(id, name, mimeType, modifiedTime)"
     r = drive.files().list(q=q, fields=fields, pageSize=200).execute()
     return r.get("files", [])
+
+
+def walk_drive_recursive(drive, folder_id, prefix=""):
+    """Yield (file_dict, prefix) pra todos os arquivos sob folder_id, recursivo.
+
+    `prefix` é o path relativo (com `/` final, ou string vazia na raiz). Pula
+    a subpasta `processados/` na raiz pra não reimportar arquivos já archivados.
+    """
+    q = f"'{folder_id}' in parents and trashed = false"
+    fields = "nextPageToken, files(id, name, mimeType, modifiedTime)"
+    page_token = None
+    while True:
+        kwargs = {"q": q, "fields": fields, "pageSize": 200}
+        if page_token:
+            kwargs["pageToken"] = page_token
+        r = drive.files().list(**kwargs).execute()
+        for f in r.get("files", []):
+            if f["mimeType"] == "application/vnd.google-apps.folder":
+                if prefix == "" and f["name"] == PROCESSADOS_FOLDER:
+                    continue
+                yield from walk_drive_recursive(drive, f["id"], prefix + f["name"] + "/")
+            else:
+                yield f, prefix
+        page_token = r.get("nextPageToken")
+        if not page_token:
+            break
+
+
+def is_text_mime(mime):
+    if mime in TEXT_MIMES_EXTRA:
+        return True
+    return any(mime.startswith(p) for p in TEXT_MIMES_PREFIX)
 
 
 def download_content(drive, file_id, mime_type):
@@ -165,7 +205,13 @@ def validate_frontmatter(fm, file_name):
 
 
 def github_put_file(repo, path, content_str, commit_message, gh_token):
-    """Cria ou atualiza arquivo no GitHub via Contents API."""
+    """Cria ou atualiza arquivo no GitHub via Contents API.
+
+    Idempotente: se o arquivo já existe e o conteúdo é byte-idêntico ao que
+    seria escrito, retorna ("unchanged", True) sem PUT — evita commit no-op
+    e quebra loop com sync-to-drive.
+    Retorna ("created"|"updated"|"unchanged", success_bool).
+    """
     url = f"https://api.github.com/repos/{repo}/contents/{path}"
     headers = {
         "Authorization": f"token {gh_token}",
@@ -173,12 +219,19 @@ def github_put_file(repo, path, content_str, commit_message, gh_token):
         "X-GitHub-Api-Version": "2022-11-28",
     }
 
-    # Verifica se já existe
     sha = None
     with httpx.Client(timeout=30) as client:
         r = client.get(url, headers=headers)
         if r.status_code == 200:
-            sha = r.json().get("sha")
+            data = r.json()
+            sha = data.get("sha")
+            if data.get("encoding") == "base64":
+                try:
+                    existing = base64.b64decode(data["content"]).decode("utf-8")
+                    if existing == content_str:
+                        return "unchanged", True
+                except (ValueError, UnicodeDecodeError):
+                    pass
         elif r.status_code != 404:
             log.warning(f"GET {url} retornou {r.status_code}: {r.text[:200]}")
 
@@ -192,9 +245,9 @@ def github_put_file(repo, path, content_str, commit_message, gh_token):
     with httpx.Client(timeout=30) as client:
         r = client.put(url, headers=headers, json=body)
         if r.status_code in (200, 201):
-            return True
+            return ("updated" if sha else "created"), True
         log.error(f"GitHub PUT {url} falhou ({r.status_code}): {r.text[:300]}")
-        return False
+        return "error", False
 
 
 def notify_telegram(message):
@@ -220,97 +273,133 @@ def normalizar_nome_arquivo(name):
     return name + ".md"
 
 
+def processar_demanda_inbox(drive, repo, gh_token, f, inbox, processados_id):
+    """Modo demanda: arquivo direto em inbox-*/ — valida frontmatter, commita, move.
+    Retorna 'imported' | 'invalid' | 'error'."""
+    file_id = f["id"]
+    file_name = f["name"]
+    mime = f.get("mimeType", "")
+
+    try:
+        content = download_content(drive, file_id, mime)
+    except HttpError as e:
+        log.error(f"    Falha ao baixar {file_name}: {e}")
+        return "error"
+
+    fm, body = parse_frontmatter(content)
+    if fm is None:
+        log.warning(f"    Frontmatter ausente/inválido em {file_name} — skip")
+        return "invalid"
+
+    erros_fm = validate_frontmatter(fm, file_name)
+    if erros_fm:
+        log.warning(f"    Validação falhou em {file_name}: {erros_fm}")
+        return "invalid"
+
+    github_path = f"dialogos/{inbox}/{normalizar_nome_arquivo(file_name)}"
+    commit_msg = f"import: {file_name} via {inbox} (origem: {fm.get('origem')})"
+
+    status, ok = github_put_file(repo, github_path, content, commit_msg, gh_token)
+    if not ok:
+        log.error(f"    GitHub PUT falhou pra {file_name}")
+        return "error"
+
+    log.info(f"    [{status}] {github_path}")
+
+    # Move no Drive pra processados/<inbox>/
+    proc_inbox_id = get_or_create_folder(drive, inbox, processados_id)
+    try:
+        move_file(drive, file_id, proc_inbox_id, find_parents(drive, file_id))
+        log.info(f"    Movido no Drive pra processados/{inbox}/")
+    except HttpError as e:
+        log.warning(f"    Move falhou (importou OK, pode reprocessar): {e}")
+
+    if inbox == "inbox-tiogu":
+        titulo = re.search(r"^#\s+(.+)$", body, re.MULTILINE)
+        titulo = titulo.group(1).strip() if titulo else file_name
+        msg = (
+            f"📥 Demanda nova em inbox-tiogu\n"
+            f"Origem: {fm.get('origem')} | Prioridade: {fm.get('prioridade')}\n"
+            f"\"{titulo}\""
+        )
+        notify_telegram(msg)
+
+    return "imported"
+
+
+def processar_mirror_raw(drive, repo, gh_token, f, prefix):
+    """Modo mirror: cópia raw pro GitHub, idempotente. Não move, não valida.
+    Retorna 'updated' | 'created' | 'unchanged' | 'skipped' | 'error'."""
+    file_id = f["id"]
+    file_name = f["name"]
+    mime = f.get("mimeType", "")
+
+    if not is_text_mime(mime):
+        log.info(f"    {prefix}{file_name} ({mime}) não é texto, skip")
+        return "skipped"
+
+    try:
+        content = download_content(drive, file_id, mime)
+    except HttpError as e:
+        log.error(f"    Falha ao baixar {prefix}{file_name}: {e}")
+        return "error"
+
+    github_path = f"dialogos/{prefix}{normalizar_nome_arquivo(file_name)}"
+    commit_msg = f"mirror: {file_name} de Drive dialogos/{prefix}"
+
+    status, ok = github_put_file(repo, github_path, content, commit_msg, gh_token)
+    if not ok:
+        return "error"
+    return status
+
+
+def find_parents(drive, file_id):
+    """Pega lista de parents atuais (necessário pra move)."""
+    r = drive.files().get(fileId=file_id, fields="parents").execute()
+    return r.get("parents", [])
+
+
 def main():
     repo = os.environ["GH_REPO"]
     gh_token = os.environ["GH_TOKEN"]
     drive_root = os.environ["DRIVE_ROOT_FOLDER_ID"]
     drive = get_drive()
 
-    # Resolve dialogos/ no Drive
     dialogos_id = find_folder_by_path(drive, "dialogos", drive_root)
     if not dialogos_id:
         log.info("Pasta dialogos/ não existe no Drive ainda — nada a importar")
         sys.exit(0)
 
-    # Garante pasta processados/ existe
     processados_id = get_or_create_folder(drive, PROCESSADOS_FOLDER, dialogos_id)
 
-    total_importados = 0
-    total_erros = 0
+    counts = {"imported": 0, "invalid": 0, "updated": 0, "created": 0,
+              "unchanged": 0, "skipped": 0, "error": 0}
 
-    for inbox in INBOXES:
-        inbox_id = find_folder_by_path(drive, inbox, dialogos_id)
-        if not inbox_id:
-            log.debug(f"{inbox}/ não existe no Drive (ainda)")
-            continue
+    for f, prefix in walk_drive_recursive(drive, dialogos_id):
+        file_name = f["name"]
+        mime = f.get("mimeType", "")
 
-        # Subpasta de processados específica
-        proc_inbox_id = get_or_create_folder(drive, inbox, processados_id)
+        # Path relativo a dialogos/. Ex: ""  -> arquivo direto em dialogos/
+        #                                "inbox-tiogu/" -> direto em inbox
+        #                                "streams/2026/" -> aninhado
+        parts = [p for p in prefix.split("/") if p]
+        is_inbox_top = len(parts) == 1 and parts[0] in INBOXES
 
-        files = list_files_in_folder(drive, inbox_id)
-        if not files:
-            continue
+        log.info(f"  → {prefix}{file_name} (mime={mime})")
 
-        log.info(f"{inbox}: {len(files)} arquivo(s) a processar")
+        if is_inbox_top:
+            result = processar_demanda_inbox(drive, repo, gh_token, f, parts[0], processados_id)
+        else:
+            result = processar_mirror_raw(drive, repo, gh_token, f, prefix)
 
-        for f in files:
-            file_id = f["id"]
-            file_name = f["name"]
-            mime = f.get("mimeType", "")
-            log.info(f"  → {file_name} (mime={mime})")
+        counts[result] = counts.get(result, 0) + 1
 
-            try:
-                content = download_content(drive, file_id, mime)
-            except HttpError as e:
-                log.error(f"    Falha ao baixar {file_name}: {e}")
-                total_erros += 1
-                continue
-
-            fm, body = parse_frontmatter(content)
-            if fm is None:
-                log.warning(f"    Frontmatter ausente/inválido em {file_name} — skip")
-                total_erros += 1
-                continue
-
-            erros_fm = validate_frontmatter(fm, file_name)
-            if erros_fm:
-                log.warning(f"    Validação falhou em {file_name}: {erros_fm}")
-                total_erros += 1
-                continue
-
-            # Tudo OK — importa pro GitHub
-            github_path = f"dialogos/{inbox}/{normalizar_nome_arquivo(file_name)}"
-            commit_msg = f"import: {file_name} via {inbox} (origem: {fm.get('origem')})"
-
-            ok = github_put_file(repo, github_path, content, commit_msg, gh_token)
-            if not ok:
-                log.error(f"    GitHub PUT falhou pra {file_name}")
-                total_erros += 1
-                continue
-
-            log.info(f"    Commitado em {github_path}")
-
-            # Move no Drive pra processados
-            try:
-                move_file(drive, file_id, proc_inbox_id, [inbox_id])
-                log.info(f"    Movido no Drive pra processados/{inbox}/")
-            except HttpError as e:
-                log.warning(f"    Move falhou (importou OK, mas pode reprocessar): {e}")
-
-            total_importados += 1
-
-            # Notifica Telegram se for inbox-tiogu
-            if inbox == "inbox-tiogu":
-                titulo = re.search(r"^#\s+(.+)$", body, re.MULTILINE)
-                titulo = titulo.group(1).strip() if titulo else file_name
-                msg = (
-                    f"📥 Demanda nova em inbox-tiogu\n"
-                    f"Origem: {fm.get('origem')} | Prioridade: {fm.get('prioridade')}\n"
-                    f"\"{titulo}\""
-                )
-                notify_telegram(msg)
-
-    log.info(f"Resumo: {total_importados} importado(s), {total_erros} erro(s)")
+    log.info(
+        f"Resumo: {counts['imported']} demanda(s), "
+        f"{counts['created']}/{counts['updated']}/{counts['unchanged']} mirror "
+        f"(novos/atualizados/sem mudança), {counts['invalid']} inválida(s), "
+        f"{counts['skipped']} ignorada(s), {counts['error']} erro(s)"
+    )
 
 
 if __name__ == "__main__":

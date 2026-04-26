@@ -118,8 +118,23 @@ def find_existing_file(service, file_name, parent_id):
 
 
 def upsert_file(service, local_path, file_name, parent_id):
-    media = MediaFileUpload(local_path, mimetype="text/plain", resumable=True)
     existing_id = find_existing_file(service, file_name, parent_id)
+
+    # Idempotência: se Drive já tem byte-idêntico, skip. Quebra loop com
+    # import-from-drive (que pode trazer o mesmo arquivo de volta do Drive
+    # quando dialogos/** for varrido recursivo).
+    if existing_id:
+        try:
+            remote_bytes = service.files().get_media(fileId=existing_id).execute()
+            with open(local_path, "rb") as fh:
+                local_bytes = fh.read()
+            if remote_bytes == local_bytes:
+                print(f"  Idêntico, skip: {file_name}")
+                return
+        except Exception as e:
+            print(f"  Comparação falhou ({e}), prossegue com update")
+
+    media = MediaFileUpload(local_path, mimetype="text/plain", resumable=True)
     if existing_id:
         service.files().update(
             fileId=existing_id,
