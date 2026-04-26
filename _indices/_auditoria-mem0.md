@@ -1,7 +1,7 @@
 ---
 tipo: meta-memoria
-atualizado: 2026-04-25T06:40:10.918805-03:00
-mem0_total: 128
+atualizado: 2026-04-26T01:10:06.938930-03:00
+mem0_total: 188
 ---
 
 # Auditoria do Mem0 (memórias sobre o Gustavo)
@@ -11,26 +11,26 @@ Análise automática e determinística do estado do armazém de memórias SOBRE 
 **Não confundir com meta-memória do Gus** (`gus/meta-memoria.md`), que é o auto-conhecimento do próprio Gus.
 
 ## Estatísticas gerais
-- **Total:** 128 memórias
+- **Total:** 188 memórias
 - **Mais antiga:** 2026-04-11 — *"User wants to edit, sign, and share PDF files from any location and is directed ..."*
-- **Mais recente:** 2026-04-24 — *"Gustavo prefers structured dialogues, approving content before deciding where to..."*
+- **Mais recente:** 2026-04-26 — *"Gus can trigger workflows manually and usually warns about side effects such as ..."*
 
 ## Frescor
-- **Últimas 24h:** 93 (72.7%)
-- **Últimos 7 dias:** 27 (21.1%)
-- **Últimos 30 dias:** 8 (6.2%)
+- **Últimas 24h:** 73 (38.8%)
+- **Últimos 7 dias:** 107 (56.9%)
+- **Últimos 30 dias:** 8 (4.3%)
 - **Mais de 30 dias:** 0 (0.0%)
 
 ## Densidade por área
 Estimativa via keywords (uma memória pode contar em múltiplas áreas):
 
-- **capturado:** 69 (53.9%)
-- **projetos:** 38 (29.7%)
-- **dimagem:** 21 (16.4%)
-- **saude:** 6 (4.7%)
-- **construcao:** 3 (2.3%)
-- **receitas:** 2 (1.6%)
-- **financeiro:** 2 (1.6%)
+- **capturado:** 105 (55.9%)
+- **projetos:** 51 (27.1%)
+- **dimagem:** 30 (16.0%)
+- **saude:** 9 (4.8%)
+- **construcao:** 3 (1.6%)
+- **receitas:** 2 (1.1%)
+- **financeiro:** 2 (1.1%)
 
 ## Duplicatas suspeitas
 Pares com similaridade Jaccard ≥ 0.5. Revisar manualmente — não são duplicatas garantidas, são candidatas.
