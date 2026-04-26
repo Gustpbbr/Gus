@@ -34,7 +34,7 @@ e o caminho pra cada objetivo final.
 - ⏳ Aguarda configuração no GPT Builder (precisa desktop)
 
 ### Claude Chat (claude.ai)
-- Bootstrap funcional: `Lê Gus-Sync/gus/gus-bootstrap.md e segue como Gus`
+- Bootstrap funcional: `Lê Gus-Sync/dialogos/_bootstrap/gus-bootstrap.md e segue como Gus`
 - Drive integration: lê/cria/lista arquivos em `Gus-Sync/`
 - Capabilities adicionais: Calendar, Gmail, Spotify, Figma, artifacts (descobertas no teste real)
 - Sem Project necessário — funciona em qualquer aba claude.ai
@@ -71,8 +71,8 @@ e o caminho pra cada objetivo final.
 - Tag `via` em toda escrita nova (rastreabilidade por porta)
 
 ### Documentação
-- `gus/gus-bootstrap.md` — ativador Claude Chat
-- `gus/gus-identity.md` — identidade compartilhada
+- `dialogos/_bootstrap/gus-bootstrap.md` — ativador Claude Chat
+- `dialogos/_bootstrap/gus-identity.md` — identidade compartilhada
 - `dialogos/README.md` — protocolo do canal
 - `projetos/gus/gus-11-tools-roadmap.md` — inventário de tools
 - `projetos/gus/gus-12-portas-futuras.md` — diretriz arquitetural
@@ -285,7 +285,7 @@ Itens 4-7 destravam Custom GPT pleno.
 - `gus-13-tags-canonicas.md` — contrato de tags `via`
 - `gus-14-custom-gpt-setup.md` — passo-a-passo Custom GPT (com Instructions V2)
 - `gus-16-canal-unificado.md` — design rationale do canal
-- `gus/gus-bootstrap.md` — ativador Claude Chat
+- `dialogos/_bootstrap/gus-bootstrap.md` — ativador Claude Chat
 - `dialogos/README.md` — protocolo do canal
 
 Atualizado: 2026-04-26 01:15 BRT.

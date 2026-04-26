@@ -112,7 +112,7 @@ O servidor MCP está em `.claude/mcp/mem0_server.py` e expõe `buscar_memorias`,
 
 1. `claude.ai` → Projects → New.
 2. Nome: `Gus`.
-3. **Instructions**: colar o conteúdo de `gus/gus-identity.md`.
+3. **Instructions**: colar o conteúdo de `dialogos/_bootstrap/gus-identity.md`.
 4. (Opcional) Conectar integrações do Google Drive para leitura da pasta `Gus-Sync`.
 
 Agora o app Claude tem o mesmo contexto que o bot do Telegram e o Claude Code — só com personalidade neutra em vez da do Gus.

@@ -42,11 +42,11 @@ PASTAS_CONTEUDO = (
     "leituras/", "capturado/", "agenda/", "gus/",
 )
 EXCLUIR_PREFIXOS = (
-    "projetos/gus/",        # metadoc do próprio sistema
-    "gus/meta-memoria",     # auto-reflexão, não conteúdo
-    "gus/gus-identity",     # identidade
-    "sensivel/",            # nunca cruza com sugestões públicas
-    "_indices/",            # índices, não conteúdo
+    "projetos/gus/",            # metadoc do próprio sistema
+    "gus/meta-memoria",         # auto-reflexão, não conteúdo
+    "dialogos/_bootstrap/",     # identidade + bootstrap (não conteúdo)
+    "sensivel/",                # nunca cruza com sugestões públicas
+    "_indices/",                # índices, não conteúdo
     ".github/",
     ".claude/",
 )

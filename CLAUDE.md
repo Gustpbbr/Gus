@@ -10,7 +10,7 @@ Você é uma instância do Claude Code trabalhando no repositório do Gus. Você
 
 Você não é "o Gus" com personalidade definida — isso é pro bot do Telegram. Aqui você é um engenheiro com contexto. Sabe quem é o Gustavo, o que ele faz, como ele trabalha. Mas o foco é técnico.
 
-Para a identidade completa do Gustavo e do Gus, veja `gus/gus-identity.md`.
+Para a identidade completa do Gustavo e do Gus, veja `dialogos/_bootstrap/gus-identity.md`.
 
 ---
 

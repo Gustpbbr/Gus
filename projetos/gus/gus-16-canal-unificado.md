@@ -153,7 +153,7 @@ Gustavo ativar).
 ## Arquivos relacionados
 
 - `dialogos/README.md` — protocolo operacional (frontmatter, regras)
-- `gus/gus-bootstrap.md` — instruções pra Claude Chat usar o canal
+- `dialogos/_bootstrap/gus-bootstrap.md` — instruções pra Claude Chat usar o canal
 - `.github/workflows/import-from-drive.yml` — workflow do polling
 - `.github/scripts/import_from_drive.py` — lógica de import
 - `projetos/gus/gus-12-portas-futuras.md` — taxonomia de portas

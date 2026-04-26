@@ -93,7 +93,7 @@ ESTADO ATUAL (base sólida)
 1. Gerar string aleatória forte (ex: `openssl rand -hex 32`) → adicionar `CUSTOM_GPT_TOKEN` no Railway
 2. `chatgpt.com/gpts/editor` → Create a GPT:
    - Nome: `Gus`
-   - Instructions: colar `gus/gus-identity.md`
+   - Instructions: colar `dialogos/_bootstrap/gus-identity.md`
    - Capabilities: só **Actions**
    - Action: importar OpenAPI via URL pública Railway
    - Auth: API Key → colar `CUSTOM_GPT_TOKEN`
