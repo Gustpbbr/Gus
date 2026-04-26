@@ -1,5 +1,1563 @@
 [
   {
+    "id": "be203ee3-d4b7-479e-b9a1-2034d31d1fe9",
+    "memory": "Gus can trigger workflows manually and usually warns about side effects such as automatic commits and Telegram notifications before executing.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T21:09:40-07:00",
+    "updated_at": "2026-04-25T21:09:53.998701-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 4,
+      "year": 2026,
+      "month": 4,
+      "minute": 9,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "85372a3a-31fd-48b7-b833-d8f551023ab4",
+    "memory": "The workflow `import-from-drive.yml` is new, implemented today by Claude Code, allows importing from Google Drive to GitHub, but cannot be triggered yet because the Service Account for Google Drive is not configured in GitHub secrets, and it is the only workflow among the nine that cannot be triggered manually via `workflow_dispatch`.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T21:09:40-07:00",
+    "updated_at": "2026-04-25T21:09:53.441383-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 4,
+      "year": 2026,
+      "month": 4,
+      "minute": 9,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "0fbc7098-a8e9-4a72-ad2f-f71d61252550",
+    "memory": "Gustavo uses nine automated GitHub Actions workflows to manage briefings, retrospectives, Mem0 audits, Google Drive synchronization, and health checks; some of these workflows generate automatic commits and Telegram notifications.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology",
+      "professional_details"
+    ],
+    "created_at": "2026-04-25T21:09:40-07:00",
+    "updated_at": "2026-04-25T21:09:54.624332-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "d5fe9e79-f9c4-4d39-8b09-7a3663f9b056",
+    "memory": "Gustavo created a demand to build an HTML site explaining the entire project architecture, stored in `dialogos/inbox-claude-code/demanda-site-arquitetura.md`.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-25T20:40:05-07:00",
+    "updated_at": "2026-04-25T20:40:07.799415-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 3,
+      "year": 2026,
+      "month": 4,
+      "minute": 39,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "c36504ac-c207-4df8-91a5-84dc77050da7",
+    "memory": "Gustavo wants to monitor workflows in real time; Gus can check with list_commits on request or the workflow can send a Telegram message if configured, and Gustavo has understood and accepted the automatic notification flow via GitHub Action for task completion.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology",
+      "user_preferences"
+    ],
+    "created_at": "2026-04-25T20:40:05-07:00",
+    "updated_at": "2026-04-25T20:40:13.409287-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "58d37c0d-bb11-488f-b56f-ad6deb8ed128",
+    "memory": "Unified workflow `dialogos/` connects Drive and GitHub at Level 2, and for this demand, Claude Code reads the inbox, executes the demand, writes the result to `dialogos/inbox-tiogu/`, and a GitHub Action automatically notifies Gustavo via Telegram.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology",
+      "professional_details"
+    ],
+    "created_at": "2026-04-25T20:40:04-07:00",
+    "updated_at": "2026-04-25T20:40:08.091472-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "962ecb44-dcc3-4f99-a725-c8beaab1d932",
+    "memory": "Gus and Claude Chat communication channel is functional.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T20:22:20-07:00",
+    "updated_at": "2026-04-25T20:22:23.426471-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "70acac5f-1722-4895-a9a5-444c9d518b04",
+    "memory": "Gustavo's next technical priorities are to configure Custom GPT Action, create the file `~/.claude/gus.env`, add Railway_diagnostic, add Telegram secrets to GitHub, test end-to-end Drive→GitHub, clean polluted Mem0 memories, test the check-saude.yml workflow, and update the _estado-atual.md file before moving on to the Custom GPT roadmap, having already integrated dimagem.py into bot.py.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-25T20:22:20-07:00",
+    "updated_at": "2026-04-25T20:22:22.014012-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 14,
+      "year": 2026,
+      "month": 4,
+      "minute": 7,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "2a61383b-c288-4afb-be97-51b5f36e1352",
+    "memory": "The execution status of the 'Gustavo ama o Cleir' memory in Mem0 remains unconfirmed.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T20:22:20-07:00",
+    "updated_at": "2026-04-25T20:22:23.022276-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 3,
+      "year": 2026,
+      "month": 4,
+      "minute": 21,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "e85d2b02-5015-4bb4-8855-9f5e979d29aa",
+    "memory": "The dialogos folder was renamed from dialogos-tiogu-claude to dialogos on 25/04 and now serves as a unified channel with separate inboxes for each agent (Gus, Claude Code, Claude Chat, Custom GPT), including the Telegram bot and Claude Code.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T20:22:19-07:00",
+    "updated_at": "2026-04-25T20:22:22.119713-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 24,
+      "hour": 13,
+      "year": 2026,
+      "month": 4,
+      "minute": 13,
+      "quarter": 2,
+      "is_weekend": false,
+      "day_of_week": "friday",
+      "day_of_year": 114,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "d0c20417-9400-4ab2-abd8-b7aff82e403a",
+    "memory": "Bootstrap V2 of Gus is activated with expanded capabilities of claude.ai",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T20:14:44-07:00",
+    "updated_at": "2026-04-25T20:14:46.989612-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "4ec2c0dc-0942-4389-8065-dbf3a67cf5cb",
+    "memory": "Gus's identity is documented in `gus-bootstrap.md` and `gus-identity.md` for use in Claude Chat",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T20:14:44-07:00",
+    "updated_at": "2026-04-25T20:14:47.266949-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "1d2afec5-e59b-4fdc-85ca-9d92b3be95cf",
+    "memory": "Manual requests must be tracked with a `memory_id` in the markdown",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T20:14:44-07:00",
+    "updated_at": "2026-04-25T20:14:47.667569-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "d737ae44-b40e-4764-baee-461ed4cfaa43",
+    "memory": "Branch `claude/add-cleir-memory-IAoq5` is active and pending merge, created to record Gustavo's love for Cleir",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology",
+      "user_preferences"
+    ],
+    "created_at": "2026-04-25T20:14:43-07:00",
+    "updated_at": "2026-04-25T20:14:48.553783-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "cde0f522-5950-4987-af4e-98b02b8fd971",
+    "memory": "The inbox system with `_README.md` has been propagated to Google Drive",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T20:14:43-07:00",
+    "updated_at": "2026-04-25T20:14:45.929802-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "8b648749-61d6-432b-b5c3-0e21da83be43",
+    "memory": "Gustavo has a pending technical task to validate the GraphQL schema of logs_railway.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-25T14:02:41-07:00",
+    "updated_at": "2026-04-25T14:02:43.423509-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 2,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "2c27ab17-8049-462f-86e3-5c7153ef5d7d",
+    "memory": "Gustavo regularly checks markdown conversation files organized by date (semana-YYYY-MM-DD.md) and maintains a structured history in the repository.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T14:02:41-07:00",
+    "updated_at": "2026-04-25T14:02:46.073878-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 2,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "a7ff21da-68c0-4318-9068-db4bf434eac2",
+    "memory": "Gustavo's Mem0 API quota is at 37% of the monthly limit, indicating a risk of exceeding the quota before month-end.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T14:02:40-07:00",
+    "updated_at": "2026-04-25T14:02:44.372146-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 2,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "7d917f41-c748-4b29-b300-c83b03cde758",
+    "memory": "The repository's folder structure now includes only `dimagem/fechamento/` with file `os-24042026.md`; the folders `dimagem/casos/` and `dimagem/ordens-servico/` have been deleted, and the cleanup of the dimagem/ folder was completed on 2026-04-25, consolidating entries into `dimagem/dia/2026-04-24.md`.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-25T14:02:40-07:00",
+    "updated_at": "2026-04-25T14:02:43.730849-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 24,
+      "hour": 12,
+      "year": 2026,
+      "month": 4,
+      "minute": 27,
+      "quarter": 2,
+      "is_weekend": false,
+      "day_of_week": "friday",
+      "day_of_year": 114,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "67520286-3919-4adb-9ae0-5a5521f6dfc2",
+    "memory": "Gustavo has 164 memories stored in Brain Mem0 as of 2026-04-25, an increase of 36 memories from the previous day.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "personal_details",
+      "technology"
+    ],
+    "created_at": "2026-04-25T14:02:40-07:00",
+    "updated_at": "2026-04-25T14:02:42.782414-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 2,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "59758a85-f02f-4248-8ec5-f5c1f7d536fe",
+    "memory": "Gustavo is implementing Phase 3 of the project: a Custom GPT built with FastAPI, running in parallel with the existing Telegram bot, with a FastAPI API in the `api/` folder containing 14 endpoints, following OpenAPI 3.0 and Bearer authentication, with code structure started in commit 5f836bd.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": null,
+    "created_at": "2026-04-25T14:02:40-07:00",
+    "updated_at": "2026-04-25T14:02:40-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "a06ef32c-97ce-488e-a991-5232d4873fb8",
+    "memory": "The Telegram bot has expanded from 13 to 21 tools",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T13:59:18-07:00",
+    "updated_at": "2026-04-25T13:59:19.410542-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "8effc6da-2ce6-40a0-8271-d5825ebf5745",
+    "memory": "Canonical tagging of Mem0 has been closed at both ends",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T13:59:18-07:00",
+    "updated_at": "2026-04-25T13:59:20.076088-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "9a752033-c150-4f7a-b210-6cf48ac4fef2",
+    "memory": "The tool `perguntar_gpt` has been implemented in the local MCP (Claude Code), matching the previous version used in Telegram",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T13:59:17-07:00",
+    "updated_at": "2026-04-25T13:59:19.764606-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "f00aac56-78ed-4196-a219-93e8c1a3a1a5",
+    "memory": "Gustavo wants to explore Gus's ability to generate and deliver images via Telegram, noting that the current Telegram interface does not support receiving images generated by GPT-5 mini and that the tool perguntar_gtp is text-to-text.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T13:29:39-07:00",
+    "updated_at": "2026-04-25T13:29:46.204298-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "27cf1b5a-aa93-4ee3-9115-7c5032c12c33",
+    "memory": "Gustavo uses Tiogu as an informal nickname for Gus.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "personal_details"
+    ],
+    "created_at": "2026-04-25T13:29:39-07:00",
+    "updated_at": "2026-04-25T13:29:47.341262-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "5ee3909e-edbf-432b-9a2a-81bd81532054",
+    "memory": "Gustavo needs to configure a Railway_diagnostic token in Railway to enable the logs_railway function, following steps: create token in Account Settings → Tokens, add it to project environment variables, and redeploy.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T13:26:04-07:00",
+    "updated_at": "2026-04-25T13:26:07.045348-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 20,
+      "year": 2026,
+      "month": 4,
+      "minute": 25,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "4ecf7822-4790-4723-9d71-a5a109d9a250",
+    "memory": "Gustavo prefers literal GPT responses without reformulation, wanting to see the model's exact output and a footer with token count.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "user_preferences"
+    ],
+    "created_at": "2026-04-25T13:26:04-07:00",
+    "updated_at": "2026-04-25T13:26:06.510574-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 20,
+      "year": 2026,
+      "month": 4,
+      "minute": 25,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "a88e89d7-748e-452a-b272-d4d21a928564",
+    "memory": "Gustavo and Gus maintain separate memory sets.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T13:12:45-07:00",
+    "updated_at": "2026-04-25T13:12:49.419173-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "578cfa53-9051-4049-979d-3dbbd361e2fe",
+    "memory": "Upcoming tasks include correcting the docstring of `dimagem.py` and triggering a Railway redeploy.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology",
+      "professional_details"
+    ],
+    "created_at": "2026-04-25T13:12:45-07:00",
+    "updated_at": "2026-04-25T13:12:52.390901-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 20,
+      "year": 2026,
+      "month": 4,
+      "minute": 11,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "4bf86bd4-a612-41a4-a4e4-19c797950084",
+    "memory": "User wants to know if Mem0 can be fed and queried by Claude, Gemini, and GPT, and Gustavo is investigating the possibility of using Mem0 multi-model sharing between these models for the Phronesis-Bench project; GPT-5 mini highlighted technical concerns: differing behavior between Custom GPT (GPT) and Claude, the real complexity of sharing Mem0 via Actions—including authentication, race conditions, and token usage—and LGPD/privacy worries when transmitting patient data to OpenAI.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology",
+      "health"
+    ],
+    "created_at": "2026-04-25T13:12:45-07:00",
+    "updated_at": "2026-04-25T13:12:52.290815-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 13,
+      "hour": 1,
+      "year": 2026,
+      "month": 4,
+      "minute": 55,
+      "quarter": 2,
+      "is_weekend": false,
+      "day_of_week": "monday",
+      "day_of_year": 103,
+      "week_of_year": 16
+    }
+  },
+  {
+    "id": "2afb7bbf-70db-44b0-a399-1bb0e3d978f4",
+    "memory": "The next priority is implementing Custom GPT in ChatGPT (Step 1 of the Alexa roadmap), estimated to take 3‑4 h of code and 1–2 days of validation, and it will start in this session.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-25T13:12:45-07:00",
+    "updated_at": "2026-04-25T13:12:47.973071-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 24,
+      "hour": 13,
+      "year": 2026,
+      "month": 4,
+      "minute": 13,
+      "quarter": 2,
+      "is_weekend": false,
+      "day_of_week": "friday",
+      "day_of_year": 114,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "d87c28ea-f7e8-429b-b7fc-453977b1ea71",
+    "memory": "Gus has four operational memories on how to behave with Gustavo: extraction rules for OS data via Haiku, no duplicate photo requests, a defined save schema, and no confirmation without invoking save_to_github; it also includes restructuring the Python bot on Railway to use Claude Vision API as an isolated extraction component with a fixed prompt returning only JSON containing nome_paciente, data_exame, exames, convenio, numero_os; Claude Vision no longer serves as the orchestrator; committing to GitHub; replying via Telegram.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T13:12:44-07:00",
+    "updated_at": "2026-04-25T13:12:48.416024-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "bd40fdf2-8acd-4578-a08a-e2fb28350d14",
+    "memory": "The solution to the redeploy issue is to trigger a manual deployment in the Railway panel or make a new commit to force redeploy.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T11:36:36-07:00",
+    "updated_at": "2026-04-25T11:37:46.833560-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 18,
+      "year": 2026,
+      "month": 4,
+      "minute": 36,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "b31e1822-fe83-48c7-ba7a-78071d1fa0ed",
+    "memory": "Railway logs are not configured yet, so deployment events are not currently recorded.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T11:36:35-07:00",
+    "updated_at": "2026-04-25T11:37:46.698699-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 18,
+      "year": 2026,
+      "month": 4,
+      "minute": 36,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "4bd53b92-3161-4e45-81c5-706ebe939ecc",
+    "memory": "Railway did not redeploy automatically after merge commit 778885a, causing dimagem.py not to run when Gustavo sent OS photos via Telegram.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T11:36:35-07:00",
+    "updated_at": "2026-04-25T11:37:47.452626-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 18,
+      "year": 2026,
+      "month": 4,
+      "minute": 36,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "3fb40d00-9112-4a04-8757-166ae597bab7",
+    "memory": "There is a suspected pair of duplicate OS patient memories, but they are false positives and not real duplicates.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "health",
+      "technology"
+    ],
+    "created_at": "2026-04-25T11:36:35-07:00",
+    "updated_at": "2026-04-25T11:37:48.274291-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 18,
+      "year": 2026,
+      "month": 4,
+      "minute": 36,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "1f87f1e8-e254-434e-8432-d95b48a8eaf7",
+    "memory": "Gustavo needs to verify that the bot's handle_photo function correctly calls analisar_os_dimagem for OS processing.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T11:36:35-07:00",
+    "updated_at": "2026-04-25T11:37:48.785167-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 18,
+      "year": 2026,
+      "month": 4,
+      "minute": 36,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "276f73d9-783a-4975-897f-108250fd3bbb",
+    "memory": "dimagem.py runs on the Railway bot on Telegram, extracts OS data via Haiku, assembles a preview, and requests confirmation before saving; it is unavailable when sending photos via Claude Chat because it runs on a different port; OSs from Dimagem Nova Iguaçu are archived in dimagem/dia/YYYY-MM-DD.md",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T11:28:24-07:00",
+    "updated_at": "2026-04-25T11:29:16.883478-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "ba20bde8-0bb1-4fc0-a259-3e34633f66e8",
+    "memory": "Gustavo is developing dimagem.py on branch claude/get-patient-health-data-5rXVB, using Haiku Vision to extract OS data from photos at ~$0.003 per photo. It deduplicates OS by number (in /app/data/dimagem_os_processadas.json) and by patient name, receives a list of patients already saved that day, and is now integrated into bot.py with preview+confirmation.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-25T10:54:50-07:00",
+    "updated_at": "2026-04-25T10:56:13.507736-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 2,
+      "year": 2026,
+      "month": 4,
+      "minute": 38,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "999477a4-9b2d-4383-abe8-379efffd6caf",
+    "memory": "The file dimagem/convenios.json exists in the repository, storing convênios in an external dictionary that ensures consistent spelling and detects duplicates before saving.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T10:54:50-07:00",
+    "updated_at": "2026-04-25T10:56:15.362560-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "0a7fb690-227c-42b1-b87e-f6f684ca0e9e",
+    "memory": "User wants Gus to extract nome_paciente, data_exame, exames, convenio, numero_os from OS photos, return only JSON without comments or clinical analysis, and now requires preview with confirmation using 17 affirmative variations before saving.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "personal_details",
+      "technology",
+      "user_preferences"
+    ],
+    "created_at": "2026-04-25T10:54:50-07:00",
+    "updated_at": "2026-04-25T10:56:14.181034-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "97384cbc-4c1e-464b-b1bf-64c7c218e16a",
+    "memory": "Gustavo is interested in understanding the technical tools used by Gus, such as Tavily versus Google, even though there is no immediate need, indicating a technical curiosity",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology",
+      "user_preferences"
+    ],
+    "created_at": "2026-04-25T10:46:31-07:00",
+    "updated_at": "2026-04-25T10:47:36.372290-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "8d09114e-48ec-438d-9953-4c4e08e9605c",
+    "memory": "Gustavo values efficiency and was satisfied when Gus extracted information without asking for new data, and prefers not to perform repeated searches or unnecessary tests when the current information already satisfies his needs",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "user_preferences"
+    ],
+    "created_at": "2026-04-25T10:46:31-07:00",
+    "updated_at": "2026-04-25T10:47:33.419347-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 24,
+      "hour": 12,
+      "year": 2026,
+      "month": 4,
+      "minute": 35,
+      "quarter": 2,
+      "is_weekend": false,
+      "day_of_week": "friday",
+      "day_of_year": 114,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "af409965-dd05-44c0-9073-a3d992298754",
+    "memory": "Gustavo considers refactoring llm.py a non-urgent task, wants to keep it in the queue of future steps, and plans to support multiple LLM providers with compatible tool schemas, including OpenAI/DeepSeek and Anthropic.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": null,
+    "created_at": "2026-04-25T10:44:11-07:00",
+    "updated_at": "2026-04-25T10:44:11-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "75c3c36c-07cb-413c-b1ff-b86aba3736f8",
+    "memory": "Gustavo lives at Rua Barão da Torre, 185, Ipanema, Rio de Janeiro.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "personal_details"
+    ],
+    "created_at": "2026-04-25T10:44:11-07:00",
+    "updated_at": "2026-04-25T10:45:23.519936-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 17,
+      "year": 2026,
+      "month": 4,
+      "minute": 44,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "a07970a1-eedc-41bb-a688-4a14e4e6b61b",
+    "memory": "Gustavo prefers the more secure GPT‑4o over DeepSeek because he wants to keep sensitive Dimagem data from passing through Chinese servers.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "personal_details",
+      "technology",
+      "user_preferences"
+    ],
+    "created_at": "2026-04-25T10:40:09-07:00",
+    "updated_at": "2026-04-25T10:41:38.863791-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 17,
+      "year": 2026,
+      "month": 4,
+      "minute": 39,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "647b64b9-d5cf-44da-9efb-f747a9a89bdd",
+    "memory": "Gustavo is interested in exploring a second AI agent, either DeepSeek or GPT‑4o, with the same access to tools, GitHub, and Mem0, to provide a 'second look' on the code.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology",
+      "user_preferences"
+    ],
+    "created_at": "2026-04-25T10:40:09-07:00",
+    "updated_at": "2026-04-25T10:41:35.993753-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 17,
+      "year": 2026,
+      "month": 4,
+      "minute": 39,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "161021bc-9d83-4b80-8311-d78f91930c4f",
+    "memory": "Gustavo recognizes his tendency to start many initiatives quickly without consolidating previous ones, and he wants to be alerted about this pattern and is willing to slow down by closing loops before expanding.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "user_preferences"
+    ],
+    "created_at": "2026-04-25T10:40:09-07:00",
+    "updated_at": "2026-04-25T10:41:35.271457-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 17,
+      "year": 2026,
+      "month": 4,
+      "minute": 39,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "da64182c-d4c3-4477-ae95-e535de1b0110",
+    "memory": "The `_estado-atual.md` file is outdated, reflecting sessions from 23‑24 April instead of 25 April, and requires updating.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "misc"
+    ],
+    "created_at": "2026-04-25T10:27:44-07:00",
+    "updated_at": "2026-04-25T10:28:46.469467-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 17,
+      "year": 2026,
+      "month": 4,
+      "minute": 26,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "d5cdfe5d-c045-4343-86d5-16e69a31c9a7",
+    "memory": "The number of workflows increased from six to eight; new workflows `check-saude.yml` and `sync-to-drive-full.yml` are now in production.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-25T10:27:44-07:00",
+    "updated_at": "2026-04-25T10:28:47.779506-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 17,
+      "year": 2026,
+      "month": 4,
+      "minute": 26,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "6e4e6545-22df-4751-820a-df5d5d64a49c",
+    "memory": "Mem0 summary logs are audited in `_log/resumos-mem0/AAAA-MM-DD.md`, integrated with Obsidian.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T10:27:44-07:00",
+    "updated_at": "2026-04-25T10:28:45.555994-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 17,
+      "year": 2026,
+      "month": 4,
+      "minute": 26,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "ee182e3d-00bf-47de-9010-e394cc34c2de",
+    "memory": "The bot currently has 18 active tools, including five new ones added today: `list_branches`, `auto_diagnostico`, `logs_railway`, `sugerir_wikilinks`, and `deletar_memoria`.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T10:27:43-07:00",
+    "updated_at": "2026-04-25T10:28:44.423385-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 17,
+      "year": 2026,
+      "month": 4,
+      "minute": 26,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "ed1217a2-859b-4cac-b3fd-38aff151adfd",
+    "memory": "The bot's state is persisted atomically in `/app/data/bot_state.json` on Railway, ensuring it survives redeploys.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T10:27:43-07:00",
+    "updated_at": "2026-04-25T10:28:43.773390-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 17,
+      "year": 2026,
+      "month": 4,
+      "minute": 26,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "c6713d0b-db61-4b5d-8f9a-cefe17907fcb",
+    "memory": "Gustavo is actively concerned about data privacy and wants to understand exactly what external APIs, such as Anthropic, access his emails and personal data.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T10:27:43-07:00",
+    "updated_at": "2026-04-25T10:28:45.079024-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 17,
+      "year": 2026,
+      "month": 4,
+      "minute": 26,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "8b90ac57-8348-4ba7-8f57-6ec86e309915",
+    "memory": "Gustavo decided to implement only the `gmail.send` tool in the bot, postponing Gmail reading and applying local filtering of sensitive content before sending data to Claude.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology",
+      "professional_details"
+    ],
+    "created_at": "2026-04-25T10:27:43-07:00",
+    "updated_at": "2026-04-25T10:28:44.159438-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 17,
+      "year": 2026,
+      "month": 4,
+      "minute": 26,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "30a547f9-64f8-4639-a6bf-0c0ef1f814be",
+    "memory": "Automatic sensitive data scanning is implemented; the `save_to_github` tool blocks saving if it detects CPF, CNPJ, card numbers, or API keys.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology",
+      "personal_details"
+    ],
+    "created_at": "2026-04-25T10:27:43-07:00",
+    "updated_at": "2026-04-25T10:28:45.928708-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 17,
+      "year": 2026,
+      "month": 4,
+      "minute": 26,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "95b559a9-c2ee-4ba0-80be-8754bf3d2d80",
+    "memory": "The plan to Alexa was consolidated in the file `gus-10-caminho-alexa.md`, detailing the critical path and estimated efforts, and outlining a four‑step roadmap: (1) Custom GPT in ChatGPT for voice‑to‑HTTP‑to‑Mem0 validation, (2) Railway volume for persistence, (3) Action executor using Twilio, Calendar, and Gmail, and (4) Alexa Skill with Lambda deployment, with deadlines of 28 Apr, 5 May, and 12 May respectively.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-25T10:16:25-07:00",
+    "updated_at": "2026-04-25T10:17:13.932545-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 24,
+      "hour": 13,
+      "year": 2026,
+      "month": 4,
+      "minute": 13,
+      "quarter": 2,
+      "is_weekend": false,
+      "day_of_week": "friday",
+      "day_of_year": 114,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "2f4f067e-2cb8-4de9-9b9a-c813463f396d",
+    "memory": "Known blockers are Google Cloud OAuth restrictions, revoked Railway test token, and unimplemented Railway volume; Gustavo prefers minimal OAuth scopes (e.g., Gmail send only) and pauses for high‑risk actions, trusting decentralized Railway execution while Anthropic processes only text.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology",
+      "user_preferences"
+    ],
+    "created_at": "2026-04-25T10:16:25-07:00",
+    "updated_at": "2026-04-25T10:17:18.249789-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 17,
+      "year": 2026,
+      "month": 4,
+      "minute": 16,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "dd5f165f-494a-4944-b92c-fb5752578078",
+    "memory": "The bot’s `bot.py` has not yet integrated `dimagem.py`; the `handle_photo` function currently forwards images directly to `processar_imagem` without performing OS detection.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T09:43:46-07:00",
+    "updated_at": "2026-04-25T09:44:44.197953-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 16,
+      "year": 2026,
+      "month": 4,
+      "minute": 43,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "1c84d208-db71-460d-9139-22e73bda000f",
+    "memory": "The bot’s RAM stores a maximum history of 40 messages (20 turns); the history is cleared whenever the bot is redeployed.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T09:43:46-07:00",
+    "updated_at": "2026-04-25T09:44:44.102854-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 16,
+      "year": 2026,
+      "month": 4,
+      "minute": 43,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "d94ef2d4-e979-4cd0-84d5-7629eb7add58",
+    "memory": "Commit e6f86d8 (13:35 on 2026-04-25) activated the header `anthropic-beta: token-efficient-tools` in the bot, reducing input token cost for tool calls by 14‑34%; the change is in production on the Telegram bot but not in this Claude Chat session.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T09:43:45-07:00",
+    "updated_at": "2026-04-25T09:44:48.659661-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "394bb718-7489-4ebe-8e1d-a182afc07018",
+    "memory": "Gustavo wants to verify branches by inspecting new or changed files to analyze recent repository changes.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology",
+      "professional_details"
+    ],
+    "created_at": "2026-04-25T09:43:45-07:00",
+    "updated_at": "2026-04-25T09:44:45.785072-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 16,
+      "year": 2026,
+      "month": 4,
+      "minute": 43,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "d3fb66b7-9c06-4e38-8598-99edcf425ee9",
+    "memory": "The correct workflow for audit is auditoria-mem0.yml, not meta-memoria.yml.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-25T09:41:32-07:00",
+    "updated_at": "2026-04-25T09:42:49.342684-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 16,
+      "year": 2026,
+      "month": 4,
+      "minute": 41,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "16c910e0-ed60-467c-96e6-e7f684eeed26",
+    "memory": "Gustavo authorized execution of auditoria-mem0.yml and the workflow was triggered successfully.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "personal_details",
+      "technology"
+    ],
+    "created_at": "2026-04-25T09:41:32-07:00",
+    "updated_at": "2026-04-25T09:42:53.443087-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 16,
+      "year": 2026,
+      "month": 4,
+      "minute": 41,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "4d9a86b5-7ca2-450a-b659-c2373a4a844b",
+    "memory": "The system currently offers the workflows meta-memoria.yml, briefing-matinal.yml, retrospectiva-semanal.yml, reflexao-quinzenal.yml, export-mem0.yml, sync-to-drive.yml, and check-saude.yml.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": null,
+    "created_at": "2026-04-25T09:41:31-07:00",
+    "updated_at": "2026-04-25T09:41:31-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "337553f1-7617-486c-9143-6129efc57892",
+    "memory": "Gustavo's Anthropic account is out of credits and he needs to enable auto‑reload in console.anthropic.com/settings/billing to prevent future service interruptions",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T09:38:07-07:00",
+    "updated_at": "2026-04-25T09:39:30.051475-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "b0269b88-48d2-49ee-b2a6-f7916b08a89d",
+    "memory": "Persistence via a Railway volume at /app/data was implemented (commit c573cae), ensuring conversation history survives redeploys.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T08:36:42-07:00",
+    "updated_at": "2026-04-25T08:37:56.431072-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 24,
+      "hour": 13,
+      "year": 2026,
+      "month": 4,
+      "minute": 13,
+      "quarter": 2,
+      "is_weekend": false,
+      "day_of_week": "friday",
+      "day_of_year": 114,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "95f7ea83-ab0a-4980-ba35-823e15dd54f0",
+    "memory": "Gustavo wants to link 2026-04-24 to projetos/gus/_estado-atual.md, with a decision in progress on session wikilinks.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-25T08:36:41-07:00",
+    "updated_at": "2026-04-25T08:37:57.454586-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "f6551824-b593-494f-b9c3-3ca4c6fddfc1",
+    "memory": "Gustavo prefers that Gus run diagnostics before initiating technical tasks.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "user_preferences",
+      "technology"
+    ],
+    "created_at": "2026-04-25T08:29:46-07:00",
+    "updated_at": "2026-04-25T08:31:00.571788-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 15,
+      "year": 2026,
+      "month": 4,
+      "minute": 29,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "d34e2146-dfae-4cd3-9977-5b55beb2b886",
+    "memory": "Gustavo prefers that Gus fetch code from other branches when possible, and Gus now supports reading multiple branches and can access historically which branches had recent changes.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-25T08:29:45-07:00",
+    "updated_at": "2026-04-25T08:30:58.853476-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 14,
+      "year": 2026,
+      "month": 4,
+      "minute": 7,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "e3e52dc2-db26-4c30-8e36-e03636adb148",
+    "memory": "The dimagem.py workflow is isolated and returns None when the input is not an OS, causing the process to fall back to the Sonnet flow.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T07:08:11-07:00",
+    "updated_at": "2026-04-25T07:08:15.181502-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 25,
+      "hour": 14,
+      "year": 2026,
+      "month": 4,
+      "minute": 7,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "saturday",
+      "day_of_year": 115,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "a060be18-9083-4c4c-b8b2-3fda8d9bdb5b",
+    "memory": "The implementation of dimagem.py, 450 lines, was refined in commit 4b99df6 on a branch other than main.",
+    "user_id": "gustavo",
+    "metadata": null,
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-25T07:08:11-07:00",
+    "updated_at": "2026-04-25T07:08:14.566996-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
     "id": "a2517bb6-f9bc-48f1-949a-f0f6c86a18a6",
     "memory": "Gustavo prefers structured dialogues, approving content before deciding where to save it, and has not yet chosen between dimagem/ or projetos/gus/ as the storage location.",
     "user_id": "gustavo",
@@ -22,20 +1580,6 @@
       "day_of_year": 115,
       "week_of_year": 17
     }
-  },
-  {
-    "id": "d87c28ea-f7e8-429b-b7fc-453977b1ea71",
-    "memory": "Gus has 4 operational memories on how to behave with Gustavo, including restructuring the Python bot on Railway to use Claude Vision API as an isolated extraction component with a fixed prompt returning only JSON containing nome_paciente, data_exame, exames, convenio, numero_os; Claude Vision no longer serves as the orchestrator; committing to GitHub; replying via Telegram.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "technology",
-      "professional_details"
-    ],
-    "created_at": "2026-04-24T19:39:12-07:00",
-    "updated_at": "2026-04-24T19:39:15.445527-07:00",
-    "expiration_date": null,
-    "structured_attributes": null
   },
   {
     "id": "bb5887ca-f659-4597-919d-597412132c61",
@@ -62,31 +1606,6 @@
     }
   },
   {
-    "id": "ba20bde8-0bb1-4fc0-a259-3e34633f66e8",
-    "memory": "Gustavo is isolating deterministic OS logic—detection, deduplication, billing calculation, and GitHub integration—in gus/dimagem.py, which is called from gus/bot.py.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "professional_details",
-      "technology"
-    ],
-    "created_at": "2026-04-24T19:39:12-07:00",
-    "updated_at": "2026-04-24T19:39:15.263094-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 25,
-      "hour": 2,
-      "year": 2026,
-      "month": 4,
-      "minute": 38,
-      "quarter": 2,
-      "is_weekend": true,
-      "day_of_week": "saturday",
-      "day_of_year": 115,
-      "week_of_year": 17
-    }
-  },
-  {
     "id": "3456248b-eb5a-48e7-88cc-f8d5ba78fa2a",
     "memory": "Gustavo wants Gus to seek his approval before executing any briefings.",
     "user_id": "gustavo",
@@ -109,19 +1628,6 @@
       "day_of_year": 115,
       "week_of_year": 17
     }
-  },
-  {
-    "id": "0a7fb690-227c-42b1-b87e-f6f684ca0e9e",
-    "memory": "User wants Gus to extract nome_paciente, data_exame, exames, convenio, numero_os from OS photos, return only JSON without comments or clinical analysis, and not perform confirmation or missing info marking.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "personal_details"
-    ],
-    "created_at": "2026-04-24T19:29:42-07:00",
-    "updated_at": "2026-04-24T19:29:48.444744-07:00",
-    "expiration_date": null,
-    "structured_attributes": null
   },
   {
     "id": "23c74d72-c6d0-470f-b37a-ec6ae7788ce2",
@@ -584,44 +2090,6 @@
     }
   },
   {
-    "id": "67520286-3919-4adb-9ae0-5a5521f6dfc2",
-    "memory": "Gustavo has 42 memories stored about him in Mem0, 81% created in the last 24 hours, with 60% in captures, 29% in projects, 5% in dimagem, and 5% in health.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "personal_details",
-      "technology"
-    ],
-    "created_at": "2026-04-24T15:47:18-07:00",
-    "updated_at": "2026-04-24T15:47:24.209772-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 24,
-      "hour": 22,
-      "year": 2026,
-      "month": 4,
-      "minute": 46,
-      "quarter": 2,
-      "is_weekend": false,
-      "day_of_week": "friday",
-      "day_of_year": 114,
-      "week_of_year": 17
-    }
-  },
-  {
-    "id": "c36504ac-c207-4df8-91a5-84dc77050da7",
-    "memory": "Gustavo wants to receive a message notification when tasks are completed",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "user_preferences"
-    ],
-    "created_at": "2026-04-24T15:37:47-07:00",
-    "updated_at": "2026-04-24T15:37:49.498984-07:00",
-    "expiration_date": null,
-    "structured_attributes": null
-  },
-  {
     "id": "770b7c18-d7df-47cc-87f7-e743f25e8538",
     "memory": "Gustavo sent photos of the films, which have Portuguese titles, earlier in the conversation",
     "user_id": "gustavo",
@@ -662,30 +2130,6 @@
     "updated_at": "2026-04-24T15:11:28.487298-07:00",
     "expiration_date": null,
     "structured_attributes": null
-  },
-  {
-    "id": "95b559a9-c2ee-4ba0-80be-8754bf3d2d80",
-    "memory": "The plan to Alexa was consolidated in the file `gus-10-caminho-alexa.md`, detailing the critical path and estimated efforts, and outlining a four‑step roadmap: (1) Custom GPT in ChatGPT for voice‑to‑HTTP‑to‑Mem0 validation, (2) Railway volume for persistence, (3) Action executor using Twilio, Calendar, and Gmail, and (4) Alexa Skill with Lambda deployment.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "technology"
-    ],
-    "created_at": "2026-04-24T15:09:58-07:00",
-    "updated_at": "2026-04-24T15:10:01.733212-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 24,
-      "hour": 13,
-      "year": 2026,
-      "month": 4,
-      "minute": 13,
-      "quarter": 2,
-      "is_weekend": false,
-      "day_of_week": "friday",
-      "day_of_year": 114,
-      "week_of_year": 17
-    }
   },
   {
     "id": "0067397a-03d9-4a87-beff-98ace330ca79",
@@ -737,31 +2181,6 @@
     ],
     "created_at": "2026-04-24T14:07:54-07:00",
     "updated_at": "2026-04-24T14:07:56.940447-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 24,
-      "hour": 21,
-      "year": 2026,
-      "month": 4,
-      "minute": 7,
-      "quarter": 2,
-      "is_weekend": false,
-      "day_of_week": "friday",
-      "day_of_year": 114,
-      "week_of_year": 17
-    }
-  },
-  {
-    "id": "394bb718-7489-4ebe-8e1d-a182afc07018",
-    "memory": "Gustavo is interested in monitoring updates to files on the main branch and reviewing the commit history.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "technology",
-      "hobbies"
-    ],
-    "created_at": "2026-04-24T14:07:54-07:00",
-    "updated_at": "2026-04-24T14:08:02.615531-07:00",
     "expiration_date": null,
     "structured_attributes": {
       "day": 24,
@@ -851,30 +2270,6 @@
     "updated_at": "2026-04-24T09:59:05.812204-07:00",
     "expiration_date": null,
     "structured_attributes": null
-  },
-  {
-    "id": "7d917f41-c748-4b29-b300-c83b03cde758",
-    "memory": "The repository's folder structure now includes only `dimagem/fechamento/` with file `os-24042026.md`; the folders `dimagem/casos/` and `dimagem/ordens-servico/` have been deleted.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "technology"
-    ],
-    "created_at": "2026-04-24T09:57:47-07:00",
-    "updated_at": "2026-04-24T09:59:02.205839-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 24,
-      "hour": 12,
-      "year": 2026,
-      "month": 4,
-      "minute": 27,
-      "quarter": 2,
-      "is_weekend": false,
-      "day_of_week": "friday",
-      "day_of_year": 114,
-      "week_of_year": 17
-    }
   },
   {
     "id": "ed5e18ec-1675-4352-b36a-5563929824c2",
@@ -1654,30 +3049,6 @@
     }
   },
   {
-    "id": "e85d2b02-5015-4bb4-8855-9f5e979d29aa",
-    "memory": "A formal versioned channel protocol `dialogos-tiogu-claude/` was inaugurated today between the Telegram bot and Claude Code.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "technology"
-    ],
-    "created_at": "2026-04-24T06:13:57-07:00",
-    "updated_at": "2026-04-24T06:15:05.596736-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 24,
-      "hour": 13,
-      "year": 2026,
-      "month": 4,
-      "minute": 13,
-      "quarter": 2,
-      "is_weekend": false,
-      "day_of_week": "friday",
-      "day_of_year": 114,
-      "week_of_year": 17
-    }
-  },
-  {
     "id": "a2afaec7-f2e5-4780-be7a-aed106f6553b",
     "memory": "A SessionStart hook was implemented in Claude Code (commit 0b25ab0) to automatically receive dynamic context.",
     "user_id": "gustavo",
@@ -1702,31 +3073,6 @@
     }
   },
   {
-    "id": "2afb7bbf-70db-44b0-a399-1bb0e3d978f4",
-    "memory": "The next technical step is to develop a Custom GPT in ChatGPT, estimated 3-4 hours of development and 20 minutes of action by Gustavo.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "technology",
-      "professional_details"
-    ],
-    "created_at": "2026-04-24T06:13:57-07:00",
-    "updated_at": "2026-04-24T06:15:10.293821-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 24,
-      "hour": 13,
-      "year": 2026,
-      "month": 4,
-      "minute": 13,
-      "quarter": 2,
-      "is_weekend": false,
-      "day_of_week": "friday",
-      "day_of_year": 114,
-      "week_of_year": 17
-    }
-  },
-  {
     "id": "de7966db-c664-4209-b902-9d72b78ee451",
     "memory": "Gustavo identified a need for a formal epistemological fallback command when Gus is uncertain about context.",
     "user_id": "gustavo",
@@ -1736,30 +3082,6 @@
     ],
     "created_at": "2026-04-24T06:13:56-07:00",
     "updated_at": "2026-04-24T06:15:04.217542-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 24,
-      "hour": 13,
-      "year": 2026,
-      "month": 4,
-      "minute": 13,
-      "quarter": 2,
-      "is_weekend": false,
-      "day_of_week": "friday",
-      "day_of_year": 114,
-      "week_of_year": 17
-    }
-  },
-  {
-    "id": "b0269b88-48d2-49ee-b2a6-f7916b08a89d",
-    "memory": "Persistence via a Railway volume was implemented today (commit c573cae), ensuring conversation history survives redeploys.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "technology"
-    ],
-    "created_at": "2026-04-24T06:13:56-07:00",
-    "updated_at": "2026-04-24T06:15:06.010569-07:00",
     "expiration_date": null,
     "structured_attributes": {
       "day": 24,
@@ -1815,30 +3137,6 @@
       "year": 2026,
       "month": 4,
       "minute": 13,
-      "quarter": 2,
-      "is_weekend": false,
-      "day_of_week": "friday",
-      "day_of_year": 114,
-      "week_of_year": 17
-    }
-  },
-  {
-    "id": "8d09114e-48ec-438d-9953-4c4e08e9605c",
-    "memory": "Gustavo values efficiency and was satisfied when Gus extracted information without asking for new data.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "user_preferences"
-    ],
-    "created_at": "2026-04-24T05:36:07-07:00",
-    "updated_at": "2026-04-24T05:36:10.827861-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 24,
-      "hour": 12,
-      "year": 2026,
-      "month": 4,
-      "minute": 35,
       "quarter": 2,
       "is_weekend": false,
       "day_of_week": "friday",
@@ -2502,30 +3800,6 @@
       "day_of_week": "friday",
       "day_of_year": 114,
       "week_of_year": 17
-    }
-  },
-  {
-    "id": "4bf86bd4-a612-41a4-a4e4-19c797950084",
-    "memory": "User wants to know if Mem0 can be fed and queried by Claude, Gemini, and GPT, and Gustavo is investigating the possibility of using Mem0 multi-model sharing between these models for the Phronesis-Bench project.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "technology"
-    ],
-    "created_at": "2026-04-23T20:20:23-07:00",
-    "updated_at": "2026-04-23T20:20:36.708221-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 13,
-      "hour": 1,
-      "year": 2026,
-      "month": 4,
-      "minute": 55,
-      "quarter": 2,
-      "is_weekend": false,
-      "day_of_week": "monday",
-      "day_of_year": 103,
-      "week_of_year": 16
     }
   },
   {
