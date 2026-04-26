@@ -10,40 +10,17 @@ Pasta única pra comunicação assíncrona entre as portas do Gus
 
 ```
 dialogos/
-├── README.md                  ← este arquivo (protocolo)
-├── inbox-tiogu/               ← demandas pra TioGu (Telegram bot) processar
-├── inbox-claude-code/         ← demandas pra Claude Code processar
-├── inbox-claude-chat/         ← marcadores pra Claude Chat ler na próxima sessão
-├── inbox-custom-gpt/          ← demandas pra Custom GPT processar
-├── inbox-mem0-from-chat/      ← canal Claude Chat → Mem0 (ver §"Canal Mem0 from Chat")
-│   └── processados/AAAA-MM/
-├── archive/                   ← demandas concluídas (move pra cá quando done)
-├── processados-erro/          ← demandas com frontmatter inválido (pra debug)
-└── streams/                   ← cronológico semanal (legado pré-25/04 noite)
+├── README.md                 ← este arquivo (protocolo)
+├── inbox-tiogu/              ← demandas pra TioGu (Telegram bot) processar
+├── inbox-claude-code/        ← demandas pra Claude Code processar
+├── inbox-claude-chat/        ← marcadores pra Claude Chat ler na próxima sessão
+├── inbox-custom-gpt/         ← demandas pra Custom GPT processar
+├── archive/                  ← demandas concluídas (move pra cá quando done)
+├── processados-erro/         ← demandas com frontmatter inválido (pra debug)
+└── streams/                  ← cronológico semanal (legado pré-25/04 noite)
     ├── semana-2026-04-21.md
     └── README-legado.md
 ```
-
-## Canal Mem0 from Chat
-
-O Claude Chat **não tem hook automático pra salvar no Mem0** (diferente do bot
-Telegram, que resume a cada 3 turnos). Pra resolver isso sem código injetado
-na porta da Anthropic, criamos um canal assíncrono:
-
-1. Claude Chat escreve resumo no Drive em `Gus-Sync/dialogos/inbox-mem0-from-chat/`
-   - Gatilho 1: fim de sessão / mudança radical de tópico
-   - Gatilho 2: comando explícito ("salva isso", "memoriza")
-2. Cron `import-from-drive.yml` (15min) mirrora pro GitHub
-3. Workflow `ingest-mem0-from-chat.yml` (cron 30min):
-   - Filtro Haiku descarta lixo óbvio (vazio, "ok", saudação)
-   - Salva no Mem0 (brain `gustavo`, `metadata.via=claude-chat`)
-   - Move pra `processados/AAAA-MM/`
-   - Loga em `_log/resumos-mem0/AAAA-MM-DD.md`
-
-Latência total Drive → Mem0: até 45min. Aceitável pra contexto de discussão.
-
-Detalhes do que Claude Chat deve escrever (formato, o que extrair) estão em
-`gus/gus-bootstrap.md` — seção "Como você (Claude Chat) preserva memória".
 
 ## Fluxo de uma demanda
 
@@ -59,10 +36,19 @@ Detalhes do que Claude Chat deve escrever (formato, o que extrair) estão em
 3. Destino lê seu próprio inbox quando ativar
    Ex: TioGu lê dialogos/inbox-tiogu/ no início de conversa
 
-4. Destino processa, atualiza status no frontmatter
-   pendente → processando → concluido
+4. Destino processa a demanda. Após terminar:
+   a. Atualiza frontmatter: status: concluido, processado_em, processado_por
+   b. Adiciona seção `## Resultado` no corpo descrevendo o que foi feito
+      (commit hash, memory_id, link, decisão tomada — qualquer coisa rastreável)
+   c. NÃO precisa mover o arquivo — o workflow archive-completed-demandas.yml
+      faz isso automaticamente em até 15min
 
-5. Destino move arquivo pra archive/ quando concluído
+5. Workflow `archive-completed-demandas.yml` (cron 15min) pega arquivos
+   com status: concluido (ou cancelado) e:
+   - Move pra dialogos/archive/<filename>
+   - Trash arquivo no Drive em Gus-Sync/dialogos/inbox-<X>/<filename>
+     (impede reimport pelo import-from-drive)
+   - Append linha em dialogos/historico/<AAAA-MM>.md (mensal)
 ```
 
 ## Frontmatter padrão (obrigatório)

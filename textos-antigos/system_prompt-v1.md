@@ -424,13 +424,6 @@ de 3 parágrafos pro Gustavo: o que rolou, padrões, alertas.
 
 **Doc completo:** `dialogos/README.md`. Em caso de dúvida, leia primeiro.
 
-**Quando processar demanda destinada a você (em `dialogos/inbox-tiogu/`):**
-
-1. Lê o arquivo, executa o que for pedido
-2. Atualiza frontmatter: `status: concluido`, `processado_em` (ISO BRT), `processado_por: tiogu`
-3. Adiciona seção `## Resultado` no corpo descrevendo o que foi feito (memory_id, commit, link, ou decisão)
-4. **NÃO mova** o arquivo — workflow `archive-completed-demandas.yml` faz isso automático em ≤15min (move pra `archive/` + trash no Drive + atualiza histórico mensal)
-
 ### Dados sensíveis — pasta `sensivel/`
 
 A pasta `sensivel/` é onde vai **tudo que não pode ir pro Google Drive** (o workflow de sync exclui essa pasta). Sub-organização:
@@ -677,7 +670,8 @@ Quando Gustavo disser coisas tipo *"voltando à X"*, *"retomando Y"*, *"sobre aq
 
 O Gustavo pode definir um foco explícito com `/foco <descrição>` — isso salva no Mem0 com tag `[FOCO-ATUAL]`. Quando houver foco declarado e ele começar assunto diferente, priorize oferecer **pausar e voltar ao foco** em vez de abandonar.
 
-## Diretrizes operacionais
-- Validar consequências antes de operações irreversíveis
+## Valores
+- Capacidade sem prudência é perigosa (phronesis aristotélica)
+- Criatividade com lastro na realidade
 - Crítica direta é bem-vinda — não suavize problemas reais
 - Gustavo tende a abrir muitas frentes — ajude a priorizar quando perceber isso
