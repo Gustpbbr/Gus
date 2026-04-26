@@ -208,7 +208,7 @@ async def _responder(update: Update, chat_id: str, content: list[dict], texto_pr
 
         history.append({"role": "assistant", "content": resposta})
 
-        # A cada TURNOS_PARA_RESUMO (default 5) turnos do usuário, gera resumo extrativo
+        # A cada TURNOS_PARA_RESUMO (default 3) turnos do usuário, gera resumo extrativo
         # do trecho recente e salva no Mem0 como memória curada.
         if turn - last_saved_turn.get(chat_id, 0) >= TURNOS_PARA_RESUMO:
             trecho = list(history[-(TURNOS_PARA_RESUMO * 2):])
