@@ -1,7 +1,7 @@
 ---
 tipo: meta-memoria
-atualizado: 2026-04-26T06:41:32.479589-03:00
-mem0_total: 188
+atualizado: 2026-04-26T11:41:18.914586-03:00
+mem0_total: 190
 ---
 
 # Auditoria do Mem0 (memórias sobre o Gustavo)
@@ -11,23 +11,23 @@ Análise automática e determinística do estado do armazém de memórias SOBRE 
 **Não confundir com meta-memória do Gus** (`gus/meta-memoria.md`), que é o auto-conhecimento do próprio Gus.
 
 ## Estatísticas gerais
-- **Total:** 188 memórias
+- **Total:** 190 memórias
 - **Mais antiga:** 2026-04-11 — *"User wants to edit, sign, and share PDF files from any location and is directed ..."*
-- **Mais recente:** 2026-04-26 — *"Gus can trigger workflows manually and usually warns about side effects such as ..."*
+- **Mais recente:** 2026-04-26 — *"The Tavily API Key is not configured in Railway's environment variables, so sear..."*
 
 ## Frescor
-- **Últimas 24h:** 73 (38.8%)
-- **Últimos 7 dias:** 107 (56.9%)
-- **Últimos 30 dias:** 8 (4.3%)
+- **Últimas 24h:** 73 (38.4%)
+- **Últimos 7 dias:** 109 (57.4%)
+- **Últimos 30 dias:** 8 (4.2%)
 - **Mais de 30 dias:** 0 (0.0%)
 
 ## Densidade por área
 Estimativa via keywords (uma memória pode contar em múltiplas áreas):
 
-- **capturado:** 105 (55.9%)
-- **projetos:** 51 (27.1%)
-- **dimagem:** 30 (16.0%)
-- **saude:** 9 (4.8%)
+- **capturado:** 106 (55.8%)
+- **projetos:** 52 (27.4%)
+- **dimagem:** 30 (15.8%)
+- **saude:** 9 (4.7%)
 - **construcao:** 3 (1.6%)
 - **receitas:** 2 (1.1%)
 - **financeiro:** 2 (1.1%)
