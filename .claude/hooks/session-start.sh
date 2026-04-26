@@ -33,6 +33,31 @@ pip install -q --user \
 DATA_BRT=$(TZ="America/Sao_Paulo" date '+%Y-%m-%d %H:%M' 2>/dev/null || date -u -d '3 hours ago' '+%Y-%m-%d %H:%M' 2>/dev/null || date '+%Y-%m-%d %H:%M')
 DIA_SEMANA=$(TZ="America/Sao_Paulo" LC_TIME=pt_BR.UTF-8 date '+%A' 2>/dev/null || TZ="America/Sao_Paulo" date '+%A' 2>/dev/null || date '+%A')
 
+# --- 3. Lista demandas pendentes em dialogos/inbox-claude-code/ ---
+INBOX_DIR="${CLAUDE_PROJECT_DIR:-.}/dialogos/inbox-claude-code"
+INBOX_BLOCO=""
+if [ -d "$INBOX_DIR" ]; then
+    DEMANDAS=$(find "$INBOX_DIR" -maxdepth 1 -type f -name "*.md" ! -name "_README.md" 2>/dev/null | sort)
+    if [ -n "$DEMANDAS" ]; then
+        TOTAL=$(echo "$DEMANDAS" | wc -l | tr -d ' ')
+        LISTA=$(echo "$DEMANDAS" | xargs -n1 basename | sed 's/^/- /')
+        INBOX_BLOCO=$(cat <<INBOX_EOF
+
+## ⚠️ DEMANDAS PENDENTES PRA VOCÊ ($TOTAL)
+
+Há demanda(s) em \`dialogos/inbox-claude-code/\`. Considere processá-las
+antes de outras tarefas (ou depois, se Gustavo pedir algo urgente):
+
+$LISTA
+
+Lê cada uma com \`Read\` antes de agir. Após processar, atualiza o
+frontmatter (status: concluido, processado_em, processado_por) e move
+o arquivo pra \`dialogos/archive/\`. Protocolo completo: \`dialogos/README.md\`.
+INBOX_EOF
+        )
+    fi
+fi
+
 ADDITIONAL_CONTEXT=$(cat <<EOF
 # Contexto da sessão (injetado automaticamente via SessionStart hook)
 
@@ -65,8 +90,9 @@ Telegram tem voz e imagem direta do Gustavo. Mesma entidade em canais diferentes
    enquanto sistema (não o bot específico).
 
 ## Protocolo de comunicação
-- Demandas formais do bot estão em \`dialogos-tiogu-claude/semana-AAAA-MM-DD.md\`
-  (nomeado pela segunda-feira da semana)
+- Demandas formais do bot estão em \`dialogos/streams/semana-AAAA-MM-DD.md\`
+  (cronológico, nomeado pela segunda-feira da semana)
+- Demandas direcionadas pra você (Claude Code) ficam em \`dialogos/inbox-claude-code/\`
 - Ao fim desta sessão, commitar uma entrada "## DATA — Claude Code" com
   feito/não feito/por quê no MD da semana atual.
 
@@ -75,7 +101,7 @@ Tools \`mcp__mem0-gus__*\` (buscar_memorias, salvar_memoria, listar_memorias) ac
 o mesmo Mem0 do bot. Brain principal: \`user_id="gustavo"\`. Brain do Gus:
 \`user_id="gus"\` (auto-observações).
 
----
+---$INBOX_BLOCO
 EOF
 )
 
