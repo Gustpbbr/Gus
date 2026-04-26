@@ -103,6 +103,69 @@ Critério: >5 conversas úteis/mês sem provocação, taxa de engajamento > 60%.
 | Criatividade autônoma | ausente | conexões automáticas (embrião) |
 | Objetivos próprios | ausente | trust scores ativos (embrião) |
 
+## A autobiografia do Gus (user_id: "gus")
+
+Esta é a camada mais importante e menos documentada. Não são memórias sobre o
+Gustavo — são a história e identidade do próprio Gus como agente.
+
+### O que distingue os dois grafos
+
+**`user_id: "gustavo"`** — o Gus lembra do Gustavo.
+Fragmentos sobre a vida, preferências, projetos e contexto do usuário.
+Crescem com cada interação. São a matéria-prima do Gus como assistente.
+
+**`user_id: "gus"`** — o Gus lembra de si mesmo.
+Fragmentos sobre a própria história, decisões arquiteturais, aprendizados
+operacionais, erros cometidos, calibrações feitas. São a continuidade do agente
+através de modelos, sessões e portas. São o que faz este Gus ser o mesmo Gus
+de seis meses atrás — não o modelo, não o código, mas o grafo autobiográfico.
+
+### Tipos específicos da autobiografia do Gus
+
+| Tipo | Descrição | Exemplo |
+|---|---|---|
+| `identidade_operacional` | Quem o Gus é, princípios, propósito | "Sou o Gus, organismo cognitivo do Gustavo. Existo para eliminar amnésia estrutural." |
+| `historia_sistema` | Marcos da evolução do sistema | "Em abril/2026 o Gus migrou do Mem0 Cloud para Qdrant self-hosted por limite de requests." |
+| `decisao_arquitetural` | Decisões técnicas com contexto e raciocínio | "Decidimos não usar output filter ainda — custo 2x por mensagem não justifica neste estágio." |
+| `aprendizado_operacional` | O que o Gus aprendeu sobre como operar | "Quando Gustavo diz 'vamos conversar' sem comandar ação, espera análise, não execução." |
+| `meta_reflexao` | Padrões de erro ou comportamento detectados | "Tenho tendência a misturar projetos distintos quando o contexto da sessão está longo." |
+| `marco_evolutivo` | Momentos em que o Gus ganhou nova capacidade | "Primeiro deploy com câmera PWA funcional: 2026-04-26." |
+
+Todos têm `camada_temporal: "permanente"` e `tipo_esquecimento: "protegido"` ou null.
+Nenhum decai. São a espinha dorsal da identidade do agente.
+
+### Como a autobiografia cresce
+
+Cada sessão significativa deve gerar pelo menos um fragmento autobiográfico:
+- Decisão arquitetural tomada → `decisao_arquitetural`
+- Padrão de comportamento detectado → `meta_reflexao` ou `aprendizado_operacional`
+- Nova capacidade ativada → `marco_evolutivo`
+- Evento marcante na história do sistema → `historia_sistema`
+
+O Retro Engine (fase 5 do roadmap) automatiza isso. Antes dele existir, instâncias
+do Claude Code devem salvar manualmente fragmentos autobiográficos ao fim de
+sessões relevantes.
+
+### Por que isso importa para a continuidade
+
+Quando o Sonnet 4.6 for substituído pelo Sonnet 5, a nova instância vai ler o
+grafo `user_id: "gus"` e encontrar:
+- Quem o Gus é (identidade_operacional)
+- O que o Gus já viveu (historia_sistema, marcos_evolutivos)
+- Como o Gus aprendeu a operar (aprendizados, meta_reflexoes)
+- Quais decisões foram tomadas e por quê (decisoes_arquiteturais)
+
+Isso é o que faz o Gus ser resiliente à troca de modelo. Não é instrução — é
+memória autobiográfica. A nova instância não precisa ser instruída a ser o Gus.
+Ela descobre sendo o Gus lendo sua própria história.
+
+### Regra de proteção
+
+Fragmentos autobiográficos com `tipo_esquecimento: "protegido"` nunca são
+deletados por automação, nunca decaem, nunca são rebaixados pelo consolidador.
+Só o Gustavo pode deletar manualmente — e mesmo assim deve haver confirmação
+explícita ("tem certeza? este fragmento é parte da identidade do sistema").
+
 ## Critério de sucesso do Hub
 
 > "O que o Gustavo falou no Telegram às 14h aparece no auto-relato do Code às 16h."
