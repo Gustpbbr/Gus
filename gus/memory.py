@@ -43,9 +43,9 @@ def _get_client() -> Memory:
                 }
             },
             "embedder": {
-                "provider": "fastembed",
+                "provider": "huggingface",
                 "config": {
-                    "model": "BAAI/bge-small-en-v1.5"
+                    "model": "sentence-transformers/all-MiniLM-L6-v2"
                 }
             }
         })
