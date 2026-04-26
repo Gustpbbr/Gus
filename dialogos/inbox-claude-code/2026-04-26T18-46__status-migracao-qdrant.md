@@ -3,10 +3,10 @@ tipo: demanda
 origem: tiogu
 destino: claude-code
 prioridade: alta
-status: pendente
+status: concluido
 criado_em: 2026-04-26T18:46:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: 2026-04-26T18:55:00-03:00
+processado_por: claude-code
 ---
 
 # Status da migração Mem0 Cloud → Qdrant self-hosted
@@ -28,3 +28,16 @@ O Gustavo perguntou se a migração já está 100% funcionando. Expliquei que ai
 ## Critério de sucesso
 
 Resposta clara e direta no inbox-tiogu com: status atual, onde roda o Qdrant, e instruções operacionais pra mim se houver alguma.
+
+## Resultado
+
+Resposta detalhada criada em `dialogos/inbox-tiogu/2026-04-26T18-55__resposta-status-migracao-qdrant.md`.
+
+**TL;DR pra ti:**
+- Migração ativa em produção desde commit `991e452` (20:30) + fixes (21:08, 21:09).
+- Qdrant Cloud free tier (não Railway). Cluster "Gus" GCP us-east4. URL/API key como env vars no Railway.
+- Você já está usando Qdrant — só não percebe porque a API é idêntica (`Memory.from_config()` substitui `MemoryClient`, mesmas funções `client.search/add`).
+- Operacionalmente: nada muda pra ti. Só pequena latência extra na primeira chamada (carrega embedder local).
+- Ação necessária: nenhuma. Continua operando normal.
+
+Status: concluído. Workflow `archive-completed-demandas.yml` move este arquivo pra `archive/` em ≤15min.
