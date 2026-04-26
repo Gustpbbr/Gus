@@ -33,8 +33,8 @@ def get_dest():
             }
         },
         "embedder": {
-            "provider": "fastembed",
-            "config": {"model": "BAAI/bge-small-en-v1.5"}
+            "provider": "huggingface",
+            "config": {"model": "sentence-transformers/all-MiniLM-L6-v2"}
         }
     })
 
