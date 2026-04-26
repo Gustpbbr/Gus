@@ -34,6 +34,7 @@ jobs:
 
       - name: Sync to Google Drive
         env:
+          FULL_SYNC: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
           DRIVE_ROOT_FOLDER_ID: ${{ secrets.DRIVE_ROOT_FOLDER_ID }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
