@@ -1,43 +1,71 @@
 import os
 import asyncio
 import logging
-from mem0 import MemoryClient
+from mem0 import Memory
 
 logger = logging.getLogger(__name__)
 
-# Dois "cérebros" no Mem0:
+# Dois "cérebros" no Hub:
 # - USER_ID_GUSTAVO: memórias sobre o Gustavo (fatos, preferências, contexto pessoal)
-# - USER_ID_GUS: memórias do próprio Gus (padrões operacionais, aprendizados sobre si)
+# - USER_ID_GUS: autobiografia do próprio Gus (padrões operacionais, história do sistema)
 USER_ID_GUSTAVO = "gustavo"
 USER_ID_GUS = "gus"
 USER_ID = USER_ID_GUSTAVO  # default retrocompatível
 
-# Tag de origem default — identifica que porta gerou essa memória.
-# Outras portas usam: 'telegram-gpt', 'claude-code', 'alexa', 'custom-gpt',
-# 'carro-audio'. Permite filtrar por origem em search se quiser comparar
-# perspectivas, mas search default vê TUDO (visibilidade cruzada).
-# Veja projetos/gus/gus-12-portas-futuras.md.
+# Tag de origem default — identifica qual porta gerou essa memória.
 VIA_DEFAULT = os.getenv("MEM0_VIA_TAG", "telegram-claude")
 
 _client = None
 
 
-def _get_client() -> MemoryClient:
+def _get_client() -> Memory:
     global _client
     if _client is None:
-        api_key = os.getenv("MEM0_API_KEY")
-        if not api_key:
-            raise ValueError("MEM0_API_KEY não definido")
-        _client = MemoryClient(api_key=api_key)
+        qdrant_url = os.getenv("QDRANT_URL")
+        qdrant_key = os.getenv("QDRANT_API_KEY")
+        anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+        if not qdrant_url or not qdrant_key:
+            raise ValueError("QDRANT_URL e QDRANT_API_KEY não definidos")
+        _client = Memory.from_config({
+            "vector_store": {
+                "provider": "qdrant",
+                "config": {
+                    "url": qdrant_url,
+                    "api_key": qdrant_key,
+                    "collection_name": "gus",
+                }
+            },
+            "llm": {
+                "provider": "anthropic",
+                "config": {
+                    "model": "claude-haiku-4-5-20251001",
+                    "api_key": anthropic_key,
+                }
+            },
+            "embedder": {
+                "provider": "fastembed",
+                "config": {
+                    "model": "BAAI/bge-small-en-v1.5"
+                }
+            }
+        })
     return _client
 
 
+def _normalizar_results(raw) -> list:
+    """Memory.search() retorna dict {"results": [...]} no self-hosted."""
+    if isinstance(raw, dict):
+        return raw.get("results", [])
+    return raw or []
+
+
 async def buscar_memorias(query: str, user_id: str = USER_ID_GUSTAVO) -> str:
-    """Busca memórias relevantes no Mem0 para o contexto da conversa."""
+    """Busca memórias relevantes para o contexto da conversa."""
     client = _get_client()
-    results = await asyncio.to_thread(
+    raw = await asyncio.to_thread(
         client.search, query, user_id=user_id, limit=5
     )
+    results = _normalizar_results(raw)
     if not results:
         return ""
     lines = [f"- {r['memory']}" for r in results]
@@ -49,12 +77,7 @@ async def salvar_memorias(
     user_id: str = USER_ID_GUSTAVO,
     via: str | None = None,
 ) -> None:
-    """Salva o par user/assistant no Mem0 para memória futura.
-
-    Adiciona metadata `via` em cada memória pra rastrear qual porta gerou
-    (telegram-claude, telegram-gpt, claude-code, alexa, etc.). Search
-    default ignora o filtro — todas as portas veem todas as memórias.
-    """
+    """Salva o par user/assistant para memória futura com tag de origem."""
     client = _get_client()
     metadata = {"via": via or VIA_DEFAULT}
     await asyncio.to_thread(
@@ -63,16 +86,13 @@ async def salvar_memorias(
 
 
 async def buscar_memorias_detalhada(query: str, limit: int = 10, user_id: str = USER_ID_GUSTAVO) -> str:
-    """Busca memórias no Mem0 com limite configurável, formatada pra retorno como tool.
-
-    Inclui o `id` de cada memória pra facilitar uso de `deletar_memoria` em
-    seguida (Gustavo escolhe qual ID confirmar).
-    """
+    """Busca memórias com limite configurável, incluindo ID para deleção."""
     try:
         client = _get_client()
-        results = await asyncio.to_thread(
+        raw = await asyncio.to_thread(
             client.search, query, user_id=user_id, limit=limit
         )
+        results = _normalizar_results(raw)
     except Exception as e:
         return f"Erro ao buscar no Mem0 (user_id={user_id}): {e}"
 
@@ -89,14 +109,9 @@ async def buscar_memorias_detalhada(query: str, limit: int = 10, user_id: str = 
 
 
 async def deletar_memoria(memory_id: str, user_id: str = USER_ID_GUSTAVO) -> str:
-    """Deleta uma memória do Mem0 pelo ID. IRREVERSÍVEL.
-
-    Use só após confirmação explícita do Gustavo. O ID vem do
-    `buscar_memorias_detalhada` (formatado como `[id] texto`).
-    """
+    """Deleta uma memória pelo ID. IRREVERSÍVEL."""
     if not memory_id or not memory_id.strip():
         return "memory_id vazio, não dá pra deletar."
-
     try:
         client = _get_client()
         await asyncio.to_thread(client.delete, memory_id=memory_id.strip())
@@ -106,7 +121,7 @@ async def deletar_memoria(memory_id: str, user_id: str = USER_ID_GUSTAVO) -> str
 
 
 async def salvar_observacao_gus(observacao: str, via: str | None = None) -> str:
-    """Salva uma observação do próprio Gus sobre si ou padrões operacionais."""
+    """Salva uma observação autobiográfica do Gus (brain `gus`)."""
     if not observacao or not observacao.strip():
         return "Observação vazia, não salvei."
     try:
@@ -115,11 +130,11 @@ async def salvar_observacao_gus(observacao: str, via: str | None = None) -> str:
             user_id=USER_ID_GUS,
             via=via,
         )
-        return f"Observação salva no brain `gus` do Mem0: \"{observacao[:80]}\""
+        return f"Observação salva no brain `gus`: \"{observacao[:80]}\""
     except Exception as e:
         return f"Erro ao salvar no Mem0 (user_id=gus): {e}"
 
 
 async def buscar_memorias_gus(query: str, limit: int = 10) -> str:
-    """Busca nas memórias próprias do Gus (Mem0 user_id='gus')."""
+    """Busca nas memórias autobiográficas do Gus (brain `gus`)."""
     return await buscar_memorias_detalhada(query, limit=limit, user_id=USER_ID_GUS)
