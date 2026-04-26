@@ -81,6 +81,23 @@ class SugerirWikilinksReq(BaseModel):
     branch: str | None = None
 
 
+# ============== Câmera / Visão (FUTURO — não integrado ao Custom GPT ainda) ==============
+
+
+class CameraAnalyseReq(BaseModel):
+    """Payload do endpoint /analise_camera. Recebido pela PWA do S8.
+
+    PROJETO FUTURO: integração câmera S8 + Claude Vision.
+    Endpoints ativos mas não expostos no OpenAPI do Custom GPT (versão atual).
+    """
+    image_base64: str = Field(
+        ..., description="Imagem JPEG em base64 puro (sem prefixo data:image/)."
+    )
+    contexto: str = Field(
+        "", description="Contexto opcional do que está sendo fotografado."
+    )
+
+
 # ============== Resposta padrão ==============
 
 
