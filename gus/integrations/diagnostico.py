@@ -40,6 +40,12 @@ MEM0_FRESH_HOURS = 12
 _EMOJI = {"ok": "✅", "warn": "⚠️", "error": "❌"}
 
 
+def _running_in_github_actions() -> bool:
+    """GH Actions seta GITHUB_ACTIONS=true em todo runner. Usado pra adaptar
+    checks que assumem contexto Railway (token PAT, volume /app/data)."""
+    return os.getenv("GITHUB_ACTIONS", "").lower() == "true"
+
+
 # ---------------------------------------------------------------------------
 # CHECKS individuais
 # ---------------------------------------------------------------------------
@@ -53,23 +59,33 @@ async def _check_github_pat() -> dict:
         "Accept": "application/vnd.github.v3+json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
+    # Em GH Actions o token automático não acessa /user (retorna 403). Vale
+    # validar via /repos/{repo} que funciona pros dois tipos de token.
+    if _running_in_github_actions():
+        repo = os.getenv("GITHUB_REPOSITORY") or os.getenv("GITHUB_REPO", "Gustpbbr/Gus")
+        url = f"https://api.github.com/repos/{repo}"
+        label = "GitHub Token (Actions)"
+    else:
+        url = "https://api.github.com/user"
+        label = "GitHub PAT"
+
     try:
         async with httpx.AsyncClient(timeout=10) as c:
-            r = await c.get("https://api.github.com/user", headers=headers)
+            r = await c.get(url, headers=headers)
         if r.status_code != 200:
             return {
-                "name": "GitHub PAT",
+                "name": label,
                 "status": "error",
                 "detail": f"status {r.status_code}",
             }
-        scopes = r.headers.get("x-oauth-scopes", "?")
-        return {
-            "name": "GitHub PAT",
-            "status": "ok",
-            "detail": f"escopos: {scopes or 'fine-grained'}",
-        }
+        if label == "GitHub PAT":
+            scopes = r.headers.get("x-oauth-scopes", "?")
+            detail = f"escopos: {scopes or 'fine-grained'}"
+        else:
+            detail = "auth OK (token Actions)"
+        return {"name": label, "status": "ok", "detail": detail}
     except Exception as e:
-        return {"name": "GitHub PAT", "status": "error", "detail": str(e)[:80]}
+        return {"name": label, "status": "error", "detail": str(e)[:80]}
 
 
 async def _check_mem0() -> dict:
@@ -205,6 +221,12 @@ async def _check_tavily() -> dict:
 
 
 def _check_volume_sync() -> dict:
+    if _running_in_github_actions():
+        return {
+            "name": "Volume Railway",
+            "status": "ok",
+            "detail": "n/a (rodando em GH Actions)",
+        }
     data_dir = Path("/app/data")
     if not data_dir.exists():
         return {
