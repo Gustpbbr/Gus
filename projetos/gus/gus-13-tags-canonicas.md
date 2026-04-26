@@ -42,7 +42,7 @@ Toda memória nova carrega `metadata.via = <tag>`. Search default não filtra
 | `telegram-claude` | Bot @Tiogubot — interação principal de hoje | Sonnet 4.6 | **ativa** (default no `gus/memory.py`) |
 | `telegram-gpt` | Bot @GptGusBot — futuro, segundo bot Telegram | GPT-5 | reservada |
 | `claude-code` | Sessões Claude Code (web ou local), via MCP | Opus/Sonnet | **ativa** (default no `mem0_server.py`) |
-| `claude-chat` | Claude.ai web (chat manual com Gustavo) | Sonnet/Opus | sem integração Mem0 hoje — não saveia |
+| `claude-chat` | Claude.ai web (chat manual com Gustavo) | Sonnet/Opus | **ativa** via canal `dialogos/inbox-mem0-from-chat/` (workflow `ingest-mem0-from-chat.yml` salva, ver §2.2) |
 | `custom-gpt` | Custom GPT no ChatGPT mobile (voz) | GPT | reservada (Sprint F do roadmap) |
 | `alexa` | Skill Alexa em casa | Sonnet (provável) | reservada (Sprint G) |
 | `carro-audio` | Plugin de áudio no carro | TBD | reservada |
@@ -57,10 +57,13 @@ Toda memória nova carrega `metadata.via = <tag>`. Search default não filtra
 | `workflow-self1` | reflexão SELF-1 (Nosis/Thymos/Síntese) | quinzenal | planejada |
 | `workflow-export-mem0` | NUNCA salva, só exporta | — | não usa |
 | `workflow-auditoria-mem0` | NUNCA salva, só lê + gera MD | — | não usa |
+| `ingest-mem0-from-chat.yml` | salva memórias do Claude Chat (tag `via=claude-chat`) | a cada 30min | **ativa** desde 26/04/2026 |
 
-**Importante:** hoje **nenhum workflow GH salva memórias** — só leem. Quando
-algum começar a salvar (ex: briefing matinal salvando "fato gerado pro dia"),
-adicionar tag canônica + atualizar este doc.
+**Importante:** o `ingest-mem0-from-chat.yml` é o **primeiro workflow que salva
+no Mem0**. Ele não cria uma tag própria — usa `via=claude-chat` porque o
+conteúdo veio do Chat (ele só executa o save). Se outros workflows começarem
+a salvar conteúdo gerado por eles mesmos (ex: briefing matinal salvando "fato
+do dia"), aí sim criar tag canônica `workflow-X` + atualizar este doc.
 
 ### 2.3 Importações externas (futuro)
 

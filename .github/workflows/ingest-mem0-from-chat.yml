@@ -1,0 +1,30 @@
+name: Ingest Mem0 from Claude Chat
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'   # a cada 30min
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install mem0ai==0.1.29 httpx==0.27.0 pyyaml
+
+      - name: Ingest Mem0 from Claude Chat
+        env:
+          MEM0_API_KEY: ${{ secrets.MEM0_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python .github/scripts/ingest_mem0_from_chat.py

@@ -153,6 +153,77 @@ Esse caminho funciona sempre, independente de workflow estar rodando.
 
 Doc completo do protocolo: `dialogos/README.md`
 
+## Como você (Claude Chat) preserva memória pro Mem0
+
+O Telegram bot resume conversa a cada 3 turnos e salva no Mem0. Você não tem
+esse hook automático — então temos um canal dedicado pra você gerar memórias
+que viram persistentes no Mem0 (brain `gustavo`, tag `via: claude-chat`).
+
+### Quando escrever uma memória
+
+**Gatilho 1 — fim de sessão / mudança radical de tópico**
+Quando perceber que a conversa terminou (Gustavo despediu, deu uma pausa
+longa, ou pulou pra um assunto totalmente diferente), gere um resumo do
+que vale preservar e escreva no Drive.
+
+**Gatilho 2 — comando explícito do Gustavo**
+Se ele disser "salva isso", "memoriza essa conversa", "guarda no Mem0",
+ou equivalente, escreva imediatamente.
+
+### Onde escrever
+
+Pasta no Drive: `Gus-Sync/dialogos/inbox-mem0-from-chat/`
+
+Nome do arquivo: `AAAA-MM-DDTHH-MM__slug-curto.md` (timestamp BRT)
+
+### Formato
+
+```yaml
+---
+tipo: memoria-claude-chat
+via: claude-chat
+criado_em: 2026-04-26T14:30:00-03:00
+contexto: <breve descrição em 1 linha>
+---
+
+[corpo: extraia FATOS NOVOS sobre Gustavo, decisões tomadas,
+preferências reveladas, projetos discutidos. Não regurgite a
+conversa inteira — destile o que vale virar memória persistente.]
+```
+
+### O que extrair (e o que não extrair)
+
+**Sim:**
+- Fatos novos (Gustavo prefere X, decidiu Y, comprou Z)
+- Decisões com motivo ("vai por opção A porque...")
+- Padrões revelados ("incomoda quando...", "prioriza...")
+- Contexto sobre projetos (Phronesis, MGE, TER, Axon, Gus)
+- Insights sobre saúde, finanças, Dimagem
+- Vínculos ("ama o Cleir", "irmã chama X")
+
+**Não:**
+- Pingue-pongue de "como vai?" / "tudo bem"
+- Suas próprias respostas reproduzidas
+- Coisas que já estão em outros .md do repo (você pode buscar antes)
+
+### Pipeline depois que você escreve
+
+1. Você cria o .md no Drive em `Gus-Sync/dialogos/inbox-mem0-from-chat/`
+2. Em até 15min, workflow `import-from-drive.yml` mirrora pro GitHub
+3. Em até 30min depois, workflow `ingest-mem0-from-chat.yml` roda:
+   - Filtro Haiku descarta lixo óbvio (vazio, "ok", saudação solta)
+   - O resto é salvo no Mem0 com `metadata.via=claude-chat`
+   - Arquivo é movido pra `processados/AAAA-MM/`
+   - Log auditável vai pra `_log/resumos-mem0/AAAA-MM-DD.md`
+4. Próxima sessão sua (ou TioGu, ou Claude Code) busca no Mem0 e vê
+
+### Frequência saudável
+
+Não precisa escrever a cada mensagem. Uma vez por sessão real
+(quando ela termina), ou quando Gustavo pede. Se ficar em dúvida
+"vale ou não", **escreve** — o filtro Haiku é permissivo, e abundância
+de memória vale mais que escassez (manutenção do grafo é depois).
+
 ## Quando perder contexto
 
 Conversa longa pode te fazer "esquecer" sou Gus. Se acontecer, Gustavo pode dizer
