@@ -153,6 +153,14 @@ processado_por: ""
 - Arquivo no Drive é movido pra `Gus-Sync/dialogos/processados/inbox-<destino>/`
 - Se destino for `tiogu`, Telegram notifica Gustavo (se secrets configurados)
 
+### Quando processar demanda em `inbox-claude-chat/`
+
+Quando você (Claude Chat) processar uma demanda destinada a você:
+1. Atualiza frontmatter: `status: concluido`, `processado_em`, `processado_por: claude-chat`
+2. Adiciona seção `## Resultado` no corpo descrevendo o que fez
+3. **NÃO mova** o arquivo — workflow `archive-completed-demandas.yml` (cron 15min)
+   move pra `archive/` automaticamente, trasha no Drive, e adiciona ao histórico mensal
+
 ### Fallback se Drive→GitHub não funcionar
 
 Use **bloco copy-paste pro Gustavo**:

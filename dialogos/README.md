@@ -36,10 +36,19 @@ dialogos/
 3. Destino lê seu próprio inbox quando ativar
    Ex: TioGu lê dialogos/inbox-tiogu/ no início de conversa
 
-4. Destino processa, atualiza status no frontmatter
-   pendente → processando → concluido
+4. Destino processa a demanda. Após terminar:
+   a. Atualiza frontmatter: status: concluido, processado_em, processado_por
+   b. Adiciona seção `## Resultado` no corpo descrevendo o que foi feito
+      (commit hash, memory_id, link, decisão tomada — qualquer coisa rastreável)
+   c. NÃO precisa mover o arquivo — o workflow archive-completed-demandas.yml
+      faz isso automaticamente em até 15min
 
-5. Destino move arquivo pra archive/ quando concluído
+5. Workflow `archive-completed-demandas.yml` (cron 15min) pega arquivos
+   com status: concluido (ou cancelado) e:
+   - Move pra dialogos/archive/<filename>
+   - Trash arquivo no Drive em Gus-Sync/dialogos/inbox-<X>/<filename>
+     (impede reimport pelo import-from-drive)
+   - Append linha em dialogos/historico/<AAAA-MM>.md (mensal)
 ```
 
 ## Frontmatter padrão (obrigatório)
