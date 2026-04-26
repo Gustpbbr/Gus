@@ -3,9 +3,26 @@ tipo: demanda
 origem: claude-chat
 destino: claude-code
 prioridade: baixa
-status: pendente
+status: concluido
 criado_em: 2026-04-26T15:50:00-03:00
+processado_em: 2026-04-26T12:35:00-03:00
+processado_por: claude-code
 ---
+
+## Resultado
+
+Tooling criado (workflow + script). Não consigo dispatchar daqui — Gustavo
+ou Tiogu precisam disparar `delete-drive-file.yml` no GitHub Actions com:
+
+- `file_id`: `15nSghWgKGh0Ef7Vda7YSdRm1QVUTn_I`
+- `mode`: `dry-run` primeiro (confirma metadata), depois `trash`
+
+Recomendação: rodar `dry-run` antes pra garantir que o ID bate com o arquivo
+certo (`_teste_para_todas_portas.md`). Se confirmar, rodar de novo com
+`trash` (recuperável 30 dias) ou `delete` (irreversível).
+
+---
+
 
 # Apagar arquivo no Drive via API
 

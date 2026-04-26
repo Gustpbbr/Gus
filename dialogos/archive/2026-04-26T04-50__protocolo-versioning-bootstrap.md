@@ -3,9 +3,21 @@ tipo: demanda
 origem: claude-chat
 destino: claude-code
 prioridade: baixa
-status: pendente
+status: concluido
 criado_em: 2026-04-26T04:50:00-03:00
+processado_em: 2026-04-26T12:35:00-03:00
+processado_por: claude-code
 ---
+
+## Resultado
+
+Seção "Protocolo de edição de arquivos no Drive" adicionada ao
+`gus/gus-bootstrap.md` (commit posterior). Convenção de sufixo `-vX`
+documentada com procedimento. Inclui ponteiro pro workflow novo
+`delete-drive-file.yml` quando precisar apagar versão antiga.
+
+---
+
 
 # Adicionar protocolo de versionamento ao gus-bootstrap.md
 
