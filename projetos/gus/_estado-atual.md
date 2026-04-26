@@ -1,6 +1,6 @@
 ---
 tipo: estado-atual-sessao
-atualizado: 2026-04-25T19:50-03:00
+atualizado: 2026-04-25T23:55-03:00
 ---
 
 # Estado atual — handoff entre sessões
@@ -53,6 +53,10 @@ Maratona de implementações. Detalhes completos em `dialogos-tiogu-claude/seman
 
 ### Prioridade 3 — Em sequência
 - ~~Volume Railway~~ ✅ Gustavo configurou (5GB, 25/04)
+- ~~Bootstrap Claude Chat~~ ✅ funcionando (25/04 noite — testado e validado)
+- ~~Canal unificado `dialogos/`~~ ✅ implementado (25/04 noite — workflow `import-from-drive.yml` cron 15min)
+- Adicionar `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` como secrets do GitHub (pra notificação ativa do `import-from-drive`)
+- Testar fluxo end-to-end: Claude Chat cria arquivo no Drive → workflow importa → TioGu lê
 - Decidir se Sprint 3 volta (email/calendar/TTS) ou pula direto pra Alexa V1
 - Alexa Skill V1 (Dot 3, Polly, voz pura) — depois do Custom GPT funcionando
 - Termux + wake word "Gus" no S8 (pós-Alexa) — Opção B aprovada
@@ -73,6 +77,10 @@ Maratona de implementações. Detalhes completos em `dialogos-tiogu-claude/seman
 - **Sprint 3 pulado nesta rodada** — Alexa V1 será leitura/captura/pergunta apenas
 - **GPT Builder mobile não tem Actions** — descoberto na noite do 25/04 testando criação. Causa alucinação de tool calls quando a Action não foi configurada. Documentado em `gus-14-custom-gpt-setup.md` com aviso crítico no topo
 - **Conector GitHub nativo do ChatGPT recusado** — bypass das proteções LGPD. Custom GPT acessa GitHub APENAS via nossa Action REST
+- **Claude Chat tem write no Drive** — descoberto contra minha afirmação inicial. Habilita loop assíncrono real
+- **Canal unificado `dialogos/` por destinatário** (não por par origem-destino) — evita explosão N×N, simplicidade operacional
+- **Workflow Drive→GitHub cron 15min** — equilíbrio latência×custo Actions free tier (~16h/mês de runtime)
+- **Auto-execução desabilitada V1** — Gustavo no loop pra revisar antes de processar. Nível 3 do plano fica pra depois
 
 ## Bugs em aberto (não bloqueantes)
 - Mem0 latência de indexação (minutos)
