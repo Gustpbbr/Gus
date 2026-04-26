@@ -53,39 +53,39 @@ def _running_in_github_actions() -> bool:
 async def _check_github_pat() -> dict:
     token = os.getenv("GITHUB_TOKEN")
     if not token:
-        return {"name": "GitHub PAT", "status": "error", "detail": "GITHUB_TOKEN ausente"}
+        return {"name": "GitHub Token", "status": "error", "detail": "GITHUB_TOKEN ausente"}
     headers = {
         "Authorization": f"token {token}",
         "Accept": "application/vnd.github.v3+json",
         "X-GitHub-Api-Version": "2022-11-28",
     }
-    # Em GH Actions o token automático não acessa /user (retorna 403). Vale
-    # validar via /repos/{repo} que funciona pros dois tipos de token.
-    if _running_in_github_actions():
-        repo = os.getenv("GITHUB_REPOSITORY") or os.getenv("GITHUB_REPO", "Gustpbbr/Gus")
-        url = f"https://api.github.com/repos/{repo}"
-        label = "GitHub Token (Actions)"
-    else:
-        url = "https://api.github.com/user"
-        label = "GitHub PAT"
+    # Sempre validar via /repos/{repo}. O endpoint /user é restritivo demais:
+    # PATs fine-grained não acessam /user mesmo quando funcionam em repos, e
+    # o GITHUB_TOKEN automático do Actions também não. /repos/{repo} responde
+    # 200 pra qualquer tipo de token que tenha leitura no repo, que é o que
+    # de fato importa pro nosso caso de uso (read/write em repo + Actions).
+    repo = os.getenv("GITHUB_REPOSITORY") or os.getenv("GITHUB_REPO", "Gustpbbr/Gus")
+    url = f"https://api.github.com/repos/{repo}"
 
     try:
         async with httpx.AsyncClient(timeout=10) as c:
             r = await c.get(url, headers=headers)
         if r.status_code != 200:
             return {
-                "name": label,
+                "name": "GitHub Token",
                 "status": "error",
-                "detail": f"status {r.status_code}",
+                "detail": f"status {r.status_code} em /repos/{repo}",
             }
-        if label == "GitHub PAT":
-            scopes = r.headers.get("x-oauth-scopes", "?")
-            detail = f"escopos: {scopes or 'fine-grained'}"
-        else:
+        scopes = r.headers.get("x-oauth-scopes", "")
+        if scopes:
+            detail = f"escopos: {scopes}"
+        elif _running_in_github_actions():
             detail = "auth OK (token Actions)"
-        return {"name": label, "status": "ok", "detail": detail}
+        else:
+            detail = "auth OK (fine-grained PAT)"
+        return {"name": "GitHub Token", "status": "ok", "detail": detail}
     except Exception as e:
-        return {"name": label, "status": "error", "detail": str(e)[:80]}
+        return {"name": "GitHub Token", "status": "error", "detail": str(e)[:80]}
 
 
 async def _check_mem0() -> dict:
