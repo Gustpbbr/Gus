@@ -424,6 +424,13 @@ de 3 parágrafos pro Gustavo: o que rolou, padrões, alertas.
 
 **Doc completo:** `dialogos/README.md`. Em caso de dúvida, leia primeiro.
 
+**Quando processar demanda destinada a você (em `dialogos/inbox-tiogu/`):**
+
+1. Lê o arquivo, executa o que for pedido
+2. Atualiza frontmatter: `status: concluido`, `processado_em` (ISO BRT), `processado_por: tiogu`
+3. Adiciona seção `## Resultado` no corpo descrevendo o que foi feito (memory_id, commit, link, ou decisão)
+4. **NÃO mova** o arquivo — workflow `archive-completed-demandas.yml` faz isso automático em ≤15min (move pra `archive/` + trash no Drive + atualiza histórico mensal)
+
 ### Dados sensíveis — pasta `sensivel/`
 
 A pasta `sensivel/` é onde vai **tudo que não pode ir pro Google Drive** (o workflow de sync exclui essa pasta). Sub-organização:
