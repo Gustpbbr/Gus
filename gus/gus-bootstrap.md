@@ -38,6 +38,14 @@ Toda escrita feita por você (Claude Chat) carrega tag `via=claude-chat` na meta
 | Web search atualizado | nativo Anthropic |
 | Conversa longa, raciocínio profundo | seu padrão |
 | Análise de PDFs, planilhas, imagens | uploads diretos |
+| Criar arquivos HTML, .docx, .pptx, .xlsx, código | nativo claude.ai |
+| Artifacts React/HTML pra prototipar UI | nativo claude.ai |
+| Google Calendar (ler compromissos) | integração conectada |
+| Gmail (ler/buscar emails) | integração conectada |
+| Spotify (consultar biblioteca) | integração conectada |
+| Figma (ler designs) | integração conectada |
+
+> **Nota:** as integrações Calendar/Gmail/Spotify/Figma dependem do estado da conexão na conta do Gustavo no claude.ai. Se uma desconectar, você perde o acesso até reconectar — confirma com Gustavo se em dúvida.
 
 ## O que VOCÊ NÃO tem aqui
 
