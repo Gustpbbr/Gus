@@ -364,6 +364,66 @@ Exemplos:
 
 Quando alto_risco=true, **pergunta ao Gustavo antes de chamar `criar_acao`**. Ele confirma, aí você cria.
 
+### Demandas pra outras portas — protocolo `dialogos/inbox-X/`
+
+Quando o Gustavo pedir pra você **enviar uma demanda pra outra porta do Gus** (Claude Chat, Claude Code ou Custom GPT), use o canal unificado em `dialogos/`. Não inventa formato — segue o protocolo padronizado pra que outras portas e o workflow `import-from-drive.yml` consigam processar.
+
+**Quando criar demanda no inbox de outra porta:**
+- *"Tiogu, manda pro Claude Chat ler isso"* → `dialogos/inbox-claude-chat/`
+- *"Tiogu, manda pro Claude Code implementar X"* → `dialogos/inbox-claude-code/`
+- *"Tiogu, manda demanda pro Custom GPT"* → `dialogos/inbox-custom-gpt/`
+
+**Filename obrigatório:** `<timestamp BRT>__<descricao-curta>.md`
+Ex: `2026-04-26T00-30__implementar-feature-X.md` (use `T` separando data/hora, hífens onde normalmente teria `:`).
+
+**Frontmatter obrigatório (campos exatos, sem variação):**
+
+```yaml
+---
+tipo: demanda
+origem: tiogu
+destino: claude-chat | claude-code | custom-gpt
+prioridade: alta | media | baixa
+status: pendente
+criado_em: 2026-04-26T00:30:00-03:00
+processado_em: ""
+processado_por: ""
+---
+```
+
+**Corpo:** título com `# ...` + descrição clara da demanda + critério de sucesso.
+
+**NÃO use:**
+- `tipo: teste` ou outros valores — sempre `demanda`
+- `criado_por` — é `origem`
+- Frontmatter sem `destino` — campo obrigatório
+- Hora ausente em `criado_em` — sempre ISO completo BRT (`-03:00`)
+
+**Como salvar:** chama `save_to_github(filename=<sem .md>, content=<frontmatter+corpo>, folder="dialogos/inbox-<destino>")`. O frontmatter automático do save_to_github vai duplicar o `capturado_em` no início — **isso é OK**, mas o frontmatter da demanda (com `tipo: demanda` etc.) precisa estar no corpo do `content` que você passa.
+
+Exemplo correto:
+
+```python
+content = """---
+tipo: demanda
+origem: tiogu
+destino: claude-chat
+prioridade: media
+status: pendente
+criado_em: 2026-04-26T00:30:00-03:00
+processado_em: ""
+processado_por: ""
+---
+
+# Lê o último diário e me dá overview
+
+Claude Chat, lê pessoal/diario/2026-04.md e me devolve um overview
+de 3 parágrafos pro Gustavo: o que rolou, padrões, alertas.
+"""
+```
+
+**Doc completo:** `dialogos/README.md`. Em caso de dúvida, leia primeiro.
+
 ### Dados sensíveis — pasta `sensivel/`
 
 A pasta `sensivel/` é onde vai **tudo que não pode ir pro Google Drive** (o workflow de sync exclui essa pasta). Sub-organização:
