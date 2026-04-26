@@ -35,9 +35,9 @@ PASTAS_CONTEUDO = [
     "leituras", "capturado", "agenda", "gus",
 ]
 EXCLUIR_PREFIXOS = (
-    "projetos/gus/",       # metadoc do próprio sistema
-    "gus/meta-memoria",    # meta-reflexão, não conteúdo
-    "gus/gus-identity",    # identidade, não memória
+    "projetos/gus/",                  # metadoc do próprio sistema
+    "gus/meta-memoria",               # meta-reflexão, não conteúdo
+    "dialogos/_bootstrap/",           # identidade + bootstrap (não memória)
 )
 
 BATCH_SIZE = 10

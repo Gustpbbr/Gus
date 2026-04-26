@@ -16,7 +16,7 @@ Aqui entra o que **ainda não existe** mas está mapeado. A ordem é Fase 3 → 
 **Por quê:** o ChatGPT mobile tem modo de voz decente em pt-BR e suporte a Actions (chamadas HTTP para APIs externas). Vira uma porta do Gus sem precisar manter infra própria.
 
 **Como:**
-1. ChatGPT → Create GPT → importar `gus/gus-identity.md` como instruções.
+1. ChatGPT → Create GPT → importar `dialogos/_bootstrap/gus-identity.md` como instruções.
 2. **Actions** apontando para dois endpoints próprios (HTTP simples, deploy no Railway ao lado do bot):
    - `POST /mem0/search` — proxy autenticado do Mem0 `search()`
    - `POST /github/save` — proxy que chama a mesma lógica de `_save_to_github`

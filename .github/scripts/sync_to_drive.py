@@ -28,12 +28,13 @@ EXCLUDE_PREFIXES = (
     ".github/",
     "sensivel/",
 )
-# Precedência sobre EXCLUDE_*. Mesmo em pastas excluídas (gus/), estes
-# arquivos sincronizam — porque Claude Chat precisa ler do Drive pra
-# assumir identidade Gus via bootstrap.
+# Precedência sobre EXCLUDE_*. Os arquivos canônicos de bootstrap/identity
+# foram movidos pra dialogos/_bootstrap/ (que já é sincronizada). Os stubs
+# em gus/ continuam aqui pra sobrescrever no Drive a versão antiga (que
+# senão ficaria stale pro Claude Chat ler).
 INCLUDE_OVERRIDES = {
-    "gus/gus-bootstrap.md",
-    "gus/gus-identity.md",
+    "gus/gus-bootstrap.md",   # stub de redirecionamento
+    "gus/gus-identity.md",    # stub de redirecionamento
 }
 
 
