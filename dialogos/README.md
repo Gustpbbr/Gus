@@ -143,8 +143,7 @@ pra subpasta de `archive/` no futuro.
 
 ## Documentos relacionados
 
-- `dialogos/_bootstrap/gus-bootstrap.md` — ativador de identidade Gus pro Claude Chat (read-only por convenção, não editar via Drive)
-- `dialogos/_bootstrap/gus-identity.md` — identidade compartilhada entre todas as portas
+- `gus/gus-bootstrap.md` — usado pra ativar identidade Gus em Claude Chat
 - `projetos/gus/gus-13-tags-canonicas.md` — tags `via` no Mem0 (mesma taxonomia de portas)
 - `projetos/gus/gus-12-portas-futuras.md` — diretriz arquitetural de portas
 - `projetos/gus/gus-16-canal-unificado.md` — design rationale desta arquitetura (a criar)
