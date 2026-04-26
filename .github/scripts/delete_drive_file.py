@@ -2,8 +2,11 @@
 """
 Apaga (ou move pra lixeira) arquivo no Google Drive via API.
 
-Uso (workflow_dispatch):
-  - file_id: ID do arquivo no Drive (obrigatório)
+Uso (workflow_dispatch) — passe UM dos dois:
+  - file_id:   ID exato do arquivo (URL do Drive: /file/d/<id>/view)
+  - file_path: caminho relativo a Gus-Sync/, ex:
+               "dialogos/Demandas Gustavo/_teste_para_todas_portas.md"
+
   - mode: dry-run | trash | delete (default: trash)
 
 Modos:
@@ -11,7 +14,8 @@ Modos:
   - trash: marca como `trashed=true` (recuperável por 30 dias no Drive)
   - delete: remove permanentemente (irreversível!)
 
-Default é `trash` por segurança.
+Default é `trash` por segurança. Se ambos file_id e file_path forem passados,
+file_id tem precedência.
 """
 
 import os
@@ -59,12 +63,56 @@ def resolve_parent_path(drive, parent_id):
     return "/".join(reversed(parts))
 
 
+def resolve_path_to_file_id(drive, root_id, path):
+    """Resolve path tipo 'dialogos/Demandas Gustavo/arquivo.md' relativo a root_id.
+
+    Retorna file_id ou levanta ValueError com motivo (não encontrado, ambíguo).
+    Quoting de aspas em nomes feito explicitamente.
+    """
+    parts = [p for p in path.split("/") if p.strip()]
+    if not parts:
+        raise ValueError("path vazio depois de normalizar")
+
+    current = root_id
+    for i, part in enumerate(parts):
+        is_last = (i == len(parts) - 1)
+        safe = part.replace("'", "\\'")
+        if is_last:
+            # Último componente: arquivo (qualquer mimeType, exceto folder)
+            q = (
+                f"name = '{safe}' and '{current}' in parents "
+                f"and trashed = false and mimeType != 'application/vnd.google-apps.folder'"
+            )
+        else:
+            # Componente intermediário: tem que ser pasta
+            q = (
+                f"name = '{safe}' and '{current}' in parents "
+                f"and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+            )
+        r = drive.files().list(q=q, fields="files(id, name, mimeType)", pageSize=10).execute()
+        files = r.get("files", [])
+        if not files:
+            tipo = "arquivo" if is_last else "pasta"
+            caminho_ate = "/".join(parts[: i + 1])
+            raise ValueError(f"{tipo} não encontrado: '{caminho_ate}'")
+        if len(files) > 1:
+            ids = ", ".join(f["id"] for f in files)
+            raise ValueError(
+                f"ambiguidade em '{part}' ({len(files)} matches: {ids}). "
+                f"Use file_id explícito."
+            )
+        current = files[0]["id"]
+
+    return current
+
+
 def main():
     file_id = os.environ.get("FILE_ID", "").strip()
+    file_path = os.environ.get("FILE_PATH", "").strip()
     mode = os.environ.get("MODE", "trash").strip().lower()
 
-    if not file_id:
-        print("ERRO: FILE_ID vazio")
+    if not file_id and not file_path:
+        print("ERRO: passe file_id OU file_path (nenhum recebido)")
         sys.exit(1)
 
     if mode not in ("dry-run", "trash", "delete"):
@@ -72,6 +120,19 @@ def main():
         sys.exit(1)
 
     drive = get_drive()
+
+    # Resolve path → file_id se necessário
+    if not file_id and file_path:
+        root_id = os.environ.get("DRIVE_ROOT_FOLDER_ID", "").strip()
+        if not root_id:
+            print("ERRO: DRIVE_ROOT_FOLDER_ID ausente, não dá pra resolver path")
+            sys.exit(1)
+        try:
+            file_id = resolve_path_to_file_id(drive, root_id, file_path)
+            print(f"Path '{file_path}' resolvido pra file_id={file_id}")
+        except ValueError as e:
+            print(f"ERRO: {e}")
+            sys.exit(1)
 
     try:
         meta = get_metadata(drive, file_id)

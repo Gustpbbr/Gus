@@ -4,8 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       file_id:
-        description: 'ID do arquivo no Google Drive'
-        required: true
+        description: 'ID do arquivo no Drive (opcional se file_path for passado)'
+        required: false
+        type: string
+      file_path:
+        description: 'Path relativo a Gus-Sync/, ex: dialogos/Demandas Gustavo/teste.md'
+        required: false
         type: string
       mode:
         description: 'Modo de operação'
@@ -33,7 +37,9 @@ jobs:
       - name: Run delete script
         env:
           FILE_ID: ${{ inputs.file_id }}
+          FILE_PATH: ${{ inputs.file_path }}
           MODE: ${{ inputs.mode }}
+          DRIVE_ROOT_FOLDER_ID: ${{ secrets.DRIVE_ROOT_FOLDER_ID }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
