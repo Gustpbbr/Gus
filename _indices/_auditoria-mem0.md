@@ -1,7 +1,7 @@
 ---
 tipo: meta-memoria
-atualizado: 2026-04-26T11:41:18.914586-03:00
-mem0_total: 190
+atualizado: 2026-04-27T07:51:42.248694-03:00
+mem0_total: 204
 ---
 
 # Auditoria do Mem0 (memórias sobre o Gustavo)
@@ -11,26 +11,26 @@ Análise automática e determinística do estado do armazém de memórias SOBRE 
 **Não confundir com meta-memória do Gus** (`gus/meta-memoria.md`), que é o auto-conhecimento do próprio Gus.
 
 ## Estatísticas gerais
-- **Total:** 190 memórias
+- **Total:** 204 memórias
 - **Mais antiga:** 2026-04-11 — *"User wants to edit, sign, and share PDF files from any location and is directed ..."*
-- **Mais recente:** 2026-04-26 — *"The Tavily API Key is not configured in Railway's environment variables, so sear..."*
+- **Mais recente:** 2026-04-26 — *"Gustavo values autonomy and permanence of Gus's memories, viewing the self‑hoste..."*
 
 ## Frescor
-- **Últimas 24h:** 73 (38.4%)
-- **Últimos 7 dias:** 109 (57.4%)
-- **Últimos 30 dias:** 8 (4.2%)
+- **Últimas 24h:** 24 (11.8%)
+- **Últimos 7 dias:** 172 (84.3%)
+- **Últimos 30 dias:** 8 (3.9%)
 - **Mais de 30 dias:** 0 (0.0%)
 
 ## Densidade por área
 Estimativa via keywords (uma memória pode contar em múltiplas áreas):
 
-- **capturado:** 106 (55.8%)
-- **projetos:** 52 (27.4%)
-- **dimagem:** 30 (15.8%)
-- **saude:** 9 (4.7%)
-- **construcao:** 3 (1.6%)
-- **receitas:** 2 (1.1%)
-- **financeiro:** 2 (1.1%)
+- **capturado:** 112 (54.9%)
+- **projetos:** 59 (28.9%)
+- **dimagem:** 30 (14.7%)
+- **saude:** 10 (4.9%)
+- **construcao:** 3 (1.5%)
+- **receitas:** 2 (1.0%)
+- **financeiro:** 2 (1.0%)
 
 ## Duplicatas suspeitas
 Pares com similaridade Jaccard ≥ 0.5. Revisar manualmente — não são duplicatas garantidas, são candidatas.
