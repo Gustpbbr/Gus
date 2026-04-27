@@ -233,6 +233,51 @@ def contar(user_id: str = "gustavo") -> int:
     ).count
 
 
+def listar(user_id: str = "gustavo", limit: int = 50) -> list[dict]:
+    """Lista fragmentos do user_id (sem busca semântica). Retorna até `limit`.
+
+    Usado pelo MCP `mem0-gus` em listar_memorias / listar_memorias_gus
+    quando o usuário quer ver tudo (não fazer query específica).
+    """
+    client = _get_client()
+    pontos, _ = client.scroll(
+        collection_name=COLLECTION,
+        scroll_filter=_filtros(user_id),
+        limit=limit,
+        with_payload=True,
+        with_vectors=False,
+    )
+    return [
+        {
+            "id": str(p.id),
+            "conteudo": (p.payload or {}).get("conteudo", ""),
+            "tipo": (p.payload or {}).get("tipo"),
+            "estado": (p.payload or {}).get("estado"),
+            "via": (p.payload or {}).get("via"),
+            "area": (p.payload or {}).get("area"),
+            "criado_em": (p.payload or {}).get("criado_em"),
+            "curador": (p.payload or {}).get("curador"),
+        }
+        for p in pontos
+    ]
+
+
+def deletar(memory_id: str) -> bool:
+    """Deleta um fragmento pelo ID. IRREVERSÍVEL.
+
+    Usado pelo MCP `mem0-gus` em deletar_memoria. O caller é responsável
+    por confirmar a intenção antes de chamar.
+    """
+    if not memory_id or not memory_id.strip():
+        raise ValueError("memory_id vazio")
+    client = _get_client()
+    client.delete(
+        collection_name=COLLECTION,
+        points_selector=[memory_id.strip()],
+    )
+    return True
+
+
 def stats() -> dict:
     """Stats agregados da coleção. Útil pra dashboard / debug."""
     client = _get_client()
