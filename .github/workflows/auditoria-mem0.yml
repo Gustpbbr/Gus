@@ -19,11 +19,13 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install mem0ai==0.1.29
+        # Migrado em R2 (2026-04-27): lê do Hub Qdrant, não mais Mem0 SaaS.
+        run: pip install -r .github/scripts/requirements.txt
 
-      - name: Rodar auditoria Mem0
+      - name: Rodar auditoria do Hub Qdrant
         env:
-          MEM0_API_KEY: ${{ secrets.MEM0_API_KEY }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
         run: python .github/scripts/auditoria_mem0.py
 
       - name: Commit and push if changed

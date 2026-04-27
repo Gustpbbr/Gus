@@ -1,0 +1,12 @@
+# Deps mínimas dos scripts em .github/scripts/ (R2 — pós-migração Mem0 → Hub).
+#
+# Versões batem com o requirements.txt principal do projeto, mas ficam isoladas
+# aqui pra workflows não precisarem instalar pillow/telegram-bot/etc inutilmente.
+#
+# Se um script precisa de algo novo, adiciona aqui (ou inline no workflow).
+
+qdrant-client>=1.9.1,<1.12.0
+sentence-transformers>=3.0.0
+anthropic==0.40.0
+httpx==0.27.0
+PyYAML==6.0.2
