@@ -1,7 +1,7 @@
 """
 Dashboard visual do Gus — grafo de memórias + saúde do sistema.
 
-Acessível em /dashboard?token=SEU_TOKEN
+Acessível em /dashboard — pede senha na tela na primeira vez.
 Os endpoints de dados (/graph-data, /health-data) exigem Bearer token.
 """
 
@@ -354,6 +354,29 @@ main { flex:1; position:relative; overflow:hidden; }
 </style>
 </head>
 <body>
+
+<!-- Login overlay -->
+<div id="login-overlay" style="display:none;position:fixed;inset:0;background:rgba(3,7,18,0.97);z-index:1000;align-items:center;justify-content:center;flex-direction:column;">
+  <div style="width:320px;text-align:center;">
+    <div style="font-size:28px;font-weight:700;margin-bottom:6px;">G<span style="color:#06b6d4">u</span>s</div>
+    <div style="font-size:13px;color:#475569;margin-bottom:32px;">Cérebro — acesso restrito</div>
+    <form id="login-form">
+      <input id="login-pw" type="password" placeholder="Senha"
+        style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+               border-radius:8px;padding:12px 16px;color:#f1f5f9;font-size:15px;font-family:inherit;
+               outline:none;margin-bottom:10px;"
+        autofocus>
+      <button type="submit"
+        style="width:100%;background:#06b6d4;border:none;border-radius:8px;
+               padding:12px;color:#030712;font-size:15px;font-weight:600;
+               cursor:pointer;font-family:inherit;">
+        Entrar
+      </button>
+    </form>
+    <div id="login-error" style="display:none;color:#ef4444;font-size:12px;margin-top:12px;"></div>
+  </div>
+</div>
+
 <header>
   <div class="logo">G<span>u</span>s &mdash; Cérebro</div>
   <div class="tabs">
@@ -396,10 +419,46 @@ main { flex:1; position:relative; overflow:hidden; }
 
 <script>
 // ── Auth ──────────────────────────────────────────────────────────
-const params = new URLSearchParams(location.search);
-const TOKEN = params.get('token') || localStorage.getItem('gus_token') || '';
-if (TOKEN) localStorage.setItem('gus_token', TOKEN);
-const HEADERS = TOKEN ? { 'Authorization': 'Bearer ' + TOKEN } : {};
+let TOKEN = localStorage.getItem('gus_token') || '';
+let HEADERS = TOKEN ? { 'Authorization': 'Bearer ' + TOKEN } : {};
+
+function saveToken(t) {
+  TOKEN = t.trim();
+  HEADERS = TOKEN ? { 'Authorization': 'Bearer ' + TOKEN } : {};
+  localStorage.setItem('gus_token', TOKEN);
+}
+
+function showLogin(errorMsg) {
+  document.getElementById('login-overlay').style.display = 'flex';
+  if (errorMsg) {
+    document.getElementById('login-error').textContent = errorMsg;
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+function hideLogin() {
+  document.getElementById('login-overlay').style.display = 'none';
+}
+
+document.getElementById('login-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const pw = document.getElementById('login-pw').value;
+  saveToken(pw);
+  hideLogin();
+  loadGraph();
+});
+
+// Verifica token salvo; se inválido mostra login
+async function checkAuth() {
+  if (!TOKEN) { showLogin(); return false; }
+  const r = await fetch('/graph-data', { headers: HEADERS });
+  if (r.status === 401 || r.status === 403) {
+    localStorage.removeItem('gus_token');
+    TOKEN = ''; HEADERS = {};
+    showLogin('Senha incorreta, tente novamente.');
+    return false;
+  }
+  return r;
+}
 
 // ── Colors ───────────────────────────────────────────────────────
 const C = { gustavo: '#06b6d4', gus: '#8b5cf6', unknown: '#475569' };
@@ -452,7 +511,8 @@ let _sim = null;
 async function loadGraph() {
   try {
     const r = await fetch('/graph-data', { headers: HEADERS });
-    if (!r.ok) throw new Error('HTTP ' + r.status + ' — verifique o token (?token=...)');
+    if (r.status === 401 || r.status === 403) { showLogin('Senha incorreta.'); return; }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
     document.getElementById('loading').style.display = 'none';
     _allNodes = data.nodes || [];
@@ -575,7 +635,8 @@ function renderHealth(d) {
 }
 
 // ── Init ──────────────────────────────────────────────────────────
-loadGraph();
+if (!TOKEN) { showLogin(); }
+else { loadGraph(); }
 </script>
 </body>
 </html>"""
