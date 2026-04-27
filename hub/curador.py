@@ -220,14 +220,21 @@ Arquivo a analisar (porta de origem: {via}):
 async def _extrair_via_modelo(
     input_texto: str, prompt_template: str, modelo: str, via: str, max_frags: int
 ) -> list[dict]:
-    """Chama um modelo Claude com prompt_template. Retorna lista de fragmentos validados."""
+    """Chama um modelo Claude com prompt_template. Retorna lista de fragmentos validados.
+
+    Bug fix 2026-04-27: prompt template vai como `system_prompt` em vez de
+    `messages[0].content`. Sonnet 4.6 com system="" (vazio) estava devolvendo
+    400 'temperature and top_p cannot both be specified' nas chamadas SEM
+    tools — o curador errava 100% do dia, Hub ficava vazio. Mover o prompt
+    pro system (canônico) resolve sem mexer no SDK.
+    """
     prompt = prompt_template.format(via=via, conversa=input_texto, conteudo=input_texto)
     try:
         response = await _chamar_claude_com_retry(
             model=modelo,
             max_tokens=2048,
-            system_prompt="",
-            messages=[{"role": "user", "content": prompt}],
+            system_prompt=prompt,
+            messages=[{"role": "user", "content": "Extraia agora os fragmentos conforme as regras."}],
         )
     except Exception as e:
         logger.warning(f"Curador {modelo} falhou: {e}")

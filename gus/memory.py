@@ -124,12 +124,59 @@ async def salvar_memorias(
     user_id: str = USER_ID_GUSTAVO,
     via: str | None = None,
 ) -> None:
-    """Salva o par user/assistant para memória futura com tag de origem."""
-    client = _get_client()
-    metadata = {"via": via or VIA_DEFAULT}
-    await asyncio.to_thread(
-        client.add, messages, user_id=user_id, metadata=metadata
-    )
+    """Salva fragmentos no Hub Qdrant (gus_hub) com tag de origem.
+
+    ADR-001 Fase 3: Hub primeiro. Antes escrevia no Mem0 SaaS via client.add,
+    agora escreve direto no Hub via hub.store.ingestar — uma chamada por
+    message não-vazia. Cada message vira um fragmento atômico.
+
+    Sem fallback Mem0: o Mem0 SaaS está aposentado pelo ADR-001 e novas
+    escritas iriam pra coleção morta (não retornaria erro mas o registro
+    nunca seria lido por mais ninguém).
+
+    Casos de uso:
+    - /foco no Telegram (gus/bot.py:handle_foco) — salva [FOCO-ATUAL] ...
+    - Fallback do _resumir_e_salvar quando curador híbrido falha
+    - salvar_observacao_gus (brain user_id=gus)
+
+    Args:
+        messages: lista de {role, content} — só "content" string é aproveitado.
+                  Para content como lista (multimodal), só blocos type=text contam.
+        user_id: 'gustavo' (default) ou 'gus' (auto-observações).
+        via: tag de origem ('telegram', 'claude-code', etc).
+    """
+    from hub.store import ingestar
+
+    via_tag = via or VIA_DEFAULT
+    metadata = {
+        "user_id": user_id,
+        "via": via_tag,
+        # Sem classificação automática (tipo/area/camada) — quem chama essa
+        # função (handle_foco, fallback) não tem o LLM curador no caminho.
+        # Default tipo=episodico, camada=sessao no schema do Hub.
+    }
+
+    for msg in messages:
+        content = msg.get("content")
+        if isinstance(content, str):
+            texto = content.strip()
+        elif isinstance(content, list):
+            partes = [
+                c.get("text", "")
+                for c in content
+                if isinstance(c, dict) and c.get("type") == "text"
+            ]
+            texto = " ".join(p for p in partes if p).strip()
+        else:
+            texto = ""
+
+        if not texto:
+            continue
+
+        try:
+            await asyncio.to_thread(ingestar, texto, metadata)
+        except Exception as e:
+            logger.warning(f"Hub.ingestar falhou em salvar_memorias (user_id={user_id}): {e}")
 
 
 async def buscar_memorias_detalhada(query: str, limit: int = 10, user_id: str = USER_ID_GUSTAVO) -> str:
@@ -180,15 +227,36 @@ async def buscar_memorias_detalhada(query: str, limit: int = 10, user_id: str = 
 
 
 async def deletar_memoria(memory_id: str, user_id: str = USER_ID_GUSTAVO) -> str:
-    """Deleta uma memória pelo ID. IRREVERSÍVEL."""
+    """Deleta uma memória pelo ID. IRREVERSÍVEL.
+
+    ADR-001 Fase 3: tenta Hub primeiro (UUID do gus_hub). Se ID não casar
+    com formato Hub OU der erro, fallback Mem0 (formato próprio do SaaS).
+    Cobre IDs históricos que ainda não foram migrados pro Hub.
+
+    Args:
+        memory_id: UUID (Hub) ou ID Mem0.
+        user_id: 'gustavo' ou 'gus' — usado só pra mensagem amigável; Hub
+                 e Mem0 deletam por ID, não filtram por user_id.
+    """
     if not memory_id or not memory_id.strip():
         return "memory_id vazio, não dá pra deletar."
+    mid = memory_id.strip()
+
+    # 1) Tenta Hub Qdrant
+    try:
+        from hub.store import deletar as hub_deletar
+        await asyncio.to_thread(hub_deletar, mid)
+        return f"Memória `{mid}` deletada do Hub (user_id=`{user_id}`)."
+    except Exception as e_hub:
+        logger.warning(f"Hub.deletar falhou em '{mid}': {e_hub}. Tentando Mem0 fallback…")
+
+    # 2) Fallback Mem0 (IDs históricos pré-migração)
     try:
         client = _get_client()
-        await asyncio.to_thread(client.delete, memory_id=memory_id.strip())
-        return f"Memória `{memory_id}` deletada do brain `{user_id}`."
-    except Exception as e:
-        return f"Erro ao deletar memória `{memory_id}`: {e}"
+        await asyncio.to_thread(client.delete, memory_id=mid)
+        return f"Memória `{mid}` deletada do Mem0 (fallback, user_id=`{user_id}`)."
+    except Exception as e_mem0:
+        return f"Erro ao deletar memória `{mid}` (Hub+Mem0): {e_mem0}"
 
 
 async def salvar_observacao_gus(observacao: str, via: str | None = None) -> str:
@@ -203,7 +271,7 @@ async def salvar_observacao_gus(observacao: str, via: str | None = None) -> str:
         )
         return f"Observação salva no brain `gus`: \"{observacao[:80]}\""
     except Exception as e:
-        return f"Erro ao salvar no Mem0 (user_id=gus): {e}"
+        return f"Erro ao salvar (user_id=gus): {e}"
 
 
 async def buscar_memorias_gus(query: str, limit: int = 10) -> str:
