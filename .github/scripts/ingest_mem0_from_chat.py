@@ -1,20 +1,29 @@
 #!/usr/bin/env python3
 """
-Ingest de memórias geradas pelo Claude Chat pra dentro do Mem0.
+Ingest de memórias geradas pelo Claude Chat → Hub Qdrant (via Curador híbrido).
 
 Fluxo (cron 30min):
   1. Lista .md em dialogos/inbox-mem0-from-chat/ (skip processados/)
   2. Pra cada arquivo:
      a. Parse frontmatter + body
-     b. Filtro permissivo Haiku: só descarta lixo óbvio (vazio, "ok", saudação)
-     c. Se aprovado: mem0.add() com user_id=gustavo, metadata.via=claude-chat
-     d. Move arquivo pra processados/AAAA-MM/ (git mv)
-     e. Append linha em _log/resumos-mem0/AAAA-MM-DD.md
+     b. Curador híbrido (Haiku + Sonnet em paralelo) extrai e classifica
+        fragmentos do body. Cada modelo salva no Hub Qdrant (gus_hub) com
+        metadata.curador distinta + mesmo hash_janela.
+     c. Move arquivo pra processados/AAAA-MM/
+     d. Append linha em _log/resumos-mem0/AAAA-MM-DD.md (uma linha por curador
+        com mesmo hash, igual ao bot Telegram)
   3. git commit + push das mudanças
 
-Idempotência: depois do move, arquivo não é reentrado. Se Mem0 falhar antes do
-move, próxima rodada tenta de novo (não duplica). Se Mem0 sucesso e move falha,
-próxima rodada vai duplicar — risco baixíssimo (git é local).
+Idempotência: depois do move, arquivo não é reentrado. Se Hub falhar antes do
+move, próxima rodada tenta de novo (pode duplicar — risco baixo dado o volume).
+
+Substitui o caminho antigo via Mem0 SaaS (ADR-001 Fase 5 — Mem0 aposentado).
+
+Variáveis de ambiente necessárias:
+  ANTHROPIC_API_KEY  — chamadas Haiku + Sonnet do Curador
+  QDRANT_URL         — Hub vector store
+  QDRANT_API_KEY     — idem
+  GITHUB_TOKEN       — commit + push automático (já configurado no Actions)
 """
 
 import logging
@@ -25,7 +34,6 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-import httpx
 import yaml
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -35,20 +43,6 @@ BRT = timezone(timedelta(hours=-3))
 INBOX = Path("dialogos/inbox-mem0-from-chat")
 PROCESSADOS = INBOX / "processados"
 LOG_DIR = Path("_log/resumos-mem0")
-
-HAIKU_MODEL = "claude-haiku-4-5"
-FILTRO_PROMPT = (
-    "Você decide se um texto vale virar memória persistente do Gustavo (no Mem0).\n\n"
-    "Diga DESCARTA apenas se o texto for claramente:\n"
-    "- vazio ou só whitespace\n"
-    "- saudação trivial sem conteúdo (ex: 'oi', 'tudo bem', 'ok', 'beleza')\n"
-    "- mensagem de teste óbvia (ex: 'teste 123', 'asdf')\n"
-    "- erro/lixo de copia-cola sem sentido\n\n"
-    "Em QUALQUER outro caso (mesmo se parecer fragmentado, parcial, ou de baixo "
-    "valor), diga SALVA. Memória do Gustavo prefere abundância a escassez — "
-    "manutenção do grafo é feita depois.\n\n"
-    "Responda APENAS uma palavra: SALVA ou DESCARTA."
-)
 
 
 def parse_frontmatter(content: str) -> tuple[dict | None, str]:
@@ -68,57 +62,20 @@ def parse_frontmatter(content: str) -> tuple[dict | None, str]:
         return None, content
 
 
-def filtro_haiku(body: str, anthropic_key: str) -> tuple[bool, str]:
-    """Retorna (salva?, motivo). True = salvar no Mem0."""
-    payload = {
-        "model": HAIKU_MODEL,
-        "max_tokens": 8,
-        "system": FILTRO_PROMPT,
-        "messages": [{"role": "user", "content": body[:4000]}],
-    }
-    headers = {
-        "x-api-key": anthropic_key,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-    }
-    try:
-        with httpx.Client(timeout=20) as c:
-            r = c.post("https://api.anthropic.com/v1/messages", json=payload, headers=headers)
-        if r.status_code != 200:
-            log.warning(f"  Haiku falhou ({r.status_code}), salvando por segurança")
-            return True, f"haiku-erro-{r.status_code}"
-        data = r.json()
-        text = (data.get("content", [{}])[0] or {}).get("text", "").strip().upper()
-        if text.startswith("DESCARTA"):
-            return False, "filtro descartou (lixo óbvio)"
-        return True, "filtro aprovou"
-    except Exception as e:
-        log.warning(f"  Haiku exception ({e}), salvando por segurança")
-        return True, f"haiku-exception-{str(e)[:40]}"
+def append_log(
+    arquivo_nome: str,
+    status: str,
+    curador: str | None,
+    hash_janela: str | None,
+    num_fragmentos: int,
+    body_preview: str,
+    motivo: str = "",
+) -> None:
+    """Loga uma entrada no MD diário do _log/resumos-mem0/.
 
-
-def salvar_no_mem0(body: str, fm: dict, mem0_key: str) -> tuple[bool, str]:
-    """Chama mem0.add via cliente nativo. Retorna (ok, msg)."""
-    try:
-        from mem0 import MemoryClient
-    except Exception as e:
-        return False, f"mem0 import: {e}"
-
-    try:
-        client = MemoryClient(api_key=mem0_key)
-        contexto = (fm.get("contexto") or "").strip()
-        msg_user = body if not contexto else f"[contexto: {contexto}]\n\n{body}"
-        client.add(
-            [{"role": "user", "content": msg_user[:8000]}],
-            user_id="gustavo",
-            metadata={"via": "claude-chat"},
-        )
-        return True, "ok"
-    except Exception as e:
-        return False, f"mem0 add: {str(e)[:120]}"
-
-
-def append_log(arquivo_nome: str, status: str, motivo: str, body_preview: str) -> None:
+    Formato compatível com o bot Telegram pós-Fase 2 (uma entrada por curador
+    com mesmo hash_janela permite parear no Obsidian).
+    """
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     hoje = datetime.now(BRT).strftime("%Y-%m-%d")
     log_path = LOG_DIR / f"{hoje}.md"
@@ -126,18 +83,31 @@ def append_log(arquivo_nome: str, status: str, motivo: str, body_preview: str) -
 
     if not log_path.exists():
         log_path.write_text(
-            f"---\ndata: {hoje}\nfonte: ingest claude-chat (Haiku filtro)\n"
-            f"tipo: log-resumos-mem0\n---\n\n# Resumos pro Mem0 — {hoje}\n\n",
+            f"---\ndata: {hoje}\n"
+            f"fonte: ingest claude-chat (Hub Curador híbrido Haiku+Sonnet)\n"
+            f"tipo: log-resumos-mem0\n---\n\n# Resumos pro Hub — {hoje}\n\n",
             encoding="utf-8",
         )
 
+    if curador and hash_janela:
+        header = f"## {agora} BRT — {status} (curador: {curador}, janela: {hash_janela})"
+    elif curador:
+        header = f"## {agora} BRT — {status} (curador: {curador})"
+    else:
+        header = f"## {agora} BRT — {status}"
+
     preview = body_preview.replace("\n", " ")[:280]
-    entrada = (
-        f"## {agora} BRT — {status} (claude-chat)\n"
-        f"**Arquivo:** `{arquivo_nome}`\n"
-        f"**Motivo:** {motivo}\n"
-        f"**Preview:** {preview}\n\n"
-    )
+    linhas = [
+        header,
+        f"**Origem:** claude-chat",
+        f"**Arquivo:** `{arquivo_nome}`",
+        f"**Fragmentos:** {num_fragmentos}",
+    ]
+    if motivo:
+        linhas.append(f"**Motivo:** {motivo}")
+    linhas.append(f"**Preview:** {preview}")
+    entrada = "\n".join(linhas) + "\n\n"
+
     with log_path.open("a", encoding="utf-8") as f:
         f.write(entrada)
 
@@ -164,11 +134,18 @@ def git_commit_push(mensagem: str) -> None:
 
 
 def main() -> None:
-    anthropic_key = os.environ.get("ANTHROPIC_API_KEY")
-    mem0_key = os.environ.get("MEM0_API_KEY")
-    if not anthropic_key or not mem0_key:
-        log.error("ANTHROPIC_API_KEY ou MEM0_API_KEY ausentes")
+    # Vars necessárias pro Curador + Hub
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        log.error("ANTHROPIC_API_KEY ausente")
         sys.exit(1)
+    if not os.environ.get("QDRANT_URL") or not os.environ.get("QDRANT_API_KEY"):
+        log.error("QDRANT_URL ou QDRANT_API_KEY ausentes")
+        sys.exit(1)
+
+    # Import lazy — ambiente do workflow precisa ter qdrant-client + sentence-transformers
+    # (já em requirements.txt desde a Fase 1)
+    import asyncio
+    from hub.curador import curar_arquivo
 
     if not INBOX.exists():
         log.info(f"{INBOX}/ não existe ainda — nada a ingerir")
@@ -176,14 +153,14 @@ def main() -> None:
 
     arquivos = sorted(
         f for f in INBOX.glob("*.md")
-        if f.is_file() and PROCESSADOS not in f.parents
+        if f.is_file() and PROCESSADOS not in f.parents and not f.name.startswith("_README")
     )
     if not arquivos:
         log.info("Nenhum arquivo novo em inbox-mem0-from-chat/")
         return
 
     log.info(f"{len(arquivos)} arquivo(s) a processar")
-    salvos = descartados = erros = 0
+    salvos_total = vazios = erros = 0
 
     for arq in arquivos:
         log.info(f"→ {arq.name}")
@@ -195,38 +172,53 @@ def main() -> None:
             continue
 
         fm, body = parse_frontmatter(content)
-        body_efetivo = body.strip() if body else content.strip()
+        body_efetivo = (body or content).strip()
 
         if not body_efetivo:
-            append_log(arq.name, "descartado", "arquivo vazio", "")
+            append_log(arq.name, "descartado", None, None, 0, "", motivo="arquivo vazio")
             mover_pra_processados(arq)
-            descartados += 1
+            vazios += 1
             continue
 
-        salva, motivo = filtro_haiku(body_efetivo, anthropic_key)
-        if not salva:
-            log.info(f"  DESCARTA: {motivo}")
-            append_log(arq.name, "descartado", motivo, body_efetivo)
-            mover_pra_processados(arq)
-            descartados += 1
-            continue
-
-        ok, msg = salvar_no_mem0(body_efetivo, fm or {}, mem0_key)
-        if not ok:
-            log.error(f"  Mem0 falhou: {msg}")
+        # Roda Curador híbrido sobre o body
+        try:
+            resultado = asyncio.run(
+                curar_arquivo(body_efetivo, via="claude-chat", user_id="gustavo")
+            )
+        except Exception as e:
+            log.error(f"  Curador falhou (não move arquivo, próxima rodada tenta): {e}")
             erros += 1
             continue  # NÃO move — próxima rodada tenta de novo
 
-        log.info(f"  SALVO ({motivo})")
-        append_log(arq.name, "salvo", motivo, body_efetivo)
+        hash_j = resultado.get("hash_janela", "")
+        haiku_frags = resultado.get("haiku", [])
+        sonnet_frags = resultado.get("sonnet", [])
+        salvos_arq = resultado.get("salvos", 0)
+        erros_curador = resultado.get("erros", [])
+
+        # Log dual (uma entrada por curador, mesmo hash_janela)
+        for nome, frags in (("haiku", haiku_frags), ("sonnet", sonnet_frags)):
+            if frags:
+                preview = "; ".join(f.get("conteudo", "")[:60] for f in frags[:3])
+                append_log(arq.name, "salvo", nome, hash_j, len(frags), preview)
+            else:
+                append_log(arq.name, "descartado", nome, hash_j, 0, body_efetivo, motivo="nenhum fragmento extraído")
+
+        for err in erros_curador:
+            log.warning(f"  Curador erro parcial: {err}")
+
+        log.info(
+            f"  ✓ haiku={len(haiku_frags)} sonnet={len(sonnet_frags)} "
+            f"salvos={salvos_arq} hash={hash_j}"
+        )
         mover_pra_processados(arq)
-        salvos += 1
+        salvos_total += salvos_arq
 
-    log.info(f"Resumo: {salvos} salvo(s), {descartados} descartado(s), {erros} erro(s)")
+    log.info(f"Resumo: {salvos_total} fragmentos salvos no Hub, {vazios} vazios, {erros} erros")
 
-    if salvos or descartados:
+    if salvos_total or vazios:
         git_commit_push(
-            f"auto: ingest mem0 claude-chat ({salvos} salvos, {descartados} descartados)"
+            f"auto: ingest claude-chat → Hub ({salvos_total} fragmentos, {vazios} vazios)"
         )
 
 

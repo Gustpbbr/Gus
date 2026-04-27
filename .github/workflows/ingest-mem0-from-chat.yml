@@ -21,10 +21,13 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install mem0ai==0.1.29 httpx==0.27.0 pyyaml
+        # Hub Curador (ADR-001 Fase 2.5): qdrant-client + sentence-transformers + anthropic
+        # mem0ai foi REMOVIDO — Hub Qdrant direto substitui o caminho antigo
+        run: pip install -r requirements.txt
 
-      - name: Ingest Mem0 from Claude Chat
+      - name: Ingest Claude Chat → Hub Qdrant (Curador híbrido)
         env:
-          MEM0_API_KEY: ${{ secrets.MEM0_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
         run: python .github/scripts/ingest_mem0_from_chat.py
