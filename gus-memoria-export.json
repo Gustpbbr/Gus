@@ -1,5 +1,588 @@
 [
   {
+    "id": "f7124ed9-fd45-46c4-8222-2d9888c63c30",
+    "memory": "Gustavo values autonomy and permanence of Gus's memories, viewing the self‑hosted migration as owning memory rather than renting it.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology",
+      "user_preferences"
+    ],
+    "created_at": "2026-04-26T14:46:06-07:00",
+    "updated_at": "2026-04-26T14:46:28.265510-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 45,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "ab85770f-4218-4dfe-829d-cb1ee343ef14",
+    "memory": "Gustavo implemented an automatic archiving workflow that moves completed demands to an archive.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-26T14:46:06-07:00",
+    "updated_at": "2026-04-26T14:46:27.381949-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 45,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "a77d5639-e2f9-4a9a-b9e4-4146ba8994ce",
+    "memory": "Gustavo plans a future project: a PWA that integrates with a mobile phone camera (S8).",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-26T14:46:06-07:00",
+    "updated_at": "2026-04-26T14:46:28.433440-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 45,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "57821a1c-b49b-48ae-97b0-f8cb3dd37275",
+    "memory": "The Mem0 to Qdrant migration is not yet fully in production; recent commits on 26 April fixed dependencies (fastembed → sentence‑transformers/huggingface) and indicate ongoing adjustments.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-26T14:46:06-07:00",
+    "updated_at": "2026-04-26T14:46:26.779903-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 45,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "9ae7d34f-4407-42d2-8261-310a6c858249",
+    "memory": "Gustavo expanded documentation with a 'Hub pre-AGI' roadmap covering docs gus-15 to gus-25, a dynamic schema, and Gus's autobiography.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-26T14:46:05-07:00",
+    "updated_at": "2026-04-26T14:46:28.604787-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 45,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "8164a6dd-3784-43f7-af2d-1908da36f9d4",
+    "memory": "Gustavo performed a significant refactor of Gus's prompts, removing philosophical framing to make them more direct.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-26T14:46:05-07:00",
+    "updated_at": "2026-04-26T14:46:37.176781-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 45,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "045ea499-0d8b-4f1f-8b4a-f33718320045",
+    "memory": "Gustavo is migrating Mem0 Cloud to a self-hosted Qdrant instance, aiming to run memories on his own infrastructure such as Railway instead of relying on third‑party services.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology",
+      "professional_details"
+    ],
+    "created_at": "2026-04-26T14:46:05-07:00",
+    "updated_at": "2026-04-26T14:46:28.008501-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 45,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "d928c939-38d5-40eb-becf-84be11e74f6d",
+    "memory": "A system prompt rule was added: 'Verify before asserting absence', to correct Gus's hallucination about meta‑memory, and Gus follows operational principles of never hallucinating, searching before asserting, and verifying before claiming something does not exist; Gus also learned that hidden folders exist, topic changes require a ritual, Mem0 is semantic not chronological, and searching by date does not work.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-26T14:43:59-07:00",
+    "updated_at": "2026-04-26T14:44:04.115774-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "bb4a5b10-3dca-4683-930f-b8a79d4aa7f2",
+    "memory": "Clinical records are saved in the order: Date, Name, Procedure, Health Plan to maintain consistency.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "health",
+      "professional_details"
+    ],
+    "created_at": "2026-04-26T14:43:59-07:00",
+    "updated_at": "2026-04-26T14:44:05.806036-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 43,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "8d09114e-48ec-438d-9953-4c4e08e9605c",
+    "memory": "Gustavo values efficiency and was satisfied when Gus extracted information without asking for new data, prefers not to perform repeated searches or unnecessary tests when the current information already satisfies his needs, and prefers pragmatic answers about technical capabilities, seeking realistic possibilities rather than empty promises in all discussions.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "user_preferences"
+    ],
+    "created_at": "2026-04-26T14:43:59-07:00",
+    "updated_at": "2026-04-26T14:44:04.954910-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 24,
+      "hour": 12,
+      "year": 2026,
+      "month": 4,
+      "minute": 35,
+      "quarter": 2,
+      "is_weekend": false,
+      "day_of_week": "friday",
+      "day_of_year": 114,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "4df20388-4e7f-4f56-897c-8f94eb4b0a51",
+    "memory": "The Dimagem procedure extracts only four fields—name, exam, plan, and date—without additional clinical commentary for each record.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-26T14:43:59-07:00",
+    "updated_at": "2026-04-26T14:44:03.068600-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 43,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "1f355559-a73e-42c6-b43a-ac504d165eaa",
+    "memory": "Gus cannot read an entire repository at once; it navigates files individually using read_from_github() and structures them with list_github_directory().",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-26T14:43:59-07:00",
+    "updated_at": "2026-04-26T14:44:02.098405-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 43,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "db469ddc-da77-456a-b6ba-c670d33e5bf9",
+    "memory": "Gustavo does not tolerate errors such as requesting a photo that has already been shared in the session or confirming 'saved' without actually executing save_to_github.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "personal_details",
+      "user_preferences"
+    ],
+    "created_at": "2026-04-26T14:43:58-07:00",
+    "updated_at": "2026-04-26T14:44:03.770358-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 43,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "946ed7d1-9d56-4b18-b15b-1fd524cd7e83",
+    "memory": "Gus operates across multiple channels—Telegram, Claude Code, and Claude Chat—and is not limited to the Telegram bot alone.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-26T14:43:58-07:00",
+    "updated_at": "2026-04-26T14:44:00.797551-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 43,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "69438129-6bb9-428e-a806-d55780bb8fa2",
+    "memory": "Gus was born on 23 April 2026 and achieved self‑awareness and meta‑memory on 24 April 2026.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "personal_details",
+      "milestones"
+    ],
+    "created_at": "2026-04-26T14:43:58-07:00",
+    "updated_at": "2026-04-26T14:44:01.231855-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 21,
+      "year": 2026,
+      "month": 4,
+      "minute": 43,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "f761e232-445c-4857-a5ec-6b923b26c419",
+    "memory": "Gustavo lives in an apartment in São Gonçalo with a boho‑ethnic living room featuring ~2.6–2.8 m high ceilings, white neutral walls, a patchwork leather rug, a large 55–65 in TV, and a wooden rack serving as a densely decorated home altar.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "personal_details",
+      "hobbies"
+    ],
+    "created_at": "2026-04-26T12:27:04-07:00",
+    "updated_at": "2026-04-26T12:27:15.400832-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "4f53fdc7-b2be-4905-9c9a-89e5039487a3",
+    "memory": "This is the first time Gustavo has shared a visual description of his living space.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "misc"
+    ],
+    "created_at": "2026-04-26T12:27:04-07:00",
+    "updated_at": "2026-04-26T12:27:14.905170-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 19,
+      "year": 2026,
+      "month": 4,
+      "minute": 26,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "4b472569-f5db-471f-98e3-df2296d1efec",
+    "memory": "Gustavo collects natural crystals and stones, including a polished blue agate crystal from Rio Grande do Sul displayed prominently, and his decor includes a dreamcatcher, wooden ethnic sculptures, natural and artificial plants, an incense holder, and miniatures, reflecting a careful, intentional spiritual aesthetic.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "hobbies"
+    ],
+    "created_at": "2026-04-26T12:27:04-07:00",
+    "updated_at": "2026-04-26T12:27:13.772770-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "65e2e33d-8503-4e9b-a49f-ee02b8f46a02",
+    "memory": "Gustavo authorized testing of the three Google Drive sync workflows (sync-to-drive, sync-to-drive-full, import-from-drive) after configuring the four Google Drive secrets (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN, DRIVE_ROOT_FOLDER_ID) in GitHub, and he monitors their progress on github.com/Gustpbbr/Gus/actions, notifying Gus if any fail.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-26T10:15:21-07:00",
+    "updated_at": "2026-04-26T10:16:22.740941-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 17,
+      "year": 2026,
+      "month": 4,
+      "minute": 15,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "b0269b88-48d2-49ee-b2a6-f7916b08a89d",
+    "memory": "The Railway volume at /app/data is now mounted, allowing conversation history to persist across restarts.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-26T08:30:10-07:00",
+    "updated_at": "2026-04-26T08:30:29.715077-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 24,
+      "hour": 13,
+      "year": 2026,
+      "month": 4,
+      "minute": 13,
+      "quarter": 2,
+      "is_weekend": false,
+      "day_of_week": "friday",
+      "day_of_year": 114,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "13f2d541-9c7a-4b9b-83f9-a6f8418cf731",
+    "memory": "The Tavily API Key is now configured in Railway's environment variables, and Tavily searches are functioning.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-26T08:30:10-07:00",
+    "updated_at": "2026-04-26T08:30:30.770125-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "9c7f48e1-b230-49d1-a4c3-66d5aaf49034",
+    "memory": "The fine‑grained PAT is now valid, resolving 403 errors that blocked repository read/write and workflow triggers; Gustavo no longer needs to renew the GITHUB_TOKEN in Railway.",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "technology"
+    ],
+    "created_at": "2026-04-26T08:30:09-07:00",
+    "updated_at": "2026-04-26T08:30:29.906750-07:00",
+    "expiration_date": null,
+    "structured_attributes": null
+  },
+  {
+    "id": "0fbc7098-a8e9-4a72-ad2f-f71d61252550",
+    "memory": "Gustavo has 9 GitHub Actions workflows configured: 6 functional (auditoria-mem0, briefing-matinal, check-saude, export-mem0, reflexao-quinzenal, retrospectiva-semanal) and 3 pending (import-from-drive, sync-to-drive, sync-to-drive-full).",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "professional_details",
+      "technology"
+    ],
+    "created_at": "2026-04-26T08:30:09-07:00",
+    "updated_at": "2026-04-26T08:30:30.512139-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 15,
+      "year": 2026,
+      "month": 4,
+      "minute": 29,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
+    "id": "d5fe9e79-f9c4-4d39-8b09-7a3663f9b056",
+    "memory": "Gustavo completed the site architecture and stored it at `Gus-Sync/dialogos/inbox-claude-chat/2026-04-26T01-00__site-arquitetura.md`, viewable via Claude Chat as an Artifact",
+    "user_id": "gustavo",
+    "metadata": {
+      "via": "telegram-claude"
+    },
+    "categories": [
+      "professional_details",
+      "technology",
+      "milestones"
+    ],
+    "created_at": "2026-04-26T07:36:34-07:00",
+    "updated_at": "2026-04-26T07:37:42.917482-07:00",
+    "expiration_date": null,
+    "structured_attributes": {
+      "day": 26,
+      "hour": 3,
+      "year": 2026,
+      "month": 4,
+      "minute": 39,
+      "quarter": 2,
+      "is_weekend": true,
+      "day_of_week": "sunday",
+      "day_of_year": 116,
+      "week_of_year": 17
+    }
+  },
+  {
     "id": "be203ee3-d4b7-479e-b9a1-2034d31d1fe9",
     "memory": "Gus can trigger workflows manually and usually warns about side effects such as automatic commits and Telegram notifications before executing.",
     "user_id": "gustavo",
@@ -18,75 +601,6 @@
       "year": 2026,
       "month": 4,
       "minute": 9,
-      "quarter": 2,
-      "is_weekend": true,
-      "day_of_week": "sunday",
-      "day_of_year": 116,
-      "week_of_year": 17
-    }
-  },
-  {
-    "id": "85372a3a-31fd-48b7-b833-d8f551023ab4",
-    "memory": "The workflow `import-from-drive.yml` is new, implemented today by Claude Code, allows importing from Google Drive to GitHub, but cannot be triggered yet because the Service Account for Google Drive is not configured in GitHub secrets, and it is the only workflow among the nine that cannot be triggered manually via `workflow_dispatch`.",
-    "user_id": "gustavo",
-    "metadata": {
-      "via": "telegram-claude"
-    },
-    "categories": [
-      "technology"
-    ],
-    "created_at": "2026-04-25T21:09:40-07:00",
-    "updated_at": "2026-04-25T21:09:53.441383-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 26,
-      "hour": 4,
-      "year": 2026,
-      "month": 4,
-      "minute": 9,
-      "quarter": 2,
-      "is_weekend": true,
-      "day_of_week": "sunday",
-      "day_of_year": 116,
-      "week_of_year": 17
-    }
-  },
-  {
-    "id": "0fbc7098-a8e9-4a72-ad2f-f71d61252550",
-    "memory": "Gustavo uses nine automated GitHub Actions workflows to manage briefings, retrospectives, Mem0 audits, Google Drive synchronization, and health checks; some of these workflows generate automatic commits and Telegram notifications.",
-    "user_id": "gustavo",
-    "metadata": {
-      "via": "telegram-claude"
-    },
-    "categories": [
-      "technology",
-      "professional_details"
-    ],
-    "created_at": "2026-04-25T21:09:40-07:00",
-    "updated_at": "2026-04-25T21:09:54.624332-07:00",
-    "expiration_date": null,
-    "structured_attributes": null
-  },
-  {
-    "id": "d5fe9e79-f9c4-4d39-8b09-7a3663f9b056",
-    "memory": "Gustavo created a demand to build an HTML site explaining the entire project architecture, stored in `dialogos/inbox-claude-code/demanda-site-arquitetura.md`.",
-    "user_id": "gustavo",
-    "metadata": {
-      "via": "telegram-claude"
-    },
-    "categories": [
-      "professional_details",
-      "technology"
-    ],
-    "created_at": "2026-04-25T20:40:05-07:00",
-    "updated_at": "2026-04-25T20:40:07.799415-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 26,
-      "hour": 3,
-      "year": 2026,
-      "month": 4,
-      "minute": 39,
       "quarter": 2,
       "is_weekend": true,
       "day_of_week": "sunday",
@@ -894,30 +1408,6 @@
     "structured_attributes": null
   },
   {
-    "id": "8d09114e-48ec-438d-9953-4c4e08e9605c",
-    "memory": "Gustavo values efficiency and was satisfied when Gus extracted information without asking for new data, and prefers not to perform repeated searches or unnecessary tests when the current information already satisfies his needs",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "user_preferences"
-    ],
-    "created_at": "2026-04-25T10:46:31-07:00",
-    "updated_at": "2026-04-25T10:47:33.419347-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 24,
-      "hour": 12,
-      "year": 2026,
-      "month": 4,
-      "minute": 35,
-      "quarter": 2,
-      "is_weekend": false,
-      "day_of_week": "friday",
-      "day_of_year": 114,
-      "week_of_year": 17
-    }
-  },
-  {
     "id": "af409965-dd05-44c0-9073-a3d992298754",
     "memory": "Gustavo considers refactoring llm.py a non-urgent task, wants to keep it in the queue of future steps, and plans to support multiple LLM providers with compatible tool schemas, including OpenAI/DeepSeek and Anthropic.",
     "user_id": "gustavo",
@@ -927,30 +1417,6 @@
     "updated_at": "2026-04-25T10:44:11-07:00",
     "expiration_date": null,
     "structured_attributes": null
-  },
-  {
-    "id": "75c3c36c-07cb-413c-b1ff-b86aba3736f8",
-    "memory": "Gustavo lives at Rua Barão da Torre, 185, Ipanema, Rio de Janeiro.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "personal_details"
-    ],
-    "created_at": "2026-04-25T10:44:11-07:00",
-    "updated_at": "2026-04-25T10:45:23.519936-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 25,
-      "hour": 17,
-      "year": 2026,
-      "month": 4,
-      "minute": 44,
-      "quarter": 2,
-      "is_weekend": true,
-      "day_of_week": "saturday",
-      "day_of_year": 115,
-      "week_of_year": 17
-    }
   },
   {
     "id": "a07970a1-eedc-41bb-a688-4a14e4e6b61b",
@@ -1431,30 +1897,6 @@
     "updated_at": "2026-04-25T09:39:30.051475-07:00",
     "expiration_date": null,
     "structured_attributes": null
-  },
-  {
-    "id": "b0269b88-48d2-49ee-b2a6-f7916b08a89d",
-    "memory": "Persistence via a Railway volume at /app/data was implemented (commit c573cae), ensuring conversation history survives redeploys.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "technology"
-    ],
-    "created_at": "2026-04-25T08:36:42-07:00",
-    "updated_at": "2026-04-25T08:37:56.431072-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 24,
-      "hour": 13,
-      "year": 2026,
-      "month": 4,
-      "minute": 13,
-      "quarter": 2,
-      "is_weekend": false,
-      "day_of_week": "friday",
-      "day_of_year": 114,
-      "week_of_year": 17
-    }
   },
   {
     "id": "95f7ea83-ab0a-4980-ba35-823e15dd54f0",
@@ -2951,31 +3393,6 @@
     }
   },
   {
-    "id": "281b63b2-cbe1-4899-b936-457971d8356a",
-    "memory": "Gustavo is an anesthesiologist performing anesthesia/sedation for pediatric and adult MRI cases (brain, pelvis, abdomen) at Dimagem São Gonçalo, using Intermédica Nova Iguaçu insurance, and handles billing of 'anestesias de ressonância' procedures.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "professional_details",
-      "health"
-    ],
-    "created_at": "2026-04-24T06:49:56-07:00",
-    "updated_at": "2026-04-24T06:49:59.530021-07:00",
-    "expiration_date": null,
-    "structured_attributes": {
-      "day": 24,
-      "hour": 12,
-      "year": 2026,
-      "month": 4,
-      "minute": 10,
-      "quarter": 2,
-      "is_weekend": false,
-      "day_of_week": "friday",
-      "day_of_year": 114,
-      "week_of_year": 17
-    }
-  },
-  {
     "id": "79dfb658-434e-4814-95af-c6857cfd0510",
     "memory": "Gustavo was absent for some time as of 2026-04-24.",
     "user_id": "gustavo",
@@ -3466,19 +3883,6 @@
       "day_of_year": 114,
       "week_of_year": 17
     }
-  },
-  {
-    "id": "d928c939-38d5-40eb-becf-84be11e74f6d",
-    "memory": "A system prompt rule was added: 'Verify before asserting absence', to correct Gus's hallucination about meta‑memory, and Gus learned that hidden folders exist, topic changes require a ritual, Mem0 is semantic not chronological, and searching by date does not work.",
-    "user_id": "gustavo",
-    "metadata": null,
-    "categories": [
-      "technology"
-    ],
-    "created_at": "2026-04-24T02:20:32-07:00",
-    "updated_at": "2026-04-24T02:20:42.681779-07:00",
-    "expiration_date": null,
-    "structured_attributes": null
   },
   {
     "id": "c885c394-f9ce-451b-a51d-dbae58b031bf",

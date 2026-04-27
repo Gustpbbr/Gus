@@ -2,6 +2,7 @@ import os
 import asyncio
 import logging
 from mem0 import Memory
+from qdrant_client.models import PayloadSchemaType
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +50,25 @@ def _get_client() -> Memory:
                 }
             }
         })
+        _ensure_indexes(_client)
     return _client
+
+
+def _ensure_indexes(memory: Memory) -> None:
+    """Cria índices de payload no Qdrant para os campos de filtro do mem0."""
+    try:
+        qdrant = memory.vector_store.client
+        for field in ("user_id", "agent_id", "run_id"):
+            try:
+                qdrant.create_payload_index(
+                    collection_name="gus",
+                    field_name=field,
+                    field_schema=PayloadSchemaType.KEYWORD,
+                )
+            except Exception:
+                pass  # já existe — idempotente
+    except Exception as e:
+        logger.warning(f"Não foi possível criar índices Qdrant: {e}")
 
 
 def _normalizar_results(raw) -> list:
