@@ -6,16 +6,16 @@ warning ou erro. Silêncio absoluto se tudo verde.
 Roda via .github/workflows/check-saude.yml (cron 7h30 BRT diário).
 
 Reusa keys já configuradas como secrets no GH Actions:
-- ANTHROPIC_API_KEY, MEM0_API_KEY, GITHUB_TOKEN, TAVILY_API_KEY
+- ANTHROPIC_API_KEY, QDRANT_URL, QDRANT_API_KEY, GITHUB_TOKEN, TAVILY_API_KEY
 - TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 
-NÃO reusa o RAILWAY_API_TOKEN (token vive só no Railway, não nos secrets GH —
+NÃO reusa o Railway_diagnostic (token vive só no Railway, não nos secrets GH —
 o check de Railway logs não roda aqui, só os 6 do auto_diagnostico que usam
 keys universais).
 
 Volume Railway (/app/data) também não existe aqui no GH runner — esse
 check vai sair como ⚠️ esperado. Aceitável: o objetivo é detectar problemas
-nos componentes externos (Mem0, Anthropic, GitHub, Tavily, workflows GH),
+nos componentes externos (Hub Qdrant, Anthropic, GitHub, Tavily, workflows GH),
 não validar volume.
 """
 

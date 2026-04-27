@@ -6,7 +6,7 @@ Tudo roda em paralelo via asyncio.gather pra latência total ~ check mais lento.
 
 CHECKS ATIVOS (6):
   1. GitHub PAT          — GET /user, valida escopo
-  2. Mem0                — get_all + calcula frescor da memória mais recente
+  2. Hub Qdrant          — listar(user_id=gustavo) + frescor do mais recente
   3. Anthropic           — Haiku ping (1 token, ~$0.000004)
   4. Tavily              — search com max_results=1
   5. Volume Railway      — /app/data writable?
@@ -15,7 +15,7 @@ CHECKS ATIVOS (6):
 CHECKS NÃO INCLUÍDOS (decisão pendente):
   - Whisper: precisaria arquivo dummy
   - DuckDuckGo: só fallback do Tavily
-  - Mem0 write real: indexação assíncrona (latência minutos), o frescor já cobre
+  - Hub write real: indexação assíncrona (latência segundos), o frescor já cobre
 
 USO:
   await auto_diagnostico()  → tabela markdown pro Telegram
@@ -88,7 +88,7 @@ async def _check_github_pat() -> dict:
         return {"name": "GitHub Token", "status": "error", "detail": str(e)[:80]}
 
 
-async def _check_mem0() -> dict:
+async def _check_hub() -> dict:
     """Lê memórias do brain `gustavo` e calcula frescor da mais recente.
 
     Migrado em 2026-04-27: agora lê do Hub Qdrant (gus_hub) em vez do Mem0
@@ -297,7 +297,7 @@ async def auto_diagnostico() -> str:
     inicio = time.time()
     resultados = await asyncio.gather(
         _check_github_pat(),
-        _check_mem0(),
+        _check_hub(),
         _check_anthropic(),
         _check_tavily(),
         _check_volume(),
