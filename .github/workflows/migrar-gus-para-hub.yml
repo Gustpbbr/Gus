@@ -1,0 +1,40 @@
+name: Migrar gus → gus_hub (ADR-001 Fase 4)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry-run (mostra o que seria feito) ou migrar (executa)'
+        required: true
+        default: 'dry-run'
+        type: choice
+        options:
+          - dry-run
+          - migrar
+
+permissions:
+  contents: read
+
+jobs:
+  migrar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        # Usa requirements.txt do repo (qdrant-client + sentence-transformers + anthropic)
+        run: pip install -r requirements.txt
+
+      - name: Migrar coleção gus → gus_hub
+        env:
+          MODE: ${{ inputs.mode }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python .github/scripts/migrar_gus_para_hub.py
