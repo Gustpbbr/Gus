@@ -466,6 +466,11 @@ async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if _img_resp.status_code == 200:
             _preview = await analisar_os_dimagem(_img_resp.content, caption)
             if _preview:
+                # Confiança baixa do OCR -> não cria pending, só pede reenvio.
+                # Sem state = sem chance de confirmar por engano nome trocado.
+                if _preview.get("pedir_reenvio"):
+                    await update.message.reply_text(_preview["preview_text"])
+                    return
                 dimagem_pending[chat_id] = _preview
                 _save_state()
                 await update.message.reply_text(_preview["preview_text"])
