@@ -67,9 +67,15 @@ async def _chamar_claude_com_retry(
                 kwargs: dict = {
                     "model": modelo_atual,
                     "max_tokens": max_tokens,
-                    "system": system_prompt,
                     "messages": messages,
                 }
+                # Só inclui `system` se tiver conteúdo. system="" disparou bug
+                # 400 'temperature and top_p cannot both be specified' em
+                # chamadas Sonnet 4.6 sem tools (curador errava 100% do dia
+                # 27/04/2026). Defesa em profundidade — chamadas com system
+                # bem-formado seguem normais.
+                if system_prompt:
+                    kwargs["system"] = system_prompt
                 # Beta header token-efficient-tools: comprime os schemas das tools
                 # no contexto enviado ao modelo. Reduz ~30-40% dos tokens dos tools.
                 # Só faz sentido quando há tools — em chamadas sem tools (resumo de
