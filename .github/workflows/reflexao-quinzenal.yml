@@ -26,11 +26,13 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install mem0ai==0.1.29 anthropic==0.40.0 httpx==0.27.0
+        # Migrado em R2 (2026-04-27): lê do Hub Qdrant, não mais Mem0 SaaS.
+        run: pip install -r .github/scripts/requirements.txt
 
       - name: Rodar Nosis + Thymos + Síntese
         env:
-          MEM0_API_KEY: ${{ secrets.MEM0_API_KEY }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}

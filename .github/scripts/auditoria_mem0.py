@@ -20,7 +20,9 @@ import unicodedata
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
-from mem0 import MemoryClient
+# Migrado em R2 (2026-04-27): lê do Hub Qdrant via _hub_compat (Mem0 aposentado).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _hub_compat import get_all_memorias
 
 USER_ID = "gustavo"
 BRT = timezone(timedelta(hours=-3))
@@ -144,14 +146,12 @@ def formatar_data(iso: str) -> str:
 
 
 def main():
-    api_key = os.environ.get("MEM0_API_KEY")
-    if not api_key:
-        print("MEM0_API_KEY ausente. Auditoria pulada.")
+    if not os.environ.get("QDRANT_URL") or not os.environ.get("QDRANT_API_KEY"):
+        print("QDRANT_URL/QDRANT_API_KEY ausentes. Auditoria pulada.")
         sys.exit(0)
 
-    print("Carregando memórias do Mem0...")
-    client = MemoryClient(api_key=api_key)
-    memorias = client.get_all(user_id=USER_ID)
+    print("Carregando memórias do Hub Qdrant (gus_hub)...")
+    memorias = get_all_memorias(user_id=USER_ID, limit=10000)
     total = len(memorias)
     print(f"Total de memórias: {total}")
 
