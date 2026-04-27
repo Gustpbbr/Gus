@@ -39,7 +39,7 @@ def _get_client() -> Memory:
             "llm": {
                 "provider": "anthropic",
                 "config": {
-                    "model": "claude-haiku-4-5-20251001",
+                    "model": "claude-sonnet-4-6",
                     "api_key": anthropic_key,
                 }
             },
