@@ -164,16 +164,69 @@ def _validar_fragmento(frag: dict) -> Optional[dict]:
     }
 
 
+PROMPT_CURADOR_ARQUIVO = """Você é o Curador de memória do Gus, agente pessoal do Gustavo Pratti de Barros.
+
+Este é um arquivo de memória escrito por uma instância do Claude Chat (claude.ai)
+em uma sessão recente com o Gustavo. O arquivo já é uma curadoria preliminar
+feita pelo próprio Chat — sua tarefa é REFINAR e CLASSIFICAR (não recriar do zero).
+
+Sua tarefa:
+1. Identificar fragmentos atômicos auto-suficientes dentro do arquivo.
+2. Classificar cada um pelo schema gus-18 (tipo / camada / area / confiança).
+3. Descartar lixo óbvio (saudação, "ok", teste, repetição do óbvio).
+
+REGRAS DE EXTRAÇÃO:
+
+1. Cada fragmento = uma informação isolada e auto-suficiente. Sem "ele", "isso", "aquele projeto" sem nomear. Quem ler a memória sozinha (sem contexto) deve entender.
+
+2. PROTEÇÃO LGPD — Dimagem: se o arquivo contiver dados de paciente, extraia APENAS:
+   - Nome do paciente
+   - Data do procedimento
+   - Convênio
+   NUNCA: tipo de exame, achados clínicos, observações médicas, intercorrências, doses, peso, jejum, status.
+
+3. Máximo 8 fragmentos por arquivo (arquivos do Chat costumam ser mais ricos que janelas Telegram).
+
+4. Se o arquivo for trivial / de teste / só saudação: retorne `[]`.
+
+CLASSIFIQUE cada fragmento:
+
+- tipo: identidade_operacional | biografico | emocional | decisao | procedural | rotina | meta_reflexao | conexao_emergente | episodico | cronologico | fato | preferencia | lacuna | projeto
+
+- camada_temporal: momento | sessao | semana | rotina | permanente
+
+- area: gus | saude | financeiro | projetos | pessoal | dimagem | pesquisa | receitas | esportes
+
+- confianca: 0.0 (especulativo) a 1.0 (cristal claro)
+
+FORMATO — apenas JSON válido, sem texto extra:
+
+[
+  {
+    "conteudo": "texto auto-suficiente em pt-BR",
+    "tipo": "<tipo>",
+    "camada_temporal": "<camada>",
+    "area": "<area>",
+    "confianca": 0.0
+  }
+]
+
+Arquivo a analisar (porta de origem: {via}):
+
+{conteudo}
+"""
+
+
 async def _extrair_via_modelo(
-    conversa: str, modelo: str, via: str
+    input_texto: str, prompt_template: str, modelo: str, via: str, max_frags: int
 ) -> list[dict]:
-    """Chama um modelo Claude com PROMPT_CURADOR. Retorna lista de fragmentos validados."""
-    prompt = PROMPT_CURADOR.format(via=via, conversa=conversa)
+    """Chama um modelo Claude com prompt_template. Retorna lista de fragmentos validados."""
+    prompt = prompt_template.format(via=via, conversa=input_texto, conteudo=input_texto)
     try:
         response = await _chamar_claude_com_retry(
             model=modelo,
-            max_tokens=1500,
-            system_prompt="",  # prompt vai todo no message do usuário
+            max_tokens=2048,
+            system_prompt="",
             messages=[{"role": "user", "content": prompt}],
         )
     except Exception as e:
@@ -183,46 +236,42 @@ async def _extrair_via_modelo(
     texto = next((b.text for b in response.content if hasattr(b, "text")), "") or ""
     crus = _extrair_json(texto)
     validos = [v for v in (_validar_fragmento(f) for f in crus) if v]
-    return validos[:5]  # cap defensivo (prompt já limita a 5)
+    return validos[:max_frags]
 
 
-async def curar_turnos(
-    messages: list[dict],
-    via: str = "telegram-claude",
-    user_id: str = "gustavo",
+async def _curar_input_hibrido(
+    input_texto: str,
+    prompt_template: str,
+    via: str,
+    user_id: str,
+    janela_turnos: int,
+    max_frags_por_modelo: int = 5,
 ) -> dict:
     """
-    Curadoria híbrida sobre uma janela de mensagens.
+    Lógica comum: roda Haiku + Sonnet em paralelo sobre o mesmo input_texto,
+    ambos salvam no Hub com metadata.curador distinta + mesmo hash_janela.
 
-    Roda Haiku e Sonnet em paralelo, ambos extraem fragmentos do mesmo trecho,
-    ambos salvam no Hub com `metadata.curador` distinta.
-
-    Args:
-        messages: lista de mensagens [{role, content}, ...] da janela.
-        via: porta de origem (telegram-claude, claude-chat, etc.).
-        user_id: brain alvo (default 'gustavo' — fatos sobre o usuário).
+    Reusada por curar_turnos (input = trecho de mensagens) e curar_arquivo
+    (input = body de arquivo Markdown).
 
     Returns:
-        dict com:
-            hash_janela: str
-            haiku: list[dict] — fragmentos extraídos por Haiku
-            sonnet: list[dict] — fragmentos extraídos por Sonnet
-            salvos: int — total de fragmentos ingeridos no Hub
-            erros: list[str] — mensagens de erro (modelo, ingestão, etc.)
+        dict {hash_janela, haiku: list, sonnet: list, salvos: int, erros: list, via, user_id}
     """
-    if not messages:
-        return {"hash_janela": "", "haiku": [], "sonnet": [], "salvos": 0, "erros": ["sem messages"]}
+    if not input_texto or not input_texto.strip():
+        return {
+            "hash_janela": "", "haiku": [], "sonnet": [],
+            "salvos": 0, "erros": ["input vazio"],
+            "via": via, "user_id": user_id,
+        }
 
-    conversa = _serializar_trecho(messages)
-    hash_j = _hash_janela(conversa)
-    janela_turnos = len(messages)
+    hash_j = _hash_janela(input_texto)
 
     modelo_haiku = os.getenv("MODEL_CURADOR_HAIKU", "claude-haiku-4-5")
     modelo_sonnet = os.getenv("MODEL_CURADOR_SONNET", "claude-sonnet-4-6")
 
     haiku_frags, sonnet_frags = await asyncio.gather(
-        _extrair_via_modelo(conversa, modelo_haiku, via),
-        _extrair_via_modelo(conversa, modelo_sonnet, via),
+        _extrair_via_modelo(input_texto, prompt_template, modelo_haiku, via, max_frags_por_modelo),
+        _extrair_via_modelo(input_texto, prompt_template, modelo_sonnet, via, max_frags_por_modelo),
         return_exceptions=False,
     )
 
@@ -266,3 +315,60 @@ async def curar_turnos(
         "via": via,
         "user_id": user_id,
     }
+
+
+async def curar_turnos(
+    messages: list[dict],
+    via: str = "telegram-claude",
+    user_id: str = "gustavo",
+) -> dict:
+    """
+    Curadoria híbrida sobre uma janela de mensagens (Telegram, etc.).
+
+    Args:
+        messages: lista de mensagens [{role, content}, ...] da janela.
+        via: porta de origem (telegram-claude, etc.).
+        user_id: brain alvo ('gustavo' ou 'gus').
+    """
+    if not messages:
+        return {
+            "hash_janela": "", "haiku": [], "sonnet": [],
+            "salvos": 0, "erros": ["sem messages"],
+            "via": via, "user_id": user_id,
+        }
+
+    conversa = _serializar_trecho(messages)
+    return await _curar_input_hibrido(
+        input_texto=conversa,
+        prompt_template=PROMPT_CURADOR,
+        via=via,
+        user_id=user_id,
+        janela_turnos=len(messages),
+        max_frags_por_modelo=5,
+    )
+
+
+async def curar_arquivo(
+    body: str,
+    via: str = "claude-chat",
+    user_id: str = "gustavo",
+) -> dict:
+    """
+    Curadoria híbrida sobre um arquivo de memória (Claude Chat ingest).
+
+    Mesmo padrão de curar_turnos, mas com prompt específico pra arquivo
+    pré-curado (não trecho de turnos crus).
+
+    Args:
+        body: corpo do arquivo (sem frontmatter).
+        via: porta de origem (default 'claude-chat').
+        user_id: brain alvo ('gustavo' ou 'gus').
+    """
+    return await _curar_input_hibrido(
+        input_texto=(body or "").strip(),
+        prompt_template=PROMPT_CURADOR_ARQUIVO,
+        via=via,
+        user_id=user_id,
+        janela_turnos=1,  # arquivo = 1 unidade de input
+        max_frags_por_modelo=8,
+    )
