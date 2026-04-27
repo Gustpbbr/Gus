@@ -31,3 +31,14 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
         run: python .github/scripts/archive_completed.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "gus-bot"
+          git config user.email "gus-bot@users.noreply.github.com"
+          if git diff --staged --quiet; then
+            echo "Nada a commitar"
+            exit 0
+          fi
+          git commit -m "auto: archive demandas concluidas ($(date -u +%Y-%m-%dT%H:%M:%SZ))"
+          git push
