@@ -89,42 +89,40 @@ async def _check_github_pat() -> dict:
 
 
 async def _check_mem0() -> dict:
-    """Lê memórias do brain `gustavo` e calcula frescor da mais recente."""
-    api_key = os.getenv("MEM0_API_KEY")
-    if not api_key:
-        return {"name": "Mem0", "status": "error", "detail": "MEM0_API_KEY ausente"}
+    """Lê memórias do brain `gustavo` e calcula frescor da mais recente.
+
+    Migrado em 2026-04-27: agora lê do Hub Qdrant (gus_hub) em vez do Mem0
+    SaaS aposentado. Nome da função mantido pra retrocompatibilidade com
+    `auto_diagnostico` e log lines existentes — o "name" reportado mudou
+    para 'Hub Qdrant' pra refletir a fonte real.
+    """
+    qdrant_url = os.getenv("QDRANT_URL")
+    qdrant_key = os.getenv("QDRANT_API_KEY")
+    if not qdrant_url or not qdrant_key:
+        return {"name": "Hub Qdrant", "status": "error", "detail": "QDRANT_URL/QDRANT_API_KEY ausentes"}
 
     try:
-        from mem0 import MemoryClient
-        client = MemoryClient(api_key=api_key)
+        from hub.store import listar
     except Exception as e:
-        return {"name": "Mem0", "status": "error", "detail": f"client init: {str(e)[:60]}"}
+        return {"name": "Hub Qdrant", "status": "error", "detail": f"import hub.store: {str(e)[:60]}"}
 
     try:
-        result = await asyncio.to_thread(
-            client.get_all, user_id="gustavo", page=1, page_size=20
-        )
+        # Hub.listar ordena pelo scroll do Qdrant (sem ordem garantida cronológica),
+        # mas pega 50 amostras é suficiente pra detectar frescor da mais recente.
+        mems = await asyncio.to_thread(listar, "gustavo", 50)
     except Exception as e:
-        return {"name": "Mem0", "status": "error", "detail": f"get_all: {str(e)[:60]}"}
-
-    # SDK varia — normaliza pra lista
-    if isinstance(result, dict):
-        mems = result.get("memories") or result.get("results") or []
-    elif isinstance(result, list):
-        mems = result
-    else:
-        mems = []
+        return {"name": "Hub Qdrant", "status": "error", "detail": f"listar: {str(e)[:60]}"}
 
     if not mems:
         return {
-            "name": "Mem0",
+            "name": "Hub Qdrant",
             "status": "warn",
-            "detail": "0 memórias no brain gustavo",
+            "detail": "0 fragmentos no user_id=gustavo",
         }
 
     latest = None
     for m in mems:
-        c = m.get("created_at") if isinstance(m, dict) else None
+        c = m.get("criado_em") if isinstance(m, dict) else None
         if not c:
             continue
         try:
@@ -137,24 +135,24 @@ async def _check_mem0() -> dict:
     total = len(mems)
     if latest is None:
         return {
-            "name": "Mem0",
+            "name": "Hub Qdrant",
             "status": "warn",
-            "detail": f"{total} mems mas sem timestamp parseável",
+            "detail": f"{total}+ frags mas sem timestamp parseável",
         }
 
-    delta_h = (datetime.now(timezone.utc) - latest).total_seconds() / 3600
+    delta_h = (datetime.now(timezone.utc) - latest.astimezone(timezone.utc)).total_seconds() / 3600
     fresca_brt = latest.astimezone(BRT).strftime("%d/%m %H:%M")
 
     if delta_h > MEM0_FRESH_HOURS:
         return {
-            "name": "Mem0",
+            "name": "Hub Qdrant",
             "status": "warn",
-            "detail": f"{total} mems, última há {delta_h:.1f}h ({fresca_brt} BRT) — possível silêncio",
+            "detail": f"{total}+ frags, mais recente há {delta_h:.1f}h ({fresca_brt} BRT) — possível silêncio",
         }
     return {
-        "name": "Mem0",
+        "name": "Hub Qdrant",
         "status": "ok",
-        "detail": f"{total} mems, última há {delta_h:.1f}h ({fresca_brt} BRT)",
+        "detail": f"{total}+ frags, mais recente há {delta_h:.1f}h ({fresca_brt} BRT)",
     }
 
 
