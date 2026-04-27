@@ -79,16 +79,44 @@ def _normalizar_results(raw) -> list:
 
 
 async def buscar_memorias(query: str, user_id: str = USER_ID_GUSTAVO) -> str:
-    """Busca memórias relevantes para o contexto da conversa."""
-    client = _get_client()
-    raw = await asyncio.to_thread(
-        client.search, query, user_id=user_id, limit=5
-    )
-    results = _normalizar_results(raw)
-    if not results:
+    """Busca memórias relevantes para o contexto da conversa.
+
+    ADR-001 Fase 3: tenta o Hub Qdrant ('gus_hub', schema rico) PRIMEIRO.
+    Se o Hub não retornar nada útil ou der erro, fallback para a coleção
+    Mem0 antiga ('gus' via mem0ai). Mantém comportamento atual como rede
+    de segurança durante a transição.
+
+    Após Fase 5 (aposentadoria do Mem0), o fallback é removido.
+    """
+    # 1) Tenta Hub Qdrant direto (rico, com filtros)
+    try:
+        from hub.store import lembrar as hub_lembrar
+        hub_results = await asyncio.to_thread(
+            hub_lembrar, query, user_id, 5
+        )
+        if hub_results:
+            linhas = [f"- {r['conteudo']}" for r in hub_results if r.get("conteudo")]
+            if linhas:
+                logger.info(f"Memória servida pelo Hub ({len(linhas)} fragmentos)")
+                return "\n".join(linhas)
+    except Exception as e:
+        logger.warning(f"Hub.lembrar falhou (cai pro fallback Mem0): {e}")
+
+    # 2) Fallback: Mem0 wrapper antigo (coleção 'gus')
+    try:
+        client = _get_client()
+        raw = await asyncio.to_thread(
+            client.search, query, user_id=user_id, limit=5
+        )
+        results = _normalizar_results(raw)
+        if not results:
+            return ""
+        lines = [f"- {r['memory']}" for r in results]
+        logger.info(f"Memória servida pelo Mem0 (fallback, {len(lines)} fragmentos)")
+        return "\n".join(lines)
+    except Exception as e:
+        logger.warning(f"Mem0 fallback também falhou: {e}")
         return ""
-    lines = [f"- {r['memory']}" for r in results]
-    return "\n".join(lines)
 
 
 async def salvar_memorias(
