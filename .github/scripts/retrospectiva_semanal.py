@@ -2,11 +2,11 @@
 """
 Retrospectiva semanal automática — roda sexta 20h BRT via GitHub Actions.
 
-Coleta atividade da semana (Mem0, commits, índices modificados) e gera MD
-estruturado em pessoal/diario/semana-AAAA-WW.md. Commit automático.
+Coleta atividade da semana (Hub Qdrant, commits, índices modificados) e gera
+MD estruturado em pessoal/diario/semana-AAAA-WW.md. Commit automático.
 
 Variáveis necessárias:
-- MEM0_API_KEY
+- QDRANT_URL, QDRANT_API_KEY (Hub Qdrant — antes era MEM0_API_KEY)
 - ANTHROPIC_API_KEY
 - TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (opcional — pra enviar resumo de aviso)
 - GITHUB_TOKEN
@@ -17,8 +17,12 @@ import sys
 import subprocess
 import httpx
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 
-from mem0 import MemoryClient
+# Migrado em R2 (2026-04-27): lê do Hub Qdrant via _hub_compat (Mem0 aposentado).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _hub_compat import get_all_memorias
+
 from anthropic import Anthropic
 
 USER_ID = "gustavo"
@@ -73,12 +77,10 @@ Se algum dado estiver vazio, sinalize ("sem atividade registrada") em vez de inv
 
 
 def buscar_memorias_recentes() -> str:
-    api_key = os.environ.get("MEM0_API_KEY")
-    if not api_key:
-        return "(sem MEM0_API_KEY)"
+    if not os.environ.get("QDRANT_URL") or not os.environ.get("QDRANT_API_KEY"):
+        return "(sem QDRANT_URL/QDRANT_API_KEY)"
     try:
-        client = MemoryClient(api_key=api_key)
-        all_mem = client.get_all(user_id=USER_ID)
+        all_mem = get_all_memorias(user_id=USER_ID, limit=10000)
         sete_dias_atras = datetime.now(timezone.utc) - timedelta(days=7)
 
         recentes = []
@@ -102,7 +104,7 @@ def buscar_memorias_recentes() -> str:
                 linhas.append(f"- ({data}) {texto}")
         return "\n".join(linhas) if linhas else "(sem conteúdo extraído)"
     except Exception as e:
-        return f"(erro Mem0: {e})"
+        return f"(erro Hub: {e})"
 
 
 def buscar_commits_semana() -> str:
@@ -202,8 +204,8 @@ def enviar_aviso_telegram(caminho: str) -> None:
 def main():
     # Skip silencioso se secrets essenciais estão ausentes — evita falha no cron
     # semanal até Gustavo configurar secrets. TELEGRAM_* é opcional (só pra aviso);
-    # ANTHROPIC_API_KEY e MEM0_API_KEY são obrigatórios pra gerar a retro.
-    essenciais = ["ANTHROPIC_API_KEY", "MEM0_API_KEY"]
+    # ANTHROPIC_API_KEY + Hub (QDRANT_*) são obrigatórios pra gerar a retro.
+    essenciais = ["ANTHROPIC_API_KEY", "QDRANT_URL", "QDRANT_API_KEY"]
     faltando = [k for k in essenciais if not os.environ.get(k)]
     if faltando:
         print(f"Secrets faltando: {', '.join(faltando)}. Retrospectiva pulada.")

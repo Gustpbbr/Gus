@@ -116,7 +116,9 @@ Schema obrigatório:
   "exames": ["RM CRANIO (ENCEFALO)", "..."],
   "convenio": "string copiada literalmente" | null,
   "valor_brl": int | null,
-  "unidade": "Dimagem Taquara" | "Dimagem São Gonçalo" | null
+  "unidade": "Dimagem Taquara" | "Dimagem São Gonçalo" | null,
+  "confianca": "alta" | "media" | "baixa",
+  "motivo_incerteza": "string curta" | null
 }
 
 Regras:
@@ -125,7 +127,24 @@ Regras:
 - convenio: copie LITERALMENTE como impresso (ex: "ASSIM TAQUARA"). Não normalize.
 - valor_brl: número inteiro se houver valor de cobrança claro (ex: "R$ 220" -> 220).
 - unidade: identifique pelo cabeçalho/endereço se aparecer. Caso contrário, null.
-- Campos não legíveis: null."""
+- Campos não legíveis: null.
+
+CONFIANÇA — REGRA CRÍTICA (impacta prontuário médico, não chute):
+- "alta":   imagem nítida, texto reto e bem legível, NOME do paciente lido com 100% de
+            certeza letra por letra. Convênio claro. Você consegue ler o documento
+            inteiro como se estivesse na mão.
+- "media":  algum borrão leve, parte do documento cortada mas o nome do paciente
+            está claro, OU letras isoladas com leve ambiguidade que o contexto
+            resolve (ex: "0" vs "O"). Aceita-se.
+- "baixa":  documento rotacionado >15° (deitado, de cabeça pra baixo), texto
+            embaçado/iluminação ruim que torna o NOME ambíguo, parte do nome
+            cortada/coberta, ou qualquer dúvida sobre QUEM é o paciente.
+            QUALQUER incerteza sobre o nome → "baixa". Falso positivo no nome
+            corrompe prontuário — prefira pedir reenvio.
+
+motivo_incerteza: se confianca for "baixa" ou "media", explique em 1 frase curta
+o que está ruim (ex: "imagem rotacionada 90°", "nome parcialmente coberto",
+"qualidade insuficiente para ler com certeza"). Null se confianca = "alta"."""
 
 CONTEXTO_TEMPLATE = """
 
@@ -522,6 +541,27 @@ async def analisar_os_dimagem(image_bytes: bytes, caption: str = "") -> dict | N
     if not dados:
         return None
 
+    # Confiança da extração — gate crítico contra prontuário corrompido (#4 inbox).
+    # "baixa" → bloqueia preview e pede reenvio (sem state pendente, sem chance
+    # de Gustavo confirmar nome trocado por engano). Default conservador "media".
+    confianca = (dados.get("confianca") or "media").strip().lower()
+    motivo = (dados.get("motivo_incerteza") or "").strip()
+    if confianca not in ("alta", "media", "baixa"):
+        confianca = "media"
+
+    if confianca == "baixa":
+        msg = (
+            "Não consegui ler essa OS com certeza"
+            + (f" ({motivo})" if motivo else "")
+            + ". Pode reenviar a foto na posição correta, "
+            "com boa iluminação e sem borrão? Não vou registrar nada até ler com clareza."
+        )
+        logger.warning(
+            f"OCR Dimagem confiança baixa — bloqueado. motivo='{motivo}' "
+            f"nome_extraido='{(dados.get('nome_paciente') or '').strip()}'"
+        )
+        return {"pedir_reenvio": True, "preview_text": msg, "confianca": "baixa", "motivo": motivo}
+
     nome = (dados.get("nome_paciente") or "").strip()
     exames = [
         e for e in (dados.get("exames") or [])
@@ -539,9 +579,15 @@ async def analisar_os_dimagem(image_bytes: bytes, caption: str = "") -> dict | N
     valor_str = f"R$ {valor}" if isinstance(valor, (int, float)) else "—"
     exames_str = " + ".join(exames)
 
-    # Preview (A do plano A+B)
+    # Preview (A do plano A+B). Quando confiança = "media", inclui aviso visível
+    # pra Gustavo conferir o nome com mais atenção antes de confirmar.
     preview = f"OS Dimagem detectada ({hoje_str}):\n"
     preview += f"  + {nome} · {exames_str} · {convenio_norm} · {valor_str}\n\n"
+    if confianca == "media":
+        aviso = "⚠️ Confiança média na leitura"
+        if motivo:
+            aviso += f" ({motivo})"
+        preview += aviso + ". Confere o nome antes de confirmar.\n\n"
     if contexto:
         n_existentes = len(contexto.splitlines())
         preview += f"Pacientes já no MD do dia ({n_existentes}):\n{contexto}\n\n"
@@ -557,6 +603,7 @@ async def analisar_os_dimagem(image_bytes: bytes, caption: str = "") -> dict | N
         "nome": nome,
         "hoje_iso": hoje_iso,
         "hoje_str": hoje_str,
+        "confianca": confianca,
     }
 
 

@@ -8,7 +8,7 @@ via Claude Haiku, posta no Telegram via Bot API direta.
 Não depende do bot estar rodando em polling — envia mensagem unidirecional.
 
 Variáveis necessárias:
-- MEM0_API_KEY
+- QDRANT_URL, QDRANT_API_KEY (Hub Qdrant — antes era MEM0_API_KEY)
 - ANTHROPIC_API_KEY
 - TELEGRAM_BOT_TOKEN
 - TELEGRAM_CHAT_ID
@@ -20,8 +20,12 @@ import sys
 import json
 import httpx
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 
-from mem0 import MemoryClient
+# Migrado em R2 (2026-04-27): lê do Hub Qdrant via _hub_compat (Mem0 aposentado).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _hub_compat import search_memorias
+
 from anthropic import Anthropic
 
 USER_ID = "gustavo"
@@ -57,19 +61,17 @@ Contexto:
 
 
 def buscar_memorias() -> str:
-    api_key = os.environ.get("MEM0_API_KEY")
-    if not api_key:
-        return "(sem MEM0_API_KEY configurada)"
+    if not os.environ.get("QDRANT_URL") or not os.environ.get("QDRANT_API_KEY"):
+        return "(sem QDRANT_URL/QDRANT_API_KEY configuradas)"
     try:
-        client = MemoryClient(api_key=api_key)
-        results = client.search(
+        results = search_memorias(
             "pendências projetos atuais decisões recentes", user_id=USER_ID, limit=15
         )
         if not results:
             return "(nenhuma memória relevante)"
         return "\n".join(f"- {r.get('memory', '')}" for r in results)
     except Exception as e:
-        return f"(erro ao buscar Mem0: {e})"
+        return f"(erro ao buscar Hub: {e})"
 
 
 def buscar_commits_24h() -> str:
@@ -147,7 +149,7 @@ def enviar_telegram(texto: str) -> bool:
 def main():
     # Skip silencioso se secrets essenciais estão ausentes — evita email de falha
     # no cron diário até o Gustavo configurar os 3 secrets no GitHub.
-    essenciais = ["ANTHROPIC_API_KEY", "MEM0_API_KEY", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"]
+    essenciais = ["ANTHROPIC_API_KEY", "QDRANT_URL", "QDRANT_API_KEY", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"]
     faltando = [k for k in essenciais if not os.environ.get(k)]
     if faltando:
         print(f"Secrets faltando: {', '.join(faltando)}. Briefing pulado.")

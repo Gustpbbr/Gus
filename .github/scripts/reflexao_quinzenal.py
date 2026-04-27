@@ -12,7 +12,7 @@ script verifica semana par/ímpar pra decidir se roda).
 Saída: projetos/gus/reflexoes/AAAA-WW-reflexao.md
 
 Variáveis necessárias:
-- MEM0_API_KEY
+- QDRANT_URL, QDRANT_API_KEY (Hub Qdrant — antes era MEM0_API_KEY)
 - ANTHROPIC_API_KEY
 - GITHUB_TOKEN (automático)
 - TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (opcional, aviso)
@@ -23,8 +23,12 @@ import sys
 import subprocess
 import httpx
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 
-from mem0 import MemoryClient
+# Migrado em R2 (2026-04-27): lê do Hub Qdrant via _hub_compat (Mem0 aposentado).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _hub_compat import get_all_memorias
+
 from anthropic import Anthropic
 
 USER_ID = "gustavo"
@@ -109,7 +113,7 @@ Português BR informal, direto, sem superlativos vazios. Sem "incrível", "fant�
 
 
 def skip_se_falta_secret() -> None:
-    essenciais = ["ANTHROPIC_API_KEY", "MEM0_API_KEY"]
+    essenciais = ["ANTHROPIC_API_KEY", "QDRANT_URL", "QDRANT_API_KEY"]
     faltando = [k for k in essenciais if not os.environ.get(k)]
     if faltando:
         print(f"Secrets faltando: {', '.join(faltando)}. Reflexão pulada.")
@@ -118,10 +122,8 @@ def skip_se_falta_secret() -> None:
 
 def buscar_memorias_janela() -> str:
     """Memórias criadas nos últimos DIAS_JANELA dias."""
-    api_key = os.environ["MEM0_API_KEY"]
     try:
-        client = MemoryClient(api_key=api_key)
-        todas = client.get_all(user_id=USER_ID)
+        todas = get_all_memorias(user_id=USER_ID, limit=10000)
         limite = datetime.now(timezone.utc) - timedelta(days=DIAS_JANELA)
 
         recentes = []
@@ -145,7 +147,7 @@ def buscar_memorias_janela() -> str:
                 linhas.append(f"- ({data}) {texto}")
         return "\n".join(linhas) or "(sem conteúdo extraído)"
     except Exception as e:
-        return f"(erro Mem0: {e})"
+        return f"(erro Hub: {e})"
 
 
 def buscar_commits_janela() -> str:

@@ -133,7 +133,31 @@ async def salvar_memorias(
 
 
 async def buscar_memorias_detalhada(query: str, limit: int = 10, user_id: str = USER_ID_GUSTAVO) -> str:
-    """Busca memórias com limite configurável, incluindo ID para deleção."""
+    """Busca memórias com limite configurável, incluindo ID para deleção.
+
+    ADR-001 Fase 3: Hub Qdrant (gus_hub) primeiro. Fallback Mem0 só se Hub
+    falhar (rede/auth). Após Fase 5, fallback removido.
+    """
+    # 1) Tenta Hub Qdrant
+    try:
+        from hub.store import lembrar as hub_lembrar
+        hub_results = await asyncio.to_thread(
+            hub_lembrar, query, user_id, limit
+        )
+        if hub_results:
+            linhas = [f"Encontradas {len(hub_results)} memória(s) em `{user_id}` (Hub) pra `{query}`:"]
+            for i, r in enumerate(hub_results, 1):
+                conteudo = (r.get("conteudo") or "").strip()
+                mem_id = r.get("id") or "?"
+                tipo = r.get("tipo") or "?"
+                area = r.get("area") or "-"
+                if conteudo:
+                    linhas.append(f"{i}. [{mem_id}] [{tipo}/{area}] {conteudo}")
+            return "\n".join(linhas)
+    except Exception as e:
+        logger.warning(f"Hub.lembrar (detalhada) falhou — fallback Mem0: {e}")
+
+    # 2) Fallback Mem0
     try:
         client = _get_client()
         raw = await asyncio.to_thread(
@@ -141,12 +165,12 @@ async def buscar_memorias_detalhada(query: str, limit: int = 10, user_id: str = 
         )
         results = _normalizar_results(raw)
     except Exception as e:
-        return f"Erro ao buscar no Mem0 (user_id={user_id}): {e}"
+        return f"Erro ao buscar (Hub+Mem0) (user_id={user_id}): {e}"
 
     if not results:
         return f"Nenhuma memória encontrada pra `{query}` no brain `{user_id}`."
 
-    linhas = [f"Encontradas {len(results)} memória(s) em `{user_id}` pra `{query}`:"]
+    linhas = [f"Encontradas {len(results)} memória(s) em `{user_id}` (Mem0 fallback) pra `{query}`:"]
     for i, r in enumerate(results, 1):
         mem = (r.get("memory") or "").strip()
         mem_id = r.get("id") or "?"
