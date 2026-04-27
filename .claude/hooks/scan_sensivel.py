@@ -2,43 +2,42 @@
 """
 PreToolUse hook — bloqueia escrita de dados sensíveis fora de sensivel/.
 
-Espelha exatamente os padrões usados pelo bot em produção
-(`gus/tools.py:_PATTERNS_SENSIVEIS`), garantindo defesa de profundidade
-quando o Claude Code faz Write/Edit/NotebookEdit aqui.
+Importa patterns de `gus.patterns_sensiveis` (fonte única — R7).
+A mesma lista é usada pelo bot Telegram em `gus/tools.py:_PATTERNS_SENSIVEIS`.
 
 COMO FUNCIONA:
   1. Recebe via stdin um JSON com {tool_name, tool_input, ...}
-  2. Se tool não for Write/Edit/NotebookEdit → exit 0 (permite)
-  3. Se path começar com 'sensivel/' → exit 0 (permite — pasta dedicada)
-  4. Senão escaneia o conteúdo. Se achar CPF/CNPJ/cartão/key → exit 2
-     com mensagem em stderr (Claude vê e ajusta)
+  2. Se tool não for Write/Edit/NotebookEdit -> exit 0 (permite)
+  3. Se path comeca com 'sensivel/' -> exit 0 (permite -- pasta dedicada)
+  4. Senao escaneia o conteudo. Se achar PII/credenciais -> exit 2
+     com mensagem em stderr (Claude ve e ajusta)
 
 CONTORNO PROPOSITAL:
-  Se o usuário REALMENTE quer salvar em path não-sensivel (ex: documentar
-  formato de CPF num exemplo), pode pedir 'use bypass' — mas o hook não
-  detecta intent. Solução prática: salvar em sensivel/ ou citar valores
-  fictícios (123.456.789-00, etc. — pattern bate, mas é o trade-off
-  aceito; o usuário pode ajustar o exemplo pra não bater).
+  Se realmente precisa salvar em path nao-sensivel (ex: documentar formato
+  num exemplo), o hook nao detecta intent. Solucao pratica: salvar em
+  sensivel/ ou usar exemplos com placeholder (XXX.XXX.XXX-XX em vez de
+  numeros que casam com regex).
 """
 
 import json
-import re
 import sys
+from pathlib import Path
 
-PATTERNS = {
-    "CPF": re.compile(r"\b\d{3}[.\s]?\d{3}[.\s]?\d{3}[-\s]?\d{2}\b"),
-    "CNPJ": re.compile(r"\b\d{2}[.\s]?\d{3}[.\s]?\d{3}/?\d{4}[-\s]?\d{2}\b"),
-    "cartão": re.compile(r"\b(?:\d[ -]?){13,19}\b"),
-    "API key Anthropic": re.compile(r"\bsk-ant-[\w-]{20,}\b"),
-    "API key OpenAI": re.compile(r"\bsk-[A-Za-z0-9]{40,}\b"),
-    "GitHub PAT": re.compile(r"\b(?:ghp_|github_pat_)[\w]{20,}\b"),
-    "Mem0 key": re.compile(r"\bm0-[\w]{20,}\b"),
-    "Tavily key": re.compile(r"\btvly-[\w]{20,}\b"),
-}
+# Adiciona repo root ao sys.path pra importar gus.patterns_sensiveis
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(_REPO_ROOT))
+
+try:
+    from gus.patterns_sensiveis import PATTERNS_SENSIVEIS as PATTERNS
+except ImportError:
+    # Fallback defensivo: se import falhar, hook degrada gracioso
+    # (nao trava o Claude Code, mas avisa em stderr)
+    print("[scan_sensivel] ATENCAO: gus.patterns_sensiveis indisponivel - hook degradado", file=sys.stderr)
+    PATTERNS = {}
 
 TOOLS_ALVO = ("Write", "Edit", "NotebookEdit")
 
-# Allowlist: paths que podem conter dados sensíveis sem alarme
+# Allowlist: paths que podem conter dados sensiveis sem alarme
 ALLOW_PREFIXES = (
     "sensivel/",
     "/sensivel/",
@@ -49,7 +48,7 @@ def main() -> int:
     try:
         data = json.load(sys.stdin)
     except Exception:
-        # Sem stdin parseável — não atrapalha, deixa passar
+        # Sem stdin parseavel - nao atrapalha, deixa passar
         return 0
 
     tool_name = data.get("tool_name") or ""
@@ -70,7 +69,7 @@ def main() -> int:
     if any(rel_path.startswith(p) for p in ALLOW_PREFIXES):
         return 0
 
-    # Conteúdo a escanear depende da tool
+    # Conteudo a escanear depende da tool
     if tool_name == "Write":
         content = tool_input.get("content", "") or ""
     elif tool_name == "Edit":
@@ -95,8 +94,8 @@ def main() -> int:
     msg = (
         f"[scan_sensivel] BLOQUEADO em '{file_path}': "
         f"detectado {', '.join(encontrados)}.\n"
-        "Mova pra 'sensivel/<subpasta>/' (não vai pro Drive sync), "
-        "ou peça confirmação explícita ao usuário antes de salvar no path original."
+        "Mova pra 'sensivel/<subpasta>/' (nao vai pro Drive sync), "
+        "ou peca confirmacao explicita ao usuario antes de salvar no path original."
     )
     print(msg, file=sys.stderr)
     return 2
