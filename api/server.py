@@ -39,6 +39,11 @@ def create_app() -> FastAPI:
     # Sem auth (é só uma página HTML). O token é inserido pelo usuário na
     # primeira abertura e salvo em localStorage. Os endpoints que a PWA
     # consome (/analise_camera) requerem Bearer token normalmente.
+    @app.get("/dashboard", include_in_schema=False, response_class=HTMLResponse)
+    async def dashboard():
+        from api.dashboard import DASHBOARD_HTML
+        return HTMLResponse(content=DASHBOARD_HTML)
+
     @app.get("/camera", include_in_schema=False, response_class=HTMLResponse)
     async def camera_pwa():
         from api.camera import CAMERA_PWA_HTML
