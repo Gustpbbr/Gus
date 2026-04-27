@@ -1,0 +1,34 @@
+name: Fix Qdrant dims + re-migrar (rodar uma vez)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fix-e-migrar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install "qdrant-client>=1.9.1,<1.12.0" mem0ai==0.1.29 sentence-transformers anthropic
+
+      - name: Recriar coleção com dims corretas (384)
+        env:
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+        run: python .github/scripts/reset_qdrant_collection.py
+
+      - name: Re-migrar memórias do Mem0 Cloud
+        env:
+          MEM0_API_KEY: ${{ secrets.MEM0_API_KEY }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python .github/scripts/migrate_mem0.py
