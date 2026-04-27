@@ -278,30 +278,16 @@ def main():
         log.info("Nada a arquivar/limpar.")
         return
 
-    # stage historicos atualizados
+    # stage historicos atualizados (commit/push fica a cargo do step do workflow)
     for h in historicos_tocados:
         git_run("add", str(h.relative_to(REPO_ROOT)))
-
-    # configurar autor
-    git_run("config", "user.name", "github-actions[bot]")
-    git_run("config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com")
 
     parts = []
     if archived:
         parts.append(f"{archived} arquivada(s)")
     if loop_cleaned:
         parts.append(f"{loop_cleaned} loop(s) limpos")
-    msg = f"auto: archive demandas — {', '.join(parts)}"
-
-    git_run("commit", "-m", msg)
-
-    push_result = subprocess.run(
-        ["git", "push"], cwd=REPO_ROOT, capture_output=True, text=True
-    )
-    if push_result.returncode != 0:
-        log.error(f"push falhou: {push_result.stderr}")
-        sys.exit(1)
-    log.info(f"Commit + push OK: {msg}")
+    log.info(f"Mudanças staged: {', '.join(parts)}. Workflow vai commitar+pushar no próximo step.")
 
 
 if __name__ == "__main__":
