@@ -1,37 +1,53 @@
 """
-Log auditável dos resumos extrativos que vão pro Mem0.
+Log auditável dos resumos / fragmentos curados que vão pro Mem0/Hub.
 
-A cada 3 turnos, bot.py:_resumir_e_salvar gera um resumo via Haiku
-(gus/llm.py:gerar_resumo_turnos) e salva no Mem0. Esse módulo registra
-TODOS os eventos (sucesso, descarte, erro) num MD diário no repo, pra
-o Gustavo auditar no Obsidian.
+A cada 3 turnos, bot.py:_resumir_e_salvar dispara curadoria. Pré-Fase 2
+(legado): Haiku via gus/llm.py:gerar_resumo_turnos + salvar_memorias (Mem0).
+Pós-Fase 2: hub/curador.py:curar_turnos (Haiku + Sonnet em paralelo, ambos
+salvam no Hub Qdrant com metadata.curador distinta).
+
+Esse módulo registra TODOS os eventos (sucesso, descarte, erro, fallback)
+num MD diário no repo, pra o Gustavo auditar no Obsidian.
 
 PATH: _log/resumos-mem0/AAAA-MM-DD.md
 
-FORMATO:
+FORMATO (atualizado Fase 2):
 ---
 data: AAAA-MM-DD
-fonte: bot Telegram (Haiku 4.5)
+fonte: bot Telegram (Hub Curador híbrido Haiku+Sonnet)
+tipo: log-resumos-mem0
 ---
 
-# Resumos pro Mem0 — DD/MM/AAAA
+# Resumos pro Hub — DD/MM/AAAA
 
-## HH:MM:SS BRT — <status>
-**Turnos:** N (mensagens do trecho)
+## HH:MM:SS BRT — salvo (curador: haiku, janela: a3f29b1c)
+**Turnos:** 6
+**Fragmentos:** 3
 **Resumo:**
-> texto do resumo, ou "(sem conteúdo relevante)", ou "(erro: ...)"
+> 1. Gustavo decidiu adotar Qdrant direto, aposentar Mem0
+> 2. ...
 
-POR QUE: o Gustavo precisa fiscalizar se o Haiku está extraindo memórias
-sensatas. Mem0 cloud não tem visualização nativa, e perder memórias por
-erro silencioso (como aconteceu 24/04) é caro.
+## HH:MM:SS BRT — salvo (curador: sonnet, janela: a3f29b1c)
+**Turnos:** 6
+**Fragmentos:** 5
+**Resumo:**
+> 1. ...
 
-CUSTO: o write é pelo save_to_github (1 commit por resumo). Em pico de uso
-intenso (10 resumos/dia) = 10 commits/dia. Aceitável — git aguenta.
+(2 entradas com mesmo hash_janela permitem comparar Haiku × Sonnet
+ para o MESMO trecho de input)
+
+POR QUE: o Gustavo precisa fiscalizar se a curadoria está extraindo
+memórias sensatas. Qdrant não tem visualização nativa, e perder
+memórias por erro silencioso (como aconteceu 24/04) é caro.
+
+CUSTO: o write é pelo save_to_github (1 commit por entrada). Em pico
+de uso intenso com curador híbrido = ~20 commits/dia. Aceitável.
 """
 
 import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 from gus.tools import _read_from_github, _save_to_github
 
@@ -41,17 +57,45 @@ BRT = timezone(timedelta(hours=-3))
 PASTA = "_log/resumos-mem0"
 
 
-def _formatar_entrada(resumo: str, num_turnos: int, status: str) -> str:
-    """Bloco de uma entrada no log."""
+def _formatar_entrada(
+    resumo: str,
+    num_turnos: int,
+    status: str,
+    curador: Optional[str] = None,
+    hash_janela: Optional[str] = None,
+    num_fragmentos: Optional[int] = None,
+) -> str:
+    """Bloco de uma entrada no log.
+
+    Args:
+        resumo: texto do resumo / fragmentos extraídos / mensagem de erro
+        num_turnos: quantos turnos do trecho cobertos
+        status: 'salvo' | 'descartado' | 'erro' | 'fallback-mem0'
+        curador: 'haiku' | 'sonnet' | None (legado/fallback sem curador)
+        hash_janela: sha8 do input — permite parear haiku↔sonnet
+        num_fragmentos: quantos fragmentos extraídos pelo curador
+    """
     agora = datetime.now(BRT).strftime("%H:%M:%S")
+
+    # Cabeçalho com assinatura quando aplicável
+    if curador and hash_janela:
+        header = f"## {agora} BRT — {status} (curador: {curador}, janela: {hash_janela})"
+    elif curador:
+        header = f"## {agora} BRT — {status} (curador: {curador})"
+    else:
+        header = f"## {agora} BRT — {status}"
+
+    linhas = [header, f"**Turnos:** {num_turnos}"]
+    if num_fragmentos is not None:
+        linhas.append(f"**Fragmentos:** {num_fragmentos}")
+
     # Indenta resumo como blockquote markdown
     linhas_resumo = (resumo or "").splitlines() or ["(vazio)"]
     quoted = "\n".join(f"> {l}" for l in linhas_resumo)
-    return (
-        f"\n## {agora} BRT — {status}\n"
-        f"**Turnos:** {num_turnos}\n"
-        f"**Resumo:**\n{quoted}\n"
-    )
+    linhas.append("**Resumo:**")
+    linhas.append(quoted)
+
+    return "\n" + "\n".join(linhas) + "\n"
 
 
 def _frontmatter_inicial(data_iso: str) -> str:
@@ -59,27 +103,39 @@ def _frontmatter_inicial(data_iso: str) -> str:
     return (
         f"---\n"
         f"data: {data_iso}\n"
-        f"fonte: bot Telegram (Haiku 4.5)\n"
+        f"fonte: bot Telegram (Hub Curador híbrido Haiku+Sonnet)\n"
         f"tipo: log-resumos-mem0\n"
         f"---\n\n"
-        f"# Resumos pro Mem0 — {data_br}\n"
+        f"# Resumos pro Hub — {data_br}\n"
     )
 
 
-async def append_resumo(resumo: str, num_turnos: int, status: str = "salvo") -> None:
+async def append_resumo(
+    resumo: str,
+    num_turnos: int,
+    status: str = "salvo",
+    curador: Optional[str] = None,
+    hash_janela: Optional[str] = None,
+    num_fragmentos: Optional[int] = None,
+) -> None:
     """Adiciona entrada no MD do dia. Silencioso em falha (não interrompe bot).
 
     Args:
-        resumo: texto bruto do resumo do Haiku, ou mensagem de erro/descarte
+        resumo: texto bruto do resumo / fragmentos / mensagem de erro
         num_turnos: quantos turnos do trecho original foram resumidos
-        status: 'salvo' | 'descartado' | 'erro' (livre, vai literal no MD)
+        status: 'salvo' | 'descartado' | 'erro' | 'fallback-mem0'
+        curador: 'haiku' | 'sonnet' | None pra entradas legadas/fallback
+        hash_janela: sha8 do input pra parear curadores diferentes
+        num_fragmentos: quantos fragmentos atômicos o curador extraiu
     """
     try:
         hoje_iso = datetime.now(BRT).strftime("%Y-%m-%d")
         path = f"{PASTA}/{hoje_iso}.md"
 
         existente = await _read_from_github(path)
-        nova_entrada = _formatar_entrada(resumo, num_turnos, status)
+        nova_entrada = _formatar_entrada(
+            resumo, num_turnos, status, curador, hash_janela, num_fragmentos
+        )
 
         if existente and not existente.startswith("Arquivo não encontrado"):
             conteudo = existente.rstrip() + "\n" + nova_entrada
@@ -94,9 +150,18 @@ async def append_resumo(resumo: str, num_turnos: int, status: str = "salvo") -> 
         logger.warning(f"append_resumo falhou: {e}")
 
 
-def append_resumo_async(resumo: str, num_turnos: int, status: str = "salvo") -> None:
+def append_resumo_async(
+    resumo: str,
+    num_turnos: int,
+    status: str = "salvo",
+    curador: Optional[str] = None,
+    hash_janela: Optional[str] = None,
+    num_fragmentos: Optional[int] = None,
+) -> None:
     """Wrapper que dispara append_resumo em background — não bloqueia bot."""
     try:
-        asyncio.create_task(append_resumo(resumo, num_turnos, status))
+        asyncio.create_task(
+            append_resumo(resumo, num_turnos, status, curador, hash_janela, num_fragmentos)
+        )
     except Exception as e:
         logger.warning(f"append_resumo_async falhou: {e}")

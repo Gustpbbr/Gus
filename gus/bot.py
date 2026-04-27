@@ -129,23 +129,86 @@ def _query_mem0_contextual(history: list[dict], fallback: str) -> str:
 
 
 async def _resumir_e_salvar(chat_id: str, trecho: list[dict]) -> None:
-    """Gera resumo extrativo do trecho e salva no Mem0. Silencioso em falhas.
+    """Curadoria híbrida via Hub (Haiku + Sonnet em paralelo). Silencioso em falhas.
 
-    Também registra cada evento (salvo/descartado/erro) no log auditável
-    em _log/resumos-mem0/AAAA-MM-DD.md (Gustavo fiscaliza no Obsidian).
+    Fluxo (Fase 2 do ADR-001):
+      1. Tenta hub.curador.curar_turnos → roda Haiku e Sonnet em paralelo
+         sobre o MESMO trecho. Cada modelo extrai fragmentos atômicos
+         classificados (tipo, area, camada_temporal). Ambos salvam no
+         Hub Qdrant (gus_hub) com metadata.curador distinta + mesmo
+         hash_janela (permite parear pra comparação de qualidade).
+      2. Loga UMA entrada por curador no _log/resumos-mem0/AAAA-MM-DD.md
+         (mesmo hash_janela visível no Obsidian → comparação lado a lado).
+      3. Se hub.curador falhar globalmente (import error ou exceção fora
+         do gather interno), fallback pro caminho legado Mem0
+         (gerar_resumo_turnos + salvar_memorias). Marca status como
+         'fallback-mem0' no log pra rastreabilidade.
+
+    Curador é fire-and-forget — chamado via asyncio.create_task em
+    _responder. Nunca bloqueia resposta do bot.
+    """
+    try:
+        from hub.curador import curar_turnos
+        resultado = await curar_turnos(trecho, via="telegram-claude", user_id="gustavo")
+    except Exception as e:
+        logger.warning(f"Curador (Hub) indisponível (chat {chat_id}): {e}. Tentando fallback Mem0.")
+        await _fallback_mem0(chat_id, trecho, motivo=f"curador-erro: {str(e)[:80]}")
+        return
+
+    hash_j = resultado.get("hash_janela", "")
+    haiku_frags = resultado.get("haiku", [])
+    sonnet_frags = resultado.get("sonnet", [])
+    salvos = resultado.get("salvos", 0)
+    erros = resultado.get("erros", [])
+
+    # Loga 1 entrada por curador (mesmo hash → permite parear no Obsidian)
+    for nome, frags in (("haiku", haiku_frags), ("sonnet", sonnet_frags)):
+        if frags:
+            texto = "\n".join(
+                f"{i+1}. [{f.get('tipo', '?')}/{f.get('area', '-')}] {f.get('conteudo', '')}"
+                for i, f in enumerate(frags)
+            )
+            append_resumo_async(
+                texto, len(trecho), status="salvo",
+                curador=nome, hash_janela=hash_j, num_fragmentos=len(frags),
+            )
+        else:
+            append_resumo_async(
+                "(sem fragmentos relevantes)", len(trecho), status="descartado",
+                curador=nome, hash_janela=hash_j, num_fragmentos=0,
+            )
+
+    for err in erros:
+        logger.warning(f"Curador erro parcial (chat {chat_id}): {err}")
+
+    logger.info(
+        f"Curador (chat {chat_id}): salvos={salvos} "
+        f"haiku={len(haiku_frags)} sonnet={len(sonnet_frags)} hash={hash_j}"
+    )
+
+
+async def _fallback_mem0(chat_id: str, trecho: list[dict], motivo: str) -> None:
+    """Fallback pro caminho legado Mem0 quando o Curador novo falha completamente.
+
+    Mantido pra não regredir vs o estado pré-Hub. Em produção pós-migração
+    (ADR-001 Fase 5), este fallback é removido junto com gus.memory.
     """
     try:
         resumo = await gerar_resumo_turnos(trecho)
         if resumo and resumo.strip().lower() != "sem conteúdo relevante":
             await salvar_memorias([{"role": "user", "content": resumo}])
-            logger.info(f"Resumo salvo no Mem0 (chat {chat_id}, {len(resumo)} chars)")
-            append_resumo_async(resumo, len(trecho), "salvo")
+            logger.info(f"Fallback Mem0 salvou (chat {chat_id})")
+            append_resumo_async(resumo, len(trecho), status="fallback-mem0")
         else:
-            logger.info(f"Resumo vazio ou sem conteúdo relevante (chat {chat_id})")
-            append_resumo_async("(sem conteúdo relevante)", len(trecho), "descartado")
+            append_resumo_async(
+                "(sem conteúdo relevante)", len(trecho), status="fallback-mem0-vazio"
+            )
     except Exception as e:
-        logger.warning(f"Resumo falhou (chat {chat_id}): {e}")
-        append_resumo_async(f"(erro: {str(e)[:120]})", len(trecho), "erro")
+        logger.warning(f"Fallback Mem0 também falhou (chat {chat_id}): {e}")
+        append_resumo_async(
+            f"(curador-erro={motivo[:60]} | mem0-erro={str(e)[:80]})",
+            len(trecho), status="erro",
+        )
 
 
 def _autorizado(chat_id: str) -> bool:
