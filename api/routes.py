@@ -43,6 +43,7 @@ from gus.memory import (
     salvar_memorias,
     salvar_observacao_gus,
 )
+from api.dashboard import fetch_graph_data, fetch_health_data
 from gus.integrations.pesquisa import pesquisar_arxiv, pesquisar_pubmed
 from gus.integrations.wikilinks import sugerir_wikilinks
 from api.camera import analisar_imagem, salvar_captura
@@ -242,6 +243,21 @@ async def r_sugerir_wikilinks(payload: SugerirWikilinksReq):
             f"_Sugestões também salvas em `acoes/wikilinks-pendentes/{filename_pendente}.md` pra curadoria do Claude/TioGu._"
         )
     )
+
+
+# ====================== Dashboard ======================
+
+
+@router.get("/graph-data", operation_id="graph_data", include_in_schema=False)
+async def r_graph_data():
+    """Retorna nós do grafo de memórias (Qdrant) pro dashboard."""
+    return await fetch_graph_data()
+
+
+@router.get("/health-data", operation_id="health_data", include_in_schema=False)
+async def r_health_data():
+    """Retorna métricas de saúde do sistema pro dashboard."""
+    return await fetch_health_data()
 
 
 # ====================== Câmera / Visão (PROJETO FUTURO) ======================
