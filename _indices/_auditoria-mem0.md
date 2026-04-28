@@ -1,7 +1,7 @@
 ---
 tipo: meta-memoria
-atualizado: 2026-04-27T07:51:42.248694-03:00
-mem0_total: 204
+atualizado: 2026-04-28T07:53:14.407313-03:00
+mem0_total: 4
 ---
 
 # Auditoria do Mem0 (memórias sobre o Gustavo)
@@ -11,37 +11,33 @@ Análise automática e determinística do estado do armazém de memórias SOBRE 
 **Não confundir com meta-memória do Gus** (`gus/meta-memoria.md`), que é o auto-conhecimento do próprio Gus.
 
 ## Estatísticas gerais
-- **Total:** 204 memórias
-- **Mais antiga:** 2026-04-11 — *"User wants to edit, sign, and share PDF files from any location and is directed ..."*
-- **Mais recente:** 2026-04-26 — *"Gustavo values autonomy and permanence of Gus's memories, viewing the self‑hoste..."*
+- **Total:** 4 memórias
+- **Mais antiga:** 2026-04-27 — *"1. Após merge e deploys recentes, o auto_diagnostico agora tem acesso ao Hub Qdr..."*
+- **Mais recente:** 2026-04-27 — *"1. Gustavo quer apagar pendências que estão ultrapassadas — decisão tomada de li..."*
 
 ## Frescor
-- **Últimas 24h:** 24 (11.8%)
-- **Últimos 7 dias:** 172 (84.3%)
-- **Últimos 30 dias:** 8 (3.9%)
+- **Últimas 24h:** 4 (100.0%)
+- **Últimos 7 dias:** 0 (0.0%)
+- **Últimos 30 dias:** 0 (0.0%)
 - **Mais de 30 dias:** 0 (0.0%)
 
 ## Densidade por área
 Estimativa via keywords (uma memória pode contar em múltiplas áreas):
 
-- **capturado:** 112 (54.9%)
-- **projetos:** 59 (28.9%)
-- **dimagem:** 30 (14.7%)
-- **saude:** 10 (4.9%)
-- **construcao:** 3 (1.5%)
-- **receitas:** 2 (1.0%)
-- **financeiro:** 2 (1.0%)
+- **capturado:** 2 (50.0%)
+- **projetos:** 2 (50.0%)
+- **saude:** 1 (25.0%)
+- **dimagem:** 1 (25.0%)
 
 ## Duplicatas suspeitas
 Pares com similaridade Jaccard ≥ 0.5. Revisar manualmente — não são duplicatas garantidas, são candidatas.
 
-### Similaridade 0.53
-- **A** (2026-04-24): *"Isabela Barros de Souza has a cranial MRI at Assim São Gonçalo with fasting confirmed +8h...."*
-- **B** (2026-04-24): *"Theo Silva Alvarenga has a cranial MRI at Assim São Gonçalo with fasting confirmed at 8am...."*
+- Nenhuma duplicata suspeita identificada.
 
 ## Gaps (áreas com índice mas sem memória)
 
-- Nenhum gap detectado.
+- **financeiro** — índice existe, nenhuma memória classificada nesta área
+- **receitas** — índice existe, nenhuma memória classificada nesta área
 
 ## Uso
 - Bot consulta este arquivo via tool `auditoria_mem0()` quando o Gustavo pergunta sobre o estado das suas próprias memórias no Mem0.
