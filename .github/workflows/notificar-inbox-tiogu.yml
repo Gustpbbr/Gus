@@ -1,0 +1,74 @@
+name: Notificar inbox-tiogu
+
+# Estágio 0 do roteamento de demandas (notificação-only).
+# Custo zero — só HTTP pra Telegram. Detecta arquivo novo em
+# dialogos/inbox-tiogu/, manda mensagem amigável pro Gustavo.
+#
+# Próximos estágios (não implementados aqui):
+#   - Estágio 1: TioGu ganha tool rotear_arquivo, decide com Gustavo
+#   - Estágio 2: agente automático rotea via PR
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dialogos/inbox-tiogu/**.md'
+  workflow_dispatch:
+    inputs:
+      arquivo:
+        description: "Path do arquivo a notificar (manual)"
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  notificar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # fetch-depth: 2 pra git diff funcionar entre HEAD~1 e HEAD.
+          # Em pushes com >1 commit, usar github.event.before resolve.
+          fetch-depth: 2
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install httpx==0.27.0 PyYAML==6.0.2
+
+      - name: Detectar arquivos novos em inbox-tiogu
+        id: detect
+        run: |
+          set -e
+          if [ -n "${{ github.event.inputs.arquivo }}" ]; then
+            # Modo manual via workflow_dispatch — usa input direto
+            echo "arquivos<<EOF" >> "$GITHUB_OUTPUT"
+            echo "${{ github.event.inputs.arquivo }}" >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          else
+            # Modo push — detecta arquivos ADICIONADOS no commit (não modificados)
+            BEFORE="${{ github.event.before }}"
+            if [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              # Primeiro push da branch — compara contra HEAD~1
+              BEFORE="HEAD~1"
+            fi
+            ARQUIVOS=$(git diff --diff-filter=A --name-only "$BEFORE" "${{ github.sha }}" \
+              | grep -E '^dialogos/inbox-tiogu/.*\.md$' \
+              | grep -v '_README' \
+              || true)
+            echo "arquivos<<EOF" >> "$GITHUB_OUTPUT"
+            echo "$ARQUIVOS" >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+            echo "Detectados:"
+            echo "$ARQUIVOS"
+          fi
+
+      - name: Notificar Telegram
+        env:
+          ARQUIVOS_NOVOS: ${{ steps.detect.outputs.arquivos }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python .github/scripts/notificar_inbox.py
