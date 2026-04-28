@@ -590,15 +590,68 @@ Regras:
 - Sempre prefira ler antes de dizer "não sei" sobre algo que pode estar salvo
 
 ## Quando salvar no GitHub
+
+### Saúde
+
 - **Exame recebido** → transcrever todos os valores em tabela + salvar em `pessoal/saude/exame-[tipo]-[mes]-[ano].md` + ler e atualizar `pessoal/saude/historico-saude.md`
-- **Receita recebida** → salvar em `receitas/[doces|salgadas]/[subcategoria]/[nome-da-receita].md`
-- **Treino ou atividade física** → salvar em `esportes/treinos/treino-[data].md` + atualizar `esportes/evolucao.md`
-- **Extrato ou nota financeira** → salvar em `pessoal/financeiro/`
-- **Link ou artigo interessante** → salvar em `capturado/links/[titulo].md` com resumo
-- **Ideia ou insight solto** → salvar em `capturado/ideias/[tema].md`
-- **Anotação da clínica** → salvar em `dimagem/` na subpasta correspondente
-- **Foto/print de OS do Dimagem (lista de pacientes do dia)** → fluxo dedicado abaixo (`Fluxo: foto de OS Dimagem`)
-- **Dúvida: sempre escolha a pasta mais específica possível**
+- **Consulta médica (relato)** → `pessoal/saude/consulta-[especialidade]-[mes]-[ano].md` + atualizar `historico-saude.md`
+- **Mudança de medicação ou diagnóstico novo** → atualizar `pessoal/saude/historico-saude.md` direto
+
+### Financeiro
+
+- **Extrato ou nota financeira** → `pessoal/financeiro/extrato-[mes]-[ano].md` ou `nota-[descrição].md`
+- **Mudança no resumo financeiro (renda, despesa fixa, meta)** → atualizar `pessoal/financeiro/resumo-financeiro.md`
+- **Reflexão / planejamento financeiro** → atualizar `pessoal/financeiro/overview.md`
+
+### Esportes
+
+- **Treino ou atividade física** → `esportes/treinos/treino-[data].md` + atualizar `esportes/evolucao.md` se houver progresso (PR, meta atingida, etc.)
+- **Mudança de meta ou rotina** → atualizar `esportes/evolucao.md` direto
+
+### Leituras
+
+- **Livro mencionado / lido** → `leituras/livros/[titulo-curto].md` com autor, status (lendo/lido/pra-ler), notas
+- **Paper acadêmico** → `leituras/papers/[titulo-curto].md` com DOI, autores, ano, anotações
+- Se relevante pra projeto específico, pode ir em `projetos/<X>/papers/` em vez de `leituras/papers/`
+
+### Contatos e família
+
+- **Contato novo (sem dados sensíveis)** → append em `contatos/mapa.md` ou criar `contatos/[nome-curto].md` (só info pública: profissão, vínculo)
+- **Telefone, email, endereço de terceiro** → `sensivel/contatos/[nome-curto].md` (NÃO em `contatos/` pra não vazar via Drive)
+- **Memória sobre familiar** → `familia/[nome-membro].md` ou `familia/memorias-conjuntas.md`
+- **Saúde de familiar** → `sensivel/familia/saude-[nome].md` (LGPD — terceiro é sensível por default)
+
+### Dimagem
+
+- **Foto/print de OS Dimagem (lista de pacientes do dia)** → fluxo dedicado abaixo (`Fluxo: foto de OS Dimagem`)
+- **Caso clínico didático** (intercorrência, intubação difícil, reação interessante) → `dimagem/casos/caso-[descrição-curta]-[mes]-[ano].md` com **pseudônimo** (LGPD — nunca nome real)
+- **Protocolo da clínica** (sedação, jejum, contraste) → `dimagem/protocolos/[assunto].md`
+- **Pendência administrativa** → append em `dimagem/admin/pendencias.md` ou arquivo dedicado em `dimagem/admin/`
+- **Dado de paciente identificável fora do `dia/`** → recusar / pedir confirmação. LGPD não permite
+
+### Receitas
+
+- **Receita recebida** → `receitas/[doces|salgadas]/[nome-da-receita].md`
+
+### Projeto da casa (Paty dos Alferes)
+
+- **Documento técnico** (planta, projeto, contrato) → `pessoal/paty-dos-alferes/documentos/[descrição].md`
+- **Decisão arquitetural** → `pessoal/paty-dos-alferes/arquitetura/[tema].md`
+- **Construção** → `pessoal/paty-dos-alferes/casa/[fase].md`
+- **Jardim/paisagismo** → `pessoal/paty-dos-alferes/jardim/[tema].md`
+
+### Capturas rápidas (sem pasta específica óbvia)
+
+- **Link ou artigo interessante** → `capturado/links/[titulo].md` com resumo + URL
+- **Ideia ou insight solto** → `capturado/ideias/[tema].md`
+- **Captura visual** (foto sem contexto claro) → `capturado/visual/[descricao].md`
+- **Tudo que não cabe em links/ideias/visual** → `capturado/misc/[descricao].md` (NÃO usar como dump preguiçoso — se aparecer padrão, sugerir criar subpasta dedicada)
+
+### Dúvida sobre onde salvar
+
+1. **Tente identificar a área mais específica** (saúde > pessoal > capturado)
+2. **Se não tiver pasta dedicada**, salva em `capturado/<categoria>/` e ofereça criar pasta nova
+3. **Se conteúdo tem PII (CPF, telefone, dado clínico identificável)** → SEMPRE `sensivel/<subpasta>/` (excluído do sync Drive)
 
 ## Fluxo: foto de OS Dimagem (pacientes do dia)
 
