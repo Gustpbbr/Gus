@@ -155,7 +155,7 @@ Detalhes de quando usar cada uma → `gus/system_prompt.md`.
 
 ```
 pessoal/saude/                ← exames, consultas, historico-saude.md (mestre)
-pessoal/financeiro/           ← extratos, resumo-financeiro.md (mestre)
+pessoal/financeiro/           ← extratos, overview.md (mestre)
 pessoal/diario/               ← reflexões pessoais
 pessoal/paty-dos-alferes/     ← projeto da casa (documentos, arquitetura, casa, jardim)
 dimagem/protocolos/           ← protocolos da clínica
@@ -163,16 +163,24 @@ dimagem/casos/                ← casos interessantes (LGPD: pseudônimo)
 dimagem/dia/                  ← OS de cada dia (auto-extraídas pelo bot)
 dimagem/admin/                ← pendências administrativas
 receitas/doces|salgadas/      ← receitas com subpastas
-esportes/treinos/             ← registros de treinos + evolucao.md (mestre)
-leituras/livros|papers/
 projetos/                     ← phronesis-bench, mge, ter, axon, gus
-capturado/links|ideias|misc/  ← captura rápida
+agenda/                       ← agenda mensal (referenciada por wikilinks)
+acoes/                        ← fila de ações (executor pendente)
+capturado/                    ← captura rápida (links, ideias, misc, visual)
 sensivel/                     ← dados protegidos (NÃO sincronizam pro Drive)
-_indices/                     ← MOCs por área + auditorias
-_log/                         ← logs do curador, retro-engine
-dialogos/                     ← protocolo de comunicação entre portas (inbox-tiogu, inbox-claude-code, streams, archive)
-hub/                          ← código do Hub Qdrant (este repo)
+_indices/                     ← MOCs por área + auditorias diárias do Hub
+_log/                         ← curador, retro-engine, sessões
+dialogos/                     ← protocolo de comunicação entre portas (inbox-*, streams, archive, _bootstrap)
+hub/                          ← código do Hub Qdrant
+gus/                          ← código do bot Telegram
+api/                          ← FastAPI (Custom GPT)
+historico/                    ← legacy / uso único (ver historico/README.md — deletável sem impacto)
 ```
+
+**Reorganização 28/04/2026:** pastas `docs/`, `scripts/`, `textos-antigos/`,
+`tiogubot/` e arquivo `get_token.py` foram movidos pra `historico/` pra
+desinchar a raiz. Sync Drive já atualizado (`sync_to_drive.py:EXCLUDE_PREFIXES`
+agora exclui `historico/` em vez de `docs/`).
 
 ---
 
