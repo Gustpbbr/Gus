@@ -170,16 +170,51 @@ Pré-requisitos:
 - Secrets `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` no GitHub Actions
 - Sem eles: workflow roda mas pula notificação com warning
 
-### Estágios futuros do roteamento (não implementados)
+### Estágios do roteamento
 
-| Estágio | O que faz | Onde |
+| Estágio | Status | O que faz | Onde |
+|---|---|---|---|
+| **0** | ✅ Implementado | Notifica Gustavo no Telegram quando demanda nova chega | `notificar-inbox-tiogu.yml` |
+| **1** | ✅ Implementado | TioGu ganha tool `rotear_arquivo(source, destino, acao)` — Gustavo aprova no Telegram, TioGu executa | `gus/tools.py` + `gus/roteador.py` |
+| **2** | ⏳ Não implementado | Agente automático lê demanda, decide destino, abre PR (não mergeia) | `auto-rotear-demanda.yml` |
+
+### Estágio 1 — Como usar `rotear_arquivo` (TioGu)
+
+Tool: `rotear_arquivo(source_path, destino_path, acao)`
+
+3 ações suportadas:
+
+| `acao` | Comportamento | Exemplo |
 |---|---|---|
-| **0 (atual)** | Notifica Gustavo no Telegram quando demanda nova chega | `notificar-inbox-tiogu.yml` |
-| **1** | TioGu ganha tool `rotear_arquivo(source, destino, acao)` — Gustavo aprova no Telegram, TioGu executa | `gus/tools.py` (tool nova) |
-| **2** | Agente automático lê demanda, decide destino, abre PR (não mergeia) | `auto-rotear-demanda.yml` |
+| `criar_novo` | Cria arquivo NOVO em `destino_path` (file `.md` completo). Falha se já existe | Ideia → `capturado/ideias/sintese-phronesis.md` |
+| `append` | Lê `destino_path`, anexa corpo do source no fim com separador `## AAAA-MM-DD HH:MM BRT — apêndice via tiogu`. Falha se destino não existe | Resumo chat → `pessoal/diario/2026-04.md` |
+| `mover` | Copia source completo (com frontmatter de demanda) pra `<destino_path>/<nome>`. `destino_path` é DIRETÓRIO sem `.md` | Caso clínico → `dimagem/casos` |
 
-Critério pra avançar de estágio: ver Estágio 0 funcionar 1-2 semanas, calibrar
-formato de mensagem, antes de adicionar ação automática.
+Após qualquer ação a tool:
+- Marca source com `status: concluido`, `processado_em`, `processado_por: tiogu`
+- Adiciona seção `## Resultado` no source com ação, destino, commit hash
+- Workflow `archive-completed-demandas.yml` move source pra `archive/` em ≤15min
+
+**Recusa em:**
+- Source já `concluido` (idempotência)
+- Source sem frontmatter
+- Conteúdo com dados sensíveis fora de `sensivel/`
+- Path inválido (caracteres estranhos, traversal)
+- `destino_path` errado pra ação (ex: `acao=mover` com `.md` no destino)
+
+**TioGu nunca rotea sozinho** — precisa de aprovação explícita do Gustavo no Telegram. Fluxo:
+
+1. Notificação Estágio 0 chega (Telegram)
+2. Gustavo confere e responde "ok, rotea" / "não, manda pra X" / "deixa pendente"
+3. TioGu chama `rotear_arquivo(...)` com argumentos confirmados
+4. Reporta sucesso/erro
+
+### Critério pra avançar pro Estágio 2
+
+- Estágio 1 funcionando por 1-2 semanas
+- Padrões de roteamento estabilizados (5+ exemplos pra cada ação)
+- Confiança do Gustavo na decisão dele mesmo (alguns "não, manda pra X" pra calibrar)
+- Aí compensa investir no agente automático (PR aberto não-mergeado, ainda com Gustavo no loop pra revisar)
 
 ## Histórico (legado)
 

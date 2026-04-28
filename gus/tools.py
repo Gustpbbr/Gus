@@ -533,6 +533,54 @@ TOOLS = [
             },
             "required": ["filename", "content", "folder"]
         }
+    },
+    {
+        "name": "rotear_arquivo",
+        "description": (
+            "Roteia um arquivo de dialogos/inbox-tiogu/ (ou outra inbox) pro destino "
+            "correto no repo. Use APÓS o Gustavo confirmar explicitamente o roteamento "
+            "no Telegram (ex: 'pode rotear', 'manda pra X', 'append em Y'). "
+            "3 ações: "
+            "(a) 'criar_novo' = cria arquivo NOVO em destino_path (file completo .md). "
+            "Ex: ideia → 'capturado/ideias/<tema>.md'. Falha se já existe. "
+            "(b) 'append' = anexa o corpo do source no fim do destino_path existente, "
+            "com separador (heading com data BRT). Ex: resumo de chat → "
+            "'pessoal/diario/2026-04.md'. Falha se destino não existe. "
+            "(c) 'mover' = copia source completo (preservando frontmatter de demanda) "
+            "pra <destino_dir>/<nome>. destino_path deve ser DIRETÓRIO (sem .md). "
+            "Ex: caso clínico → 'dimagem/casos'. "
+            "Após qualquer ação: source é marcado status: concluido + ## Resultado, "
+            "e workflow archive-completed-demandas move pra archive/ em ≤15min. "
+            "Recusa se source já estiver concluído (idempotência). "
+            "Recusa se conteúdo tem dados sensíveis fora de sensivel/."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "source_path": {
+                    "type": "string",
+                    "description": (
+                        "Path completo no repo do arquivo a rotear, relativo à raiz. "
+                        "Ex: 'dialogos/inbox-tiogu/2026-04-27T22-30__reflexao.md'. "
+                        "Precisa estar em uma das inboxes (dialogos/inbox-*/)."
+                    )
+                },
+                "destino_path": {
+                    "type": "string",
+                    "description": (
+                        "Path do destino. Pra acao=criar_novo/append: file completo "
+                        "terminando em .md (ex: 'pessoal/diario/2026-04.md'). "
+                        "Pra acao=mover: diretório sem .md (ex: 'dimagem/casos')."
+                    )
+                },
+                "acao": {
+                    "type": "string",
+                    "description": "Uma de: 'criar_novo' | 'append' | 'mover'.",
+                    "enum": ["criar_novo", "append", "mover"]
+                }
+            },
+            "required": ["source_path", "destino_path", "acao"]
+        }
     }
 ]
 
@@ -1065,5 +1113,12 @@ async def executar_tool(name: str, inputs: dict) -> str:
         return await _sugerir_wikilinks(
             inputs["arquivo"],
             inputs.get("branch"),
+        )
+    elif name == "rotear_arquivo":
+        from gus.roteador import rotear_arquivo as _rotear
+        return await _rotear(
+            inputs["source_path"],
+            inputs["destino_path"],
+            inputs["acao"],
         )
     return f"Tool desconhecida: {name}"
