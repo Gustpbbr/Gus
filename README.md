@@ -21,11 +21,15 @@ princípios e arquivos.
 | **`api/`** | FastAPI exposta pra Custom GPT (futuro) | Railway (segundo deploy) |
 | **`dialogos/`** | Protocolo entre portas — inboxes, streams, archive, _bootstrap | Todas as portas |
 | **`pessoal/`** | Saúde, financeiro, diário, Paty dos Alferes (terreno+casa) | Gustavo + bot |
-| **`dimagem/`** | Clínica — protocolos, casos, dia (LGPD: pseudônimo em casos) | Bot extrai OS automático |
-| **`projetos/`** | Phronesis-Bench, MGE, TER, Axon, Gus | Gustavo + Claude Chat |
+| **`dimagem/`** | Clínica — protocolos, casos, dia, admin (LGPD: pseudônimo em casos) | Bot extrai OS automático |
+| **`esportes/`** | Treinos + evolução | Bot salva treinos |
+| **`leituras/`** | Livros e papers (anotações, conexões) | Bot detecta links |
+| **`contatos/`** | Mapa de relacionamentos (não-sensível) | Manual |
+| **`familia/`** | Registros sobre família | Manual |
+| **`projetos/`** | Phronesis-Bench, MGE, TER, Axon, Gus, blueprint-agente, Lua | Gustavo + Claude Chat |
 | **`agenda/`** | Agenda mensal | Wikilinks |
 | **`acoes/`** | Fila de ações pendentes (executor a desenvolver) | Bot enfileira |
-| **`capturado/`** | Captura rápida (links, ideias, misc) | Bot salva |
+| **`capturado/`** | Captura rápida (links, ideias, misc, visual) | Bot salva |
 | **`receitas/`** | Receitas (doces, salgadas) | Pessoal |
 | **`sensivel/`** | Dados protegidos (NÃO sincroniza pro Drive) | Bot scan + manual |
 

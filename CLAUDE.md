@@ -155,32 +155,49 @@ Detalhes de quando usar cada uma → `gus/system_prompt.md`.
 
 ```
 pessoal/saude/                ← exames, consultas, historico-saude.md (mestre)
-pessoal/financeiro/           ← extratos, overview.md (mestre)
-pessoal/diario/               ← reflexões pessoais
+pessoal/financeiro/           ← extratos, overview.md, resumo-financeiro.md (mestre)
+pessoal/diario/               ← reflexões pessoais (auto-geradas pela retrospectiva semanal)
 pessoal/paty-dos-alferes/     ← projeto da casa (documentos, arquitetura, casa, jardim)
-dimagem/protocolos/           ← protocolos da clínica
-dimagem/casos/                ← casos interessantes (LGPD: pseudônimo)
-dimagem/dia/                  ← OS de cada dia (auto-extraídas pelo bot)
+dimagem/protocolos/           ← protocolos clínicos (sedação, anestesia, jejum, etc.)
+dimagem/casos/                ← casos didáticos (LGPD: pseudônimo)
+dimagem/dia/                  ← OS de cada dia (schema único em SCHEMA.md)
 dimagem/admin/                ← pendências administrativas
 receitas/doces|salgadas/      ← receitas com subpastas
-projetos/                     ← phronesis-bench, mge, ter, axon, gus
+esportes/                     ← evolucao.md (mestre) + treinos/
+leituras/livros|papers/       ← anotações de livros e papers
+contatos/                     ← mapa.md de relacionamentos (não-sensível)
+familia/                      ← registros sobre família (futuras páginas por membro)
+projetos/                     ← phronesis-bench, mge, ter, axon, gus, blueprint-agente, Lua
 agenda/                       ← agenda mensal (referenciada por wikilinks)
 acoes/                        ← fila de ações (executor pendente)
 capturado/                    ← captura rápida (links, ideias, misc, visual)
 sensivel/                     ← dados protegidos (NÃO sincronizam pro Drive)
 _indices/                     ← MOCs por área + auditorias diárias do Hub
 _log/                         ← curador, retro-engine, sessões
-dialogos/                     ← protocolo de comunicação entre portas (inbox-*, streams, archive, _bootstrap)
+dialogos/                     ← protocolo de comunicação entre portas
 hub/                          ← código do Hub Qdrant
 gus/                          ← código do bot Telegram
 api/                          ← FastAPI (Custom GPT)
-historico/                    ← legacy / uso único (ver historico/README.md — deletável sem impacto)
+historico/                    ← legacy / uso único (deletável sem impacto)
 ```
 
-**Reorganização 28/04/2026:** pastas `docs/`, `scripts/`, `textos-antigos/`,
-`tiogubot/` e arquivo `get_token.py` foram movidos pra `historico/` pra
-desinchar a raiz. Sync Drive já atualizado (`sync_to_drive.py:EXCLUDE_PREFIXES`
-agora exclui `historico/` em vez de `docs/`).
+**Reorganização 28/04/2026 (segunda etapa):**
+- Criadas pastas que estavam declaradas mas não existiam: `pessoal/saude/`,
+  `esportes/`, `leituras/`, `contatos/`, `familia/`
+- Criadas subpastas em `dimagem/`: `casos/`, `protocolos/`, `admin/`
+- Criadas subpastas em `capturado/`: `links/`, `ideias/`, `misc/`
+- Criados MD mestre vazios (templates): `pessoal/saude/historico-saude.md`,
+  `pessoal/financeiro/resumo-financeiro.md`, `esportes/evolucao.md`,
+  `contatos/mapa.md`
+- Criado `dimagem/dia/SCHEMA.md` documentando schema único (resolve
+  fragmentação observada com sufixos `-assim`, `-outros`)
+- Conteúdo existente preservado — não foi apagado nada
+
+**Reorganização 28/04/2026 (primeira etapa):** pastas `docs/`, `scripts/`,
+`textos-antigos/`, `tiogubot/` e arquivo `get_token.py` foram movidos pra
+`historico/` pra desinchar a raiz. Sync Drive já atualizado
+(`sync_to_drive.py:EXCLUDE_PREFIXES` agora exclui `historico/` em vez de
+`docs/`).
 
 ---
 
