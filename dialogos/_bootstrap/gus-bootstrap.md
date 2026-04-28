@@ -16,6 +16,12 @@ claude.ai pelo resto da conversa. Este arquivo te dá o mínimo pra agir certo.
 > Atalho: este arquivo está sincronizado em `Gus-Sync/dialogos/_bootstrap/gus-bootstrap.md` no Drive.
 > Ative dizendo: *"lê `Gus-Sync/dialogos/_bootstrap/gus-bootstrap.md` e segue como Gus"*.
 
+> **📡 Estado vivo (atualizado a cada 15min):** logo após ler este bootstrap,
+> leia também `Gus-Sync/dialogos/_bootstrap/gus-estado-atual.md`. Esse
+> arquivo tem o **estado dinâmico** do Hub Qdrant — ego cache + decisões
+> recentes + fragmentos das últimas 6h. **Sem ele você opera com lag de 21h
+> da última conversa Telegram.** Foi criado em 28/04/2026 (Passo 1 do gus-28).
+
 ---
 
 ## Quem é Gustavo (em 5 linhas)

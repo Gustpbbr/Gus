@@ -1,0 +1,47 @@
+name: Gerar estado atual pro Claude Chat
+
+# Cron a cada 15 minutos. Lê do Hub Qdrant e gera
+# `dialogos/_bootstrap/gus-estado-atual.md` com ego cache + fragmentos
+# das últimas 6h. Substitui o snapshot estático das 03h.
+#
+# Resolve lag de 21h do Claude Chat (Passo 1 do gus-28).
+# Detalhes: `dialogos/inbox-tiogu/2026-04-28T18-00__gus-28-acesso-hub-claude-chat.md`
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  gerar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r .github/scripts/requirements.txt
+
+      - name: Gerar gus-estado-atual.md
+        env:
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+        run: python .github/scripts/gerar_estado_atual_chat.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "gus-bot"
+          git config user.email "gus-bot@users.noreply.github.com"
+          git add dialogos/_bootstrap/gus-estado-atual.md
+          # Só commita se houve diff real (evita commits no-op a cada 15min)
+          git diff --staged --quiet || git commit -m "auto: estado atual do Hub pra Claude Chat ($(date -u +%Y-%m-%dT%H:%MZ))"
+          git push
