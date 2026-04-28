@@ -521,8 +521,10 @@ async def handle_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
         label = "Excel"
     else:
         await update.message.reply_text(
-            f"Formato '{mime or nome}' ainda não suportado. Formatos ativos: PDF, Word (.docx), Excel (.xlsx). "
-            "Áudio e vídeo em breve."
+            f"Formato '{mime or nome}' ainda não suportado. "
+            "Documentos ativos: PDF, Word (.docx), Excel (.xlsx). "
+            "Mensagem de voz e arquivo de áudio funcionam direto. "
+            "Vídeo ainda não tem handler."
         )
         return
 

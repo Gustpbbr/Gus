@@ -149,10 +149,11 @@ TOOLS = [
     {
         "name": "search_memory",
         "description": (
-            "Busca memórias do Gustavo no Mem0 de forma ativa (por query específica). "
-            "Use quando o usuário perguntar sobre memórias recentes, ou quando você precisar "
-            "de contexto adicional além do que já foi injetado passivamente no início da "
-            "conversa. Retorna as memórias mais semanticamente próximas da query."
+            "Busca memórias do Gustavo no Hub Qdrant (gus_hub) de forma ativa (por query "
+            "específica). Mem0 SaaS é fallback se Hub falhar. Use quando o usuário perguntar "
+            "sobre memórias recentes, ou quando você precisar de contexto adicional além do "
+            "que já foi injetado passivamente no início da conversa. Retorna as memórias "
+            "mais semanticamente próximas da query, com [tipo/area] visível."
         ),
         "input_schema": {
             "type": "object",
@@ -327,8 +328,8 @@ TOOLS = [
         "name": "auto_diagnostico",
         "description": (
             "Roda health check paralelo em todos os componentes externos do Gus: "
-            "GitHub PAT, Mem0 (com frescor da última memória), Anthropic API, Tavily, "
-            "volume Railway (/app/data writable), workflows GH (últimos 5 runs). "
+            "GitHub PAT, Hub Qdrant (com frescor do fragmento mais recente), Anthropic API, "
+            "Tavily, volume Railway (/app/data writable), workflows GH (últimos 5 runs). "
             "Retorna tabela markdown com ✅/⚠️/❌. Use quando o Gustavo perguntar "
             "'tá tudo funcionando?', 'que está quebrado?', 'roda o /check', ou quando "
             "você suspeitar que algo travou silenciosamente. Sem inputs."
@@ -344,10 +345,10 @@ TOOLS = [
         "description": (
             "Puxa logs recentes do bot Gus rodando em produção no Railway. Use quando o "
             "Gustavo perguntar sobre erros, comportamento estranho, se algum salvamento no "
-            "Mem0 ou GitHub falhou silenciosamente, ou quando precisar auditar a operação "
-            "do bot. Filtra por substring (case-insensitive) na mensagem e por janela "
-            "temporal em minutos. Requer RAILWAY_API_TOKEN configurado nas Variables do "
-            "Railway."
+            "Hub Qdrant ou GitHub falhou silenciosamente, ou quando precisar auditar a "
+            "operação do bot. Filtra por substring (case-insensitive) na mensagem e por "
+            "janela temporal em minutos. Requer Railway_diagnostic configurado nas "
+            "Variables do Railway."
         ),
         "input_schema": {
             "type": "object",
@@ -358,7 +359,7 @@ TOOLS = [
                 },
                 "filtro": {
                     "type": "string",
-                    "description": "Substring pra filtrar mensagens. Ex: 'Mem0', 'Resumo', 'error', 'salvar'."
+                    "description": "Substring pra filtrar mensagens. Ex: 'curador', 'Hub', 'error', 'salvar', 'dimagem'."
                 },
                 "since_min": {
                     "type": "integer",
@@ -387,12 +388,13 @@ TOOLS = [
     {
         "name": "salvar_memoria_gus",
         "description": (
-            "Salva uma observação no SEU PRÓPRIO brain do Mem0 (user_id='gus', "
+            "Salva uma observação no SEU PRÓPRIO brain no Hub Qdrant (user_id='gus', "
             "separado das memórias sobre o Gustavo). Use quando perceber: "
             "(a) um padrão operacional sobre o Gustavo que afeta como você deve agir, "
             "(b) um aprendizado tático sobre você mesmo (caveat de tool, comportamento), "
             "(c) um princípio que emergiu da conversa e vale lembrar. "
-            "NÃO usar pra fatos sobre o Gustavo (esses ficam no Mem0 padrão automaticamente)."
+            "NÃO usar pra fatos sobre o Gustavo — esses ficam no brain user_id='gustavo' "
+            "automaticamente via curador híbrido a cada 3 turnos."
         ),
         "input_schema": {
             "type": "object",
@@ -408,9 +410,9 @@ TOOLS = [
     {
         "name": "buscar_memoria_gus",
         "description": (
-            "Busca nas SUAS PRÓPRIAS memórias (Mem0 user_id='gus'). Brain separado do "
-            "Mem0 do Gustavo. Use pra recuperar padrões operacionais, aprendizados sobre si, "
-            "princípios que você acumulou. NÃO traz fatos sobre o Gustavo — pra isso use "
+            "Busca nas SUAS PRÓPRIAS memórias no Hub Qdrant (user_id='gus'). Brain separado "
+            "do brain do Gustavo. Use pra recuperar padrões operacionais, aprendizados sobre "
+            "si, princípios que você acumulou. NÃO traz fatos sobre o Gustavo — pra isso use "
             "search_memory."
         ),
         "input_schema": {
@@ -431,12 +433,13 @@ TOOLS = [
     {
         "name": "deletar_memoria",
         "description": (
-            "DELETA uma memória do Mem0 pelo ID. AÇÃO IRREVERSÍVEL — não dá pra desfazer. "
+            "DELETA uma memória pelo ID (Hub Qdrant primário, Mem0 fallback pra IDs "
+            "históricos pré-migração). AÇÃO IRREVERSÍVEL — não dá pra desfazer. "
             "Use SOMENTE após o Gustavo confirmar explicitamente qual memória deletar. "
             "Fluxo obrigatório: (1) `search_memory(query)` retorna memórias com IDs no "
-            "formato `[id] texto`; (2) você mostra ao Gustavo e PERGUNTA qual deletar; "
-            "(3) só após resposta clara dele (ex: 'deleta a 2', 'pode apagar a do "
-            "workflow'), você chama `deletar_memoria(memory_id=...)` com o ID exato. "
+            "formato `[id] [tipo/area] texto`; (2) você mostra ao Gustavo e PERGUNTA qual "
+            "deletar; (3) só após resposta clara dele (ex: 'deleta a 2', 'pode apagar a "
+            "do workflow'), você chama `deletar_memoria(memory_id=...)` com o ID exato. "
             "NUNCA chame essa tool sem confirmação explícita. NUNCA chame em loop sem "
             "perguntar entre cada uma. Se houver dúvida sobre qual ID, pergunte."
         ),
@@ -458,12 +461,12 @@ TOOLS = [
     {
         "name": "auditoria_mem0",
         "description": (
-            "Retorna a auditoria do armazém Mem0 — estatísticas das memórias SOBRE O "
-            "GUSTAVO (quantas, por área, frescor, duplicatas suspeitas, gaps). Use "
-            "quando o Gustavo perguntar sobre o estado do Mem0 dele, do que tem "
+            "Retorna a auditoria do armazém de memórias — estatísticas do Hub Qdrant "
+            "SOBRE O GUSTAVO (quantas, por área, frescor, duplicatas suspeitas, gaps). "
+            "Use quando o Gustavo perguntar sobre o estado das memórias dele, do que tem "
             "registrado, se há duplicatas, onde tem gap. Não confundir com `meta_memoria()` "
             "(auto-conhecimento do Gus). Dados vêm de `_indices/_auditoria-mem0.md` "
-            "atualizado diariamente."
+            "atualizado diariamente pelo cron (nome legado, mas o conteúdo já é do Hub)."
         ),
         "input_schema": {
             "type": "object",
