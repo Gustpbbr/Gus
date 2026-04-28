@@ -23,7 +23,7 @@ EXCLUDE_PATHS = {
     "gus/system_prompt.md",
 }
 EXCLUDE_PREFIXES = (
-    "docs/",
+    "historico/",
     "gus/",
     ".github/",
     "sensivel/",
@@ -35,6 +35,7 @@ EXCLUDE_PREFIXES = (
 INCLUDE_OVERRIDES = {
     "gus/gus-bootstrap.md",   # stub de redirecionamento
     "gus/gus-identity.md",    # stub de redirecionamento
+    "gus/meta-memoria.md",    # identidade narrativa do Gus como sistema
 }
 
 
