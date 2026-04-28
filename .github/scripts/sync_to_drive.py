@@ -23,7 +23,7 @@ EXCLUDE_PATHS = {
     "gus/system_prompt.md",
 }
 EXCLUDE_PREFIXES = (
-    "docs/",
+    "historico/",
     "gus/",
     ".github/",
     "sensivel/",

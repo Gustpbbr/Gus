@@ -9,7 +9,7 @@ on:
       - '!gus/**'
       - 'gus/gus-bootstrap.md'
       - 'gus/gus-identity.md'
-      - '!docs/**'
+      - '!historico/**'
       - '!CLAUDE.md'
       - '!README.md'
   workflow_dispatch:
