@@ -121,7 +121,7 @@ hub/
 
 ---
 
-## Tools do bot Telegram (~21 ativas)
+## Tools do bot Telegram (~22 ativas)
 
 Lista completa em `gus/tools.py`. Categorias principais:
 
@@ -129,6 +129,7 @@ Lista completa em `gus/tools.py`. Categorias principais:
 - **Memória:** `search_memory` (Hub Qdrant primário, Mem0 fallback), `salvar_memoria_gus`, `buscar_memoria_gus`, `deletar_memoria`, `auditoria_mem0` (lê arquivo, gerado pelo cron)
 - **Web:** `search_web` (Tavily + DuckDuckGo fallback), `pesquisar_pubmed`, `pesquisar_arxiv`
 - **Diagnóstico:** `auto_diagnostico` (6 checks: GitHub/Hub Qdrant/Anthropic/Tavily/volume/workflows), `logs_railway`
+- **Roteamento:** `rotear_arquivo` (Estágio 1 do plano de roteamento — move/cria/anexa arquivos de `dialogos/inbox-*/` pro destino correto, sob aprovação explícita do Gustavo)
 - **Outros:** `perguntar_gpt`, `disparar_workflow`, `sugerir_wikilinks`, `criar_acao`, `meta_memoria`
 
 Detalhes de quando usar cada uma → `gus/system_prompt.md`.
