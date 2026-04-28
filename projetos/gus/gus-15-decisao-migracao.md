@@ -1,12 +1,27 @@
 ---
 tipo: decisao-arquitetural
 data: 2026-04-26
-status: decidido
+atualizado: 2026-04-27
+status: decidido (evoluído pelo ADR-001)
 area: infra-memoria
 proximos: gus-17-setup-ambiente.md
 ---
 
 # Decisão: migração do Mem0 Cloud para self-hosted + Qdrant
+
+> **2026-04-27 — EVOLUÇÃO:** Esta decisão (Mem0 SaaS → mem0 self-hosted +
+> Qdrant Cloud) foi o **passo intermediário**. Após implementar e ver os
+> trade-offs do wrapper mem0 self-hosted, o **ADR-001** (de 27/04) decidiu
+> aposentar **também** o wrapper mem0 self-hosted em favor do Hub Qdrant
+> direto (`hub/store.py`). Razão: o wrapper mem0 limita schema rico, o
+> Hub direto permite payload completo gus-18 (tipo, camada_temporal, area,
+> confiança, ciclo de vida, curador).
+>
+> Esta decisão (gus-15) é a **Etapa 1** da migração de memória.
+> ADR-001 é a **Etapa 2** (mem0 self-hosted → Hub direto). Ambas estão
+> em produção; Etapa 2 prevalece.
+>
+> Ver: `projetos/gus/auditorias/2026-04-27/.../ADR-001-aposentadoria-mem0.md`
 
 ## O problema
 
