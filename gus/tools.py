@@ -525,9 +525,25 @@ TOOLS = [
                     "type": "string",
                     "description": (
                         "Pasta no repositório. Use a mais específica possível: "
-                        "'pessoal/saude' para exames, 'phronesis-bench' para Phronesis, "
-                        "'mge' para MGE/MGX, 'ter' para TER, 'axon' para Axon, "
-                        "'capturado' para capturas gerais sem projeto definido."
+                        "'pessoal/saude' para exames/consultas/medicamentos, "
+                        "'pessoal/financeiro' para extratos/notas, "
+                        "'pessoal/diario' para reflexões pessoais, "
+                        "'pessoal/paty-dos-alferes' para o projeto da casa, "
+                        "'esportes/treinos' para treinos individuais (e atualizar 'esportes/evolucao.md'), "
+                        "'leituras/livros' ou 'leituras/papers' para anotações de leitura, "
+                        "'contatos' para mapa de relacionamentos não-sensível "
+                        "(dados sensíveis de terceiros vão em 'sensivel/contatos'), "
+                        "'familia' para registros sobre família, "
+                        "'dimagem/casos' para casos clínicos didáticos com pseudônimo, "
+                        "'dimagem/protocolos' para protocolos clínicos, "
+                        "'dimagem/admin' para gestão da clínica, "
+                        "'receitas/doces' ou 'receitas/salgadas' para receitas, "
+                        "'phronesis-bench' / 'mge' / 'ter' / 'axon' para projetos específicos, "
+                        "'capturado/links' para artigos/posts da web, "
+                        "'capturado/ideias' para insights soltos, "
+                        "'capturado/misc' para tudo sem categoria clara, "
+                        "'capturado/visual' para capturas visuais. "
+                        "PII/credenciais sempre em 'sensivel/<subpasta>' (não sincroniza pro Drive)."
                     )
                 }
             },
