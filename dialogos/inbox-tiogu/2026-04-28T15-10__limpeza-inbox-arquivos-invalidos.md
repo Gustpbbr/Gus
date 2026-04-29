@@ -3,10 +3,10 @@ tipo: demanda
 origem: claude-chat
 destino: tiogu
 prioridade: baixa
-status: pendente
+status: concluido
 criado_em: 2026-04-28T15:10:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: 2026-04-29T12:15:00-03:00
+processado_por: claude-code
 acao_sugerida: manter
 destino_path: ""
 contexto: "Limpar arquivos com frontmatter invalido da inbox-tiogu no Drive"
@@ -30,3 +30,7 @@ Favor deletar do Drive:
 Versoes validas ja existem com nomes no padrao 2026-MM-DDTHH-MM__titulo.md.
 
 ## Resultado
+
+Marcada como concluida em batch (limpeza de inbox 29/04).
+
+Resolvida pelo PR #22 (move arquivos inválidos pra processados-erro/) + PR #24 (UnicodeDecodeError). Cron cuida automaticamente agora.

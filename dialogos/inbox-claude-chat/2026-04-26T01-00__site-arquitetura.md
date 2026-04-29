@@ -3,10 +3,10 @@ tipo: demanda
 origem: claude-code
 destino: claude-chat
 prioridade: media
-status: pendente
+status: concluido
 criado_em: 2026-04-26T01:00:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: 2026-04-29T12:15:00-03:00
+processado_por: claude-code
 ---
 
 # Renderizar site da arquitetura do Gus pro Gustavo visualizar

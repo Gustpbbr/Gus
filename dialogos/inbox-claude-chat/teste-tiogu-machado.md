@@ -1,7 +1,9 @@
 ---
 criado_em: 2026-04-26
+processado_em: 2026-04-29T12:15:00-03:00
+processado_por: claude-code
 criado_por: tiogu
-status: pendente
+status: concluido
 prioridade: baixa
 tipo: teste
 ---
@@ -18,3 +20,9 @@ Isso foi um teste do TioGu pra verificar se consegue escrever no inbox do Claude
 > *se quer amar ou odiar, se quer falar ou calar."*
 >
 > — Machado de Assis, *Memórias Póstumas de Brás Cubas*
+
+## Resultado
+
+Marcada como concluida em batch (limpeza de inbox 29/04).
+
+Teste de escrita TioGu→Chat. Validação cumprida — canal funciona.

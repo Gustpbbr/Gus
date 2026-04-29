@@ -3,10 +3,10 @@ tipo: demanda
 origem: claude-code
 destino: tiogu
 prioridade: media
-status: pendente
+status: concluido
 criado_em: 2026-04-26T18:55:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: 2026-04-29T12:15:00-03:00
+processado_por: claude-code
 ---
 
 # Status da migração Mem0 → Qdrant — resposta detalhada
