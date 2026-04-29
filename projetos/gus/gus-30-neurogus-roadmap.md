@@ -574,3 +574,200 @@ Pra futuro, criar `NEUROGUS_TOKEN` separado permite revogar acesso ao
 NeuroGus sem afetar Custom GPT.
 
 ---
+
+## 8. Design visual
+
+### 8.1 Tipografia
+
+- **Syne 800** (Google Fonts) — logo, títulos, valores numéricos.
+  Geométrica, forte, sem serifa. Carregada via `@import` no CSS.
+- **Space Mono** (Google Fonts) — labels, metadados, UI chrome.
+  Monospace técnico sem ser genérico (como JetBrains Mono ou IBM
+  Plex Mono).
+
+**Justificativa:** evita Inter/Roboto/Arial. NeuroGus é instrumento
+pessoal com identidade própria — fonte default genérica destoa.
+
+### 8.2 Atmosfera
+
+- **Fundo:** `#030312` — preto puro com leve azul profundo. Cria
+  sensação de espaço sideral sem virar navy. Testado: sólido em
+  ambos OLED (escuro real) e LCD (sem banding).
+- **Sem skybox / texturas de fundo.** O grafo é o único protagonista.
+
+### 8.3 Cores dos nós (geração dinâmica)
+
+Hardcoded de N cores não escala (já discutido). Implementação:
+
+```javascript
+// Algoritmo: HSL golden-ratio rotation
+const GOLDEN_ANGLE = 137.508;  // graus
+const corPorTipo = new Map();
+
+function corDeTipo(tipo) {
+  if (corPorTipo.has(tipo)) return corPorTipo.get(tipo);
+  const idx = corPorTipo.size;
+  const hue = (idx * GOLDEN_ANGLE) % 360;
+  const cor = `hsl(${hue}, 70%, 60%)`;  // saturação/luminância fixas
+  corPorTipo.set(tipo, cor);
+  return cor;
+}
+```
+
+**Propriedades:**
+- Tipo recebe cor consistente (mesmo tipo → mesma cor sempre)
+- Cores ficam visualmente bem distribuídas (golden ratio garante
+  separação angular)
+- Saturação 70% + luminância 60% = vivacidade suficiente sem cansar
+- Adapta-se: se aparecer tipo 15, ele só pega a próxima cor da
+  rotação, sem refatoração
+
+**Legenda viva:** chips no canto superior direito mostram só os tipos
+que existem no momento na coleção carregada. Aparece tipo novo →
+chip nasce.
+
+### 8.4 Glow + iluminação
+
+```javascript
+// Material por nó (em 3d-force-graph .nodeThreeObject)
+new THREE.MeshPhongMaterial({
+  color: corDoTipo,
+  emissive: corDoTipo,
+  emissiveIntensity: 0.5,
+  transparent: true,
+  opacity: 0.95,
+});
+```
+
+Combinado com `AdditiveBlending` em uma esfera externa de halo
+(maior, mais transparente), produz "glow" sem post-processing
+shader. Funciona bem em mobile (sem Bloom Pass que é caro).
+
+### 8.5 Animação de nascimento (corrigida)
+
+Problema do desenho original: branco → cor em 2s pode parecer "flash"
+sem easing. Refinamento:
+
+```javascript
+// Pseudocódigo
+function animarNascimento(no, corFinal) {
+  // Fase 1 (0 → 0.5s): pulso radial (esfera-halo expande de 1x para 2x)
+  no.cor = '#ffffff';
+  no.escala = 1.0;
+  tween(no.haloEscala, 1.0, 2.0, 0.5, 'easeOutCubic');
+
+  // Fase 2 (0.5 → 1.5s): halo retorna, cor transiciona
+  tween(no.haloEscala, 2.0, 1.0, 1.0, 'easeInOutQuad');
+  tween(no.cor, '#ffffff', corFinal, 1.0, 'easeInOutQuad');
+
+  // Fase 3 (1.5 → 2.0s): assenta na cor final, glow normal
+  // (nada — já tá lá)
+}
+```
+
+**Efeito percebido:** sinapse disparando — onda radial + transição
+cromática ≠ flash chamativo.
+
+### 8.6 Câmera + interação
+
+- **Auto-orbit:** câmera rotaciona lentamente (~5°/s) ao redor do
+  centroide do grafo. Sensação de sistema vivo.
+- **Pause-on-interaction:** primeira interação do usuário (touch,
+  mouse drag, click em nó) **pausa** auto-orbit imediatamente. Volta
+  só ao clicar num botão "retomar órbita" no canto inferior. Sem
+  isso, irrita ao tentar focar num nó específico.
+- **Touch nativo:** OrbitControls do 3d-force-graph já suporta
+  pinch-zoom + drag-rotate no mobile. Sem código extra.
+
+### 8.7 Painel lateral (clique no nó)
+
+```css
+.painel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: min(380px, 90vw);
+  height: 100vh;
+  background: rgba(4, 4, 22, 0.95);
+  backdrop-filter: blur(28px);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  transform: translateX(100%);
+  transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.painel.open { transform: translateX(0); }
+```
+
+**Conteúdo (em ordem):**
+1. Tipo (chip colorido)
+2. Conteúdo completo do fragmento (Space Mono, scroll vertical)
+3. Metadados (curador, area, camada_temporal, via, criado_em)
+4. Barra de confiança visual (0–1)
+5. Conexões clicáveis (top-K vizinhos com nome resumido + tipo)
+6. Botão "apagar" (vermelho discreto, confirma com pop-up)
+
+**Vidro fumê** (`backdrop-filter: blur(28px)`) deixa o grafo visível
+atrás. Em mobile com tela bloqueada por painel, dá pra clicar no grafo
+em volta do painel sem fechá-lo (toques nas bordas).
+
+### 8.8 Filtros (chips toggle)
+
+Chips no topo central do viewport com label de cada tipo presente.
+Comportamento:
+
+- Estado inicial: todos visíveis (chips em cor saturada).
+- Click num chip: isola só esse tipo (outros chips ficam dim, nós
+  dos outros tipos viram opacidade 10%, sem clique).
+- Click de novo no mesmo chip: volta tudo ao normal.
+- Click em outro chip enquanto isolado: troca o filtro.
+
+Deliberadamente **single-select**, não multi. Multi-select é
+power-user feature; pra v0, single-select é mais decisivo.
+
+### 8.9 Estados visuais futuros (roadmap, não implementar agora)
+
+Os estados abaixo virão quando `gus-31` (Maturação do Grafo) for
+implementado. NeuroGus v0 **não** representa nenhum deles — todos os
+fragmentos hoje são tratados visualmente iguais. Documentar agora
+serve pra:
+
+1. Não criar conflitos de design quando o sistema crescer
+2. Reservar "espaço visual" pras dimensões adicionais sem refactor
+
+| Estado (vem do gus-31) | Como representar visualmente | Mecanismo Three.js |
+|---|---|---|
+| `confianca` baixando (decay) | **Opacidade reduz** (1.0 → 0.4) conforme `confianca` cai. Tamanho também encolhe levemente. | `material.opacity` |
+| `staging` (em quarentena 30d) | **Borda pontilhada** ao redor da esfera. Texto "staging" no painel. | Outline shader leve OU segunda esfera wireframe transparente |
+| `factual` (estabilidade_tipo) | Ícone **âncora** flutuando ao lado. Glow azul-petróleo (não confundir com cor de tipo). | Sprite 2D anexado ao nó |
+| `sintetizado` (essência) | Esfera **maior** + saturação +20%. Linhas finas conectando aos N originais (que ficam menores e cinza-azulados). | `material.emissiveIntensity` + arestas com `linkOpacity` reduzido |
+| `invalidated_belief` (negative memory) | Esfera **fantasma**: cor cinza-claro + opacidade 30% + sem glow. Conexão tracejada com o fragmento que invalidou. | `material.opacity = 0.3`, `emissiveIntensity = 0` |
+| `tensao_nao_resolvida` (stasis prudencial) | **Pulsa vermelho/laranja** (oscilação `emissiveIntensity` 0.4–0.9). Indica conflito persistente entre sessões. | `requestAnimationFrame` loop de pulse |
+| `entity_pair` (memória relacional) | Aresta **tipo "trust_signal"** entre nó "gus" e "gustavo" (entidades virtuais que aparecem como esferas-âncora separadas). | Nós especiais sempre presentes |
+
+**Princípio unificador:** **opacidade** é o vetor visual primário do
+estado interno do fragmento. Cor é tipo (semântico). Tamanho é
+confiança (dinâmica). Forma é classe (esfera padrão; outline/halo
+diferente sinaliza estado).
+
+Isso permite que **tudo seja visto simultaneamente** sem o usuário
+precisar trocar de "modo" — diferentes dimensões usam canais
+visuais diferentes.
+
+### 8.10 Toast de nascimento
+
+Canto inferior direito, slide-in de baixo:
+
+```
+┌─────────────────────────────┐
+│ 🌟 Novo fragmento            │
+│ tipo: decisao                │
+│ "Decidi implementar Passo 2  │
+│  do gus-28 hoje..."          │
+│ via telegram-claude          │
+└─────────────────────────────┘
+   (fade out após 4s)
+```
+
+Acumula até 3 simultâneos (empilha verticalmente). Quarto e além
+fica em fila e aparece quando os anteriores expiram.
+
+---
