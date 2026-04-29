@@ -771,3 +771,232 @@ Acumula até 3 simultâneos (empilha verticalmente). Quarto e além
 fica em fila e aparece quando os anteriores expiram.
 
 ---
+
+## 9. Plano de implementação por fase
+
+Cada fase tem **definição de pronto** (DoP) e checkpoints. Branch única
+por fase.
+
+### Fase 0 — Pre-flight (~30 min)
+
+Decisões e localização de assets antes de tocar em código.
+
+- [ ] Decidir top-K e threshold (defaults: K=3, threshold=0.6) — confirmar
+- [ ] Localizar mock HTML do Drive da Claude Chat (28/04) ou decidir
+      recriar do zero
+- [ ] Confirmar que `CUSTOM_GPT_TOKEN` está setada no Railway service do
+      bot
+- [ ] Confirmar que `OPENAI_API_KEY` está setada (já está, mas conferir)
+- [ ] Backup mental: como vai testar localmente sem Qdrant Cloud
+      (decisão: smoke test mocka `hub.store`, integração real só pós-merge)
+
+**DoP:** Gustavo aprova os 3 defaults + mock HTML está acessível ou
+descartado.
+
+### Fase 1 — Backend SSE (~2h)
+
+Criar a infraestrutura de eventos sem frontend ainda.
+
+- [ ] Branch `claude/neurogus-fase1-backend-sse`
+- [ ] Criar `hub/events.py` com `broadcast()` + `subscribe()`
+      (~50 linhas, esqueleto na seção 7.5)
+- [ ] Hook em `hub/store.py:ingestar()`:
+      - [ ] Função `_calcular_vizinhos(vetor, k, threshold, exclude_id)`
+            usa `client.search(...)` no Qdrant pra retornar top-K
+      - [ ] Salva `relacionados: [id1, id2, id3]` no payload
+      - [ ] Dispara `broadcast()` fire-and-forget via
+            `asyncio.create_task` (ou equivalente em contexto sync)
+- [ ] Adicionar 2 endpoints em `hub/routes.py`:
+      - [ ] `GET /hub/recent?limit=N` (Bearer auth normal, JSON)
+      - [ ] `GET /hub/stream?token=X` (StreamingResponse SSE,
+            auth via query param)
+- [ ] Smoke test local: import + valida que função existe e schema
+      do retorno bate
+- [ ] Smoke test de integração: `curl --no-buffer -H "Authorization:
+      Bearer X" .../hub/stream` em uma janela; em outra janela,
+      `POST /hub/ingestar` deve aparecer no SSE da primeira
+
+**DoP:**
+- Endpoint `/hub/recent` retorna últimos N fragmentos com `relacionados`
+- Endpoint `/hub/stream` mantém conexão aberta e empurra evento JSON
+  por `data: {...}\n\n` quando `ingestar()` é chamado
+- PR mergeado, deploy automático no Railway, smoke test em produção
+  passou (curl real do bot)
+
+**Validação:** mandar mensagem no Telegram, abrir SSE em terminal local
+com curl, ver fragmento aparecer ~5-10s depois (tempo do curador).
+
+### Fase 2 — Frontend produção (~3h)
+
+Substituir mock por dados reais. Pré-requisito: Fase 1 mergeada.
+
+- [ ] Branch `claude/neurogus-fase2-frontend`
+- [ ] Criar `api/neurogus.py` com:
+      - [ ] Endpoint `GET /neurogus?token=X` que serve HTML inline
+      - [ ] Endpoint `GET /neurogus/manifest.json` pro PWA install
+      - [ ] (Opcional) `GET /neurogus/icon.png` pro ícone da home screen
+- [ ] HTML embed:
+      - [ ] CDN: Three.js r128, 3d-force-graph 1.73.3, Google Fonts
+            (Syne 800 + Space Mono)
+      - [ ] CSS: backdrop-filter, transitions, painel lateral
+      - [ ] Lógica JS:
+            - [ ] No boot: lê token da URL, fetch `/hub/recent`,
+                  monta `{nodes, links}` (links via `relacionados[]`)
+            - [ ] Geração dinâmica de cor por tipo (HSL golden-ratio)
+            - [ ] `EventSource('/hub/stream?token=X')` pra novos
+                  fragmentos
+            - [ ] Animação de nascimento (3 fases: pulso, transição,
+                  assenta)
+            - [ ] Pause-on-interaction da auto-orbit
+            - [ ] Click em nó → painel lateral
+            - [ ] Botão apagar → `DELETE /hub/fragmento/{id}` (com
+                  confirmação)
+            - [ ] Filtros chips no topo
+            - [ ] Toast de nascimento (canto inferior direito)
+- [ ] Adicionar `DELETE /hub/fragmento/{id}` em `hub/routes.py`
+      (Bearer normal, chama `store.deletar`)
+- [ ] Registrar `api.server.app.include_router(neurogus_router)` em
+      `api/server.py`
+
+**DoP:**
+- Acessar `https://api-gus.../neurogus?token=X` no navegador retorna
+  grafo populado
+- Abrir Telegram, mandar mensagem; ~5-10s depois novo nó nasce no
+  grafo
+- Touch/click funcionam no mobile
+- Painel lateral abre, conexões clicáveis, botão apagar funciona
+
+**Validação:** abrir no celular, mandar 3 mensagens no Telegram,
+observar 3 nós nascendo. Apagar 1 nó, confirmar que somem do grafo
+e do Qdrant.
+
+### Fase 3 — PWA install + polish (~1h)
+
+Ajustes pós-validação Fase 2 que fazem o NeuroGus ser "produto" e
+não só "página".
+
+- [ ] `manifest.json` completo (name, short_name, icons, theme_color,
+      background_color, display: standalone, start_url)
+- [ ] Service worker simples pra cache de assets estáticos
+      (Three.js, fontes — não cache de dados, é tudo SSE/dinâmico)
+- [ ] Meta tags pra iOS Add-to-Home-Screen (apple-touch-icon,
+      apple-mobile-web-app-capable)
+- [ ] Reconnect automático SSE com `Last-Event-ID` se conexão cair
+      (tela bloqueada, perda de rede)
+- [ ] Indicador visual de status da conexão (verde / amarelo
+      "reconectando" / vermelho "offline")
+
+**DoP:** instalável como app no Android Chrome e iOS Safari. Funciona
+em background quando volta foco. Reconnect transparente.
+
+### Fase 4 — Validação real (1-2 semanas de uso)
+
+Sem código novo. Só observação.
+
+- [ ] Usar 1 semana inteira: abrir NeuroGus diariamente, mandar
+      mensagens no Telegram, observar grafo
+- [ ] Anotar friccções:
+      - Performance bate gargalo em N=?
+      - Cor dinâmica fica confusa quando há > N tipos?
+      - Auto-orbit é incômodo ou útil?
+      - Painel lateral tem informação faltando?
+- [ ] Decisão pós-validação: continuar polindo OU partir pra estados
+      visuais futuros (opacity decay, etc.) — depende do gus-31
+      Maturação estar pronto
+
+**DoP:** lista de fricções escrita em `_log/neurogus-validacao-DDMM.md`,
+discutida com Gustavo, decisão sobre próximos passos tomada.
+
+---
+
+## 10. Decisões já tomadas (não rediscutir)
+
+Cada decisão abaixo foi resolvida e tem justificativa. Mudar exige
+argumento novo, não só mudança de gosto.
+
+### 10.1 Stack frontend: 3d-force-graph
+
+**Decidido em:** demanda 14-01 (Claude Chat 28/04)
+**Por quê:** API de alto nível, partículas direcionais nativas,
+OrbitControls, suporta até ~5k nós (suficiente pro horizonte de uso).
+**Trade-off aceito:** não escala pra 10k+ nós. Cosmograph reservado
+pra esse caso futuro como "view 2D mapa completo".
+
+### 10.2 Cor dos nós: por tipo, não por curador
+
+**Decidido em:** demanda 14-01 (Claude Chat 28/04)
+**Por quê:** o que importa visualmente é o que a memória **é**, não
+quem a extraiu. Curador (Haiku/GPT) é metadata de proveniência,
+disponível no painel lateral.
+**Implementação:** cor gerada dinamicamente via HSL golden-ratio
+(decisão complementar tomada nesta sessão pra evitar tabela hardcoded).
+
+### 10.3 Conexões: por afinidade semântica, não por hash_janela
+
+**Decidido em:** sessão 29/04 (correção da proposta original)
+**Por quê:** `hash_janela` liga só 2-5 fragmentos da mesma curadoria.
+Sem afinidade semântica, grafo vira ilhas desconexas — não é "rede
+neural", é "lista de janelas".
+**Implementação:** top-K por nó (K=3, threshold cosine 0.6),
+pré-computado no backend ao ingerir, salvo em `relacionados[]` no
+payload. `hash_janela` vira filtro/destaque secundário.
+
+### 10.4 Stack backend: SSE, não WebSocket
+
+**Decidido em:** demanda 14-01 (Claude Chat 28/04) + revisão 29/04
+**Por quê:** comunicação é unidirecional (servidor → browser).
+WebSocket bidirecional é overkill, exige libs extras, reconnect
+manual. SSE é nativo no browser via EventSource, com reconnect
+automático via `Last-Event-ID`.
+
+### 10.5 Onde vive: mesmo container do bot
+
+**Decidido em:** demanda 14-01 (Claude Chat 28/04)
+**Por quê:** sem custo extra, sem secrets duplicados, sem deploy
+separado. Bot + API + NeuroGus rodam no mesmo processo via
+asyncio.gather (já é o padrão atual).
+
+### 10.6 Auth: Bearer token compartilhado (CUSTOM_GPT_TOKEN)
+
+**Decidido em:** sessão 29/04
+**Por quê:** single-user, single-purpose. Não vale a complexidade
+de OAuth/JWT. Token via query param em SSE/HTML é necessário porque
+EventSource não suporta header custom.
+**Trade-off aceito:** token aparece em logs/history do browser.
+Mitigação: rotação periódica OU criar `NEUROGUS_TOKEN` separado
+quando o atrito justificar.
+
+### 10.7 Estados visuais avançados: roadmap futuro (gus-31)
+
+**Decidido em:** sessão 29/04
+**Por quê:** decay/quarentena/factual/sintetizado/invalidated
+dependem do gus-31 (Maturação do Grafo) estar implementado. NeuroGus
+v0 funciona sem — todos os fragmentos são tratados igual visualmente.
+**Reservado:** seção 8.9 documenta como cada estado vai aparecer
+quando a Maturação for implementada (opacidade pra decay, âncora
+pra factual, etc.).
+
+### 10.8 Filtros: single-select, não multi
+
+**Decidido em:** sessão 29/04
+**Por quê:** decisivo no v0, fácil no mobile. Multi-select é
+power-user feature, fica pra Fase 3+.
+
+### 10.9 Cores dinâmicas: HSL golden-ratio
+
+**Decidido em:** sessão 29/04 (correção do briefing original)
+**Por quê:** não escala hardcode de N cores quando aparecem tipos
+novos. Golden-ratio garante distribuição visual e consistência por
+tipo. Saturação 70%, luminância 60% (vivacidade sem cansar).
+
+### 10.10 Curador modelo (Haiku + GPT-4o-mini)
+
+**Decidido em:** gus-29 Fase 3 (PR #44, 29/04)
+**Por quê:** resiliência (se Anthropic offline, GPT continua) +
+custo (~10x menor que Haiku+Sonnet) + A/B inter-família mais
+informativo.
+**Relevante pro NeuroGus:** o campo `curador` no payload pode ter
+"haiku", "gpt", e historicamente "sonnet" (legado). Painel lateral
+mostra mas não filtra (proveniência, não significado).
+
+---
