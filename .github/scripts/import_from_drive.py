@@ -42,6 +42,7 @@ BRT = timezone(timedelta(hours=-3))
 PORTAS_VALIDAS = {"claude-chat", "tiogu", "claude-code", "custom-gpt", "gustavo"}
 INBOXES = ["inbox-tiogu", "inbox-claude-code", "inbox-claude-chat", "inbox-custom-gpt"]
 PROCESSADOS_FOLDER = "processados"
+PROCESSADOS_ERRO_FOLDER = "processados-erro"
 
 # Mimes considerados texto pra mirror raw. Outros tipos (imagens, binários) são
 # ignorados com warning — Drive pode ter qualquer coisa, repo só aceita texto.
@@ -110,7 +111,8 @@ def walk_drive_recursive(drive, folder_id, prefix=""):
     """Yield (file_dict, prefix) pra todos os arquivos sob folder_id, recursivo.
 
     `prefix` é o path relativo (com `/` final, ou string vazia na raiz). Pula
-    a subpasta `processados/` na raiz pra não reimportar arquivos já archivados.
+    as subpastas `processados/` e `processados-erro/` na raiz pra não
+    reimportar arquivos já archivados (sucesso ou falha).
     """
     q = f"'{folder_id}' in parents and trashed = false"
     fields = "nextPageToken, files(id, name, mimeType, modifiedTime)"
@@ -122,7 +124,7 @@ def walk_drive_recursive(drive, folder_id, prefix=""):
         r = drive.files().list(**kwargs).execute()
         for f in r.get("files", []):
             if f["mimeType"] == "application/vnd.google-apps.folder":
-                if prefix == "" and f["name"] == PROCESSADOS_FOLDER:
+                if prefix == "" and f["name"] in (PROCESSADOS_FOLDER, PROCESSADOS_ERRO_FOLDER):
                     continue
                 yield from walk_drive_recursive(drive, f["id"], prefix + f["name"] + "/")
             else:
@@ -273,12 +275,21 @@ def normalizar_nome_arquivo(name):
     return name + ".md"
 
 
-def processar_demanda_inbox(drive, repo, gh_token, f, inbox, processados_id):
+def processar_demanda_inbox(drive, repo, gh_token, f, inbox, processados_id, processados_erro_id):
     """Modo demanda: arquivo direto em inbox-*/ — valida frontmatter, commita, move.
+    Inválidos vão pra processados-erro/<inbox>/ pra não ciclar a cada 15min.
     Retorna 'imported' | 'invalid' | 'error'."""
     file_id = f["id"]
     file_name = f["name"]
     mime = f.get("mimeType", "")
+
+    def _mover_para_erro(motivo):
+        try:
+            proc_erro_inbox_id = get_or_create_folder(drive, inbox, processados_erro_id)
+            move_file(drive, file_id, proc_erro_inbox_id, find_parents(drive, file_id))
+            log.info(f"    Movido pra processados-erro/{inbox}/ ({motivo})")
+        except HttpError as e:
+            log.warning(f"    Move pra erro falhou: {e} — vai reprocessar no próximo ciclo")
 
     try:
         content = download_content(drive, file_id, mime)
@@ -289,11 +300,13 @@ def processar_demanda_inbox(drive, repo, gh_token, f, inbox, processados_id):
     fm, body = parse_frontmatter(content)
     if fm is None:
         log.warning(f"    Frontmatter ausente/inválido em {file_name} — skip")
+        _mover_para_erro("frontmatter ausente/inválido")
         return "invalid"
 
     erros_fm = validate_frontmatter(fm, file_name)
     if erros_fm:
         log.warning(f"    Validação falhou em {file_name}: {erros_fm}")
+        _mover_para_erro(f"validação: {erros_fm}")
         return "invalid"
 
     github_path = f"dialogos/{inbox}/{normalizar_nome_arquivo(file_name)}"
@@ -371,6 +384,7 @@ def main():
         sys.exit(0)
 
     processados_id = get_or_create_folder(drive, PROCESSADOS_FOLDER, dialogos_id)
+    processados_erro_id = get_or_create_folder(drive, PROCESSADOS_ERRO_FOLDER, dialogos_id)
 
     counts = {"imported": 0, "invalid": 0, "updated": 0, "created": 0,
               "unchanged": 0, "skipped": 0, "error": 0}
@@ -394,7 +408,7 @@ def main():
         log.info(f"  → {prefix}{file_name} (mime={mime})")
 
         if is_inbox_top:
-            result = processar_demanda_inbox(drive, repo, gh_token, f, parts[0], processados_id)
+            result = processar_demanda_inbox(drive, repo, gh_token, f, parts[0], processados_id, processados_erro_id)
         else:
             result = processar_mirror_raw(drive, repo, gh_token, f, prefix)
 
