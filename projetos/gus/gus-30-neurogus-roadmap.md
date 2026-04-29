@@ -1000,3 +1000,205 @@ informativo.
 mostra mas não filtra (proveniência, não significado).
 
 ---
+
+## 11. Decisões abertas (precisa resolver antes de começar)
+
+Cada item exige resposta do Gustavo. Default proposto entre parênteses
+— se aprovado, vira decisão tomada (mover pra seção 10 quando confirmado).
+
+### 11.1 Top-K e threshold pra afinidade
+
+**Pendente:** quantos vizinhos por nó (K) e qual cosine similarity
+mínima pra criar aresta.
+**Default proposto:** K=3, threshold=0.6
+**Trade-off:**
+- K alto + threshold baixo → grafo denso, perde clareza
+- K baixo + threshold alto → grafo esparso, parece "ilhas"
+- K=3, threshold=0.6 → grafo legível com ~3-5 conexões por nó típico
+**Custo de mudar depois:** alto (re-precisa popular `relacionados[]`
+em todos fragmentos antigos via batch)
+
+### 11.2 Mock HTML do Drive da Claude Chat (28/04)
+
+**Pendente:** localizar o HTML do mock que a Claude Chat criou em
+sessão própria, ou recriar do zero?
+**Implicação:**
+- Se localizado: economiza ~2-3h de trabalho de UI
+- Se não: recriamos seguindo a especificação visual da seção 8 (mais
+  trabalho mas com decisões mais frescas)
+**Como Gustavo localiza:** entrar na sessão Claude Chat de 28/04, pedir
+o HTML, baixar e commitar em `projetos/gus/neurogus-mock-2604.html`
+**Custo de mudar depois:** baixo (recriar é sempre opção)
+
+### 11.3 Token na URL é aceitável?
+
+**Pendente:** token aparece em `?token=X` na URL do navegador. Aceita
+ou cria mecanismo alternativo?
+**Default proposto:** aceita pra v0; rotacionar `CUSTOM_GPT_TOKEN`
+periodicamente
+**Alternativas (mais complexas):**
+- Cookie HttpOnly setado por endpoint POST que faz auth, depois
+  EventSource usa cookie
+- Token específico `NEUROGUS_TOKEN` separado, com TTL curto (24h),
+  renovado a cada acesso
+**Custo de mudar depois:** médio (mexe em auth + JS + manifest.json)
+
+### 11.4 Auto-orbit é ON ou OFF por default?
+
+**Pendente:** câmera começa orbitando ou parada?
+**Default proposto:** ON (sensação de sistema vivo no boot)
+**Argumento contra:** logo ao abrir, usuário pode querer focar num nó;
+auto-orbit faz a tela mexer enquanto ele tenta clicar.
+**Mitigação:** pause-on-interaction já contemplado (primeira interação
+pausa). Default ON é razoável SE a animação for lenta o suficiente.
+
+### 11.5 Reconnect SSE vs reload do grafo inteiro
+
+**Pendente:** quando SSE cair (rede instável, tela bloqueada > 5min),
+reconnect tenta retomar do `Last-Event-ID` ou pede reload completo?
+**Default proposto:** reload completo do `/hub/recent` quando reconectar
+após > 30s sem eventos
+**Argumento:** retomar de event-id exige backend manter cache de
+eventos, mais complexo. Reload completo perde animação de eventos
+intermediários mas garante consistência.
+**Custo de mudar depois:** baixo (lógica do JS do reconnect)
+
+### 11.6 Apagar fragmento é hard-delete ou soft-delete?
+
+**Pendente:** botão "apagar" no painel chama `DELETE /hub/fragmento/{id}`
+— remove do Qdrant ou marca como `deleted: true`?
+**Default proposto:** hard-delete (`store.deletar()` já faz isso hoje)
+**Argumento contra:** sem audit trail, fragmento apagado por engano
+não recupera
+**Alternativa:** marcar `estado: "esquecido"` (já existe no schema)
+em vez de deletar de fato. Some do retrieval normal mas continua no
+Qdrant pra investigação.
+**Pergunta pra resolver:** quero recuperabilidade ou minimalismo?
+
+### 11.7 Coleção mostrada: só `gustavo` ou também `gus`?
+
+**Pendente:** o brain `user_id="gus"` (auto-observações do agente)
+aparece no NeuroGus ou só `user_id="gustavo"` (memórias sobre o
+Gustavo)?
+**Default proposto:** só `gustavo` no v0. Depois adicionar toggle
+"ver brain Gus" como dimensão extra.
+**Implicação:** quando o Retro Engine começar a popular `user_id="gus"`,
+NeuroGus precisa decidir se mostra ou não.
+
+---
+
+## 12. Cross-references (cola pra próxima sessão)
+
+Tudo que uma sessão nova precisa pra contextualizar.
+
+### 12.1 Documentos canônicos relacionados
+
+| Doc | Função | Onde |
+|---|---|---|
+| `gus-28-acesso-hub-claude-chat.md` | Design dos 4 Passos do acesso ao Hub. NeuroGus = Passo 3. | `projetos/gus/` |
+| `gus-28-passo2-mcp-server.md` | Setup guide do MCP server (Passo 2) | `projetos/gus/` |
+| `gus-29-roteamento-multimodelo-tiogu.md` | Roteamento texto/áudio/foto entre OpenAI e Anthropic | `projetos/gus/` |
+| `gus-31-maturacao-grafo.md` *(futuro)* | Decay, síntese, factual, negative memory. Pré-req lógico mas não bloqueia. | TODO |
+| `gus-31a-reconciliacao-schema.md` *(futuro)* | Mapeamento `tipo_esquecimento × camada_temporal × estabilidade_tipo` | TODO |
+| `gus-32-memoria-relacional.md` *(futuro)* | `entity_pair` gus↔gustavo. Escopo grande. | TODO |
+| `gus-18-schema-indexacao.md` *(existe)* | Schema canônico do payload Qdrant (`tipo`, `area`, `confianca`, `via`, etc.) | `projetos/gus/` |
+
+### 12.2 Demandas de origem (Claude Chat 28/04)
+
+| Demanda | Conteúdo | Status |
+|---|---|---|
+| `2026-04-28T14-00__neurogus-briefing.md` | Visão de produto e UX | pendente |
+| `2026-04-28T14-01__neurogus-arquitetura.md` | Stack, fluxo, peças, auth | pendente |
+| `2026-04-28T14-02__neurogus-codigo-v1.md` | Mock HTML (referência ao Drive) | pendente |
+
+Localização: `dialogos/inbox-tiogu/`. Após implementação, marcar
+`status: concluido` e cron `archive-completed-demandas` move pra
+`dialogos/archive/`.
+
+### 12.3 Arquivos de código relevantes (estado atual)
+
+| Arquivo | Linhas | Função | Mexer? |
+|---|---|---|---|
+| `hub/store.py` | ~290 | `ingestar`, `lembrar`, `ego_cache`, `listar`, `contar`, `stats` | **Sim** — adicionar `_calcular_vizinhos()` + hook broadcast |
+| `hub/routes.py` | ~150 | endpoints REST `/hub/*` com Bearer | **Sim** — adicionar `/hub/recent`, `/hub/stream` |
+| `hub/curador.py` | ~400 | curador híbrido Haiku + GPT | Não |
+| `hub/mcp_server.py` | ~310 | MCP server (Passo 2) | Não |
+| `hub/events.py` | — | (não existe) | **Criar** |
+| `api/server.py` | ~80 | FastAPI app, healthcheck, mount routers | **Sim** — incluir `neurogus_router` |
+| `api/auth.py` | ~40 | `verify_bearer` dependency | Não (reusar) |
+| `api/routes.py` | ? | rotas Custom GPT | Não |
+| `api/neurogus.py` | — | (não existe) | **Criar** |
+| `gus/main.py` | ~100 | entrypoint, asyncio.gather(bot, api) | Não |
+| `gus/bot.py` | ~580 | Telegram handlers | Não |
+
+### 12.4 Endpoints existentes vs novos
+
+**Existem hoje (em produção):**
+- `GET /health` (público)
+- `POST /hub/ingestar` (Bearer)
+- `POST /hub/lembrar` (Bearer)
+- `GET /hub/ego-cache` (Bearer)
+- `GET /hub/stats` (Bearer)
+
+**A criar:**
+- `GET /hub/recent` (Bearer) — boot do grafo
+- `GET /hub/stream` (token query param, SSE) — eventos em tempo real
+- `DELETE /hub/fragmento/{id}` (Bearer) — apagar pelo painel
+- `GET /neurogus` (token query param, HTML) — frontend
+- `GET /neurogus/manifest.json` (público) — PWA install
+
+### 12.5 Variáveis de ambiente relevantes
+
+**Já configuradas no Railway:**
+- `OPENAI_API_KEY`
+- `ANTHROPIC_API_KEY`
+- `QDRANT_URL`, `QDRANT_API_KEY`
+- `CUSTOM_GPT_TOKEN` (Bearer compartilhado)
+- `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
+- `MCP_BEARER_TOKEN` (do Passo 2)
+
+**Possivelmente criar pro NeuroGus (opcional):**
+- `NEUROGUS_TOKEN` (separa auth do NeuroGus do Custom GPT — ver 11.3)
+- `NEUROGUS_PUBLIC_URL` (override do `API_PUBLIC_URL` se tiver
+  domínio próprio no futuro)
+
+### 12.6 Comando de smoke test rápido (pra próxima sessão)
+
+```bash
+# 1. SSE local — abrir em terminal
+curl --no-buffer \
+  "https://api-gus-railway.up.railway.app/hub/stream?token=$CUSTOM_GPT_TOKEN"
+
+# 2. Simular fragmento — em outro terminal
+curl -X POST \
+  -H "Authorization: Bearer $CUSTOM_GPT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"conteudo": "teste neurogus", "tipo": "teste", "area": "gus"}' \
+  "https://api-gus-railway.up.railway.app/hub/ingestar"
+
+# Esperado no terminal 1:
+# data: {"id": "...", "conteudo": "teste neurogus", "tipo": "teste", ...}
+```
+
+Se isso funcionar, Fase 1 está OK pra prosseguir pra Fase 2.
+
+### 12.7 Comando de leitura rápida pra próxima sessão
+
+Pra contextualizar de zero:
+```bash
+# 1. Ler este doc
+cat projetos/gus/gus-30-neurogus-roadmap.md | head -100
+
+# 2. Ver estado dos arquivos
+ls -la hub/
+ls -la api/
+git log --oneline -20
+
+# 3. Ver demandas pendentes
+ls dialogos/inbox-tiogu/
+
+# 4. Conferir variáveis (sem ler valores secretas)
+grep -r "os.getenv" hub/ api/ | grep -v "__pycache__"
+```
+
+---
