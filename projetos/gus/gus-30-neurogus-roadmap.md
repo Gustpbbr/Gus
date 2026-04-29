@@ -2,9 +2,9 @@
 tipo: design-decision
 area: gus
 gus-id: 30
-atualizado: 2026-04-29T16:45-03:00
-status: planejamento
-proximos: implementar Fase 1 (backend SSE) quando Gustavo decidir começar
+atualizado: 2026-04-29T19:40-03:00
+status: completo (planejamento)
+proximos: Gustavo confirma 11.1-11.7 (decisões abertas), depois Fase 0 → Fase 1
 referencia: gus-28 Passo 3 (NeuroGus em produção)
 depende-de:
   - hub/events.py (não existe ainda)
@@ -1322,7 +1322,7 @@ e validada por curl em produção.)
       - `2026-04-28T14-02__neurogus-codigo-v1.md`
 - [ ] Atualizar `gus-28-acesso-hub-claude-chat.md`: marcar Passo 3
       como concluído
-- [ ] Atualizar este doc (`gus-30`): mudar `status: planejamento`
+- [ ] Atualizar este doc (`gus-30`): mudar `status: completo (planejamento)`
       para `status: implementado`
 - [ ] Adicionar entrada em `_log/sessoes-claude-code/` com
       detalhes da implementação
@@ -1370,3 +1370,144 @@ e validada por curl em produção.)
 | Hub Qdrant fica indisponível | Baixa | NeuroGus mostra "carregando..." infinito | Timeout de 30s no fetch de `/hub/recent`, mostra mensagem de erro com link pra `/health`. |
 
 ---
+
+## 15. O que NÃO fazer (anti-padrões)
+
+Lista de armadilhas comuns que podem aparecer durante a implementação.
+Cada item é um "se isso aparecer, **NÃO** faça".
+
+### 15.1 Não criar service Railway novo
+
+**Tentação:** "vou criar um service `neurogus` separado pra isolar a UI
+do bot".
+
+**Por que não:** custo extra (~$5/mês), secrets duplicados, complexidade
+de deploy, sem ganho real. NeuroGus é HTML inline + 2 endpoints — cabe
+no mesmo processo do bot+API que já roda. Ver seção 7.3.
+
+### 15.2 Não usar Cosmograph pro v0
+
+**Tentação:** "Cosmograph é mais performático e bonito, vou começar com
+ele".
+
+**Por que não:** Cosmograph é 2D (perde a metáfora 3D imersivo) e não
+tem partículas direcionais nas arestas (perde "feixes de luz"). É
+ferramenta diferente, pra problema diferente (~10k+ nós). Reservado
+pra futuro se a coleção crescer muito. Ver seção 7.2.
+
+### 15.3 Não escrever direto no Qdrant pelo frontend
+
+**Tentação:** "vou conectar o frontend direto no Qdrant pra reduzir
+latência".
+
+**Por que não:**
+- Vaza credenciais Qdrant pro browser
+- Quebra contrato `via=` na ingestão (curador é o único que escreve)
+- NeuroGus é leitor (e deletor de fragmentos próprios). Toda escrita
+  passa pelo backend, sempre.
+
+### 15.4 Não bloquear `ingestar()` esperando broadcast
+
+**Tentação:** "vou fazer `await broadcast(...)` síncrono no fim do
+`ingestar()` pra garantir consistência".
+
+**Por que não:** se o broadcast travar (ex: listener com fila cheia,
+network lento), o curador trava. **Curador trava = sem fragmento
+novo no Telegram = bot quieto**. Broadcast é fire-and-forget via
+`asyncio.create_task` ou `run_coroutine_threadsafe`. Falha em
+broadcast NÃO derruba ingestar. Ver seção 7.5 peça 2.
+
+### 15.5 Não exigir login complexo
+
+**Tentação:** "vou implementar OAuth pra o NeuroGus, single-user já
+não escala".
+
+**Por que não:** premissa errada. NeuroGus **é** single-user
+deliberadamente (instrumento privado de auto-observação). OAuth
+exige client/secret, refresh tokens, redirect URLs, callback handler.
+Bearer token compartilhado resolve em 5 linhas. Quando a porta for
+multi-user (não está no roadmap), revisitar.
+
+### 15.6 Não tentar replicar o mock HTML antigo letra-por-letra
+
+**Tentação:** "vou abrir o mock da Claude Chat e reproduzir tudo
+exato".
+
+**Por que não:** o mock é validação estética, não código de produção.
+Tem CSS antigo, estrutura monolítica, sem PWA, sem auth. **Use como
+inspiração visual, não cópia.** Estrutura nova segue seção 8 deste
+doc + decisões mais recentes.
+
+### 15.7 Não confundir `via` com `curador`
+
+**Tentação:** "fragmentos do `via=telegram-claude` são todos
+gerados pelo Claude — vou cor-rir por via".
+
+**Por que não:** `via` = porta de origem da conversa
+(`telegram-claude`, `claude-chat`, `claude-code`). `curador` = quem
+extraiu o fragmento (`haiku`, `gpt`, historicamente `sonnet`). São
+metadados independentes — qualquer combinação é válida.
+
+### 15.8 Não esquecer do `_get_embedder()` cold start
+
+**Tentação:** assumir que `lembrar()` ou `_calcular_vizinhos()` é
+sempre rápido.
+
+**Por que não:** primeira chamada após boot do container carrega o
+modelo `sentence-transformers/all-MiniLM-L6-v2` (~80MB) do
+HuggingFace, leva ~30s. Mitigar com warm-up no `startup_event` do
+FastAPI: chamar `_get_embedder()` uma vez com texto fake. Antes de
+ter warm-up, primeira `GET /hub/recent` pode dar timeout no fetch
+do frontend (default 30s do `httpx`).
+
+### 15.9 Não persistir filtros visuais no Qdrant
+
+**Tentação:** "fica legal salvar a posição da câmera ou tipo
+filtrado por usuário".
+
+**Por que não:** estado de UI não pertence ao backend. Use
+`localStorage` no browser. Single-user também ajuda — não tem
+multi-tenant onde isso importa.
+
+### 15.10 Não confiar 100% na confiança como tamanho
+
+**Tentação:** "fragmento `confianca=0.5` deve ser metade do tamanho".
+
+**Por que não:** distribuição real é enviesada (quase tudo > 0.7
+hoje). Diferença visual entre 0.7 e 0.95 é invisível. Aplicar
+**stretch** ou **mapeamento exponencial** pra exagerar contraste:
+```javascript
+size = baseSize * Math.pow(confianca, 2);  // ou similar
+```
+Re-avaliar quando coleção tiver distribuição mais variada (após
+gus-31 com decay).
+
+### 15.11 Não tentar resolver tudo no v0
+
+**Tentação:** "já que vou implementar, melhor incluir decay,
+síntese, factual, negative memory tudo de uma vez".
+
+**Por que não:** todos esses conceitos vêm do `gus-31`
+(Maturação do Grafo). Se misturar tudo no v0, gus-30 vira gus-30+31
+e fica impossível de revisar. **NeuroGus v0 = visualização do estado
+atual do Hub**, sem dimensões adicionais. Estados visuais futuros
+estão documentados em 8.9 pra quando chegarmos lá.
+
+---
+
+## Apêndice A — Mudanças neste doc
+
+| Data | Sessão | Mudança |
+|---|---|---|
+| 2026-04-29 16:45 | gus-30 inicial | Frontmatter + TL;DR + seção "O que é" |
+| 2026-04-29 18:20 | gus-30 correções | Conexão por afinidade (não janela), cores HSL dinâmicas |
+| 2026-04-29 18:50 | gus-30 seções 4-6 | Por que existe, status atual, pré-requisitos |
+| 2026-04-29 19:00 | gus-30 seção 7 | Arquitetura técnica completa |
+| 2026-04-29 19:10 | gus-30 seção 8 | Design visual + estados visuais futuros (preview gus-31) |
+| 2026-04-29 19:20 | gus-30 seções 9-10 | Plano de fases + decisões tomadas |
+| 2026-04-29 19:25 | gus-30 seções 11-12 | Decisões abertas + cross-references |
+| 2026-04-29 19:35 | gus-30 seções 13-14 | Checklist canônico + riscos |
+| 2026-04-29 19:40 | gus-30 seção 15 | Anti-padrões (final) |
+
+**Status final:** completo (planejamento). Pronto pra implementação
+quando Gustavo decidir começar Fase 0.
