@@ -1,8 +1,152 @@
 [
   {
+    "id": "06caf6bb-f1ed-43f4-a9ea-424409b55743",
+    "memory": "1. Gustavo é anestesiologista e trabalha com o Dimagem (clínica/laboratório de imagem).\n2. Gustavo recebe ordens de serviço do Dimagem e precisa acompanhar pacientes agendados.\n3. Preferência: Gus deve descrever OS apenas com dados factuais (nome, exame, horário, convênio) — sem análise clínica ou interpretação que Gustavo já domina.\n4. Gus deve confirmar leitura correta dos dados e oferecer salvamento no arquivo do dia, sem expandir para análises não solicitadas.\n5. Gustavo valoriza eficiência: ruído deve ser eliminado nas respostas do Gus.",
+    "created_at": "2026-04-28T16:52:13.259826-03:00",
+    "metadata": {
+      "tipo": "episodico",
+      "estado": "ativo",
+      "via": "telegram-claude",
+      "area": "",
+      "curador": null
+    }
+  },
+  {
+    "id": "0ccf0b81-5233-4636-ba85-6ef997b02073",
+    "memory": "1. Gustavo estabeleceu protocolo específico de análise de fotos que deve ser seguido nas próximas conversas\n2. Gustavo está processando múltiplas imagens de Ordens de Serviço (OS) médicas com datas históricas (09/01/2026)\n3. Paciente Analete da Silva Pinto teve exames de RM (Crânio/Encéfalo com Espectroscopia e RM Fluxo Liquórico) + anestesia em Assim São Gonçalo\n4. Há questão em aberto sobre como arquivar OS com datas antigas (se salva no arquivo histórico ou ignora)",
+    "created_at": "2026-04-28T17:11:16.171835-03:00",
+    "metadata": {
+      "tipo": "episodico",
+      "estado": "ativo",
+      "via": "telegram-claude",
+      "area": "",
+      "curador": null
+    }
+  },
+  {
+    "id": "0f7a70ea-3e6c-4735-8ff1-45d0e8c8ba84",
+    "memory": "1. Gustavo trabalha com um projeto chamado **NeuroGus** — chegaram 3 demandas novas no dia 28/04 (briefing, arquitetura, código v1)\n2. Existe um sistema de **múltiplos canais de comunicação** com o Gus (Gus Chat e Gus direto) — mesma entidade, portas diferentes\n3. Gustavo usa **workflows automatizados** (ex: `import-from-drive.yml`) para trazer demandas do GitHub\n4. Preferência de Gustavo: quer que Gus **dispare workflows e leia demandas automaticamente**, sem esperar aprovação caso estejam prontas",
+    "created_at": "2026-04-28T12:33:29.493521-03:00",
+    "metadata": {
+      "tipo": "episodico",
+      "estado": "ativo",
+      "via": "telegram-claude",
+      "area": "",
+      "curador": null
+    }
+  },
+  {
+    "id": "11b98c82-75de-4d09-b6c9-c0f1d49e6ba1",
+    "memory": "1. Caminho completo da pasta de demandas do Gus: `Gustpbbr/Gus/dialogos/inbox-tiogu/`\n2. PR #14 foi mergeado hoje (protocolo de portas e tools) — Gustavo pode querer revisar a documentação nova sobre análise de portas e ferramentas\n3. Infraestrutura de automação está funcionando: auditoria automática, export diário do Hub e capture de sessão rodando conforme esperado\n4. Hook de fim de sessão do retro-engine está funcional (2 entradas registradas ontem à noite)",
+    "created_at": "2026-04-28T10:43:06.928236-03:00",
+    "metadata": {
+      "tipo": "episodico",
+      "estado": "ativo",
+      "via": "telegram-claude",
+      "area": "",
+      "curador": null
+    }
+  },
+  {
     "id": "2b68d542-c7c5-4ef9-b72e-492bbaddb7fe",
     "memory": "1. Após merge e deploys recentes, o auto_diagnostico agora tem acesso ao Hub Qdrant (evolução positiva)\n2. Problema identificado: Hub Qdrant mostra 0 fragmentos para user_id=gustavo — curador acessível mas vazio ou fragmentos indexados com user_id incorreto\n3. Workflow \"Ingest Mem0 from Claude Chat\" está falhando pós-merge — precisa investigação\n4. Gustavo usa estratégia de rodar auto_diagnostico duas vezes em sequência para detectar mudanças pós-deploy\n5. Infraestrutura base saudável: GitHub Token (fine-grained PAT), Anthropic Haiku, Tavily search, volume Railway writable funcionando",
     "created_at": "2026-04-27T21:03:00.110331-03:00",
+    "metadata": {
+      "tipo": "episodico",
+      "estado": "ativo",
+      "via": "telegram-claude",
+      "area": "",
+      "curador": null
+    }
+  },
+  {
+    "id": "3c58cbb8-63ee-4c99-a944-3a50dd512149",
+    "memory": "1. Gustavo quer que o workflow de migração Mem0 → Qdrant rode e que o auto_diagnóstico seja executado após conclusão.\n\n2. Hub Qdrant está operacional com 4+ fragmentos (subiu de 2), migração em progresso para consolidar 204 memórias. Esperado crescimento conforme workflow processa.\n\n3. Site da arquitetura do Gus foi gerado em HTML e está em `dialogos/inbox-claude-chat/` aguardando Gustavo abrir no claude.ai para renderizar como Artifact.\n\n4. Infra confirmada como estável: GitHub Token (fine-grained PAT), Qdrant, Anthropic (Haiku), Tavily, Volume Railway e Workflows GitHub todos operacionais.\n\n5. Gustavo tem capacidade de revisar demandas, priorizar tarefas e tomar decisões sobre fluxo de trabalho conforme feedback do Gus.",
+    "created_at": "2026-04-28T09:43:02.465881-03:00",
+    "metadata": {
+      "tipo": "episodico",
+      "estado": "ativo",
+      "via": "telegram-claude",
+      "area": "",
+      "curador": null
+    }
+  },
+  {
+    "id": "474e334c-efb3-4f4a-a777-a91e857beb2d",
+    "memory": "1. Gustavo quer que o Gus tenha capacidade de disparar todos os 8 workflows disponíveis manualmente (auditoria-mem0, briefing-matinal, check-saude, export-mem0, reflexao-quinzenal, retrospectiva-semanal, sync-to-drive, sync-to-drive-full).\n\n2. Gustavo quer auto diagnóstico do sistema: health check completo que valide GitHub, Hub Qdrant, Anthropic, Tavily, volume Railway e workflows com status visual (✅/⚠️/❌).\n\n3. Gustavo quer que o Gus possa acessar e auditar as memórias: buscar no Hub Qdrant (brain do Gustavo), ver auditoria completa com stats/gaps/duplicatas/frescor, e acessar o próprio brain do Gus (padrões operacionais).\n\n4. O `sync-to-drive-full` copia todos os `.md` do repo pro Drive, exceto a pasta `sensivel/` — workflow simples e sem lógica específica adicional.\n\n5. O `notificar-inbox-tiogu` detecta arquivos novos na inbox e avisa Gustavo no Telegram (workflow de 7s).",
+    "created_at": "2026-04-28T14:14:00.787655-03:00",
+    "metadata": {
+      "tipo": "episodico",
+      "estado": "ativo",
+      "via": "telegram-claude",
+      "area": "",
+      "curador": null
+    }
+  },
+  {
+    "id": "6855c44f-9d55-41ac-abd3-a9582985b505",
+    "memory": "1. Gustavo está em fase de testes e quer que o Gus dispare workflows sempre que solicitado, sem justificar que foi feito recentemente.\n2. Workflow de importação de demandas roda em ciclos de 15 minutos.\n3. Há um atraso entre arquivos aparecerem no Drive e chegarem ao GitHub via workflow.\n4. Gustavo detectou uma demanda nova que ainda não foi importada — pode estar em processamento ou no próximo ciclo do workflow.\n5. O Gus consegue listar arquivos processados (7 arquivos: 4 antigas do dia 26 + 3 do NeuroGus) e distinguir o que já chegou ao GitHub do que ainda está pendente no Drive.",
+    "created_at": "2026-04-28T12:39:42.427990-03:00",
+    "metadata": {
+      "tipo": "episodico",
+      "estado": "ativo",
+      "via": "telegram-claude",
+      "area": "",
+      "curador": null
+    }
+  },
+  {
+    "id": "6b589952-ef9c-4a2e-b278-dffb347130ca",
+    "memory": "1. Gustavo quer que Gus dispare workflows sempre que solicitado, sem justificativas de execução recente — workflow de importação roda em ciclos de 15min.\n\n2. Bug resolvido em `download_content`: `UnicodeDecodeError` ao ler byte `0xB6` — solução aplicada foi fallback UTF-8 → Latin-1.\n\n3. Gus Chat deve sempre salvar arquivos em UTF-8 sem BOM.\n\n4. Workflow `import-from-drive` tem falha conhecida de encoding — será resolvida quando o script for corrigido.\n\n5. Hub Qdrant tem 14+ fragmentos armazenados (últimas 24h). Sistema de memória usa busca semântica por fragmentos atômicos com metadados de tipo, área, camada temporal e confiança.\n\n6. Gaps identificados em memórias: áreas financeira e receitas ainda não têm fragmentos capturados.",
+    "created_at": "2026-04-28T14:40:03.833598-03:00",
+    "metadata": {
+      "tipo": "episodico",
+      "estado": "ativo",
+      "via": "telegram-claude",
+      "area": "",
+      "curador": null
+    }
+  },
+  {
+    "id": "772f611d-ca24-4811-8ca0-0c8ba486785b",
+    "memory": "1. Caminho correto no Drive para Claude Chat escrever demandas: `Gus-Sync/dialogos/inbox-tiogu/`\n2. Workflow `import-from-drive.yml` executa a cada 15min, puxa arquivos do Drive pro GitHub e notifica Gustavo no Telegram\n3. Arquivos devem ser `.md` com frontmatter obrigatório (tipo, origem, destino, etc) — workflow rejeita se inválido\n4. Convenção de nome de arquivo: `<timestamp>__<descricao-curta>.md`\n5. README da pasta contém especificação completa do frontmatter, regras de validação e campos opcionais para roteamento\n6. Claude Chat tem capacidade de escrever demandas no Drive seguindo o padrão documentado",
+    "created_at": "2026-04-28T11:16:00.100735-03:00",
+    "metadata": {
+      "tipo": "episodico",
+      "estado": "ativo",
+      "via": "telegram-claude",
+      "area": "",
+      "curador": null
+    }
+  },
+  {
+    "id": "7ef3b811-8dd7-40d8-85d6-5fe604461613",
+    "memory": "1. Gustavo executa regularmente workflows de sincronização GitHub → Google Drive (sync-to-drive-full.yml para sync completo e sync-to-drive.yml para incremental)\n2. Tem uma pasta `sensivel/` no repositório que é automaticamente excluída da sincronização com o Drive por política\n3. Usa Google Drive como backup/espelho do conteúdo do repositório GitHub\n4. Prefere verificar logs do GitHub Actions ou Railway para auditar execuções de workflow",
+    "created_at": "2026-04-28T14:07:55.607223-03:00",
+    "metadata": {
+      "tipo": "episodico",
+      "estado": "ativo",
+      "via": "telegram-claude",
+      "area": "",
+      "curador": null
+    }
+  },
+  {
+    "id": "809ba3f9-18d9-4aa8-b62e-590c02eedb7d",
+    "memory": "1. Gustavo prefere corrigir o script para ser tolerante a encoding inválido em vez de deletar arquivos — usa fallback (UTF-8 → Latin-1)\n2. Erro técnico identificado: arquivo `2026-04-28T14-30__frontmatter-referencia.md` no Drive com byte 0xB6 inválido em UTF-8 na posição 1754\n3. Validação de frontmatter exigida: campos `origem` e `destino` são obrigatórios — arquivo `teste-tiogu-machado.md` falhou por faltá-los\n4. Script `import_from_drive.py` (linha 150 e ocorrências similares) precisa implementar fallback de encoding: tentar UTF-8, se falhar usar Latin-1/Windows-1252\n5. Fluxo de importação do Drive: valida MIME type, faz requests ao GitHub API, processa frontmatter, detecta encoding — falha em qualquer etapa gera warning ou erro",
+    "created_at": "2026-04-28T12:42:16.364256-03:00",
+    "metadata": {
+      "tipo": "episodico",
+      "estado": "ativo",
+      "via": "telegram-claude",
+      "area": "",
+      "curador": null
+    }
+  },
+  {
+    "id": "9608b85a-488f-4cd1-93c5-e7cf8a382214",
+    "memory": "1. Bug resolvido: função `download_content` (linha 150) falhava com `UnicodeDecodeError` ao ler arquivo `frontmatter-referencia.md` salvo com encoding não-UTF-8 (provavelmente Windows-1252), continha byte inválido `0xB6` (¶).\n\n2. Solução técnica aplicada: trocar `decode(\"utf-8\")` por fallback robusto — tentar UTF-8 primeiro, cair para Latin-1 se falhar, ou usar `errors=\"replace\"`.\n\n3. Padrão futuro: Gus Chat deve sempre salvar arquivos no Drive em UTF-8 sem BOM e evitar caracteres especiais problemáticos (¶, •, –, aspas curvas de Word/Pages).\n\n4. Contexto: problema ocorre quando arquivo `.md` é criado externamente e enviado pro Drive; exportar direto do Google Docs não tem esse risco (já vem UTF-8).\n\n5. Ação confirmada: Gustavo autorizou aplicar a correção no script.",
+    "created_at": "2026-04-28T13:19:58.940137-03:00",
     "metadata": {
       "tipo": "episodico",
       "estado": "ativo",
@@ -24,9 +168,45 @@
     }
   },
   {
+    "id": "bf6e32f3-d8b9-4953-be09-327f17521f2f",
+    "memory": "1. Gustavo trabalha com agendamento/gestão de pacientes para exames de RM (ressonância magnética).\n2. Padrão de resposta esperado do Gus: formato com detecção de imagem, lista de pacientes já no sistema do dia, e solicitação de confirmação (sim/ok/manda ou não/cancela).\n3. Gus deve manter esse padrão de resposta estruturado em futuras interações com Gustavo.\n4. Roberta Xavier Lins foi adicionada ao arquivo do dia com exame de RM Coluna Dorsal + Lombar + Anestesia agendada para 15h-19h30, plano Intermédica.",
+    "created_at": "2026-04-28T16:54:42.753593-03:00",
+    "metadata": {
+      "tipo": "episodico",
+      "estado": "ativo",
+      "via": "telegram-claude",
+      "area": "",
+      "curador": null
+    }
+  },
+  {
+    "id": "c95ad8c6-1944-42f2-b5b7-acf147f9c67d",
+    "memory": "1. Gustavo dispara regularmente workflow `import-from-drive.yml` para sincronizar arquivos do Drive com GitHub — tempo de execução esperado é até 15 minutos\n2. Gustavo prefere confirmação clara quando workflows são disparados\n3. Gus é a identidade unificada do agente pessoal; Tiogu é apenas o bot no Telegram — mesma entidade, memória e princípios em múltiplas plataformas (Claude Chat, Claude Code, futuro Alexa e Custom GPT)\n4. Gustavo tem 4 demandas abertas do dia 26/04 que continuam sem novidade",
+    "created_at": "2026-04-28T12:14:07.555970-03:00",
+    "metadata": {
+      "tipo": "episodico",
+      "estado": "ativo",
+      "via": "telegram-claude",
+      "area": "",
+      "curador": null
+    }
+  },
+  {
     "id": "cb860bdb-c58e-4ba8-89c4-3b44435cb557",
     "memory": "1. Hub Qdrant agora funciona corretamente — 2+ fragmentos salvos, merge resolveu o problema crítico; Gustavo pode enviar PDFs quando quiser.\n\n2. Sistema de curador híbrido (Haiku + Sonnet em paralelo) está operacional com schema gus-18 completo, embeddings locais via sentence-transformers, e controle de ciclo de vida (ativo/histórico/esquecido).\n\n3. Experimento de 14 dias coletando pares Haiku × Sonnet encerra ~12/05/2026; após isso, Gustavo analisará logs em `_log/resumos-mem0/` no Obsidian para decidir qual modelo(s) manter.\n\n4. Canal `dialogos/` operacional em ambas direções: workflow `notificar-inbox-tiogu.yml` notifica bot quando arquivo entra em inbox; tool `rotear_arquivo` permite mover arquivos após confirmação.\n\n5. 16 workflows ativos (dobrou desde última análise): notificação inbox, archive automático, migração Qdrant, migração Mem0→Qdrant, importação Drive, etc.\n\n6. Pendências técnicas: PR #10 ainda aberta (cosmético), workflow \"Ingest Mem0 from Claude Chat\" falhando (provável endpoint antigo), `memory.py` importa mem0ai à toa (limpeza Fase 5), suporte a vídeo ainda falta.\n\n7. Estrutura repo expandida: novas pastas `api/`, `scripts/`, `_log/`, `agenda/`, `docs/`.",
     "created_at": "2026-04-27T22:42:58.905671-03:00",
+    "metadata": {
+      "tipo": "episodico",
+      "estado": "ativo",
+      "via": "telegram-claude",
+      "area": "",
+      "curador": null
+    }
+  },
+  {
+    "id": "e414b653-94c9-4a62-a8df-9cb30e2b9855",
+    "memory": "1. Schema atual do Mem0 é `gus-18` com campos: `tipo`, `area`, `campa_temporal`, `confiança` — não possui campo `origem` (source de telegram/chat/code).\n2. Gustavo quer melhorias no schema documentadas como sugestões, não ordens — com instrução explícita pra verificar se já não foi planejado/implementado em outra branch antes de agir.\n3. Demandas de código são salvas em `dialogos/inbox-claude-code/` com prioridade e status claro.\n4. `save_to_github` salva sempre na branch main por padrão — comportamento correto para que workflows de importação (`import-from-drive`, etc.) consigam ler as demandas.",
+    "created_at": "2026-04-28T14:46:41.619831-03:00",
     "metadata": {
       "tipo": "episodico",
       "estado": "ativo",
