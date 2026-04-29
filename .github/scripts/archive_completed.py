@@ -140,10 +140,14 @@ def append_historico(fm, filename, inbox, resumo):
     """Adiciona linha em dialogos/historico/AAAA-MM.md (mensal). Cria arquivo
     com header se ainda não existe."""
     processado_em = fm.get("processado_em") or datetime.now(BRT).isoformat()
-    try:
-        dt = datetime.fromisoformat(processado_em.replace("Z", "+00:00"))
-    except (ValueError, AttributeError):
-        dt = datetime.now(BRT)
+    # YAML safe_load converte ISO datetime sem aspas direto pra datetime — aceita ambos
+    if isinstance(processado_em, datetime):
+        dt = processado_em
+    else:
+        try:
+            dt = datetime.fromisoformat(str(processado_em).replace("Z", "+00:00"))
+        except (ValueError, AttributeError, TypeError):
+            dt = datetime.now(BRT)
     yyyy_mm = dt.strftime("%Y-%m")
 
     historico_dir = DIALOGOS / "historico"
