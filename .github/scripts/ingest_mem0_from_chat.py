@@ -36,6 +36,12 @@ from pathlib import Path
 
 import yaml
 
+# Adiciona repo root ao sys.path pra importar hub.curador
+# (mesmo pattern de gerar_estado_atual_chat.py e _hub_compat.py)
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
