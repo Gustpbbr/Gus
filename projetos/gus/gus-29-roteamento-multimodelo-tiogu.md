@@ -2,9 +2,9 @@
 tipo: design-decision
 area: gus
 gus-id: 29
-atualizado: 2026-04-29T12:50-03:00
-status: parcial
-proximos: Fases 1 e 3 implementadas. Fase 2 (Dimagem em GPT-4o-mini Vision) pendente.
+atualizado: 2026-04-29T13:25-03:00
+status: completo
+proximos: Fases 1, 2 e 3 implementadas. Validação real depende de Railway liberar deploys.
 ---
 
 
@@ -267,15 +267,28 @@ Sonnet pra fotos não-Dimagem e PDFs (Fase 1). Dimagem específico é
 
 **Economia esperada (Fase 1):** ~80% — texto e áudio são ~80% do volume.
 
-### Fase 2 — Dimagem via GPT-4o-mini Vision ⏳ pendente
+### Fase 2 — Dimagem via GPT-4o-mini Vision ✅ implementado (29/04)
 
-Refator `gus/dimagem.py` (ainda usa Haiku Anthropic). Trocar:
-- `_e_os_dimagem` (detecção binária) → GPT-4o-mini Vision
-- `_extrair_os` (extração JSON) → GPT-4o-mini Vision
-- Manter gate de confiança como hoje
-- Se confiança baixa → escalar pra Sonnet (fallback de qualidade pra OS difícil)
+Refator `gus/dimagem.py`:
+- `_e_os_dimagem` (detecção binária Haiku Anthropic) → gpt-4o-mini Vision OpenAI
+- `_extrair_os` (extração JSON Haiku Anthropic) → gpt-4o-mini Vision OpenAI
+- Helper `_chamar_openai_vision(image_bytes, system, user_text, max_tokens)`
+  abstrai a chamada API e é reusado pelas duas funções
+- Lazy init `_get_openai()` (mesmo padrão do curador Fase 3)
+- `MODEL = "gpt-4o-mini"` (override via env `MODEL_DIMAGEM`)
+- Detail `"high"` no `image_url` — OS Dimagem é texto pequeno em formulário,
+  precisa de OCR fino. Default `"auto"` poderia escolher `"low"` (~85 tokens)
+  e perder texto.
+- Gate de confiança ("alta/media/baixa" no prompt) preservado intacto —
+  protege caso clínico igual antes.
 
-**Não é blocker pra Fase 1.** Fazer só após Fase 1 estabilizar (1-2 dias).
+**Resultado:** ~88% de economia (~$0.45/mês → ~$0.05/mês). Fluxo Dimagem
+funciona mesmo com crédito Anthropic offline.
+
+**Não escala pra Sonnet em "baixa"** — gate já pede reenvio diretamente
+pro Gustavo, que é o comportamento conservador correto. Se na prática
+gpt-4o-mini for muito conservador (muitas "baixas" em OS legíveis),
+podemos escalar pra Sonnet em fase futura.
 
 ### Fase 3 — Curador Haiku + GPT-4o-mini ✅ implementado (29/04)
 

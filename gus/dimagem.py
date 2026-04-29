@@ -1,52 +1,45 @@
 """
-Fluxo determinístico de OS Dimagem — versão refinada da proposta do TioGu.
+Fluxo determinístico de OS Dimagem.
 
 ARQUITETURA:
-1. _e_os_dimagem(image_bytes, caption)   — detecta via caption + Haiku binário (cache hash)
-2. _extrair_os(image_bytes)              — extrai JSON via Haiku Vision
+1. _e_os_dimagem(image_bytes, caption)   — detecta via caption + gpt-4o-mini Vision binário (cache hash)
+2. _extrair_os(image_bytes)              — extrai JSON via gpt-4o-mini Vision
 3. _normalizar_convenio(raw, dict)       — lookup em dicionário versionado
 4. _formatar_linha(dados, convenio_norm) — uma linha de tabela markdown
 5. _append_linha_no_md(md, linha)        — append cirúrgico, preserva edições manuais
-6. processar_os_dimagem(image_bytes, caption) — orquestra. None se não é OS / falha extração.
+6. processar_os_dimagem / analisar_os_dimagem / salvar_os_dimagem
+   — orquestra. None se não é OS / falha extração.
 
-INTEGRAÇÃO (futura, em bot.py — NÃO ativada ainda):
-
-    from gus.dimagem import processar_os_dimagem
-
-    async def handle_photo(update, context):
-        ...
-        photo = update.message.photo[-1]
-        file = await context.bot.get_file(photo.file_id)
-        async with httpx.AsyncClient(timeout=30) as c:
-            img_bytes = (await c.get(file.file_path)).content
-
-        resp = await processar_os_dimagem(img_bytes, update.message.caption or "")
-        if resp:
-            await update.message.reply_text(resp)
-            return  # não passa pro Sonnet
-
-        # fallback: fluxo conversacional normal
-        content = await processar_imagem(file.file_path, update.message.caption or "")
-        await _responder(update, chat_id, content, ...)
+INTEGRAÇÃO (em produção desde 28/04, no `gus/bot.py:handle_photo` via
+modo confirmação prévia: `analisar_os_dimagem` extrai e devolve preview
+pra Gustavo confirmar com "sim/ok/manda" antes de `salvar_os_dimagem`).
 
 DEDUPLICAÇÃO:
 - Por número de OS: persiste em /app/data/dimagem_os_processadas.json (volume Railway).
 - Por nome dentro do MD do dia: lê o MD e checa case-insensitive.
 
-CUSTOS:
-- Detecção (Haiku binário): ~$0.001/foto.
-- Extração (Haiku JSON):    ~$0.002/foto.
-- Total: ~$0.003/foto. 5 fotos/dia = ~$0.45/mês.
+CUSTOS (gus-29 Fase 2 — 29/04/2026):
+- Detecção (gpt-4o-mini Vision binário): ~$0.0001/foto.
+- Extração (gpt-4o-mini Vision JSON):    ~$0.0002/foto.
+- Total: ~$0.0003/foto. 5 fotos/dia = ~$0.05/mês.
+
+Histórico:
+- até 28/04: Haiku Anthropic Vision (~$0.45/mês, 5 fotos/dia).
+- 29/04 (gus-29 Fase 2): substituído por gpt-4o-mini Vision (~10x mais barato).
+  Resiliente a crédito Anthropic — se Anthropic ficar offline, fluxo Dimagem
+  continua. Gate de confiança ("alta/media/baixa" no prompt) protege caso
+  clínico igual antes.
 
 DECISÕES vs proposta original do TioGu:
-- Modelo: Haiku 4.5 (não Opus 4.5 inexistente)
+- Modelo: gpt-4o-mini Vision (era Haiku 4.5 Anthropic; Sonnet 4.5/Opus 4.5 não existem)
+- Detail "high" no image_url: usa mais tokens mas garante OCR de texto fino
 - Reusa tools._read_from_github e tools._save_to_github (mantém scan sensível)
 - Detecção visual real (não só caption)
 - Dedup persistente em disco (não em memória global)
 - Convênios em JSON versionado (não regex frágil no código)
 - Append cirúrgico (não regex de tabela frágil)
 - Valor extraído da própria foto (não tabela hardcoded)
-- Fallback graceful: retorna None pra caller decidir cair no Sonnet
+- Fallback graceful: retorna None pra caller decidir cair no fluxo conversacional
 """
 
 import asyncio
@@ -58,15 +51,78 @@ import os
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Optional
 
-import httpx
+from openai import AsyncOpenAI
 
 from gus.tools import _read_from_github, _save_to_github
 
 logger = logging.getLogger(__name__)
 
 BRT = timezone(timedelta(hours=-3))
-MODEL = "claude-haiku-4-5"
+# gus-29 Fase 2 (29/04/2026): Haiku Anthropic Vision → gpt-4o-mini OpenAI Vision.
+# Override via env MODEL_DIMAGEM. Custos caem ~10x e o gate de confiança
+# (alta/media/baixa no prompt) protege caso clínico igual.
+MODEL = os.getenv("MODEL_DIMAGEM", "gpt-4o-mini")
+
+_openai_client: Optional[AsyncOpenAI] = None
+
+
+def _get_openai() -> AsyncOpenAI:
+    """Lazy-init do client OpenAI. Compartilhado entre detecção e extração."""
+    global _openai_client
+    if _openai_client is None:
+        _openai_client = AsyncOpenAI(
+            api_key=os.getenv("OPENAI_API_KEY"),
+            timeout=60.0,
+        )
+    return _openai_client
+
+
+async def _chamar_openai_vision(
+    image_bytes: bytes,
+    system_prompt: str,
+    user_text: str,
+    max_tokens: int,
+) -> Optional[str]:
+    """Chama gpt-4o-mini Vision com imagem + prompt. Retorna texto da resposta
+    ou None em falha (sem API key, exception, status != 200).
+
+    Detail "high" pra OS Dimagem (texto pequeno em formulário) — usa mais
+    tokens mas garante OCR melhor. Default seria "auto" que pode escolher
+    "low" (~85 tokens) e perder texto fino.
+    """
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return None
+
+    img_b64 = base64.b64encode(image_bytes).decode()
+    try:
+        oai = _get_openai()
+        response = await oai.chat.completions.create(
+            model=MODEL,
+            max_tokens=max_tokens,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{img_b64}",
+                                "detail": "high",
+                            },
+                        },
+                        {"type": "text", "text": user_text},
+                    ],
+                },
+            ],
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        logger.warning(f"OpenAI Vision falhou: {e}")
+        return None
 
 _DATA_DIR = "/app/data" if os.path.isdir("/app/data") else "."
 _OS_DEDUP_FILE = Path(_DATA_DIR) / "dimagem_os_processadas.json"
@@ -164,7 +220,7 @@ Use isso pra:
 async def _e_os_dimagem(image_bytes: bytes, caption: str) -> bool:
     """Detecta se a imagem é uma OS Dimagem.
 
-    Ordem: caption (custo zero) -> cache de hash -> Haiku binário.
+    Ordem: caption (custo zero) -> cache de hash -> gpt-4o-mini Vision binário.
     """
     cap = (caption or "").upper()
     if any(k in cap for k in ("DIMAGEM", "ORDEM DE SERVI", " OS ", "OS:", "/OS")):
@@ -174,44 +230,18 @@ async def _e_os_dimagem(image_bytes: bytes, caption: str) -> bool:
     if h in _DETECCAO_CACHE:
         return _DETECCAO_CACHE[h]
 
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
+    texto = await _chamar_openai_vision(
+        image_bytes=image_bytes,
+        system_prompt=PROMPT_DETECCAO,
+        user_text="Esta imagem é uma OS Dimagem?",
+        max_tokens=8,
+    )
+    if not texto:
         return False
 
-    img_b64 = base64.b64encode(image_bytes).decode()
-    payload = {
-        "model": MODEL,
-        "max_tokens": 8,
-        "system": PROMPT_DETECCAO,
-        "messages": [{
-            "role": "user",
-            "content": [
-                {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": img_b64}},
-                {"type": "text", "text": "Esta imagem é uma OS Dimagem?"},
-            ],
-        }],
-    }
-    headers = {
-        "x-api-key": api_key,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-    }
-
-    try:
-        async with httpx.AsyncClient(timeout=30) as client:
-            resp = await client.post(
-                "https://api.anthropic.com/v1/messages", json=payload, headers=headers
-            )
-        if resp.status_code != 200:
-            logger.warning(f"Detecção Haiku status {resp.status_code}: {resp.text[:200]}")
-            return False
-        texto = resp.json()["content"][0]["text"].strip().lower()
-        eh_os = texto.startswith("sim")
-        _DETECCAO_CACHE[h] = eh_os
-        return eh_os
-    except Exception as e:
-        logger.warning(f"Detecção Haiku falhou: {e}")
-        return False
+    eh_os = texto.strip().lower().startswith("sim")
+    _DETECCAO_CACHE[h] = eh_os
+    return eh_os
 
 
 # ---------------------------------------------------------------------------
@@ -219,7 +249,7 @@ async def _e_os_dimagem(image_bytes: bytes, caption: str) -> bool:
 # ---------------------------------------------------------------------------
 
 def _extrair_pacientes_atual(md: str) -> str:
-    """Extrai linhas de paciente do MD pra usar como contexto pro Haiku.
+    """Extrai linhas de paciente do MD pra usar como contexto pro Vision.
     Formato compacto: cada linha = uma row da tabela."""
     if not md:
         return ""
@@ -238,16 +268,12 @@ def _extrair_pacientes_atual(md: str) -> str:
 
 
 async def _extrair_os(image_bytes: bytes, contexto_md: str = "") -> dict | None:
-    """Chama Haiku Vision com prompt fixo + contexto opcional do MD do dia.
+    """Chama gpt-4o-mini Vision com prompt fixo + contexto opcional do MD do dia.
 
     Quando `contexto_md` é passado (lista de pacientes já registrados hoje),
-    o prompt do Haiku ganha referência pra: manter grafia de convênio,
-    detectar duplicata, e padronizar unidade.
+    o prompt ganha referência pra: manter grafia de convênio, detectar
+    duplicata, e padronizar unidade.
     """
-    api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        return None
-
     system_prompt = PROMPT_EXTRACAO
     if contexto_md.strip():
         hoje_str = datetime.now(BRT).strftime("%d/%m/%Y")
@@ -256,44 +282,24 @@ async def _extrair_os(image_bytes: bytes, contexto_md: str = "") -> dict | None:
             lista_atual=contexto_md.strip()[:1500],
         )
 
-    img_b64 = base64.b64encode(image_bytes).decode()
-    payload = {
-        "model": MODEL,
-        "max_tokens": 800,
-        "system": system_prompt,
-        "messages": [{
-            "role": "user",
-            "content": [
-                {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": img_b64}},
-                {"type": "text", "text": "Extraia."},
-            ],
-        }],
-    }
-    headers = {
-        "x-api-key": api_key,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-    }
+    texto = await _chamar_openai_vision(
+        image_bytes=image_bytes,
+        system_prompt=system_prompt,
+        user_text="Extraia.",
+        max_tokens=800,
+    )
+    if not texto:
+        return None
 
+    texto = texto.strip()
+    match = re.search(r"\{[\s\S]*\}", texto)
+    if not match:
+        logger.warning(f"Vision não retornou JSON: {texto[:200]}")
+        return None
     try:
-        async with httpx.AsyncClient(timeout=60) as client:
-            resp = await client.post(
-                "https://api.anthropic.com/v1/messages", json=payload, headers=headers
-            )
-        if resp.status_code != 200:
-            logger.error(f"Extração Haiku status {resp.status_code}: {resp.text[:300]}")
-            return None
-        texto = resp.json()["content"][0]["text"].strip()
-        match = re.search(r"\{[\s\S]*\}", texto)
-        if not match:
-            logger.warning(f"Haiku não retornou JSON: {texto[:200]}")
-            return None
         return json.loads(match.group())
     except json.JSONDecodeError as e:
         logger.warning(f"JSON inválido na extração: {e}")
-        return None
-    except Exception as e:
-        logger.error(f"Erro na extração: {e}")
         return None
 
 
