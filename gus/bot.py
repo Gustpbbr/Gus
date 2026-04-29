@@ -157,12 +157,12 @@ async def _resumir_e_salvar(chat_id: str, trecho: list[dict]) -> None:
 
     hash_j = resultado.get("hash_janela", "")
     haiku_frags = resultado.get("haiku", [])
-    sonnet_frags = resultado.get("sonnet", [])
+    gpt_frags = resultado.get("gpt", [])
     salvos = resultado.get("salvos", 0)
     erros = resultado.get("erros", [])
 
     # Loga 1 entrada por curador (mesmo hash → permite parear no Obsidian)
-    for nome, frags in (("haiku", haiku_frags), ("sonnet", sonnet_frags)):
+    for nome, frags in (("haiku", haiku_frags), ("gpt", gpt_frags)):
         if frags:
             texto = "\n".join(
                 f"{i+1}. [{f.get('tipo', '?')}/{f.get('area', '-')}] {f.get('conteudo', '')}"
@@ -183,7 +183,7 @@ async def _resumir_e_salvar(chat_id: str, trecho: list[dict]) -> None:
 
     logger.info(
         f"Curador (chat {chat_id}): salvos={salvos} "
-        f"haiku={len(haiku_frags)} sonnet={len(sonnet_frags)} hash={hash_j}"
+        f"haiku={len(haiku_frags)} gpt={len(gpt_frags)} hash={hash_j}"
     )
 
 

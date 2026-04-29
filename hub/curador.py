@@ -1,22 +1,30 @@
 """
-Curador híbrido — extração de fragmentos atômicos via Haiku + Sonnet em paralelo.
+Curador híbrido — extração de fragmentos atômicos via Haiku + GPT-4o-mini em paralelo.
 
 Implementa Fase 2 do ADR-001 (aposentar Mem0 → Qdrant direto). Roda os DOIS
 modelos sobre o MESMO trecho/arquivo, ambos salvam no Hub com:
-    metadata.curador     = "haiku" ou "sonnet"
+    metadata.curador     = "haiku" (Anthropic) ou "gpt" (OpenAI)
     metadata.hash_janela = sha8 do input (mesmo valor pros 2 → permite parear)
     metadata.janela_turnos = quantas mensagens cobertas
     metadata.via         = porta de origem (telegram-claude, claude-chat, etc.)
 
-Por 14 dias de coleta dual, o Gustavo pode comparar par-a-par qual curador
-extrai melhor. Depois de validado, decide se mantém só um ou os dois.
+Histórico:
+- 27/04 → 29/04: A/B Haiku × Sonnet (mesma família Anthropic).
+- 29/04 (gus-29 Fase 3): Sonnet substituído por GPT-4o-mini.
+  Motivações: (1) resiliência — quando crédito Anthropic zera, GPT continua
+  salvando memórias; (2) custo menor (~10x); (3) A/B mais informativo entre
+  famílias diferentes.
 
-Custo estimado por janela: ~$0.001 (Haiku) + ~$0.003 (Sonnet) = ~$0.004.
+Fragmentos antigos com `metadata.curador="sonnet"` permanecem históricos.
+Novos fragmentos têm `metadata.curador="gpt"`.
+
+Custo estimado por janela: ~$0.001 (Haiku) + ~$0.0001 (GPT-4o-mini).
 
 Referências:
     - projetos/gus/auditorias/2026-04-27/.../ADR-001-aposentadoria-mem0.md
     - projetos/gus/gus-21-etapa3-curador.md (desenho original, single-model)
     - projetos/gus/gus-18-schema-indexacao.md (schema do payload)
+    - projetos/gus/gus-29-roteamento-multimodelo-tiogu.md (mudança Sonnet → GPT)
 """
 
 import asyncio
@@ -27,10 +35,25 @@ import os
 import re
 from typing import Optional
 
+from openai import AsyncOpenAI
+
 from gus.llm import _chamar_claude_com_retry
 from hub.store import ingestar
 
 logger = logging.getLogger(__name__)
+
+_openai_client: Optional[AsyncOpenAI] = None
+
+
+def _get_openai() -> AsyncOpenAI:
+    """Lazy-init do client OpenAI (compartilhado entre chamadas)."""
+    global _openai_client
+    if _openai_client is None:
+        _openai_client = AsyncOpenAI(
+            api_key=os.getenv("OPENAI_API_KEY"),
+            timeout=120.0,
+        )
+    return _openai_client
 
 
 PROMPT_CURADOR = """Você é o Curador de memória do Gus, agente pessoal do Gustavo Pratti de Barros (anestesiologista, pesquisador em IA brasileiro).
@@ -246,6 +269,36 @@ async def _extrair_via_modelo(
     return validos[:max_frags]
 
 
+async def _extrair_via_openai(
+    input_texto: str, prompt_template: str, modelo: str, via: str, max_frags: int
+) -> list[dict]:
+    """Variante OpenAI de `_extrair_via_modelo`. Mesmo prompt, mesma extração JSON.
+
+    Adicionado em gus-29 Fase 3 (29/04/2026). Substitui Sonnet no slot
+    secundário do curador híbrido. Resiliente a crédito Anthropic — se
+    Anthropic ficar offline, GPT-4o-mini continua salvando memórias.
+    """
+    prompt = prompt_template.format(via=via, conversa=input_texto, conteudo=input_texto)
+    try:
+        oai = _get_openai()
+        response = await oai.chat.completions.create(
+            model=modelo,
+            max_tokens=2048,
+            messages=[
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": "Extraia agora os fragmentos conforme as regras."},
+            ],
+        )
+    except Exception as e:
+        logger.warning(f"Curador {modelo} (OpenAI) falhou: {e}")
+        return []
+
+    texto = response.choices[0].message.content or ""
+    crus = _extrair_json(texto)
+    validos = [v for v in (_validar_fragmento(f) for f in crus) if v]
+    return validos[:max_frags]
+
+
 async def _curar_input_hibrido(
     input_texto: str,
     prompt_template: str,
@@ -262,11 +315,11 @@ async def _curar_input_hibrido(
     (input = body de arquivo Markdown).
 
     Returns:
-        dict {hash_janela, haiku: list, sonnet: list, salvos: int, erros: list, via, user_id}
+        dict {hash_janela, haiku: list, gpt: list, salvos: int, erros: list, via, user_id}
     """
     if not input_texto or not input_texto.strip():
         return {
-            "hash_janela": "", "haiku": [], "sonnet": [],
+            "hash_janela": "", "haiku": [], "gpt": [],
             "salvos": 0, "erros": ["input vazio"],
             "via": via, "user_id": user_id,
         }
@@ -274,11 +327,11 @@ async def _curar_input_hibrido(
     hash_j = _hash_janela(input_texto)
 
     modelo_haiku = os.getenv("MODEL_CURADOR_HAIKU", "claude-haiku-4-5")
-    modelo_sonnet = os.getenv("MODEL_CURADOR_SONNET", "claude-sonnet-4-6")
+    modelo_gpt = os.getenv("MODEL_CURADOR_GPT", "gpt-4o-mini")
 
-    haiku_frags, sonnet_frags = await asyncio.gather(
+    haiku_frags, gpt_frags = await asyncio.gather(
         _extrair_via_modelo(input_texto, prompt_template, modelo_haiku, via, max_frags_por_modelo),
-        _extrair_via_modelo(input_texto, prompt_template, modelo_sonnet, via, max_frags_por_modelo),
+        _extrair_via_openai(input_texto, prompt_template, modelo_gpt, via, max_frags_por_modelo),
         return_exceptions=False,
     )
 
@@ -310,13 +363,13 @@ async def _curar_input_hibrido(
 
     await asyncio.gather(
         _salvar_lista(haiku_frags, "haiku"),
-        _salvar_lista(sonnet_frags, "sonnet"),
+        _salvar_lista(gpt_frags, "gpt"),
     )
 
     return {
         "hash_janela": hash_j,
         "haiku": haiku_frags,
-        "sonnet": sonnet_frags,
+        "gpt": gpt_frags,
         "salvos": salvos,
         "erros": erros,
         "via": via,
@@ -339,7 +392,7 @@ async def curar_turnos(
     """
     if not messages:
         return {
-            "hash_janela": "", "haiku": [], "sonnet": [],
+            "hash_janela": "", "haiku": [], "gpt": [],
             "salvos": 0, "erros": ["sem messages"],
             "via": via, "user_id": user_id,
         }
