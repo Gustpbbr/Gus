@@ -92,17 +92,20 @@ mcp = FastMCP("gus-hub", host="0.0.0.0", port=PORT)
 def buscar_hub(
     query: str,
     limit: int = 10,
-    area: Optional[str] = None,
+    area: str = "",
     user_id: str = "gustavo",
 ) -> list[dict]:
     """Busca semântica no Hub Qdrant.
 
     Retorna fragmentos mais relevantes pra `query`, ordenados por score.
-    Filtra por `area` (saude, dimagem, projetos, etc.) se informada.
+    Filtra por `area` (saude, dimagem, projetos, etc.) se informada;
+    string vazia = sem filtro de área.
     Default `user_id='gustavo'` (memórias sobre o Gustavo); use `'gus'`
     pra brain do próprio agente (auto-observações).
     """
-    return lembrar(query=query, user_id=user_id, limit=limit, area=area)
+    # area="" → None pra _filtros (igual ao comportamento "sem filtro")
+    area_filtro = area if area else None
+    return lembrar(query=query, user_id=user_id, limit=limit, area=area_filtro)
 
 
 @mcp.tool()
