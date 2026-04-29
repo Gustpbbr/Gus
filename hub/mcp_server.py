@@ -1,6 +1,8 @@
 """
 MCP Server — wrapper FastMCP em cima do Hub Qdrant.
 
+Build cache marker: 2026-04-29T11:15  # invalida COPY layer no Railway
+
 Expõe o Hub via Model Context Protocol pra clientes MCP-aware (Claude Chat,
 Claude Code, etc.) consumirem busca semântica, ego cache, ingestão e leitura
 de arquivos do GitHub em tempo real.
@@ -383,6 +385,7 @@ def _create_app() -> Starlette:
 
 def main():
     """Entry point pra rodar via `python -m hub.mcp_server`."""
+    log.info("=== MCP server boot — build 2026-04-29T11:15 ===")
     if not os.environ.get("QDRANT_URL") or not os.environ.get("QDRANT_API_KEY"):
         log.error("QDRANT_URL ou QDRANT_API_KEY ausentes")
         sys.exit(1)
