@@ -1,0 +1,21 @@
+# Dockerfile do MCP server (gus-28 Passo 2)
+# Imagem separada do bot Telegram pra deploy independente no Railway.
+# Bot e MCP rodam como serviços distintos no mesmo projeto Railway.
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Deps do sistema mínimas (sentence-transformers + qdrant-client puxam libs)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Só copia o que o MCP precisa (não copia gus/, .github/, etc.)
+COPY hub/ ./hub/
+
+EXPOSE 8000
+CMD ["python", "-m", "hub.mcp_server"]
