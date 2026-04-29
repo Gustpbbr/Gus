@@ -1,0 +1,99 @@
+name: Auto-issue on cron failure
+
+# Quando qualquer workflow scheduled falha, abre uma issue com link do run.
+# Dedup: não cria issue duplicada se já houver uma aberta com mesmo título
+# nas últimas 24h.
+#
+# Lista de workflows monitorados é canônica: precisa atualizar quando
+# adicionar novo cron. Se preferir cobrir TODOS automaticamente, troca pra
+# `workflows: ['*']` (não tem suporte oficial — workaround é não filtrar
+# o trigger e checar event.workflow.name no script).
+
+on:
+  workflow_run:
+    workflows:
+      - "Archive completed demandas"
+      - "Auditoria Mem0"
+      - "Briefing matinal"
+      - "Check saúde"
+      - "Export Mem0"
+      - "Gerar estado Claude Chat"
+      - "Import demandas from Drive"
+      - "Ingest Mem0 from Claude Chat"
+      - "Reflexão quinzenal"
+      - "Retrospectiva semanal"
+    types: [completed]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  create-issue:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cria issue (com dedup 24h e labels lazy)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const wf = context.payload.workflow_run;
+            const title = `[auto] ${wf.name} falhou`;
+
+            // Dedup: já existe issue aberta com este título nas últimas 24h?
+            const since = new Date(Date.now() - 24*3600*1000).toISOString();
+            const search = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${context.repo.owner}/${context.repo.repo} is:issue is:open in:title "${title}" created:>${since}`,
+            });
+            if (search.data.total_count > 0) {
+              const dup = search.data.items[0];
+              console.log(`Issue duplicada já aberta (#${dup.number}), skip.`);
+              return;
+            }
+
+            // Labels: cria se não existem (idempotente, ignora 422 já-existe)
+            const labels = [
+              { name: 'auto-detected-failure', color: 'd73a4a',
+                description: 'Falha detectada automaticamente em workflow scheduled' },
+              { name: 'cron', color: '0075ca',
+                description: 'Relacionado a workflow scheduled (cron)' },
+            ];
+            for (const lbl of labels) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ...lbl,
+                });
+              } catch (e) {
+                // 422 = já existe, ignora
+              }
+            }
+
+            const body = [
+              `## Workflow falhou`,
+              ``,
+              `- **Workflow:** ${wf.name}`,
+              `- **Run:** ${wf.html_url}`,
+              `- **Conclusão:** ${wf.conclusion}`,
+              `- **Iniciado:** ${wf.run_started_at}`,
+              `- **Branch:** ${wf.head_branch}`,
+              `- **Commit:** \`${wf.head_sha.slice(0, 7)}\``,
+              ``,
+              `## Próximos passos`,
+              ``,
+              `1. Abrir [Run](${wf.html_url}) e copiar últimas 30-50 linhas do log da step que falhou`,
+              `2. Forward pro Claude Code com link e logs (ele faz triage + abre PR de fix)`,
+              `3. Após resolver, fechar este issue manualmente`,
+              ``,
+              `_Issue criada automaticamente por \`.github/workflows/issue-on-cron-failure.yml\`._`,
+            ].join('\n');
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: labels.map(l => l.name),
+            });
+            console.log(`Issue criada: #${issue.data.number} — ${issue.data.html_url}`);
