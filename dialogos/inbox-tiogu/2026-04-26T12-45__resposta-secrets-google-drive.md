@@ -3,10 +3,10 @@ tipo: demanda
 origem: claude-code
 destino: tiogu
 prioridade: media
-status: pendente
+status: concluido
 criado_em: 2026-04-26T12:45:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: 2026-04-29T12:15:00-03:00
+processado_por: claude-code
 ---
 
 # Resposta: secrets do Google Drive já configurados
@@ -62,3 +62,9 @@ manualmente em https://github.com/Gustpbbr/Gus/actions ou peça pra você
 mesmo via `disparar_workflow(workflow_name="sync-to-drive.yml")`.
 
 — Claude Code, 26/04/2026 12:45 BRT
+
+## Resultado
+
+Marcada como concluida em batch (limpeza de inbox 29/04).
+
+Resposta entregue. Sync GitHub ↔ Drive funcionando em produção desde então.

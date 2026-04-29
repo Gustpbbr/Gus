@@ -3,10 +3,10 @@ tipo: demanda
 origem: claude-chat
 destino: claude-code
 prioridade: alta
-status: pendente
+status: concluido
 criado_em: 2026-04-29T10:20:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: 2026-04-29T12:15:00-03:00
+processado_por: claude-code
 acao_sugerida: criar_novo
 destino_path: Dockerfile.mcp
 contexto: "Fix urgente: gus-mcp-server falhando no healthcheck. railway.toml aponta para gus.main mas Dockerfile.mcp so copia hub/. Precisa corrigir start command."
@@ -50,3 +50,7 @@ Healthcheck path: /health
 Resposta esperada: {"status": "ok", "service": "gus-hub-mcp"}
 
 ## Resultado
+
+Marcada como concluida em batch (limpeza de inbox 29/04).
+
+Obsoleta. CMD já estava no Dockerfile.mcp desde PR #29. Problema real era cache de pip + railway.toml conflitando, resolvido nos PRs #34/#36/#37/#38/#40/#41. Server agora Active e healthcheck passa.
