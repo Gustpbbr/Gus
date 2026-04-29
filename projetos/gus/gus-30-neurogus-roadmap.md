@@ -1202,3 +1202,171 @@ grep -r "os.getenv" hub/ api/ | grep -v "__pycache__"
 ```
 
 ---
+
+## 13. Tarefas concretas pra próxima sessão (checklist canônico)
+
+Cole esse bloco numa nova sessão Claude Code pra começar do ponto certo.
+Cada item tem path explícito e definição de pronto local.
+
+### 13.1 Pre-flight (antes de codar)
+
+- [ ] **Decisão de afinidade:** Gustavo confirma ou ajusta:
+      - Top-K = 3
+      - Threshold = 0.6 (cosine similarity)
+      - Recalcular só na ingestão (sem batch retroativo)
+- [ ] **Decisão de mock:** localizar HTML em algum lugar do Drive da
+      Claude Chat OU descartar e recriar do zero
+- [ ] **Conferir Variables Railway** do service do bot:
+      - `CUSTOM_GPT_TOKEN` setada (`echo $CUSTOM_GPT_TOKEN | wc -c`
+        ≥ 32)
+      - `OPENAI_API_KEY` setada
+      - `QDRANT_URL` + `QDRANT_API_KEY` setadas
+- [ ] **Branch criada:** `git checkout -b claude/neurogus-fase1-backend-sse`
+
+### 13.2 Fase 1 — Backend SSE
+
+#### `hub/events.py` (criar)
+
+- [ ] `_listeners: list[asyncio.Queue]` global
+- [ ] `async def broadcast(fragmento: dict)`:
+      - Serializa pra JSON (`json.dumps`, `default=str` pra datetime)
+      - Loop em `_listeners`, `put_nowait` em cada
+      - Captura `QueueFull`, loga warning, conta descartados
+- [ ] `async def subscribe()`:
+      - Cria `asyncio.Queue(maxsize=100)`
+      - Append em `_listeners`
+      - Loop infinito: `payload = await q.get()` → yield payload
+      - `finally:` remove da lista (limpa quando cliente desconecta)
+- [ ] **Validação:** `python -c "from hub.events import broadcast,
+      subscribe; print('ok')"` sem erro
+
+#### `hub/store.py:ingestar()` (modificar)
+
+- [ ] Função privada `_calcular_vizinhos(vetor, k=3, threshold=0.6,
+      exclude_id=None)`:
+      - Chama `client.search(collection_name=COLLECTION, query_vector=
+        vetor, limit=k+1)` (k+1 pra excluir o próprio depois)
+      - Filtra: cosine similarity > threshold E id != exclude_id
+      - Retorna lista de IDs strings
+- [ ] Em `ingestar()`, **após** `client.upsert(...)` e antes do `return`:
+      - Calcular `vizinhos = _calcular_vizinhos(vetor, exclude_id=frag_id)`
+      - `client.set_payload(payload={"relacionados": vizinhos},
+        points=[frag_id])`
+      - Disparar broadcast: ver decisão sobre sync/async (próximo item)
+- [ ] **Decisão pendente em runtime:** `ingestar` é sync (chamado de
+      `asyncio.to_thread` em curador). Pra disparar `await broadcast(...)`
+      precisa:
+      - **Opção A:** mudar `ingestar` pra async (impacta callers em
+        cascata)
+      - **Opção B:** usar `asyncio.run_coroutine_threadsafe(broadcast,
+        loop)` — precisa do loop atual via `loop = asyncio.get_event_loop()`
+      - **Recomendação:** B pra v0 (menos invasivo)
+- [ ] **Validação:** smoke test mockando Qdrant + listener → ingerir
+      fragmento → ver listener recebendo
+
+#### `hub/routes.py` (adicionar 2 endpoints)
+
+- [ ] `GET /hub/recent?limit=N&user_id=X`:
+      - Bearer auth (já no router)
+      - Chama `await asyncio.to_thread(listar, user_id=user_id,
+        limit=limit)`
+      - Retorna `{"fragmentos": [...], "total": N}`
+- [ ] `GET /hub/stream?token=X`:
+      - **Sem** Bearer (recebe via query param porque EventSource não
+        suporta header custom)
+      - Valida `token == os.getenv("CUSTOM_GPT_TOKEN")` manualmente
+      - Retorna `StreamingResponse(event_stream(),
+        media_type="text/event-stream")`
+      - Loop interno: `async for payload in subscribe(): yield f"data:
+        {payload}\n\n"`
+      - **Headers obrigatórios pra SSE estável:**
+        - `Cache-Control: no-cache`
+        - `X-Accel-Buffering: no` (Nginx/proxy)
+
+- [ ] **Validação local:**
+      ```bash
+      # Terminal 1
+      curl --no-buffer "http://localhost:8000/hub/stream?token=fake"
+
+      # Terminal 2
+      curl -X POST -H "Authorization: Bearer fake" \
+           -H "Content-Type: application/json" \
+           -d '{"conteudo":"teste","tipo":"teste"}' \
+           http://localhost:8000/hub/ingestar
+      # Terminal 1 deve mostrar: data: {"id": "...", ...}
+      ```
+
+#### Smoke test workflow (já existe — `test-scripts.yml`)
+
+- [ ] Rodar manual no PR pra confirmar que `hub/events.py` e
+      `hub/routes.py` modificadas passam syntax + import check
+
+#### Definição de pronto Fase 1
+
+- Container Railway sobe sem erro com novos endpoints
+- `curl /hub/stream` mantém conexão aberta indefinidamente
+- `POST /hub/ingestar` dispara evento que aparece no `/hub/stream`
+- Payload novo tem `relacionados[]` populado
+- PR mergeado em main, deploy automático ok
+
+### 13.3 Fase 2 — Frontend produção
+
+(Detalhes idem seção 9.2 — só executar quando Fase 1 estiver mergeada
+e validada por curl em produção.)
+
+### 13.4 Após implementação completa
+
+- [ ] Marcar 3 demandas como `concluido` em `inbox-tiogu/`:
+      - `2026-04-28T14-00__neurogus-briefing.md`
+      - `2026-04-28T14-01__neurogus-arquitetura.md`
+      - `2026-04-28T14-02__neurogus-codigo-v1.md`
+- [ ] Atualizar `gus-28-acesso-hub-claude-chat.md`: marcar Passo 3
+      como concluído
+- [ ] Atualizar este doc (`gus-30`): mudar `status: planejamento`
+      para `status: implementado`
+- [ ] Adicionar entrada em `_log/sessoes-claude-code/` com
+      detalhes da implementação
+
+---
+
+## 14. Riscos e mitigações
+
+### 14.1 Performance
+
+| Risco | Probabilidade | Impacto | Mitigação |
+|---|---|---|---|
+| 3d-force-graph trava com > 1000 nós | Alta a longo prazo | Trava UI | Paginação no `/hub/recent` (default 100, max 500). Filtro temporal (últimos 30 dias). Cosmograph 2D como fallback futuro. |
+| All-pairs cosine similarity O(N²) no client | Alta | Page slow load | **Não fazer no client** — vizinhos pré-computados no backend e armazenados em `relacionados[]`. Já decidido. |
+| Cold start do `_get_embedder()` (~30s) | Média | Primeira `GET /hub/recent` timeout | Warm-up no boot do FastAPI: chamar embedder uma vez no `startup_event` com texto fake. |
+| SSE em mobile com tela bloqueada > 5min | Alta | Conexão cai, perde eventos | Reconnect com reload completo de `/hub/recent` quando volta foco (decisão 11.5). |
+| Qdrant Cloud rate limit | Baixa | API 429 | Já há retry no client; se bater, aumentar `timeout`. |
+
+### 14.2 Segurança
+
+| Risco | Probabilidade | Impacto | Mitigação |
+|---|---|---|---|
+| Token na URL aparece em logs/history | Alta (sempre acontece) | Token vazado em browser history, server logs, referrer | Aceitar pra v0; rotação periódica do `CUSTOM_GPT_TOKEN`. Futuro: cookie HttpOnly. |
+| Token vazado em screenshot | Média | Acesso indevido | Mitigação prática: não compartilhar tela do NeuroGus quando ativo. URL bookmarked sem o token + janela cole token só na sessão? Decisão futura. |
+| MCP server e NeuroGus compartilham `CUSTOM_GPT_TOKEN` | Média | Vazamento de um expõe o outro | Criar `NEUROGUS_TOKEN` separado quando o atrito justificar (decisão 11.3). |
+| CSP/XSS via fragmento com HTML/JS no `conteudo` | Baixa | Injeção no painel lateral | Sanitizar `conteudo` no frontend (`textContent`, não `innerHTML`). Já é o padrão da API DOM. |
+| CORS aberto sem necessidade | Baixa | Outro site pode chamar | NeuroGus serve do mesmo origin que `/hub/*` — CORS não é necessário. Se `API_PUBLIC_URL` mudar, ajustar. |
+
+### 14.3 Cognitivo / produto
+
+| Risco | Probabilidade | Impacto | Mitigação |
+|---|---|---|---|
+| Grafo "vazio" assusta no boot (0-19 fragmentos hoje) | Alta no v0 | Sensação de produto sem valor | Texto onboarding: "rede ainda em formação. Mande mensagens no Telegram pra ver fragmentos nascendo". |
+| Fragmentos sem contradição visíveis (curador só registra sucessos) | Alta | Grafo monótono, falsa sensação de "tudo ok" | Documentar em FAQ; depende do gus-31 (negative memory) pra ficar visível. |
+| Auto-orbit irrita | Média | Usuário desativa e perde "vivacidade" | Pause-on-interaction + botão retomar (decisão tomada). |
+| Cores HSL golden-ratio criam combinação ruim | Baixa | Estética degradada | Aceitar e refinar — tipos vão estabilizar em ~10 categorias na prática. |
+
+### 14.4 Operacional
+
+| Risco | Probabilidade | Impacto | Mitigação |
+|---|---|---|---|
+| Deploy Railway pausa (free tier limit) | Média (já aconteceu) | Não consegue subir fix | Aguardar liberação OU upgrade pra Pro. |
+| Curador silenciado (sem crédito Anthropic) | Média | Sem fragmentos novos = grafo estático | Resiliência via Haiku+GPT (gus-29 Fase 3). Se Anthropic offline, ainda metade dos fragmentos sai. |
+| Migração do schema Qdrant (gus-31a) quebra `relacionados[]` | Baixa-média | NeuroGus parou de mostrar conexões | Backup do schema antes de gus-31a. Field `relacionados` é opcional (frontend tolera ausência). |
+| Hub Qdrant fica indisponível | Baixa | NeuroGus mostra "carregando..." infinito | Timeout de 30s no fetch de `/hub/recent`, mostra mensagem de erro com link pra `/health`. |
+
+---
