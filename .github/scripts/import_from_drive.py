@@ -296,6 +296,10 @@ def processar_demanda_inbox(drive, repo, gh_token, f, inbox, processados_id, pro
     except HttpError as e:
         log.error(f"    Falha ao baixar {file_name}: {e}")
         return "error"
+    except UnicodeDecodeError as e:
+        log.warning(f"    {file_name} não é UTF-8 válido: byte {hex(e.object[e.start])} pos {e.start}")
+        _mover_para_erro(f"conteúdo não-UTF-8 (byte {hex(e.object[e.start])})")
+        return "invalid"
 
     fm, body = parse_frontmatter(content)
     if fm is None:
@@ -355,6 +359,9 @@ def processar_mirror_raw(drive, repo, gh_token, f, prefix):
         content = download_content(drive, file_id, mime)
     except HttpError as e:
         log.error(f"    Falha ao baixar {prefix}{file_name}: {e}")
+        return "error"
+    except UnicodeDecodeError as e:
+        log.error(f"    {prefix}{file_name} não é UTF-8 válido (byte {hex(e.object[e.start])} pos {e.start}) — pulando")
         return "error"
 
     github_path = f"dialogos/{prefix}{normalizar_nome_arquivo(file_name)}"
