@@ -1,7 +1,7 @@
 ---
 tipo: meta-memoria
-atualizado: 2026-04-28T07:53:14.407313-03:00
-mem0_total: 4
+atualizado: 2026-04-29T07:46:54.892095-03:00
+mem0_total: 19
 ---
 
 # Auditoria do Mem0 (memórias sobre o Gustavo)
@@ -11,23 +11,24 @@ Análise automática e determinística do estado do armazém de memórias SOBRE 
 **Não confundir com meta-memória do Gus** (`gus/meta-memoria.md`), que é o auto-conhecimento do próprio Gus.
 
 ## Estatísticas gerais
-- **Total:** 4 memórias
+- **Total:** 19 memórias
 - **Mais antiga:** 2026-04-27 — *"1. Após merge e deploys recentes, o auto_diagnostico agora tem acesso ao Hub Qdr..."*
-- **Mais recente:** 2026-04-27 — *"1. Gustavo quer apagar pendências que estão ultrapassadas — decisão tomada de li..."*
+- **Mais recente:** 2026-04-28 — *"1. Gustavo estabeleceu protocolo específico de análise de fotos que deve ser seg..."*
 
 ## Frescor
-- **Últimas 24h:** 4 (100.0%)
-- **Últimos 7 dias:** 0 (0.0%)
+- **Últimas 24h:** 15 (78.9%)
+- **Últimos 7 dias:** 4 (21.1%)
 - **Últimos 30 dias:** 0 (0.0%)
 - **Mais de 30 dias:** 0 (0.0%)
 
 ## Densidade por área
 Estimativa via keywords (uma memória pode contar em múltiplas áreas):
 
-- **capturado:** 2 (50.0%)
-- **projetos:** 2 (50.0%)
-- **saude:** 1 (25.0%)
-- **dimagem:** 1 (25.0%)
+- **projetos:** 14 (73.7%)
+- **saude:** 5 (26.3%)
+- **dimagem:** 4 (21.1%)
+- **capturado:** 4 (21.1%)
+- **receitas:** 1 (5.3%)
 
 ## Duplicatas suspeitas
 Pares com similaridade Jaccard ≥ 0.5. Revisar manualmente — não são duplicatas garantidas, são candidatas.
@@ -37,7 +38,6 @@ Pares com similaridade Jaccard ≥ 0.5. Revisar manualmente — não são duplic
 ## Gaps (áreas com índice mas sem memória)
 
 - **financeiro** — índice existe, nenhuma memória classificada nesta área
-- **receitas** — índice existe, nenhuma memória classificada nesta área
 
 ## Uso
 - Bot consulta este arquivo via tool `auditoria_mem0()` quando o Gustavo pergunta sobre o estado das suas próprias memórias no Mem0.
