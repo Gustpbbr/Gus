@@ -39,8 +39,11 @@ jobs:
           import sys
           from pathlib import Path
 
+          # Cobre scripts cron + módulo hub (importado pelos scripts e MCP server)
+          targets = list(Path(".github/scripts").glob("*.py")) + list(Path("hub").glob("*.py"))
+
           erros = []
-          for py in sorted(Path(".github/scripts").glob("*.py")):
+          for py in sorted(targets):
               try:
                   ast.parse(py.read_text(encoding="utf-8"))
                   print(f"OK syntax: {py}")
@@ -51,7 +54,7 @@ jobs:
               for e in erros:
                   print(f"FAIL {e}", file=sys.stderr)
               sys.exit(1)
-          print(f"\n{len([p for p in Path('.github/scripts').glob('*.py')])} scripts com syntax OK")
+          print(f"\n{len(targets)} arquivos com syntax OK")
           PYEOF
 
       - name: Import check (toplevel imports executam)
@@ -59,6 +62,11 @@ jobs:
         # constantes toplevel rodam; main() não roda (gated por __main__).
         # Isso pega o caso clássico do PR #26: from hub.curador falha porque
         # sys.path não tem repo root.
+        env:
+          # Env vars fake pra scripts que checam no toplevel ou no init
+          QDRANT_URL: http://fake.local
+          QDRANT_API_KEY: fake
+          MCP_BEARER_TOKEN: fake
         run: |
           python <<'PYEOF'
           import importlib.util
@@ -68,19 +76,18 @@ jobs:
           # PYTHONPATH = repo root pra scripts que importam de hub/
           sys.path.insert(0, str(Path.cwd()))
 
+          targets = list(Path(".github/scripts").glob("*.py")) + list(Path("hub").glob("*.py"))
+
           erros = []
-          for py in sorted(Path(".github/scripts").glob("*.py")):
-              # _hub_compat.py é módulo helper, não script — pulado
-              if py.name.startswith("_"):
-                  continue
+          for py in sorted(targets):
+              # Helpers tipo _hub_compat.py não são entrypoints, mas import deve passar
+              # routes.py / curador.py / store.py / mcp_server.py são todos importáveis
               try:
                   spec = importlib.util.spec_from_file_location(py.stem, py)
                   module = importlib.util.module_from_spec(spec)
                   spec.loader.exec_module(module)
                   print(f"OK import: {py}")
               except SystemExit:
-                  # Alguns scripts saem cedo se faltar env var — toplevel imports
-                  # já rodaram, então passa
                   print(f"OK import (early exit, env-vars ausentes ok): {py}")
               except Exception as e:
                   erros.append(f"{py}: {type(e).__name__}: {e}")
