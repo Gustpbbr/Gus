@@ -3,12 +3,12 @@ tipo: demanda
 origem: claude-chat
 destino: tiogu
 prioridade: baixa
-status: pendente
+status: concluido
 criado_em: 2026-04-28T15:00:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: 2026-04-29T00:05:00-03:00
+processado_por: claude-code
 acao_sugerida: criar_novo
-destino_path: docs/exemplos/frontmatter-referencia.md
+destino_path: dialogos/_frontmatter-referencia.md
 contexto: "Referencia de frontmatter valido para cada inbox do canal dialogos/"
 ---
 
@@ -123,3 +123,14 @@ Usado por: qualquer porta. Custom GPT acessa via Actions REST (futuro).
 | acao_sugerida    | criar_novo, append, mover, manter                    |
 
 ## Resultado
+
+Concluído por Claude Code em 2026-04-29 (PR `claude/frontmatter-referencia`).
+
+**Implementação:**
+- Doc canônico criado em `dialogos/_frontmatter-referencia.md`
+- 4 cópias em cada inbox: `dialogos/inbox-{tiogu,claude-code,claude-chat,custom-gpt}/_frontmatter-referencia.md`
+- Convenção `_` prefix adotada: arquivos `_*.md` em inboxes não são processados como demanda (modo mirror)
+- Patch em `.github/scripts/import_from_drive.py:is_inbox_top` pra respeitar a convenção (protege também `_README.md` existente)
+- Nota de manutenção em todas as 5 cópias: ao adicionar/remover campos, atualizar todas + validator
+
+Diferença vs `destino_path` original (`docs/exemplos/`): movido pra dentro de `dialogos/` a pedido do dono — referência fica visível em cada inbox onde é necessária.

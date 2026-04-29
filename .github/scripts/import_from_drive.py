@@ -382,8 +382,14 @@ def main():
         # Path relativo a dialogos/. Ex: ""  -> arquivo direto em dialogos/
         #                                "inbox-tiogu/" -> direto em inbox
         #                                "streams/2026/" -> aninhado
+        # Arquivos com prefixo `_` (ex: _README.md, _frontmatter-referencia.md)
+        # são docs/referência — modo mirror, não demanda.
         parts = [p for p in prefix.split("/") if p]
-        is_inbox_top = len(parts) == 1 and parts[0] in INBOXES
+        is_inbox_top = (
+            len(parts) == 1
+            and parts[0] in INBOXES
+            and not file_name.startswith("_")
+        )
 
         log.info(f"  → {prefix}{file_name} (mime={mime})")
 
