@@ -1,8 +1,10 @@
 import os
+import json
 import asyncio
 import logging
 import functools
 import anthropic
+from openai import AsyncOpenAI
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from gus.tools import TOOLS, executar_tool
@@ -16,17 +18,25 @@ DIAS_SEMANA = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", 
 _STATUS_RETRY = {500, 502, 503, 504, 529}
 
 # Preços por família de modelo (USD por token) — atualizado abr/2026
+# Anthropic: por família (substring match no nome do modelo)
+# OpenAI:    chave exata pra evitar match parcial (gpt-4o-mini é mais barato que gpt-4o)
 MODEL_PRICING = {
-    "opus":   {"input":  5.0 / 1_000_000, "output": 25.0 / 1_000_000},
-    "sonnet": {"input":  3.0 / 1_000_000, "output": 15.0 / 1_000_000},
-    "haiku":  {"input":  0.8 / 1_000_000, "output":  4.0 / 1_000_000},
+    "opus":         {"input":  5.0  / 1_000_000, "output": 25.0 / 1_000_000},
+    "sonnet":       {"input":  3.0  / 1_000_000, "output": 15.0 / 1_000_000},
+    "haiku":        {"input":  0.8  / 1_000_000, "output":  4.0 / 1_000_000},
+    "gpt-4o-mini":  {"input":  0.15 / 1_000_000, "output":  0.60 / 1_000_000},
+    "gpt-4o":       {"input":  2.5  / 1_000_000, "output": 10.0 / 1_000_000},
 }
 FALLBACK_PRICING = MODEL_PRICING["sonnet"]
 
 
 def _get_pricing(model: str) -> dict:
-    """Retorna pricing baseado no nome do modelo."""
+    """Retorna pricing baseado no nome do modelo. Match exato pra gpt-* (mini
+    vs full diferem 16x) e substring pras famílias Anthropic."""
     model_lower = model.lower()
+    # OpenAI: prefer exact match (gpt-4o-mini antes de gpt-4o)
+    if model_lower in MODEL_PRICING:
+        return MODEL_PRICING[model_lower]
     for family, pricing in MODEL_PRICING.items():
         if family in model_lower:
             return pricing
@@ -35,6 +45,11 @@ def _get_pricing(model: str) -> dict:
 client = anthropic.AsyncAnthropic(
     api_key=os.getenv("ANTHROPIC_API_KEY"),
     timeout=120.0,  # 2 minutos — evita ficar pendurado se a API travar
+)
+
+openai_client = AsyncOpenAI(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    timeout=120.0,
 )
 
 
@@ -248,7 +263,11 @@ def _build_tools_cached(tools: list[dict]) -> list[dict]:
 _TOOLS_CACHED = _build_tools_cached(TOOLS)
 
 
-async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tuple[str, dict]:
+async def _gerar_resposta_anthropic(messages: list[dict], memory_context: str = "") -> tuple[str, dict]:
+    """Implementação Anthropic da geração de resposta — loop tool-calling com
+    prompt caching e retry/fallback. Comportamento legado pré-gus-29; agora
+    chamada via dispatcher quando content tem image/document ou
+    MULTIMODEL_ENABLED=false."""
     model = os.getenv("MODEL_DEFAULT", "claude-sonnet-4-6")
     max_tokens = int(os.getenv("MAX_TOKENS_RESPONSE", "2048"))
 
@@ -372,3 +391,269 @@ async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tupl
         "cache_read": cache_read,
         "cost_usd": cost_usd
     }
+
+
+# ---------------------------------------------------------------------------
+# OpenAI path (gus-29 Fase 1) — texto/áudio via gpt-4o-mini
+# ---------------------------------------------------------------------------
+
+
+def _anthropic_to_openai_tools(tools: list[dict]) -> list[dict]:
+    """Converte tools do formato Anthropic (`{name, description, input_schema}`)
+    pro formato OpenAI (`{type: function, function: {name, description, parameters}}`).
+    JSON Schema do `parameters` é o mesmo `input_schema`."""
+    return [
+        {
+            "type": "function",
+            "function": {
+                "name": t["name"],
+                "description": t.get("description", ""),
+                "parameters": t.get("input_schema", {"type": "object", "properties": {}}),
+            },
+        }
+        for t in tools
+    ]
+
+
+_TOOLS_OPENAI = _anthropic_to_openai_tools(TOOLS)
+
+
+def _history_to_openai(messages: list[dict]) -> list[dict]:
+    """Converte history do formato bot.py (Anthropic-style) pra OpenAI.
+
+    bot.py mantém:
+      - user: content é lista de blocos `[{type: "text", text: "..."}]` ou string
+      - assistant: content é string (resposta final do turno anterior)
+
+    OpenAI espera content como string simples nas mensagens persistidas.
+    Tool calls do turno corrente NUNCA persistem em history (só o texto
+    final), então não precisamos converter tool_use/tool_result aqui.
+    """
+    out = []
+    for msg in messages:
+        role = msg.get("role", "user")
+        content = msg.get("content", "")
+        if isinstance(content, list):
+            partes = []
+            for block in content:
+                if isinstance(block, dict):
+                    if block.get("type") == "text":
+                        partes.append(block.get("text", ""))
+                    # blocos image/document deveriam mandar pra Anthropic via
+                    # dispatcher — mas se chegou aqui, ignora (descreve)
+                    elif block.get("type") == "image":
+                        partes.append("[imagem anexada]")
+                    elif block.get("type") == "document":
+                        partes.append("[documento anexado]")
+            content_str = " ".join(p for p in partes if p).strip() or "[mídia sem texto]"
+        else:
+            content_str = str(content) if content is not None else ""
+        out.append({"role": role, "content": content_str})
+    return out
+
+
+def _mensagem_erro_amigavel_openai(e: Exception) -> str:
+    """Converte erro da API OpenAI em mensagem clara em português pro Gustavo."""
+    status = getattr(e, "status_code", None) or getattr(e, "code", None)
+    msg = str(e).lower()
+
+    if "insufficient_quota" in msg or "quota" in msg or "billing" in msg:
+        return (
+            "A conta OpenAI tá sem créditos ou com problema de billing. "
+            "Pra voltar, o Gustavo precisa adicionar saldo em platform.openai.com/account/billing."
+        )
+    if status == 401 or "authentication" in msg or "invalid_api_key" in msg:
+        return "Chave OpenAI inválida ou expirada. Checa OPENAI_API_KEY no Railway."
+    if status == 403 or "permission" in msg:
+        return f"Sem permissão na API OpenAI: {str(e)[:200]}"
+    if status == 429:
+        return "Bati limite de rate na OpenAI. Aguenta ~30s e tenta de novo."
+    if status and isinstance(status, int) and status >= 500:
+        return f"Erro de servidor OpenAI (status {status}). Tenta de novo em 1 min."
+    return f"Problema inesperado com a API OpenAI: {str(e)[:200]}"
+
+
+async def _gerar_resposta_openai(messages: list[dict], memory_context: str = "") -> tuple[str, dict]:
+    """Implementação OpenAI da geração de resposta — loop tool-calling
+    espelhando o caminho Anthropic.
+
+    Comportamento:
+      - System prompt: concatena system_prompt.md + data/hora + memórias
+        em string única (OpenAI faz prompt caching automático em ≥1024 tokens).
+      - Tools: schema convertido pra formato OpenAI, mesma execução via
+        `executar_tool(name, inputs)`.
+      - Fallback: se OpenAI falhar (rate, billing, 5xx), tenta Anthropic
+        Sonnet pra manter bot respondendo.
+
+    Custo: gpt-4o-mini é ~20x mais barato que Sonnet em texto.
+    """
+    model = os.getenv("MODEL_OPENAI_DEFAULT", "gpt-4o-mini")
+    max_tokens = int(os.getenv("MAX_TOKENS_RESPONSE", "2048"))
+
+    # Monta system prompt como string única (OpenAI cacheia auto em ≥1024 tok)
+    system_estavel = _load_system_prompt()
+    agora = datetime.now(BRT)
+    dia_semana = DIAS_SEMANA[agora.weekday()]
+    suffix_var = (
+        f"\n\n## Data e hora atuais\n"
+        f"Hoje é {dia_semana}, {agora.strftime('%d/%m/%Y')}, {agora.strftime('%H:%M')} (horário de Brasília)."
+    )
+    if memory_context:
+        suffix_var += f"\n\n## Memórias relevantes\n{memory_context}"
+    system_prompt = system_estavel + suffix_var
+
+    # History em formato OpenAI
+    current_messages = [{"role": "system", "content": system_prompt}] + _history_to_openai(messages)
+
+    total_in = 0
+    total_out = 0
+    cached_tokens = 0
+    max_tool_rounds = 10
+
+    for _ in range(max_tool_rounds):
+        try:
+            response = await openai_client.chat.completions.create(
+                model=model,
+                max_tokens=max_tokens,
+                messages=current_messages,
+                tools=_TOOLS_OPENAI,
+                tool_choice="auto",
+            )
+        except Exception as e:
+            logger.error(f"OpenAI erro: {e}")
+            # Fallback pra Anthropic se OpenAI falhar — mantém bot respondendo
+            try:
+                logger.info("Fallback OpenAI → Anthropic")
+                return await _gerar_resposta_anthropic(messages, memory_context)
+            except Exception as e2:
+                logger.error(f"Fallback Anthropic também falhou: {e2}")
+                pricing = _get_pricing(model)
+                cost_usd = round(total_in * pricing["input"] + total_out * pricing["output"], 6)
+                texto = _mensagem_erro_amigavel_openai(e)
+                return texto, {
+                    "model": model, "tokens_in": total_in,
+                    "tokens_out": total_out, "cost_usd": cost_usd,
+                    "error": "openai_failed_anthropic_failed",
+                }
+
+        usage = response.usage
+        total_in += usage.prompt_tokens or 0
+        total_out += usage.completion_tokens or 0
+        # OpenAI prompt caching automático (≥1024 tokens) — exposto em
+        # usage.prompt_tokens_details.cached_tokens. Conta separado pra
+        # cost tracking (cached é 50% do preço de input fresh).
+        details = getattr(usage, "prompt_tokens_details", None)
+        if details:
+            cached_tokens += getattr(details, "cached_tokens", 0) or 0
+
+        choice = response.choices[0]
+        msg = choice.message
+
+        if choice.finish_reason == "tool_calls" and msg.tool_calls:
+            # Adiciona assistant turn com tool_calls
+            current_messages.append({
+                "role": "assistant",
+                "content": msg.content or "",
+                "tool_calls": [
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {
+                            "name": tc.function.name,
+                            "arguments": tc.function.arguments,
+                        },
+                    }
+                    for tc in msg.tool_calls
+                ],
+            })
+            # Executa tools
+            for tc in msg.tool_calls:
+                try:
+                    inputs = json.loads(tc.function.arguments) if tc.function.arguments else {}
+                except json.JSONDecodeError:
+                    inputs = {}
+                result = await executar_tool(tc.function.name, inputs)
+                current_messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": result if isinstance(result, str) else str(result),
+                })
+            continue
+
+        # Resposta final em texto
+        text = msg.content or ""
+        pricing = _get_pricing(model)
+        # Cached tokens pagam ~50% (gpt-4o-mini): $0.075/M vs $0.15/M
+        fresh_in = total_in - cached_tokens
+        cost_input = fresh_in * pricing["input"] + cached_tokens * pricing["input"] * 0.5
+        cost_usd = round(cost_input + total_out * pricing["output"], 6)
+        metadata = {
+            "model": model,
+            "tokens_in": total_in,
+            "tokens_out": total_out,
+            "cache_creation": 0,  # OpenAI não distingue cache_creation
+            "cache_read": cached_tokens,
+            "cost_usd": cost_usd,
+            "provider": "openai",
+        }
+        return text, metadata
+
+    # Loop esgotou
+    pricing = _get_pricing(model)
+    fresh_in = total_in - cached_tokens
+    cost_input = fresh_in * pricing["input"] + cached_tokens * pricing["input"] * 0.5
+    cost_usd = round(cost_input + total_out * pricing["output"], 6)
+    return "Desculpa, entrei em loop interno. Tenta reformular.", {
+        "model": model, "tokens_in": total_in,
+        "tokens_out": total_out,
+        "cache_creation": 0,
+        "cache_read": cached_tokens,
+        "cost_usd": cost_usd,
+        "provider": "openai",
+    }
+
+
+# ---------------------------------------------------------------------------
+# Dispatcher (gus-29) — escolhe provider baseado no content type
+# ---------------------------------------------------------------------------
+
+
+def _escolher_provider(messages: list[dict]) -> str:
+    """Escolhe provider baseado no último user message.
+
+    - texto puro             → openai (gpt-4o-mini, ~20x mais barato)
+    - imagem ou document     → anthropic (Sonnet, mantém qualidade Vision/PDF)
+    - MULTIMODEL_ENABLED=false → anthropic (rollback flag)
+
+    Retorna 'openai' | 'anthropic'.
+    """
+    if os.getenv("MULTIMODEL_ENABLED", "true").lower() != "true":
+        return "anthropic"
+
+    # Procura último user message no history
+    for msg in reversed(messages):
+        if msg.get("role") != "user":
+            continue
+        content = msg.get("content", "")
+        if isinstance(content, list):
+            for block in content:
+                if isinstance(block, dict) and block.get("type") in ("image", "document"):
+                    return "anthropic"
+        # Achou user message text-only — para a busca
+        break
+    return "openai"
+
+
+async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tuple[str, dict]:
+    """Dispatcher do gus-29: escolhe provider conforme content type do último
+    turno do user e delega pra implementação Anthropic ou OpenAI.
+
+    Retorno é compatível entre os dois caminhos: `(text, metadata)` onde
+    metadata sempre contém model/tokens_in/tokens_out/cost_usd. O campo
+    `provider` é adicionado no path OpenAI (omitido no Anthropic).
+    """
+    provider = _escolher_provider(messages)
+    logger.info(f"Provider escolhido: {provider}")
+    if provider == "openai":
+        return await _gerar_resposta_openai(messages, memory_context)
+    return await _gerar_resposta_anthropic(messages, memory_context)

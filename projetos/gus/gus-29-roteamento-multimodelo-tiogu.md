@@ -1,16 +1,12 @@
 ---
-tipo: demanda
-origem: claude-chat
-destino: tiogu
-prioridade: media
-status: concluido
-criado_em: 2026-04-28T19:00:00-03:00
-processado_em: 2026-04-29T09:30:00-03:00
-processado_por: claude-code
-acao_sugerida: criar_novo
-destino_path: projetos/gus/gus-29-roteamento-multimodelo-tiogu.md
-contexto: "Design decision: substituir modelo unico do TioGu por roteamento multi-modelo (GPT-4o-mini para texto, Sonnet para midia), mantendo todos os workflows e tools intactos"
+tipo: design-decision
+area: gus
+gus-id: 29
+atualizado: 2026-04-29T09:30-03:00
+status: parcial
+proximos: Fase 1 implementada (texto → OpenAI). Fase 2 (Dimagem em GPT-4o-mini Vision) pendente.
 ---
+
 
 # Roteamento Multi-Modelo no TioGu
 ## Design Decision -- sessao 28/04/2026
@@ -20,7 +16,6 @@ Cobre o problema de custo atual, a arquitetura de roteamento proposta,
 o impacto nas capacidades existentes, o que muda no codigo, e a estimativa
 de economia.
 
----
 
 ## Problema
 
@@ -38,7 +33,6 @@ Custo estimado com Sonnet para todo o volume: ~$25-30/mes em tokens.
 Custo com roteamento proposto: ~$4-6/mes.
 Economia potencial: ~80%.
 
----
 
 ## Arquitetura de roteamento proposta
 
@@ -80,7 +74,6 @@ MODELOS:
     Ja em uso no experimento A/B. Correto para extracao de fragmentos.
     Nao muda.
 
----
 
 ## Impacto nas capacidades existentes
 
@@ -115,7 +108,6 @@ CAPACIDADES QUE CONTINUAM IDENTICAS:
   Registro de informacoes -> sem mudanca
     Tool call para o Hub. Independente do modelo.
 
----
 
 ## O que muda no codigo
 
@@ -167,7 +159,6 @@ TOTAL ESTIMADO DE LINHAS ALTERADAS: 30-50 linhas no bot.py
 COMPLEXIDADE: baixa
 RISCO: baixo -- o fallback natural e o Sonnet se houver duvida
 
----
 
 ## System prompt: precisa mudar?
 
@@ -183,7 +174,6 @@ Se apos os primeiros dias de uso o comportamento parecer diferente
 do esperado em algum aspecto especifico, ajustar o system prompt
 pontualmente.
 
----
 
 ## Capacidades multimodais dos modelos open source (contexto adicional)
 
@@ -209,7 +199,6 @@ DECISAO: manter Sonnet para midia por qualidade e confiabilidade
 em contexto clinico. GPT-4o-mini para texto por custo.
 Reavaliar open source quando volume justificar servidor proprio.
 
----
 
 ## Estimativa de custo
 
@@ -225,7 +214,6 @@ Nota: os numeros reais dependem dos logs do Railway.
 Claude Code deve verificar o uso atual em tokens antes de implementar
 para ter baseline preciso.
 
----
 
 ## Checklist de implementacao
 
@@ -241,7 +229,6 @@ para ter baseline preciso.
 10. Monitorar por 48h e comparar qualidade de respostas
 11. Ajustar system prompt do GPT-4o-mini se necessario
 
----
 
 ## Decisoes tomadas
 
@@ -255,21 +242,41 @@ para ter baseline preciso.
 
 ## Resultado
 
-Concluido (Fase 1) por Claude Code em 2026-04-29.
+---
 
-**Design doc:** `projetos/gus/gus-29-roteamento-multimodelo-tiogu.md`
-(frontmatter `tipo: design-decision`, `gus-id: 29`, `status: parcial`).
+## Status de implementação (atualizado 2026-04-29)
 
-**Implementacao Fase 1:**
-- Branch `claude/gus-29-multimodel-fase1`
-- `gus/llm.py` ganha dispatcher `gerar_resposta` que escolhe provider:
-  - texto puro -> gpt-4o-mini (~20x mais barato)
-  - imagem/document -> Sonnet (mantem qualidade)
-- Adapter de tools (Anthropic <-> OpenAI), adapter de history,
-  pricing OpenAI, fallback resiliente, feature flag MULTIMODEL_ENABLED
-- Curador continua Haiku (sem mudanca)
+### Fase 1 — Texto/áudio via GPT-4o-mini ✅ implementado
 
-**Pendente:**
-- Fase 2: refator `gus/dimagem.py` pra usar gpt-4o-mini Vision
-  (hoje usa Haiku Anthropic). Nao bloqueia Fase 1.
+PR `claude/gus-29-multimodel-fase1`:
 
+- `gus/llm.py`: dispatcher `gerar_resposta()` escolhe provider baseado em content type
+- Texto puro → `_gerar_resposta_openai` (gpt-4o-mini, tool calling, prompt caching automático)
+- Imagem/document → `_gerar_resposta_anthropic` (Sonnet, prompt caching explícito)
+- Áudio → Whisper (já era OpenAI) + texto resultante → gpt-4o-mini
+- Adapter: `_anthropic_to_openai_tools()` converte schema das ~21 tools
+- Adapter: `_history_to_openai()` converte history bot.py → OpenAI format
+- Fallback resiliente: se OpenAI falhar, tenta Anthropic Sonnet automaticamente
+- Feature flag `MULTIMODEL_ENABLED` (default true) — rollback de 30s no Railway
+- Pricing OpenAI adicionado em `MODEL_PRICING` (gpt-4o-mini, gpt-4o)
+- Tracking custo: `cached_tokens` (50% do preço) computado separado
+
+**Diferença vs design original:** o doc fala "Sonnet para mídia". Mantive
+Sonnet pra fotos não-Dimagem e PDFs (Fase 1). Dimagem específico é
+**Fase 2** (Vision ainda em Anthropic Haiku no `dimagem.py`).
+
+**Economia esperada (Fase 1):** ~80% — texto e áudio são ~80% do volume.
+
+### Fase 2 — Dimagem via GPT-4o-mini Vision ⏳ pendente
+
+Refator `gus/dimagem.py` (ainda usa Haiku Anthropic). Trocar:
+- `_e_os_dimagem` (detecção binária) → GPT-4o-mini Vision
+- `_extrair_os` (extração JSON) → GPT-4o-mini Vision
+- Manter gate de confiança como hoje
+- Se confiança baixa → escalar pra Sonnet (fallback de qualidade pra OS difícil)
+
+**Não é blocker pra Fase 1.** Fazer só após Fase 1 estabilizar (1-2 dias).
+
+### Fase 3 (futura) — Outras fotos / PDF
+
+Mantém Sonnet por enquanto. Evoluir só se houver caso de uso claro.
