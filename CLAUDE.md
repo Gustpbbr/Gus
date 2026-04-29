@@ -44,7 +44,7 @@ Todas as portas compartilham:
 
 - Hub Qdrant (`gus_hub`) é a fonte da verdade. O bot, MCP, scripts cron e o curador escrevem nele.
 - Mem0 SaaS continua existindo só como fallback de leitura em algumas funções, até a Fase 5 do ADR (após 14 dias de coleta dual).
-- O **curador híbrido** (`hub/curador.py`) roda **Haiku 4.5** e **Sonnet 4.6** em paralelo no mesmo trecho a cada 3 turnos do Telegram, ambos salvam no Hub com `metadata.curador` distinta + mesmo `hash_janela` pra comparação par-a-par.
+- O **curador híbrido** (`hub/curador.py`) roda **Haiku 4.5** (Anthropic) e **GPT-4o-mini** (OpenAI) em paralelo no mesmo trecho a cada 3 turnos do Telegram, ambos salvam no Hub com `metadata.curador` distinta + mesmo `hash_janela` pra comparação par-a-par. (Antes era Haiku × Sonnet — substituído em 29/04/2026 pelo PR #44 por resiliência e custo.)
 - Coleção antiga `gus` (Mem0 self-hosted) tem ~204 mems históricas — workflow `Migrar gus → gus_hub` faz a migração sob demanda.
 
 Quando ler "Mem0" em arquivos pré-migração, entenda como referência histórica — comportamento atual vai pelo Hub.
@@ -81,7 +81,7 @@ gus/
 ├── memory.py          ← buscar_memorias / salvar_memorias / deletar_memoria (Hub-first, fallback Mem0)
 ├── tools.py           ← ~21 tools ativas (web, github, memória, pubmed, arxiv, gpt, dimagem, etc.)
 ├── media.py           ← processa imagens (Vision Sonnet) + PDF + Word + Excel + voz (Whisper)
-├── dimagem.py         ← fluxo OS Dimagem com gate de confiança no OCR
+├── dimagem.py         ← fluxo OS Dimagem com gate de confiança no OCR (Vision: gpt-4o-mini desde PR #45)
 ├── logger.py          ← log de custos e latência (JSONL)
 ├── resumo_log.py      ← log do curador em _log/resumos-mem0/AAAA-MM-DD.md
 ├── patterns_sensiveis.py ← regex de PII/credenciais (fonte única, R7)
@@ -96,7 +96,7 @@ gus/
 
 hub/
 ├── store.py           ← ingestar / lembrar / listar / deletar / contar / stats / ego_cache
-├── curador.py         ← curar_turnos / curar_arquivo (Haiku × Sonnet em paralelo)
+├── curador.py         ← curar_turnos / curar_arquivo (Haiku × GPT-4o-mini em paralelo)
 ├── routes.py          ← endpoints FastAPI /hub/* (não usado em produção, manual)
 └── schemas.py         ← Pydantic validators do schema gus-18
 
@@ -205,7 +205,9 @@ historico/                    ← legacy / uso único (deletável sem impacto)
 
 - [x] Bot Telegram com ~21 tools (texto, foto, PDF, Word, Excel, voz)
 - [x] Hub Qdrant Fase 1–4 (ingest, curador híbrido, leitura Hub-first, migração)
-- [x] Curador híbrido Haiku × Sonnet em paralelo (coleta dual até 12/05/2026)
+- [x] Curador híbrido Haiku × GPT-4o-mini em paralelo (coleta dual início 29/04/2026, decisão ~13/05/2026)
+- [x] gus-29: roteamento multi-modelo — texto → GPT-4o-mini (OpenAI), mídia/PDF → Sonnet (Anthropic)
+- [x] Dimagem Vision migrada para GPT-4o-mini (PR #45, ~88% economia vs Haiku)
 - [x] Curador chat ingest (Claude Chat → arquivo → Hub)
 - [x] Retro Engine (hook Stop, log do que cada sessão Claude Code aprendeu)
 - [x] Patterns sensíveis fonte única + 5 patterns novos (R7)
@@ -222,7 +224,7 @@ historico/                    ← legacy / uso único (deletável sem impacto)
 
 - [ ] Disparar workflow `Migrar gus → gus_hub` se ainda não rodou (preenche Hub com 204 mems históricas)
 - [ ] Conferir secrets `QDRANT_URL`/`QDRANT_API_KEY` no GitHub (usado pelos crons migrados em R2)
-- [ ] Decisão modelo curador final (Fase 5 do ADR-001 — após 14 dias coleta dual)
+- [ ] Decisão modelo curador final (Fase 5 do ADR-001 — após 14 dias coleta Haiku×GPT, ~13/05/2026)
 - [ ] Aposentar Mem0 SaaS completamente (Fase 5: remover fallbacks, requirements, secrets)
 - [ ] Suporte a vídeo no Telegram (`filters.VIDEO` sem handler)
 - [ ] Configurar Service Account do Google Drive (Drive sync) — pendente desde sempre
