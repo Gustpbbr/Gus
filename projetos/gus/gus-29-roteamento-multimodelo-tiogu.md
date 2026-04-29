@@ -2,9 +2,9 @@
 tipo: design-decision
 area: gus
 gus-id: 29
-atualizado: 2026-04-29T09:30-03:00
+atualizado: 2026-04-29T12:50-03:00
 status: parcial
-proximos: Fase 1 implementada (texto → OpenAI). Fase 2 (Dimagem em GPT-4o-mini Vision) pendente.
+proximos: Fases 1 e 3 implementadas. Fase 2 (Dimagem em GPT-4o-mini Vision) pendente.
 ---
 
 
@@ -277,6 +277,28 @@ Refator `gus/dimagem.py` (ainda usa Haiku Anthropic). Trocar:
 
 **Não é blocker pra Fase 1.** Fazer só após Fase 1 estabilizar (1-2 dias).
 
-### Fase 3 (futura) — Outras fotos / PDF
+### Fase 3 — Curador Haiku + GPT-4o-mini ✅ implementado (29/04)
+
+Substitui Sonnet por **GPT-4o-mini** no slot secundário do curador híbrido.
+
+**Motivações:**
+1. **Resiliência:** quando crédito Anthropic zera, curador inteiro parava. Agora GPT-4o-mini continua salvando memórias mesmo com Anthropic offline.
+2. **Custo:** Sonnet ~$0.001/janela → GPT-4o-mini ~$0.0001/janela (10x menor).
+3. **A/B mais informativo:** Haiku × GPT compara famílias diferentes (Anthropic × OpenAI), enquanto Haiku × Sonnet era intra-família.
+
+**Arquivos tocados:**
+- `hub/curador.py`:
+  - Nova função `_extrair_via_openai()` (paralela a `_extrair_via_modelo()`)
+  - `_curar_input_hibrido` substitui `modelo_sonnet` → `modelo_gpt` (env var `MODEL_CURADOR_GPT`, default `gpt-4o-mini`)
+  - Salva com `metadata.curador="gpt"` em vez de `"sonnet"`
+- `gus/bot.py`: `_resumir_e_salvar` itera `("haiku", ...), ("gpt", ...)` e loga `gpt={N}` em vez de `sonnet={N}`
+
+**Backward compat:**
+Fragmentos antigos com `metadata.curador="sonnet"` permanecem inalterados (histórico). Novos fragmentos têm `metadata.curador="gpt"`.
+
+**Trade-off aceito:**
+A coleta dual de 14 dias planejada pra ADR-001 Fase 5 (decisão modelo curador final, 12/05) reseta — Haiku × Sonnet só rodou de 27 a 29/04 (3 dias). A nova comparação Haiku × GPT começa em 29/04. Compensação: resiliência prática agora vale mais que continuidade do A/B teórico.
+
+### Fase 4 (futura) — Outras fotos / PDF
 
 Mantém Sonnet por enquanto. Evoluir só se houver caso de uso claro.
