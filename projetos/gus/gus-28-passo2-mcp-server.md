@@ -53,14 +53,20 @@ Você já tem o projeto Gus no Railway com o serviço do bot Telegram rodando. V
 5. Seleciona o repo **Gustpbbr/Gus**
 6. Branch: **main**
 
-Vai começar um deploy automaticamente. Vai falhar — esperado, porque o Railway por default usa o Procfile/comando do bot. Vamos corrigir.
+Vai começar um deploy automaticamente. Vai falhar — esperado, porque o Railway por default usa o `railway.toml` do bot. Vamos corrigir.
 
 7. No serviço novo, vai em **Settings**:
    - **Service Name:** muda pra `gus-mcp-server` (ou similar — só pra você reconhecer)
-   - **Build:**
-     - **Builder:** Dockerfile
-     - **Dockerfile Path:** `Dockerfile.mcp`
+   - **Source → Config-as-Code File Path:** `railway.mcp.toml`
+     (esse arquivo é específico do MCP — define Dockerfile.mcp + healthcheck.
+     Se você deixar em branco, Railway usa `railway.toml` do bot e o MCP
+     tenta rodar como bot Telegram, falhando o healthcheck)
    - Salva
+   - Em **Deployments**, faz **Redeploy** pra pegar a nova config
+
+OBS: você não precisa mexer manualmente em "Build → Dockerfile Path" nem
+"Deploy → Start Command" — o `railway.mcp.toml` cuida disso (aponta
+`Dockerfile.mcp` e usa o `CMD` dele: `python -m hub.mcp_server`).
 
 ---
 

@@ -1,0 +1,21 @@
+# Config-as-code do MCP server (gus-28 Passo 2)
+#
+# Use este arquivo no service `gus-mcp-server` apontando em
+# Railway → Settings → Source → Config-as-Code File Path = railway.mcp.toml
+#
+# O `railway.toml` (sem .mcp) é do bot Telegram. Não compartilhamos
+# config porque os entry points são diferentes.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.mcp"
+
+[deploy]
+# Sem startCommand — usa o CMD do Dockerfile.mcp (`python -m hub.mcp_server`)
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+healthcheckPath = "/health"
+# 60s pra acomodar primeira boot quando sentence-transformers baixa o
+# modelo (~80MB) na primeira chamada. Após cache de imagem, boots
+# subsequentes ficam <10s.
+healthcheckTimeout = 60
