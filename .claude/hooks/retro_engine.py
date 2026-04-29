@@ -38,6 +38,7 @@ Se as vars não estiverem disponíveis, o hook é no-op silencioso.
 import json
 import logging
 import os
+import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -304,6 +305,28 @@ def _logar_sessao(num_fragmentos: int, salvos: int, erros: list[str], resumo: st
         log.warning(f"_logar_sessao falhou: {e}")
 
 
+def _auto_commit_log() -> None:
+    """Commita e faz push do log do dia. Evita conflito com stop-hook-git-check."""
+    try:
+        hoje = datetime.now(BRT).strftime("%Y-%m-%d")
+        log_path = LOG_DIR / f"{hoje}.md"
+        subprocess.run(
+            ["git", "add", str(log_path)],
+            cwd=str(REPO_ROOT), capture_output=True, timeout=10,
+        )
+        result = subprocess.run(
+            ["git", "commit", "-m", f"chore(log): retro-engine {hoje}"],
+            cwd=str(REPO_ROOT), capture_output=True, timeout=15,
+        )
+        if result.returncode == 0:
+            subprocess.run(
+                ["git", "push"],
+                cwd=str(REPO_ROOT), capture_output=True, timeout=30,
+            )
+    except Exception:
+        pass  # silencioso — nunca quebra o hook
+
+
 def main() -> None:
     """Hook Stop — recebe JSON via stdin com info da sessão."""
     try:
@@ -339,6 +362,7 @@ def main() -> None:
     if not fragmentos:
         log.info("Nenhum fragmento autobiográfico extraído — sessão trivial")
         _logar_sessao(0, 0, [], "(sessão trivial — nada extraído)")
+        _auto_commit_log()
         return
 
     salvos, erros = _ingestar_no_hub(fragmentos)
@@ -349,6 +373,7 @@ def main() -> None:
 
     resumo = " | ".join(f.get("conteudo", "")[:80] for f in fragmentos[:3])
     _logar_sessao(len(fragmentos), salvos, erros, resumo)
+    _auto_commit_log()
 
 
 if __name__ == "__main__":
