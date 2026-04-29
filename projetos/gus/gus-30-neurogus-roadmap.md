@@ -235,3 +235,342 @@ visuais futuros" e doc `gus-31` que documentará a maturação do grafo).
   quando der; NeuroGus pode operar com fragmentos novos primeiro.
 
 ---
+
+## 7. Arquitetura técnica
+
+### 7.1 Stack escolhido
+
+**Frontend:** [`3d-force-graph`](https://github.com/vasturiano/3d-force-graph)
+da família vasturiano. Construído sobre Three.js. Física de forças na CPU,
+renderização WebGL. API de alto nível: passa `{ nodes, links }` e
+configura.
+
+Suporta nativamente:
+- Partículas direcionais nas arestas (feixes de luz com velocidade
+  configurável via `linkDirectionalParticles`)
+- OrbitControls (zoom/pan/rotate por touch)
+- Click no nó com callback (`.onNodeClick`)
+- Custom 3D objects por nó (`.nodeThreeObject`)
+- HTML labels acopladas a coordenadas 3D (`.nodeLabel`)
+
+**Limitações conhecidas:**
+- Performance degrada > ~5.000 nós (simulação de forças na CPU). Pra
+  janela ativa do NeuroGus (~50–500 fragmentos), irrelevante.
+- Não tem post-processing de bloom nativo — `MeshPhongMaterial` +
+  `emissive` + `AdditiveBlending` resolve sem shader custom.
+
+**Backend:** FastAPI já existente em `api/server.py`. Adicionar:
+- `hub/events.py` (asyncio.Queue global)
+- `broadcast()` em `hub/store.py:ingestar()` (1 linha)
+- 2 endpoints novos em `hub/routes.py` (`/hub/recent`, `/hub/stream`)
+- 1 endpoint novo em `api/server.py` (`/neurogus`, serve HTML)
+
+### 7.2 Stack rejeitado (com motivo)
+
+**Cosmograph (cosmos.gl)** — engine 100% GPU via shaders WebGL.
+Suporta centenas de milhares de nós em real-time. **Rejeitado** porque:
+- Não tem 3D nativo (é grafo 2D)
+- Não tem partículas direcionais nas arestas (perde a metáfora "feixes
+  de luz")
+
+**Reservado pra futuro:** quando coleção crescer pra ~10k+ fragmentos
+ativos e a janela 3D não der conta, criar segunda view "mapa completo
+2D" com Cosmograph. Botão alterna entre as duas vistas.
+
+**WebSocket bidirecional** — rejeitado em favor de SSE porque:
+- NeuroGus só consome eventos (não emite). SSE é unidirecional e
+  nativo no browser via `EventSource`.
+- WebSocket exigiria framework adicional (`websockets`/`fastapi.WebSocket`)
+  e tratamento de reconnect manual.
+- SSE tem reconnect automático com `Last-Event-ID` header, suportado
+  pelo browser sem código.
+
+### 7.3 Onde vive
+
+**Mesmo container do bot/API no Railway.** Sem service novo, sem custo
+extra, sem secrets duplicados.
+
+```
+Railway Project: Gus
+├── Service: tiogu-bot (já existe)
+│   └── gus/main.py roda bot Telegram + FastAPI no mesmo processo
+│       (asyncio.gather)
+│       └── api/server.py expõe:
+│           ├── /health  (público)
+│           ├── /hub/*   (Bearer auth, JSON API — já existe)
+│           ├── /neurogus       (NOVO, HTML inline)
+│           ├── /hub/recent     (NOVO, JSON)
+│           └── /hub/stream     (NOVO, SSE)
+└── Service: gus-mcp-server (já existe — Passo 2)
+    └── hub/mcp_server.py
+        Não precisa mexer aqui pro NeuroGus.
+```
+
+### 7.4 Fluxo end-to-end
+
+```
+Gustavo escreve no Telegram
+        │
+        ▼
+   gus/bot.py recebe mensagem
+        │
+        ▼
+   curador (a cada 3 turnos, fire-and-forget)
+        │
+        ▼
+   Haiku + GPT-4o-mini extraem fragmentos
+        │
+        ▼
+   hub/store.py:ingestar(fragmento, metadata)
+        │   ┌────────────────────────────────┐
+        │   │ 1. salva no Qdrant gus_hub     │
+        │   │ 2. calcula top-K vizinhos       │
+        │   │    (cosine similarity > 0.6)    │
+        │   │ 3. atualiza payload com         │
+        │   │    relacionados: [id1, id2, id3]│
+        │   │ 4. await broadcast(fragmento)   │  ← NOVO
+        │   └────────────────────────────────┘
+        │
+        ▼
+   hub/events.py: enfileira em asyncio.Queue global
+        │
+        ▼
+   GET /hub/stream (SSE) consome a fila
+        │
+        ▼
+   Browser (EventSource) recebe `data: {...}\n\n`
+        │
+        ▼
+   neurogus.html: novo nó nasce no grafo
+                   pulsa branco 2s → assume cor do tipo
+```
+
+### 7.5 As 4 peças de implementação
+
+#### Peça 1: `hub/events.py` (~50 linhas)
+
+**Responsabilidade:** fila assíncrona global, broadcast pra múltiplos
+listeners (caso outros clientes além do NeuroGus se conectem no futuro).
+
+**Esqueleto:**
+
+```python
+# hub/events.py
+import asyncio
+import json
+import logging
+from typing import AsyncIterator
+
+logger = logging.getLogger(__name__)
+
+# Lista de filas (uma por listener conectado).
+# Não é Queue compartilhada — cada listener tem a própria pra evitar
+# que um listener lento atrase os outros.
+_listeners: list[asyncio.Queue] = []
+
+
+async def broadcast(fragmento: dict) -> None:
+    """Empurra fragmento pra todos os listeners conectados.
+
+    Não-bloqueante: se listener tem fila cheia (ex: cliente travado),
+    descarta o evento pra ele em vez de bloquear o ingestar().
+    """
+    if not _listeners:
+        return  # ninguém conectado, no-op
+
+    payload = json.dumps(fragmento, ensure_ascii=False, default=str)
+    descartados = 0
+    for q in _listeners:
+        try:
+            q.put_nowait(payload)
+        except asyncio.QueueFull:
+            descartados += 1
+    if descartados:
+        logger.warning(f"broadcast: {descartados} listener(s) com fila cheia, evento descartado")
+
+
+async def subscribe() -> AsyncIterator[str]:
+    """Inscreve um novo listener. Yield events conforme chegam.
+
+    Usado por `GET /hub/stream` no FastAPI:
+        async def stream():
+            async for evento in subscribe():
+                yield f"data: {evento}\n\n"
+    """
+    q: asyncio.Queue = asyncio.Queue(maxsize=100)
+    _listeners.append(q)
+    try:
+        while True:
+            payload = await q.get()
+            yield payload
+    finally:
+        _listeners.remove(q)
+```
+
+**Pontos de atenção:**
+- Fila por listener (não compartilhada) evita head-of-line blocking
+- `maxsize=100` por fila: se cliente trava, descarta após 100 eventos
+  acumulados (sinal de cliente morto)
+- `asyncio.Queue` é thread-safe dentro de um event loop, o que
+  basta — bot+API rodam no mesmo loop
+
+#### Peça 2: hook em `hub/store.py:ingestar()` (~5 linhas)
+
+**Responsabilidade:** após salvar no Qdrant, disparar broadcast.
+
+**Esqueleto da modificação:**
+
+```python
+# hub/store.py — adicionar import
+from hub.events import broadcast as _broadcast
+
+def ingestar(conteudo, metadata):
+    # ... código existente que salva no Qdrant ...
+
+    # NOVO: pré-calcular vizinhos top-K e adicionar ao payload
+    vizinhos = _calcular_vizinhos(vetor, k=3, threshold=0.6, exclude_id=frag_id)
+    payload["relacionados"] = vizinhos
+    client.set_payload(  # update no Qdrant
+        collection_name=COLLECTION,
+        payload={"relacionados": vizinhos},
+        points=[frag_id],
+    )
+
+    # NOVO: broadcast pro NeuroGus (fire-and-forget)
+    asyncio.create_task(_broadcast({
+        "id": frag_id,
+        **payload,
+    }))
+
+    return frag_id
+```
+
+**Pontos de atenção:**
+- `_calcular_vizinhos` é função nova — busca top-K mais próximos do
+  vetor recém-salvo, exclui o próprio ID, retorna lista de IDs
+- `asyncio.create_task` faz fire-and-forget. Se broadcast falhar, não
+  derruba o ingestar
+- `ingestar` é chamado de contexto sync (curador roda em
+  `asyncio.to_thread`). Precisa adaptar pra async OU usar
+  `asyncio.run_coroutine_threadsafe`. Decisão: rever ao implementar
+
+#### Peça 3: 2 endpoints em `hub/routes.py` (~80 linhas)
+
+**Endpoint A: `GET /hub/recent`**
+
+Retorna últimos N fragmentos pra inicializar o grafo no boot do
+frontend. Inclui `relacionados` pra montar arestas.
+
+```python
+@router.get("/recent", operation_id="hub_recent")
+async def r_recent(
+    limit: int = 100,
+    user_id: str = "gustavo",
+):
+    """Retorna últimos `limit` fragmentos do user_id, ordenados por
+    criado_em desc. Inclui `relacionados` pra montar arestas no grafo.
+    """
+    fragmentos = await asyncio.to_thread(listar, user_id=user_id, limit=limit)
+    return {"fragmentos": fragmentos, "total": len(fragmentos)}
+```
+
+**Endpoint B: `GET /hub/stream`** (SSE)
+
+```python
+from fastapi.responses import StreamingResponse
+from hub.events import subscribe
+
+@router.get("/stream", include_in_schema=False)
+async def r_stream(token: str):
+    """SSE com fragmentos novos em tempo real.
+
+    Auth via query param porque EventSource não suporta header custom.
+    Token comparado contra CUSTOM_GPT_TOKEN (mesmo da Bearer auth).
+    """
+    expected = os.getenv("CUSTOM_GPT_TOKEN")
+    if not expected or token != expected:
+        raise HTTPException(status_code=401)
+
+    async def event_stream():
+        async for payload in subscribe():
+            yield f"data: {payload}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+```
+
+**Pontos de atenção:**
+- Auth no SSE via `?token=` (browser não envia header custom em
+  EventSource; única alternativa segura sem proxy)
+- `include_in_schema=False` esconde do OpenAPI público (não vaza pro
+  Custom GPT)
+- StreamingResponse com `text/event-stream` é o padrão SSE
+- Reconnect: SSE tem isso nativo via `Last-Event-ID` header. Se
+  quisermos retomar de onde parou, precisamos enviar `id:` em cada
+  evento (issue futura, não v0)
+
+#### Peça 4: `api/neurogus.py` + frontend (~50 linhas Python + ~400 linhas HTML/JS)
+
+```python
+# api/neurogus.py
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import HTMLResponse
+import os
+
+router = APIRouter(prefix="/neurogus", tags=["neurogus"])
+
+@router.get("", response_class=HTMLResponse, include_in_schema=False)
+async def serve_neurogus(token: str):
+    """Serve o HTML do NeuroGus. Token via query param pra simplificar
+    o link compartilhado (PWA na home screen do celular).
+
+    O HTML lê o token da própria URL e usa em `?token=` nas chamadas
+    ao /hub/recent e /hub/stream.
+    """
+    expected = os.getenv("CUSTOM_GPT_TOKEN")
+    if not expected or token != expected:
+        raise HTTPException(status_code=401)
+
+    return HTMLResponse(NEUROGUS_HTML)
+
+
+NEUROGUS_HTML = """
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>NeuroGus</title>
+  <link rel="manifest" href="/neurogus/manifest.json">
+  <!-- ... -->
+</head>
+<body>
+  <!-- 3d-force-graph + lógica em JS inline -->
+</body>
+</html>
+"""
+```
+
+**Pontos de atenção:**
+- HTML inline no Python = simples, sem precisar servir static files
+- Manifest.json pra PWA: arquivo separado servido em `/neurogus/manifest.json`
+- Token vem na URL: usuário acessa `https://api-gus.../neurogus?token=XXX`,
+  JS extrai com `new URLSearchParams(location.search).get('token')`
+- Token na URL = aparece em logs/history. Mitigação: rotação periódica
+  do `CUSTOM_GPT_TOKEN` ou usar token específico de NeuroGus (ver
+  riscos)
+
+### 7.6 Auth — síntese
+
+| Endpoint | Método auth | Razão |
+|---|---|---|
+| `GET /neurogus?token=X` | Query param | HTML servido direto, JS lê token da URL |
+| `GET /hub/recent?token=X` | Query param | Chamado por JS do navegador |
+| `GET /hub/stream?token=X` | Query param | EventSource não suporta header custom |
+| `DELETE /hub/fragmento/{id}` | **Bearer** | Chamado via `fetch()` pelo JS, suporta header |
+| Outros endpoints `/hub/*` | Bearer (já existe) | sem mudança |
+
+Token compartilhado: `CUSTOM_GPT_TOKEN` (já em uso). Pra MVP basta.
+Pra futuro, criar `NEUROGUS_TOKEN` separado permite revogar acesso ao
+NeuroGus sem afetar Custom GPT.
+
+---
