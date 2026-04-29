@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 async def run_bot() -> None:
+    logger.info("=== Bot boot — build 2026-04-29T13:50 ===")
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
         raise ValueError("TELEGRAM_BOT_TOKEN não definido.")
