@@ -30,7 +30,6 @@ from qdrant_client.models import (
     Distance, VectorParams, Filter, FieldCondition, MatchValue,
     PayloadSchemaType, PointStruct,
 )
-from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ EMBED_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 EMBED_DIM = 384
 
 _client: Optional[QdrantClient] = None
-_embedder: Optional[SentenceTransformer] = None
+_embedder = None  # type: Optional["SentenceTransformer"] — lazy import (boot leve)
 
 
 def _get_client() -> QdrantClient:
@@ -57,10 +56,14 @@ def _get_client() -> QdrantClient:
     return _client
 
 
-def _get_embedder() -> SentenceTransformer:
+def _get_embedder():
+    """Lazy import: sentence_transformers puxa torch (~500MB). Importar no
+    top-level estouraria RAM em containers pequenos no boot, mesmo sem chamar
+    nada. Importamos só quando a 1ª busca/ingest acontecer."""
     global _embedder
     if _embedder is None:
         logger.info(f"Carregando embedder {EMBED_MODEL_NAME} (primeira call do Hub)…")
+        from sentence_transformers import SentenceTransformer
         _embedder = SentenceTransformer(EMBED_MODEL_NAME)
     return _embedder
 
