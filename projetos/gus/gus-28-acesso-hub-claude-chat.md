@@ -1,15 +1,10 @@
 ---
-tipo: demanda
-origem: claude-chat
-destino: tiogu
-prioridade: media
-status: concluido
-criado_em: 2026-04-28T18:00:00-03:00
-processado_em: 2026-04-29T00:35:00-03:00
-processado_por: claude-code
-acao_sugerida: criar_novo
-destino_path: projetos/gus/gus-28-acesso-hub-claude-chat.md
-contexto: "Design decision completo: como dar ao Claude Chat acesso real-time ao Hub Qdrant, sequencia de implementacao, papel do NeuroGus"
+tipo: design-decision
+area: gus
+gus-id: 28
+atualizado: 2026-04-29T00:30-03:00
+status: parcial
+proximos: implementar Passo 2 (MCP wrapper FastMCP)
 ---
 
 # Acesso ao Hub Qdrant pelo Claude Chat
@@ -19,7 +14,6 @@ Documento gerado em sessao de design entre Gustavo e Claude Chat.
 Cobre o problema atual, as tres opcoes exploradas, as decisoes tomadas,
 a sequencia correta de implementacao e o papel do NeuroGus nesse processo.
 
----
 
 ## Por que isso importa
 
@@ -38,7 +32,6 @@ amanha de manha.
 O objetivo desta decisao foi mapear como resolver isso, em qual sequencia,
 e qual papel o NeuroGus joga nesse processo.
 
----
 
 ## O que o Hub Qdrant e (e o que nao e)
 
@@ -65,7 +58,6 @@ user_id='gus': autobiografia do proprio Gus como agente -- aprendizados
 Uma busca com user_id=gustavo nunca retorna fragmentos do user_id=gus
 e vice-versa. Sao grafos independentes.
 
----
 
 ## As tres opcoes exploradas
 
@@ -110,7 +102,6 @@ LIMITACAO CRITICA: fragmentos gerados nesta conversa nao aparecem ate
   as 15h05, o fragmento novo so estara disponivel no proximo ciclo de 15min.
   Nao e real-time -- e uma fotografia mais fresca.
 
----
 
 ### Opcao B -- MCP wrapper do Hub conectado ao claude.ai
 
@@ -161,7 +152,6 @@ COMPLEXIDADE: media -- o padrao MCP ja existe no projeto. O Windows-MCP e
 LIMITACAO: stateless por chamada -- o Claude Chat busca quando precisa,
   nao recebe push automatico de novos fragmentos.
 
----
 
 ### Opcao C -- NeuroGus como interface de curadoria (artifact SSE)
 
@@ -202,7 +192,6 @@ COMPLEXIDADE: alta -- depende do NeuroGus em producao (Fases 3-5 ADR-001
   /hub/recent e /hub/stream funcionando) E do MCP da Opcao B ja funcionando.
   Sao dois sistemas novos que precisam estar estaveis antes desta opcao.
 
----
 
 ## Decisao central: Claude Chat nunca escreve no NeuroGus diretamente
 
@@ -222,7 +211,6 @@ quebrando o principio central do ADR-001 (Hub como fonte unica de verdade).
 O NeuroGus e o visualizador do Hub, nao o destino final. Essa direcao
 nao se inverte.
 
----
 
 ## Quando fazer o NeuroGus
 
@@ -247,7 +235,6 @@ Se o NeuroGus for implementado depois do pipeline solido:
 
 O NeuroGus precisa de base solida para ser espetacular.
 
----
 
 ## Quando o Claude Chat passa a ser alimentado em real-time
 
@@ -270,7 +257,6 @@ A diferenca entre os dois momentos:
   Passo 2: 'posso buscar quando quero'
   Passo 4: 'vejo automaticamente quando acontece'
 
----
 
 ## Sequencia de implementacao recomendada
 
@@ -320,7 +306,6 @@ TABELA COMPARATIVA:
 | Passo 3 (NeuroGus)     | <1s        | alta         | PR#10 + ADR-001 3-5 |
 | Passo 4 (Artifact SSE) | <1s push   | media        | Passos 2 e 3        |
 
----
 
 ## Perfis de contexto por tipo de sessao
 
@@ -346,7 +331,6 @@ O curador precisa de flag para nao ingestar ou ingestar apenas aspecto
 tecnico anonimizado (sem nome, sem dados do paciente). Isso precisa ser
 implementado antes de usar o modo clinico com curadoria ativa.
 
----
 
 ## Sobre demandas: quem pode sugerir
 
@@ -369,7 +353,6 @@ Em todos os casos Gustavo sempre aprova antes de ir pro inbox.
 Alinhado com Nivel 1 de proatividade do gus-25 (validacao obrigatoria
 antes de qualquer execucao autonoma).
 
----
 
 ## Estado atual vs estado alvo
 
@@ -381,7 +364,6 @@ antes de qualquer execucao autonoma).
 | Bootstrap             | Tudo-ou-nada       | Minimo + busca       | Minimo + busca        |
 | Experiencia Gustavo   | Chat normal        | Chat c/ memoria viva | Chat + grafo aberto   |
 
----
 
 ## Proximos passos imediatos
 
@@ -394,15 +376,3 @@ antes de qualquer execucao autonoma).
 7. Passo 4: implementar artifact SSE no Claude Chat
 
 ## Resultado
-
-Concluído por Claude Code em 2026-04-29.
-
-**Design doc preservado:** `projetos/gus/gus-28-acesso-hub-claude-chat.md`
-(frontmatter `tipo: design-decision`, `gus-id: 28`, `status: parcial`).
-
-**Status dos Passos:**
-- Passo 1 (cron 15min `gus-estado-atual.md`): ✅ mergeado (PR #21)
-- Passo 2 (MCP wrapper FastMCP): pendente — próximo PR
-- Passo 3 (NeuroGus em produção): bloqueado (depende de `hub/events.py` + Fases 3-5 ADR-001)
-- Passo 4 (Artifact SSE): bloqueado (depende de Passos 2 e 3)
-
