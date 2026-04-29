@@ -275,7 +275,11 @@ async def _gerar_resposta_anthropic(messages: list[dict], memory_context: str = 
     agora = datetime.now(BRT)
     dia_semana = DIAS_SEMANA[agora.weekday()]
     suffix_var = (
-        f"\n\n## Data e hora atuais\n"
+        f"\n\n## Modelo atual\n"
+        f"Esta resposta está sendo gerada por **{model}** (Anthropic). "
+        f"Quando perguntado qual modelo, diga isso — não invente. "
+        f"O sistema rotea automaticamente entre Anthropic e OpenAI conforme o tipo de mensagem.\n\n"
+        f"## Data e hora atuais\n"
         f"Hoje é {dia_semana}, {agora.strftime('%d/%m/%Y')}, {agora.strftime('%H:%M')} (horário de Brasília)."
     )
     if memory_context:
@@ -495,7 +499,11 @@ async def _gerar_resposta_openai(messages: list[dict], memory_context: str = "")
     agora = datetime.now(BRT)
     dia_semana = DIAS_SEMANA[agora.weekday()]
     suffix_var = (
-        f"\n\n## Data e hora atuais\n"
+        f"\n\n## Modelo atual\n"
+        f"Esta resposta está sendo gerada por **{model}** (OpenAI). "
+        f"Quando perguntado qual modelo, diga isso — não invente. "
+        f"O sistema rotea automaticamente entre Anthropic e OpenAI conforme o tipo de mensagem.\n\n"
+        f"## Data e hora atuais\n"
         f"Hoje é {dia_semana}, {agora.strftime('%d/%m/%Y')}, {agora.strftime('%H:%M')} (horário de Brasília)."
     )
     if memory_context:
@@ -618,17 +626,18 @@ async def _gerar_resposta_openai(messages: list[dict], memory_context: str = "")
 # ---------------------------------------------------------------------------
 
 
-def _escolher_provider(messages: list[dict]) -> str:
+def _escolher_provider(messages: list[dict]) -> tuple[str, str]:
     """Escolhe provider baseado no último user message.
 
     - texto puro             → openai (gpt-4o-mini, ~20x mais barato)
     - imagem ou document     → anthropic (Sonnet, mantém qualidade Vision/PDF)
     - MULTIMODEL_ENABLED=false → anthropic (rollback flag)
 
-    Retorna 'openai' | 'anthropic'.
+    Retorna (provider, motivo) onde provider ∈ {'openai', 'anthropic'}
+    e motivo é descrição curta pra log.
     """
     if os.getenv("MULTIMODEL_ENABLED", "true").lower() != "true":
-        return "anthropic"
+        return "anthropic", "MULTIMODEL_ENABLED=false (rollback flag)"
 
     # Procura último user message no history
     for msg in reversed(messages):
@@ -637,11 +646,15 @@ def _escolher_provider(messages: list[dict]) -> str:
         content = msg.get("content", "")
         if isinstance(content, list):
             for block in content:
-                if isinstance(block, dict) and block.get("type") in ("image", "document"):
-                    return "anthropic"
+                if isinstance(block, dict):
+                    btype = block.get("type")
+                    if btype == "image":
+                        return "anthropic", "content: image"
+                    if btype == "document":
+                        return "anthropic", "content: document"
         # Achou user message text-only — para a busca
         break
-    return "openai"
+    return "openai", "content: text"
 
 
 async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tuple[str, dict]:
@@ -652,8 +665,11 @@ async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tupl
     metadata sempre contém model/tokens_in/tokens_out/cost_usd. O campo
     `provider` é adicionado no path OpenAI (omitido no Anthropic).
     """
-    provider = _escolher_provider(messages)
-    logger.info(f"Provider escolhido: {provider}")
+    provider, motivo = _escolher_provider(messages)
     if provider == "openai":
+        modelo = os.getenv("MODEL_OPENAI_DEFAULT", "gpt-4o-mini")
+        logger.info(f"Routing → openai ({modelo}) | {motivo}")
         return await _gerar_resposta_openai(messages, memory_context)
+    modelo = os.getenv("MODEL_DEFAULT", "claude-sonnet-4-6")
+    logger.info(f"Routing → anthropic ({modelo}) | {motivo}")
     return await _gerar_resposta_anthropic(messages, memory_context)
