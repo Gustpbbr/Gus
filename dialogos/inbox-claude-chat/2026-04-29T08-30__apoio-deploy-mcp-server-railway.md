@@ -89,15 +89,26 @@ da dashboard:
 5. Branch: **main**
 
 O Railway vai comecar um deploy automatico que **vai falhar**. Isso eh esperado:
-o servico novo por default tenta usar o Procfile ou comando do bot, e
-precisamos apontar pro Dockerfile.mcp.
+o `railway.toml` da raiz do repo eh do bot Telegram (startCommand =
+`python -m gus.main`). Sem corrigir, o "MCP service" tenta rodar o bot
+sem TELEGRAM_BOT_TOKEN, crasha, e o healthcheck `/health` falha com
+"service unavailable".
 
-6. Vai em **Settings → Build**
-   - **Builder:** Dockerfile (nao Nixpacks, nao Heroku Buildpacks)
-   - **Dockerfile Path:** `Dockerfile.mcp` (com ponto, nao barra)
+6. Vai em **Settings → Source**:
+   - **Config-as-Code File Path:** `railway.mcp.toml`
+     (esse arquivo no repo aponta pra `Dockerfile.mcp` + healthcheck `/health`
+     com timeout 60s. Sem ele, Railway usa `railway.toml` do bot por default.)
    - Salva
+
 7. (Opcional) Em **Settings**, renomeia o service pra `gus-mcp-server` ou
    similar pra distinguir do bot
+
+8. **Redeploy** manual em **Deployments → Deploy** pra pegar a nova config
+
+OBS: voce **nao** precisa configurar manualmente "Build → Dockerfile Path"
+nem "Deploy → Start Command". O `railway.mcp.toml` ja faz isso —
+aponta `Dockerfile.mcp` (que tem `CMD ["python", "-m", "hub.mcp_server"]`).
+Setar manualmente seria redundante e pode conflitar.
 
 ### Etapa 3 — Configurar variaveis de ambiente
 
