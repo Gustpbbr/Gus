@@ -78,10 +78,14 @@ No mesmo serviço, vai em **Variables**:
 |---|---|
 | `QDRANT_URL` | **copia do bot** (mesmo valor) |
 | `QDRANT_API_KEY` | **copia do bot** (mesmo valor) |
-| `MCP_BEARER_TOKEN` | o token gerado na Etapa 1 |
+| `MCP_BEARER_TOKEN` | token gerado na Etapa 1 (usado por Claude Desktop / Code / Cursor) |
+| `MCP_AUTH_DISABLED` | `true` — claude.ai web não suporta Bearer; desliga AuthMiddleware |
+| `MCP_URL_SECRET` | **outro** segredo de 32+ chars (gera igual à Etapa 1, mas separado do Bearer) — privacidade no path |
 | `GH_TOKEN` | **copia do bot** (Personal Access Token GitHub) |
 | `GH_REPO` | `Gustpbbr/Gus` |
 | `PORT` | **NÃO setar manualmente.** Railway injeta automaticamente (geralmente 8080). Setar `8000` cria conflito com proxy do Railway que escuta 8080. |
+
+**Por que MCP_URL_SECRET?** [claude.ai web só aceita OAuth no UI do Connector](https://github.com/anthropics/claude-ai-mcp/issues/112) — não tem campo de Bearer / custom header. Sem nenhuma proteção, qualquer um com a URL pública lê todo o Hub. O `MCP_URL_SECRET` muda o endpoint de `/mcp` pra `/{secret}/mcp` — modelo "shared secret in URL" igual webhooks Slack/GitHub. Não é tão forte quanto Bearer, mas cobre 90% do risco real (URL é hard to guess).
 
 Para copiar do bot: abre o serviço do bot → Variables → toca no valor de cada uma → copy. Volta no MCP service → Variables → cola.
 
@@ -119,16 +123,21 @@ Se aparecer 503 ou erro, abre **Logs** no Railway e me manda a última linha. Ma
 
 ## Etapa 6 — Conectar no claude.ai
 
+claude.ai web **não suporta Bearer / custom header** — só OAuth no UI. Como nosso server não tem OAuth implementado, a estratégia é:
+- Server roda com `MCP_AUTH_DISABLED=true` (sem Bearer check)
+- Privacidade vem do `MCP_URL_SECRET` no path
+
 1. Abre **claude.ai** no celular ou desktop (mais fácil no desktop)
 2. **Settings → Connectors**
-3. **Add MCP Server**
+3. **Add custom connector** (ou "Add MCP Server")
 4. Preenche:
    - **Name:** `Gus Hub`
-   - **URL:** `https://<seu-domain>.up.railway.app/mcp`
-   - **Auth Type:** Custom header
-   - **Header Name:** `Authorization`
-   - **Header Value:** `Bearer <MCP_BEARER_TOKEN>` (o token da Etapa 1, com a palavra `Bearer ` e espaço antes)
+   - **URL:** `https://<seu-domain>.up.railway.app/<MCP_URL_SECRET>/mcp`
+     (substitui `<MCP_URL_SECRET>` pelo valor da Etapa 3, **sem chaves**)
+   - **Auth:** deixa em branco / "no authentication"
 5. Salva
+
+Pra Claude Desktop / Code / Cursor (que suportam Bearer), pode usar a URL antiga `https://<seu-domain>/<MCP_URL_SECRET>/mcp` igual + header `Authorization: Bearer <MCP_BEARER_TOKEN>` — mas opcional, o URL secret já gate.
 
 Claude.ai vai testar a conexão. Se OK, aparece status verde + lista das 9 tools disponíveis.
 
@@ -184,10 +193,11 @@ Deve chamar `ingestar_fragmento(...)` com `via='claude-chat'` automático. Confi
 **Build falha no Railway com "Dockerfile not found":**
 - Verifica em Settings → Build → Dockerfile Path = `Dockerfile.mcp` (com ponto, não barra)
 
-**`/health` responde mas claude.ai diz "Connection failed":**
+**`/health` responde mas claude.ai diz "Connection failed" / "Falha ao adicionar":**
 - A URL conectada deve terminar em `/mcp` (não em `/`)
-- Verifica que o Bearer header tem espaço entre "Bearer" e o token
-- Logs do Railway mostram cada request — procura por linhas 401
+- Se setou `MCP_URL_SECRET`, a URL precisa do segredo: `/<secret>/mcp` — sem isso retorna 404
+- Logs do Railway mostram cada request — procura linhas 401, 404 ou 500
+- Confere `MCP_AUTH_DISABLED=true` (se não, claude.ai web é rejeitado por falta de Bearer)
 
 **Claude Chat conecta mas não usa as tools:**
 - Em conversa nova, pergunta diretamente algo que exija o Hub
