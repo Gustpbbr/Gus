@@ -1,6 +1,6 @@
 ---
 tipo: meta-memoria
-atualizado: 2026-04-29T07:46:54.892095-03:00
+atualizado: 2026-04-30T07:45:38.134685-03:00
 mem0_total: 19
 ---
 
@@ -16,8 +16,8 @@ Análise automática e determinística do estado do armazém de memórias SOBRE 
 - **Mais recente:** 2026-04-28 — *"1. Gustavo estabeleceu protocolo específico de análise de fotos que deve ser seg..."*
 
 ## Frescor
-- **Últimas 24h:** 15 (78.9%)
-- **Últimos 7 dias:** 4 (21.1%)
+- **Últimas 24h:** 0 (0.0%)
+- **Últimos 7 dias:** 19 (100.0%)
 - **Últimos 30 dias:** 0 (0.0%)
 - **Mais de 30 dias:** 0 (0.0%)
 
