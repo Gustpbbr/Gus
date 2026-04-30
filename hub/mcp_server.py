@@ -379,12 +379,20 @@ class AuthMiddleware(BaseHTTPMiddleware):
 def _create_app() -> Starlette:
     """Monta Starlette com /health público + Mount do app MCP em /. Auth é
     aplicado via AuthMiddleware Bearer, exceto quando MCP_AUTH_DISABLED=true
-    (modo provisório, server público sem auth + write tools bloqueadas)."""
+    (modo provisório, server público sem auth + write tools bloqueadas).
+
+    IMPORTANTE: passa `lifespan=mcp_app.router.lifespan_context` pro Starlette
+    wrapper. Sem isso, o session_manager do FastMCP não inicializa e qualquer
+    POST /mcp explode com `RuntimeError: Task group is not initialized`.
+    Esse foi o bug que impedia claude.ai Connector de conectar (29-30/04).
+    """
     mcp_app = mcp.streamable_http_app()
     routes = [
         Route("/health", health, methods=["GET"]),
         Mount("/", app=mcp_app),
     ]
+    # Reusa o lifespan do mcp_app — sem isso o session_manager fica órfão
+    lifespan = mcp_app.router.lifespan_context
 
     if _is_auth_disabled():
         log.warning("=" * 60)
@@ -393,7 +401,7 @@ def _create_app() -> Starlette:
         log.warning("Tools de escrita (ingestar_fragmento) bloqueadas.")
         log.warning("Reverter: remova MCP_AUTH_DISABLED no Railway Variables.")
         log.warning("=" * 60)
-        return Starlette(routes=routes, middleware=[])
+        return Starlette(routes=routes, middleware=[], lifespan=lifespan)
 
     expected_token = os.environ.get("MCP_BEARER_TOKEN")
     if not expected_token:
@@ -403,6 +411,7 @@ def _create_app() -> Starlette:
     return Starlette(
         routes=routes,
         middleware=[Middleware(AuthMiddleware, expected_header=expected_header)],
+        lifespan=lifespan,
     )
 
 
