@@ -3,13 +3,14 @@ tipo: demanda
 origem: gustavo
 destino: claude-code
 prioridade: alta
-status: pendente
+status: concluido
 criado_em: 2026-04-30T16:55:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: 2026-04-30T18:42:00-03:00
+processado_por: claude-code
 acao_sugerida: investigar
 destino_path: hub/mcp_server.py
 contexto: "Claude Chat conecta no gus-hub MCP (status verde, 9 tools listadas na UI) mas afirma que não consegue invocar as tools — diz que estão 'só disponíveis dentro de Artifacts'. Investigar se é bug no MCP server (transport/protocol) ou comportamento esperado do Claude Chat web."
+resolucao: "Causa raiz = Connector adicionado em Settings mas não habilitado na conversa. claude.ai exige toggle per-conversation via botão '+' no canto inferior esquerdo → Connectors → toggle do Gus Hub ON. Sem isso, Claude Chat alucina que tools só funcionam em Artifact (H1 do MD original era especulação, NÃO comportamento esperado). Servidor tá correto — nenhum fix de código necessário. Doc gus-28-passo2-mcp-server.md atualizada com Etapa 7 (toggle) + troubleshooting reescrito."
 ---
 
 # Demanda — investigar por que Claude Chat não invoca tools do gus-hub

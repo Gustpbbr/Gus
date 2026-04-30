@@ -2,7 +2,7 @@
 tipo: setup-guide
 area: gus
 gus-id: 28-passo2
-atualizado: 2026-04-29T08:30-03:00
+atualizado: 2026-04-30T18:40-03:00
 status: pronto-pra-deploy
 proximos: deploy Railway + conectar em claude.ai
 ---
@@ -134,9 +134,32 @@ Claude.ai vai testar a conexão. Se OK, aparece status verde + lista das 9 tools
 
 ---
 
-## Etapa 7 — Teste end-to-end
+## Etapa 7 — Habilitar o Connector NA conversa (passo crítico)
 
-Abre uma conversa nova no Claude Chat (modo Gus) e pergunta:
+> ⚠️ **Pegadinha confirmada 30/04/2026:** adicionar o Connector em
+> Settings deixa ele "registrado" mas **NÃO** liga ele automaticamente
+> nas conversas. Cada conversa nova começa com o Connector desligado.
+> Sem esse toggle ON, Claude Chat afirma que "não tem acesso" às tools
+> (e às vezes alucina dizendo que elas só funcionam em Artifact — isso
+> é falso, ignore).
+
+Em **cada conversa nova** que precisar das tools do Hub:
+
+1. Abre conversa nova no claude.ai
+2. Clica no botão **"+"** no canto inferior esquerdo (ao lado da caixa
+   de mensagem). Em alguns layouts pode aparecer como ícone de clipe
+   ou menu "Ferramentas/Connectors".
+3. Escolhe **"Connectors"**
+4. Liga o toggle do **Gus Hub** (e desliga os que não precisar pra
+   essa conversa — economia de tokens no system prompt)
+5. Fecha o menu
+
+Só DEPOIS desse toggle as 9 tools ficam visíveis pra Claude Chat na
+conversa. Sem isso, ele não vê.
+
+## Etapa 8 — Teste end-to-end
+
+Com o toggle ON na conversa, pergunta:
 
 > "Quantos fragmentos eu tenho no Hub?"
 
@@ -189,10 +212,25 @@ Deve chamar `ingestar_fragmento(...)` com `via='claude-chat'` automático. Confi
 - Verifica que o Bearer header tem espaço entre "Bearer" e o token
 - Logs do Railway mostram cada request — procura por linhas 401
 
-**Claude Chat conecta mas não usa as tools:**
-- Em conversa nova, pergunta diretamente algo que exija o Hub
-- Verifica que o Connector está marcado como ativo (toggle ligado)
-- Mensagem de boot pode mencionar "9 tools available" se conectado
+**Claude Chat conecta mas não usa as tools (90% dos casos):**
+- O Connector é **per-conversation**: precisa ligar o toggle dentro
+  da conversa via botão "+" no canto inferior esquerdo → Connectors →
+  toggle do Gus Hub ON. Ver Etapa 7 acima.
+- Não basta ter status verde em Settings → Connectors — isso só
+  registra o servidor, não habilita ele na conversa atual.
+- Sintoma típico: Claude Chat responde "não tenho como chamar essa
+  tool daqui, ela só fica disponível em Artifacts via fetch no
+  browser". **Isso é alucinação dele.** Custom MCP connectors no
+  claude.ai web (Pro/Max/Enterprise) funcionam como tools nativas
+  na conversa, não restritos a Artifact. Ele tá inventando porque
+  não vê tool habilitada e racionaliza.
+
+**Conferência rápida que o servidor tá ok:**
+- `/health` retorna 200
+- claude.ai → Settings → Connectors → Gus Hub aparece com 9 tools
+  listadas (toggle "sempre permitir" disponível)
+- Logs Railway de uma conexão recente mostram `initialize` + `tools/list`
+  com 200 OK
 
 **Cold start lento (3-5s na primeira chamada):**
 - Esperado. Railway põe serviço em sleep após inatividade. Próxima chamada acorda.
