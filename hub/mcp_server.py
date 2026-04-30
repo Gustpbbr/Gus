@@ -35,7 +35,7 @@ Variáveis de ambiente:
   MCP_BEARER_TOKEN    — auth header (Bearer)
   GITHUB_TOKEN        — repo tools (opcional, sem ele tools repo retornam 503)
   GITHUB_REPO         — default "Gustpbbr/Gus"
-  PORT                — default 8000
+  PORT                — default 8080 (Railway injeta automaticamente; NÃO setar manual)
 
 Rota /health responde 200 sem auth (pra Railway probe).
 Rota /mcp é o endpoint MCP, exige Bearer.
@@ -80,7 +80,7 @@ log = logging.getLogger(__name__)
 BRT = timezone(timedelta(hours=-3))
 
 GH_REPO = os.environ.get("GITHUB_REPO", "Gustpbbr/Gus")
-PORT = int(os.environ.get("PORT", "8000"))
+PORT = int(os.environ.get("PORT", "8080"))
 
 # FastMCP server — host 0.0.0.0 pro Railway expor pública
 mcp = FastMCP("gus-hub", host="0.0.0.0", port=PORT)
