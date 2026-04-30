@@ -33,12 +33,12 @@ Variáveis de ambiente:
   QDRANT_URL          — Hub
   QDRANT_API_KEY      — Hub
   MCP_BEARER_TOKEN    — auth header (Bearer)
+  MCP_AUTH_DISABLED   — se "true", server público sem auth (modo provisório
+                        enquanto OAuth não estiver pronto). Quando ligado,
+                        ingestar_fragmento bloqueia (read-only).
   GITHUB_TOKEN        — repo tools (opcional, sem ele tools repo retornam 503)
   GITHUB_REPO         — default "Gustpbbr/Gus"
   PORT                — default 8080 (Railway injeta automaticamente; NÃO setar manual)
-
-Rota /health responde 200 sem auth (pra Railway probe).
-Rota /mcp é o endpoint MCP, exige Bearer.
 """
 
 from __future__ import annotations
@@ -84,6 +84,14 @@ PORT = int(os.environ.get("PORT", "8080"))
 
 # FastMCP server — host 0.0.0.0 pro Railway expor pública
 mcp = FastMCP("gus-hub", host="0.0.0.0", port=PORT)
+
+
+def _is_auth_disabled() -> bool:
+    """Modo provisório: server público sem auth. Habilitado via env var
+    MCP_AUTH_DISABLED=true. Quando ligado, AuthMiddleware é desativado e
+    tools de escrita (ingestar_fragmento) ficam bloqueadas pra reduzir o
+    risco de poluição do Hub. Reverter = remover a env var no Railway."""
+    return os.environ.get("MCP_AUTH_DISABLED", "").lower() == "true"
 
 
 # ---------------------------------------------------------------------------
@@ -219,6 +227,12 @@ def ingestar_fragmento(
       biografico, identidade_operacional, meta_reflexao, projeto, rotina.
     Camada temporal: efemero, sessao (default), semana, rotina, permanente.
     """
+    if _is_auth_disabled():
+        return {
+            "ok": False,
+            "error": "Read-only mode: escrita bloqueada enquanto MCP_AUTH_DISABLED=true. "
+                     "Aguarde OAuth pra reativar ingestão.",
+        }
     metadata = {
         "tipo": tipo,
         "area": area,
@@ -363,26 +377,33 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
 
 def _create_app() -> Starlette:
-    """Monta Starlette com /health público + Mount do app MCP em /, com
-    middleware de auth Bearer aplicado globalmente."""
+    """Monta Starlette com /health público + Mount do app MCP em /. Auth é
+    aplicado via AuthMiddleware Bearer, exceto quando MCP_AUTH_DISABLED=true
+    (modo provisório, server público sem auth + write tools bloqueadas)."""
+    mcp_app = mcp.streamable_http_app()
+    routes = [
+        Route("/health", health, methods=["GET"]),
+        Mount("/", app=mcp_app),
+    ]
+
+    if _is_auth_disabled():
+        log.warning("=" * 60)
+        log.warning("MCP_AUTH_DISABLED=true — SERVER PÚBLICO, SEM AUTH")
+        log.warning("Modo provisório enquanto OAuth não está pronto.")
+        log.warning("Tools de escrita (ingestar_fragmento) bloqueadas.")
+        log.warning("Reverter: remova MCP_AUTH_DISABLED no Railway Variables.")
+        log.warning("=" * 60)
+        return Starlette(routes=routes, middleware=[])
+
     expected_token = os.environ.get("MCP_BEARER_TOKEN")
     if not expected_token:
         log.warning("MCP_BEARER_TOKEN ausente — server vai responder 503 em todas as rotas (exceto /health)")
 
     expected_header = f"Bearer {expected_token}" if expected_token else None
-
-    mcp_app = mcp.streamable_http_app()
-
-    app = Starlette(
-        routes=[
-            Route("/health", health, methods=["GET"]),
-            Mount("/", app=mcp_app),
-        ],
-        middleware=[
-            Middleware(AuthMiddleware, expected_header=expected_header),
-        ],
+    return Starlette(
+        routes=routes,
+        middleware=[Middleware(AuthMiddleware, expected_header=expected_header)],
     )
-    return app
 
 
 def main():
@@ -396,7 +417,10 @@ def main():
     app = _create_app()
     log.info(f"MCP server iniciando na porta {PORT}")
     log.info(f"GH_REPO={GH_REPO}")
-    log.info(f"Auth: {'configurado' if os.environ.get('MCP_BEARER_TOKEN') else 'AUSENTE (server vai negar)'}")
+    if _is_auth_disabled():
+        log.info("Auth: DESABILITADA (MCP_AUTH_DISABLED=true)")
+    else:
+        log.info(f"Auth: {'configurado' if os.environ.get('MCP_BEARER_TOKEN') else 'AUSENTE (server vai negar)'}")
     uvicorn.run(app, host="0.0.0.0", port=PORT)
 
 
