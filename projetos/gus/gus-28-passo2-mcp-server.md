@@ -81,7 +81,7 @@ No mesmo serviço, vai em **Variables**:
 | `MCP_BEARER_TOKEN` | o token gerado na Etapa 1 |
 | `GH_TOKEN` | **copia do bot** (Personal Access Token GitHub) |
 | `GH_REPO` | `Gustpbbr/Gus` |
-| `PORT` | `8000` (Railway pode override automático) |
+| `PORT` | **NÃO setar manualmente.** Railway injeta automaticamente (geralmente 8080). Setar `8000` cria conflito com proxy do Railway que escuta 8080. |
 
 Para copiar do bot: abre o serviço do bot → Variables → toca no valor de cada uma → copy. Volta no MCP service → Variables → cola.
 
