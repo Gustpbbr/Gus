@@ -32,10 +32,18 @@ Tools expostas (Tier 1 — gus-28 Passo 2):
 Variáveis de ambiente:
   QDRANT_URL          — Hub
   QDRANT_API_KEY      — Hub
-  MCP_BEARER_TOKEN    — auth header (Bearer)
-  MCP_AUTH_DISABLED   — se "true", server público sem auth (modo provisório
-                        enquanto OAuth não estiver pronto). Quando ligado,
-                        ingestar_fragmento bloqueia (read-only).
+  MCP_BEARER_TOKEN    — auth header (Bearer). Funciona em Claude Desktop,
+                        Claude Code, Cursor. claude.ai web NÃO suporta
+                        custom headers — usar MCP_URL_SECRET pra esses casos.
+  MCP_AUTH_DISABLED   — se "true", desliga AuthMiddleware (sem Bearer check).
+                        Combina com MCP_URL_SECRET pra privacidade no
+                        claude.ai web. Sem nenhum dos dois = público total.
+  MCP_URL_SECRET      — se setado, monta o app MCP em `/{secret}` em vez de `/`.
+                        Endpoint final vira `/{secret}/mcp`. "Shared secret in URL"
+                        — modelo igual webhook do Slack/GitHub. Usado pra dar
+                        privacidade prática no claude.ai web (que só aceita
+                        OAuth, não Bearer). Ingestão fica habilitada se houver
+                        ESSE secret OU Bearer ativo.
   GITHUB_TOKEN        — repo tools (opcional, sem ele tools repo retornam 503)
   GITHUB_REPO         — default "Gustpbbr/Gus"
   PORT                — default 8080 (Railway injeta automaticamente; NÃO setar manual)
@@ -87,11 +95,25 @@ mcp = FastMCP("gus-hub", host="0.0.0.0", port=PORT)
 
 
 def _is_auth_disabled() -> bool:
-    """Modo provisório: server público sem auth. Habilitado via env var
-    MCP_AUTH_DISABLED=true. Quando ligado, AuthMiddleware é desativado e
-    tools de escrita (ingestar_fragmento) ficam bloqueadas pra reduzir o
-    risco de poluição do Hub. Reverter = remover a env var no Railway."""
+    """AuthMiddleware desligado via MCP_AUTH_DISABLED=true. Use junto com
+    MCP_URL_SECRET pra ainda ter privacidade prática no claude.ai web."""
     return os.environ.get("MCP_AUTH_DISABLED", "").lower() == "true"
+
+
+def _url_secret() -> str:
+    """Segredo no path: se setado, MCP é montado em /{secret} em vez de /.
+    Vazio = mount em / (modo legado / público explícito)."""
+    return os.environ.get("MCP_URL_SECRET", "").strip()
+
+
+def _has_access_control() -> bool:
+    """True se as requests são gated por Bearer OU URL secret.
+    Quando False, ingestar_fragmento é bloqueado (modo público total)."""
+    if not _is_auth_disabled() and os.environ.get("MCP_BEARER_TOKEN"):
+        return True
+    if _url_secret():
+        return True
+    return False
 
 
 # ---------------------------------------------------------------------------
@@ -227,11 +249,11 @@ def ingestar_fragmento(
       biografico, identidade_operacional, meta_reflexao, projeto, rotina.
     Camada temporal: efemero, sessao (default), semana, rotina, permanente.
     """
-    if _is_auth_disabled():
+    if not _has_access_control():
         return {
             "ok": False,
-            "error": "Read-only mode: escrita bloqueada enquanto MCP_AUTH_DISABLED=true. "
-                     "Aguarde OAuth pra reativar ingestão.",
+            "error": "Read-only mode: sem auth (Bearer) nem URL secret configurados. "
+                     "Setar MCP_URL_SECRET ou MCP_BEARER_TOKEN pra reativar escrita.",
         }
     metadata = {
         "tipo": tipo,
@@ -377,9 +399,15 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
 
 def _create_app() -> Starlette:
-    """Monta Starlette com /health público + Mount do app MCP em /. Auth é
-    aplicado via AuthMiddleware Bearer, exceto quando MCP_AUTH_DISABLED=true
-    (modo provisório, server público sem auth + write tools bloqueadas).
+    """Monta Starlette com /health público + Mount do app MCP.
+
+    Path do mount:
+      - MCP_URL_SECRET setado → `/{secret}` (endpoint final: `/{secret}/mcp`)
+      - vazio → `/` (endpoint legado: `/mcp`)
+
+    Auth:
+      - MCP_AUTH_DISABLED=true → AuthMiddleware desligado
+      - caso contrário → AuthMiddleware exige Bearer == MCP_BEARER_TOKEN
 
     IMPORTANTE: passa `lifespan=mcp_app.router.lifespan_context` pro Starlette
     wrapper. Sem isso, o session_manager do FastMCP não inicializa e qualquer
@@ -387,20 +415,29 @@ def _create_app() -> Starlette:
     Esse foi o bug que impedia claude.ai Connector de conectar (29-30/04).
     """
     mcp_app = mcp.streamable_http_app()
+    secret = _url_secret()
+    mount_path = f"/{secret}" if secret else "/"
     routes = [
         Route("/health", health, methods=["GET"]),
-        Mount("/", app=mcp_app),
+        Mount(mount_path, app=mcp_app),
     ]
     # Reusa o lifespan do mcp_app — sem isso o session_manager fica órfão
     lifespan = mcp_app.router.lifespan_context
 
+    if secret:
+        log.info(f"MCP montado em /{secret}/mcp (URL secret ativo)")
+    else:
+        log.info("MCP montado em /mcp (sem URL secret)")
+
     if _is_auth_disabled():
-        log.warning("=" * 60)
-        log.warning("MCP_AUTH_DISABLED=true — SERVER PÚBLICO, SEM AUTH")
-        log.warning("Modo provisório enquanto OAuth não está pronto.")
-        log.warning("Tools de escrita (ingestar_fragmento) bloqueadas.")
-        log.warning("Reverter: remova MCP_AUTH_DISABLED no Railway Variables.")
-        log.warning("=" * 60)
+        if not secret:
+            log.warning("=" * 60)
+            log.warning("SERVER 100% PÚBLICO — sem Bearer e sem URL secret")
+            log.warning("Qualquer um com a URL pode ler o Hub.")
+            log.warning("Setar MCP_URL_SECRET pra privacidade prática.")
+            log.warning("=" * 60)
+        else:
+            log.info("Bearer auth desligada (MCP_AUTH_DISABLED=true) — privacidade vem do URL secret")
         return Starlette(routes=routes, middleware=[], lifespan=lifespan)
 
     expected_token = os.environ.get("MCP_BEARER_TOKEN")
@@ -427,9 +464,11 @@ def main():
     log.info(f"MCP server iniciando na porta {PORT}")
     log.info(f"GH_REPO={GH_REPO}")
     if _is_auth_disabled():
-        log.info("Auth: DESABILITADA (MCP_AUTH_DISABLED=true)")
+        log.info("Auth: Bearer DESABILITADA (MCP_AUTH_DISABLED=true)")
     else:
-        log.info(f"Auth: {'configurado' if os.environ.get('MCP_BEARER_TOKEN') else 'AUSENTE (server vai negar)'}")
+        log.info(f"Auth: Bearer {'configurado' if os.environ.get('MCP_BEARER_TOKEN') else 'AUSENTE (server vai negar)'}")
+    log.info(f"URL secret: {'ativo (path /<secret>/mcp)' if _url_secret() else 'sem secret (path /mcp)'}")
+    log.info(f"Escrita: {'habilitada' if _has_access_control() else 'BLOQUEADA (read-only)'}")
     uvicorn.run(app, host="0.0.0.0", port=PORT)
 
 
