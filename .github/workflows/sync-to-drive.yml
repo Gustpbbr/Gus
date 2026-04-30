@@ -12,6 +12,9 @@ on:
       - '!historico/**'
       - '!CLAUDE.md'
       - '!README.md'
+  workflow_run:
+    workflows: ["Gerar estado atual pro Claude Chat"]
+    types: [completed]
   workflow_dispatch:
 
 permissions:
