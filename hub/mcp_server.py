@@ -1,7 +1,7 @@
 """
 MCP Server — wrapper FastMCP em cima do Hub Qdrant.
 
-Build cache marker: 2026-04-29T13:50  # invalida COPY layer no Railway
+Build cache marker: 2026-04-29T19:45  # invalida COPY layer no Railway
 
 Expõe o Hub via Model Context Protocol pra clientes MCP-aware (Claude Chat,
 Claude Code, etc.) consumirem busca semântica, ego cache, ingestão e leitura
@@ -33,8 +33,8 @@ Variáveis de ambiente:
   QDRANT_URL          — Hub
   QDRANT_API_KEY      — Hub
   MCP_BEARER_TOKEN    — auth header (Bearer)
-  GH_TOKEN            — repo tools (opcional, sem ele tools repo retornam 503)
-  GH_REPO             — default "Gustpbbr/Gus"
+  GITHUB_TOKEN        — repo tools (opcional, sem ele tools repo retornam 503)
+  GITHUB_REPO         — default "Gustpbbr/Gus"
   PORT                — default 8080 (Railway injeta automaticamente; NÃO setar manual)
 
 Rota /health responde 200 sem auth (pra Railway probe).
@@ -43,6 +43,7 @@ Rota /mcp é o endpoint MCP, exige Bearer.
 
 from __future__ import annotations
 
+import hmac
 import logging
 import os
 import sys
@@ -78,7 +79,7 @@ log = logging.getLogger(__name__)
 
 BRT = timezone(timedelta(hours=-3))
 
-GH_REPO = os.environ.get("GH_REPO", "Gustpbbr/Gus")
+GH_REPO = os.environ.get("GITHUB_REPO", "Gustpbbr/Gus")
 PORT = int(os.environ.get("PORT", "8080"))
 
 # FastMCP server — host 0.0.0.0 pro Railway expor pública
@@ -242,7 +243,7 @@ def ingestar_fragmento(
 
 
 def _gh_headers() -> Optional[dict]:
-    token = os.environ.get("GH_TOKEN")
+    token = os.environ.get("GITHUB_TOKEN")
     if not token:
         return None
     return {
@@ -262,7 +263,7 @@ def read_repo_file(path: str, ref: str = "main") -> dict:
     """
     headers = _gh_headers()
     if not headers:
-        return {"ok": False, "error": "GH_TOKEN não configurado"}
+        return {"ok": False, "error": "GITHUB_TOKEN não configurado"}
 
     url = f"https://api.github.com/repos/{GH_REPO}/contents/{path}"
     params = {"ref": ref}
@@ -297,7 +298,7 @@ def list_repo_dir(path: str = "", ref: str = "main") -> dict:
     """
     headers = _gh_headers()
     if not headers:
-        return {"ok": False, "error": "GH_TOKEN não configurado"}
+        return {"ok": False, "error": "GITHUB_TOKEN não configurado"}
 
     url = f"https://api.github.com/repos/{GH_REPO}/contents/{path}"
     params = {"ref": ref}
@@ -354,7 +355,8 @@ class AuthMiddleware(BaseHTTPMiddleware):
                 status_code=503,
             )
 
-        if request.headers.get("authorization") != self.expected_header:
+        received = request.headers.get("authorization", "")
+        if not hmac.compare_digest(received, self.expected_header):
             return JSONResponse({"error": "unauthorized"}, status_code=401)
 
         return await call_next(request)
@@ -385,7 +387,7 @@ def _create_app() -> Starlette:
 
 def main():
     """Entry point pra rodar via `python -m hub.mcp_server`."""
-    log.info("=== MCP server boot — build 2026-04-29T13:50 ===")
+    log.info("=== MCP server boot — build 2026-04-29T19:45 ===")
     if not os.environ.get("QDRANT_URL") or not os.environ.get("QDRANT_API_KEY"):
         log.error("QDRANT_URL ou QDRANT_API_KEY ausentes")
         sys.exit(1)

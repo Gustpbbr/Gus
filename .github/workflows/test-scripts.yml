@@ -30,7 +30,9 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          pip install -r .github/scripts/requirements.txt
 
       - name: Syntax check (ast.parse)
         run: |
@@ -63,10 +65,16 @@ jobs:
         # Isso pega o caso clássico do PR #26: from hub.curador falha porque
         # sys.path não tem repo root.
         env:
-          # Env vars fake pra scripts que checam no toplevel ou no init
+          # Env vars fake pra scripts que checam no toplevel ou no init.
+          # OPENAI_API_KEY e ANTHROPIC_API_KEY: gus/llm.py instancia clients
+          # no top-level (linhas 45/50) — AsyncOpenAI valida key vazia no
+          # construtor e crasha o import. Refactor pra lazy fica em PR
+          # separado; aqui só destrava o smoke test.
           QDRANT_URL: http://fake.local
           QDRANT_API_KEY: fake
           MCP_BEARER_TOKEN: fake
+          OPENAI_API_KEY: fake-test-key
+          ANTHROPIC_API_KEY: fake-test-key
         run: |
           python <<'PYEOF'
           import importlib.util
