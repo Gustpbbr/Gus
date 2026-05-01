@@ -47,10 +47,21 @@ client = anthropic.AsyncAnthropic(
     timeout=120.0,  # 2 minutos — evita ficar pendurado se a API travar
 )
 
-openai_client = AsyncOpenAI(
-    api_key=os.getenv("OPENAI_API_KEY"),
-    timeout=120.0,
-)
+# OpenAI client é lazy: AsyncOpenAI explode em __init__ se OPENAI_API_KEY
+# ausente, o que quebrava import de hub.curador (transitivamente importa
+# gus.llm) em workflows que não usam OpenAI mas ainda assim importam o módulo.
+# Inicialização sob demanda mantém imports seguros.
+_openai_client: AsyncOpenAI | None = None
+
+
+def _get_openai_client() -> AsyncOpenAI:
+    global _openai_client
+    if _openai_client is None:
+        _openai_client = AsyncOpenAI(
+            api_key=os.getenv("OPENAI_API_KEY"),
+            timeout=120.0,
+        )
+    return _openai_client
 
 
 async def _chamar_claude_com_retry(
@@ -520,7 +531,7 @@ async def _gerar_resposta_openai(messages: list[dict], memory_context: str = "")
 
     for _ in range(max_tool_rounds):
         try:
-            response = await openai_client.chat.completions.create(
+            response = await _get_openai_client().chat.completions.create(
                 model=model,
                 max_tokens=max_tokens,
                 messages=current_messages,

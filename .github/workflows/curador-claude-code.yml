@@ -1,4 +1,4 @@
-name: Ingest Mem0 from Claude Chat
+name: Curador Claude Code (cron)
 
 on:
   schedule:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  ingest:
+  process:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,14 +21,14 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        # Hub Curador (ADR-001 Fase 2.5): qdrant-client + sentence-transformers + anthropic
-        # mem0ai foi REMOVIDO — Hub Qdrant direto substitui o caminho antigo
+        # Hub Curador híbrido: anthropic + openai + qdrant-client + sentence-transformers
+        # Tudo já no requirements.txt principal
         run: pip install -r requirements.txt
 
-      - name: Ingest Claude Chat → Hub Qdrant (Curador híbrido)
+      - name: Process Claude Code transcripts → Hub Qdrant
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           QDRANT_URL: ${{ secrets.QDRANT_URL }}
           QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
-        run: python .github/scripts/ingest_mem0_from_chat.py
+        run: python .github/scripts/curador_claude_code.py
