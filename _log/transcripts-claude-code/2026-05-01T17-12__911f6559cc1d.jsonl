@@ -1,0 +1,693 @@
+user: oi, blz? posso falar com o Gus? 
+assistant: oi, blz sim. é o Gus aqui — porta Claude Code. o que manda?
+user: Continue from where you left off.
+assistant: No response requested.
+user: primeiro tenha um panorama geral do projeto. segue um guia para vc ver. depois vamos focar em um assunto específico, mas te falo apos vc ler tudo necessário do projeto. segue uma dica de outra aba do code
+
+Aqui vai a receita ordenada por valor por contexto. Foco: mínimo necessário pra não inflar contexto à toa.
+Core obrigatório (sempre, em toda aba nova)
+Arquivo
+Pra quê
+dialogos/_bootstrap/gus-bootstrap.md
+manual operacional do Gus, regras de comportamento, como cada porta usa o Hub
+dialogos/_bootstrap/gus-identity.md
+quem é o Gustavo + quem é o Gus enquanto entidade
+dialogos/_bootstrap/gus-estado-atual.md
+handoff auto-gerado pelo cron 03h, snapshot do Hub
+projetos/gus/_estado-atual.md
+onde paramos na sessão anterior (mais "operacional" que o bootstrap)
+Esses 4 dão 80% do contexto pra qualquer aba nova.
+Live — preferir sobre arquivo
+Se a aba tem MCP gus-hub conectado:
+ego_cache_atual() — identidade + últimas 3 decisões + 5 meta-reflexões
+fragmentos_recentes(horas=24) — o que rolou desde ontem
+contar_fragmentos() — sanity check
+Hub é mais fresco que gus-estado-atual.md (que é snapshot das 03h). Sempre que possível, prefira tools MCP a arquivo .md.
+Específicos do contexto da pergunta
+Só ler se a conversa for sobre:
+Tema
+Arquivo
+Próximos passos / NeuroGus
+projetos/gus/gus-08-plano-proximos-passos.md, projetos/gus/gus-30-neurogus-roadmap.md
+Caminho Alexa
+projetos/gus/gus-10-caminho-alexa.md
+MCP / claude.ai connector
+projetos/gus/gus-28-passo2-mcp-server.md
+Roteamento multi-modelo
+projetos/gus/gus-29-roteamento-multimodelo-tiogu.md
+Hub Qdrant arquitetura
+projetos/gus/gus-18-schema-indexacao.md, gus-20-etapa2-hub-qdrant.md, gus-21-etapa3-curador.md
+Decisão migração ADR-001
+projetos/gus/gus-15-decisao-migracao.md
+Demanda da semana
+dialogos/streams/semana-2026-04-21.md (último arquivo da pasta)
+Demandas pendentes pra essa porta
+dialogos/inbox-<porta>/
+O que NÃO precisa ler
+gus-01 a gus-09 (a não ser por curiosidade arqueológica — bootstrap já resume)
+pessoal/, dimagem/, receitas/ etc. — só sob demanda explícita
+historico/ — pasta morta de conteúdo legado
+Logs antigos (>3 dias)
+_log/sessoes-claude-code/ — arquivos longos de transcript
+Truque pra Claude Chat web
+Como ele lê via Drive Project knowledge, o boot dele já tem gus-bootstrap.md como project instruction. Aí ele só precisa fazer:
+Ler gus-estado-atual.md (snapshot 03h)
+Chamar ego_cache_atual() via MCP gus-hub (estado vivo)
+Pra Claude Code, o CLAUDE.md na raiz é auto-injetado em toda sessão — então já cobre o "core obrigatório".
+Quer que eu padronize isso num arquivo dialogos/_bootstrap/checklist-boot-aba-nova.md pra deixar canonizado?
+
+
+Ah, entendi mal. PRs são histórico, não documentação — uma aba nova não precisa ler nenhum.
+Por que não
+O estado final dos PRs já tá no código + nos docs gus-XX atualizados
+PRs descrevem o caminho, não onde a gente tá. Nova aba quer onde tamo.
+60 PRs = ruído gigante no contexto pra ganho zero
+Quando vale olhar PR
+Situação
+Qual PR
+"Por que esse arquivo tá assim?"
+git log --oneline <arquivo> → abre o PR específico
+"O que mudou hoje?"
+Lista PRs mergeados nas últimas 24h: gh pr list --state merged --limit 10
+Bug recente
+PR mais recente que tocou o código quebrado
+Decisão arquitetural não-óbvia
+PR description costuma ter o "porquê"
+Boa prática
+O que tem que ficar nos docs (não nos PRs):
+Decisões arquiteturais → ADR (gus-15 é exemplo)
+Como configurar algo → gus-XX-setup
+Estado atual do projeto → gus-26-status-consolidado, _estado-atual
+Se um PR precisa ser lido pra entender o presente, é sinal de doc desatualizado — não de PR importante.
+Receita
+Aba nova só precisa olhar PRs se:
+Você falar "tá quebrando X depois do PR #YY" → aí sim, lê o PR
+Investigar bug específico no código mexido recentemente
+Senão, esquece os 60. Os 7 docs do checklist anterior te dão o estado atual.
+assistant: ok, panorama carregado. resumo do que captei:
+
+**onde tamo:**
+- ADR-001 em curso — Mem0 SaaS aposentando, Hub Qdrant é fonte de verdade
+- Curador híbrido Haiku × Sonnet rodando coleta dual até **12/05/2026** (Fase 5)
+- Última sessão (27/04): 5 demandas resolvidas, R2/R6/R7 mergeados, bug 400 do curador corrigido
+- Hoje (01/05) = ~4 dias depois. `gus-estado-atual.md` mostra Hub com 19 frags, mas **nenhum fragmento novo nas últimas 6h** — sistema ocioso ou curador parado (vale checar)
+
+**inbox-claude-code com 4 demandas pendentes:**
+- captura-multiporta-curador
+- curador-bidirecional-cron
+- drive-sync-oauth-fix
+- _frontmatter-referencia (template, não é demanda)
+
+**branch atual:** `claude/initial-setup-iWTfL` (não é a `claude/fix-curador-mem0-cleanup` que ficou aberta com PR #10 do dia 27/04 — vale conferir se mergeou)
+
+**alerta interessante:** o CLAUDE.md desta porta diz que captura proativa via MCP `mem0-gus__salvar_memoria*` está **quebrada neste ambiente** (sem ANTHROPIC_API_KEY/QDRANT_URL). Conhecimento desta sessão sobrevive só via commit/PR/docs.
+
+manda o foco específico que tu quer atacar.
+user: vamos ver isso. acredito que tenha uma demanda aberta na aba diálogos sobre isso tbm
+tbm
+
+PR #63 mergeado — arquivamento feito. Inbox agora 4 pendências reais.
+Caminho 2 — passo a passo
+Visão geral
+Código
+Passo 1 — Hook salvar transcript no repo (~30 linhas)
+Arquivo: .claude/hooks/retro_engine.py
+Adicionar antes da chamada Haiku (que falha sem env vars):
+Python
+Passo 2 — Hook commit auto (~10 linhas)
+~/.claude/stop-hook-git-check.sh já avisa se há mudanças. Estende pra também stagear/commitar transcripts automaticamente:
+Bash
+Atenção: git push pode falhar se branch não tracked. Implementar fallback gracioso (loga warning, não quebra).
+Passo 3 — Script cron processar (~80 linhas)
+Arquivo novo: .github/scripts/curador_claude_code.py
+Python
+Passo 4 — Workflow GitHub Actions (~30 linhas)
+Arquivo novo: .github/workflows/curador-claude-code.yml
+Yaml
+Passo 5 — .gitkeep + README na pasta
+Arquivos:
+_log/transcripts-claude-code/.gitkeep — cria pasta vazia no repo
+_log/transcripts-claude-code/README.md — explica o que é, como cron processa, política PII
+Passo 6 — Validar end-to-end
+Implementa Passos 1-5 numa branch
+Mergeia
+Próxima sessão Code que rodar Stop hook deve gerar _log/transcripts-claude-code/<timestamp>__<id>.jsonl
+Commit auto-empurra pro repo
+Cron roda em até 30min
+Verificar logs do workflow no GitHub
+Buscar no Hub: mcp__mem0-gus__buscar_memorias(query="claude-code") deve retornar fragmentos novos
+Pontos de atenção
+Risco
+Mitigação
+PII em transcripts públicos
+Rodar gus.patterns_sensiveis.redact() ANTES de salvar arquivo
+Custo Haiku/GPT explodindo
+Cap MAX_CHARS=50K; cron a cada 30min limita 48 runs/dia
+Push falhar no hook
+Fallback gracioso, transcript fica local, pega na próxima
+Conflito git durante push
+Hook usa git pull --rebase antes do push
+Curador retornando lixo
+Logs do workflow no GitHub permitem revisar; quarentenar fragmentos com confiança baixa
+Custo estimado
+Haiku: ~$0.0001/sessão × 2 (gus+gustavo) = $0.0002/sessão
+GPT-4o-mini: ~$0.0001/sessão × 2 = $0.0002/sessão
+Total: <$0.50/mês mesmo com 50 sessões/dia
+Onde implementar
+Tudo na demanda dialogos/inbox-claude-code/2026-05-01-curador-bidirecional-cron.md (já criada). Próxima aba pode pegar e implementar — ~2-3h.
+Quer que eu implemente agora, ou prefere deixar pra outra sessão? Aviso que não vou conseguir testar end-to-end nesta sessão (env vars ausentes, vai precisar de cron real rodando).
+
+
+
+[sessão Code]
+    ↓ Stop hook
+salva transcript bruto em _log/transcripts-claude-code/<timestamp>__<id>.jsonl
+    ↓ stop-hook-git-check.sh detecta + commita + push
+[GitHub Actions cron — a cada 30min]
+    ↓ checkout + pip install
+processa transcripts não-processados:
+    1. roda curador bidirecional Haiku × GPT-4o-mini
+    2. extrai 2 listas: gus + gustavo
+    3. salva fragmentos no Hub via hub.store.ingestar
+    4. move arquivo pra _log/transcripts-claude-code/processados/
+    ↓ commit + push
+[Hub Qdrant]
+ambos brains alimentados, zero atrito UX
+
+
+
+def _persist_transcript_pra_cron(transcript: str) -> Path:
+    """Salva transcript em pasta processada pelo cron GitHub Actions.
+    Esse é o caminho que funciona quando ambiente Web não tem env vars."""
+    transcripts_dir = REPO_ROOT / "_log" / "transcripts-claude-code"
+    transcripts_dir.mkdir(parents=True, exist_ok=True)
+
+    session_id = uuid.uuid4().hex[:12]
+    nome = f"{datetime.now(BRT).strftime('%Y-%m-%dT%H-%M')}__{session_id}.jsonl"
+    out_path = transcripts_dir / nome
+
+    # Filtra PII via regex existente em gus.patterns_sensiveis
+    try:
+        from gus.patterns_sensiveis import redact
+        transcript_safe = redact(transcript)
+    except Exception:
+        transcript_safe = transcript  # fallback: não filtra
+
+    out_path.write_text(transcript_safe, encoding="utf-8")
+    return out_path
+
+# Em main(), DEPOIS do _ler_transcript:
+out_path = _persist_transcript_pra_cron(transcript)
+log.info(f"Transcript salvo pra cron processar: {out_path.name}")
+
+# Daí tenta extrair via Haiku (legacy path, pode falhar sem env vars):
+try:
+    fragmentos = _extrair_fragmentos(transcript)
+    # ...
+except RuntimeError:
+    # Já salvou pra cron — vida segue
+    _logar_sessao(0, 0, [str(e)], f"(transcript {out_path.name} salvo pra cron)")
+    return
+
+
+
+# No fim do hook git-check, antes do exit:
+TRANSCRIPTS_NOVOS=$(git status --porcelain _log/transcripts-claude-code/ 2>/dev/null | head -5)
+if [ -n "$TRANSCRIPTS_NOVOS" ]; then
+    git add _log/transcripts-claude-code/
+    git commit -m "chore(transcripts): captura sessão $(date +%Y-%m-%dT%H-%M)" --quiet
+    git push origin HEAD --quiet 2>/dev/null || echo "push falhou — manual depois"
+fi
+
+
+
+
+"""Cron: processa transcripts Claude Code novos com curador bidirecional."""
+import asyncio
+import sys
+from pathlib import Path
+
+# Adiciona repo root ao path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from hub.curador import curar_turnos
+
+TRANSCRIPTS_DIR = Path("_log/transcripts-claude-code")
+PROCESSADOS_DIR = TRANSCRIPTS_DIR / "processados"
+MIN_CHARS = 200
+MAX_CHARS = 50_000  # cap pra evitar custo absurdo
+
+
+async def processar(path: Path) -> dict:
+    """Lê transcript, roda curador 2x (gus + gustavo), move pra processados/."""
+    conteudo = path.read_text(encoding="utf-8")
+
+    if len(conteudo) < MIN_CHARS:
+        path.rename(PROCESSADOS_DIR / path.name)
+        return {"file": path.name, "skip": "muito curto"}
+
+    # Trunca pra cap de custo (mantém início + fim)
+    if len(conteudo) > MAX_CHARS:
+        meio = MAX_CHARS // 2
+        conteudo = conteudo[:meio] + "\n\n[…transcript truncado…]\n\n" + conteudo[-meio:]
+
+    # Roda curador 2x (uma por brain)
+    resultados = {}
+    for user_id in ("gustavo", "gus"):
+        try:
+            r = await curar_turnos(
+                conteudo,
+                via="claude-code",
+                user_id=user_id,
+            )
+            resultados[user_id] = r.get("salvos", 0)
+        except Exception as e:
+            resultados[user_id] = f"erro: {str(e)[:120]}"
+
+    # Move pra processados/
+    PROCESSADOS_DIR.mkdir(exist_ok=True)
+    path.rename(PROCESSADOS_DIR / path.name)
+
+    return {"file": path.name, **resultados}
+
+
+async def main():
+    PROCESSADOS_DIR.mkdir(exist_ok=True)
+    transcripts = sorted(p for p in TRANSCRIPTS_DIR.glob("*.jsonl") if p.is_file())
+
+    if not transcripts:
+        print("Nenhum transcript novo")
+        return
+
+    for path in transcripts:
+        resultado = await processar(path)
+        print(resultado)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+
+
+
+name: Curador Claude Code (cron)
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"  # a cada 30 min
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements.txt -r .github/scripts/requirements.txt
+
+      - name: Process transcripts
+        env:
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python .github/scripts/curador_claude_code.py
+
+      - name: Commit processed transcripts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _log/transcripts-claude-code/
+          if ! git diff --cached --quiet; then
+            git commit -m "auto: processa transcripts Claude Code"
+            git push
+          fi
+assistant: Lido. Esse plano da outra aba mapeia exato pra demanda `2026-05-01-curador-bidirecional-cron.md` (Caminho 2). Antes de cravar a implementação, preciso verificar alguns pontos no código atual pra não codar baseado em suposição.
+assistant: Conferi os pontos críticos do plano vs realidade do código. Encontrei 4 furos que precisam decisão antes de codar:
+
+**1. `patterns_sensiveis.redact()` não existe**
+Só tem `escanear()` que retorna lista de nomes de patterns achados. O plano assume `redact()`. Duas opções:
+- (a) Criar `redact()` no `patterns_sensiveis.py` (substitui matches por `[REDACTED-<tipo>]`)
+- (b) Em vez de redigir, **bloquear save** se `escanear()` achar qualquer pattern (mais conservador — risco zero de PII no repo público)
+
+Recomendo **(b)** — transcript com PII fica só local, não trash. Mais seguro pra repo público.
+
+**2. `curar_turnos` espera `list[dict]`, não string**
+Plano passa `conteudo` (string) — quebraria. A função certa é `curar_arquivo(body, via, user_id)` que aceita string. Já existe e é usada pelo `ingest_mem0_from_chat.py`. Trocar pra ela.
+
+**3. Auto-commit do transcript — Opção B do plano não funciona aqui**
+`stop-hook-git-check.sh` está em `~/.claude/` (user settings, fora do repo). Editá-lo só afeta esta máquina; outras sessões Code on the web podem não ter. Melhor:
+- (c) **`retro_engine.py` faz `git add + commit + push` direto após salvar transcript** (já roda como hook do projeto, in-repo)
+- Tratar push falhar com fallback gracioso (loga aviso, transcript fica local pra próxima sessão)
+
+**4. `openai` não está em `.github/scripts/requirements.txt`**
+`hub/curador.py` usa `AsyncOpenAI`. Cron quebra sem `openai` no requirements. Adicionar.
+
+**Outros achados:**
+- Pasta `_log/transcripts-claude-code/` não existe — criar com `.gitkeep`
+- Atual branch é `claude/clarify-session-purpose-4otLR`, vou trabalhar nela
+- `retro_engine.py` já tem `_ler_transcript()` decente (parseia JSONL, trunca em 30K chars) — reaproveitar
+
+**Plano refeito (Fase 1 + 2 do plano original, ~150 linhas):**
+
+1. `gus/patterns_sensiveis.py` — adiciona `redact()` opcionalmente, mas implemento estratégia de **bloquear se PII detectada** no hook
+2. `.claude/hooks/retro_engine.py` — após `
+
+[…transcript truncado…]
+
+ / shortcut iOS
+Tu mesmo escreve script (Tampermonkey no desktop, ou Atalho no iPhone) que pega texto da página e manda pro Drive via API. Mais trabalho, mais customizável.
+
+### Caminho C — Voltar ao manual + simplificar
+Tu já cola .md em `dialogos/inbox-mem0-from-chat/` no GitHub web. Drive como intermediário só vale se tu prefere mexer no Drive pelo celular.
+
+## Meu pitch
+
+Antes de decidir o caminho A/B/C, fechar primeiro **3 itens em sequência:**
+
+**1. Consertar OAuth (Service Account)** — `drive-sync-oauth-fix.md` recomenda. Sem isso, Drive não conversa com GitHub. ~30min código + 10min Google Console.
+
+**2. Adicionar `inbox-mem0-from-chat` no import-from-drive** — pequena mudança no script (uns 10 linhas). Cria pasta espelhada no Drive, qualquer .md ali vira automaticamente arquivo no GitHub → cron processa pro Hub. ~15min.
+
+**3. Decidir o A/B/C** — só depois dos 1+2 funcionando. Se eu fosse tu, tentava extensão browser primeiro (Caminho A) — é o esforço-benefício melhor.
+
+## Custo
+
+- Service Account Google: gratuito, ilimitado
+- Storage Drive: já tem (15GB free)
+- Compute extra: zero (workflows já rodam)
+
+## Pergunta pra ti
+
+Quer que eu ataque os itens 1 e 2 agora? Pra item 1 vou precisar que tu execute uns passos no Google Cloud Console (criar Service Account, baixar JSON, colar como secret). Te dou o passo-a-passo.
+
+Item 2 é puro código, faço sem tu fazer nada.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pushed.
+user: Continue from where you left off.
+assistant: No response requested.
+user: 
+sim, vamos começar 
+
+
+
+assistant: Beleza. Vou em 2 frentes em paralelo: tu cria o Service Account no Google Cloud (passos abaixo), eu mexo no código.
+
+## 📱 Tua parte — Criar Service Account (10min)
+
+### Passo 1 — Criar Service Account
+1. Abre: **https://console.cloud.google.com/iam-admin/serviceaccounts**
+2. Login com a conta Google que tem o Drive `Gus-Sync`
+3. **Selecionar ou criar projeto** no topo:
+   - Se já tens um projeto onde rodou OAuth antes (tipo "Gus" ou similar), seleciona ele
+   - Se não, clica em **"NEW PROJECT"** → nome: `gus-bot` → CREATE → aguarda 30s → seleciona
+4. Botão **"+ CREATE SERVICE ACCOUNT"** no topo
+5. Preenche:
+   - **Service account name:** `gus-drive-sync`
+   - **Service account ID:** auto-preenche (algo tipo `gus-drive-sync@<projeto>.iam.gserviceaccount.com`)
+   - **Description:** `Sync GitHub ↔ Drive sem OAuth expirar`
+6. **CREATE AND CONTINUE**
+7. **Grant roles:** pode pular (deixa em branco) → **CONTINUE** → **DONE**
+
+### Passo 2 — Baixar JSON key
+1. Na lista, clica no SA que acabou de criar (`gus-drive-sync@...`)
+2. Aba **"KEYS"** no topo
+3. **ADD KEY** → **Create new key** → **JSON** → **CREATE**
+4. **Salva o arquivo .json** que baixar (vai chamar algo tipo `gus-bot-abc123.json`)
+5. **NÃO compartilha esse arquivo com ninguém — é a chave de acesso completa**
+
+### Passo 3 — Compartilhar pasta Drive com o SA
+1. Abre Google Drive: https://drive.google.com
+2. Acha a pasta **`Gus-Sync`** (provavelmente na raiz ou em "Meu Drive")
+3. Clica direito → **Compartilhar** (ou ícone de pessoa)
+4. No campo "Adicionar pessoas e grupos", cola o **email do Service Account** (algo tipo `gus-drive-sync@gus-bot.iam.gserviceaccount.com`)
+5. Permissão: **Editor**
+6. **Desmarca** "Notificar pessoas" (SA não tem inbox)
+7. **Compartilhar**
+
+### Passo 4 — Adicionar JSON como secret no GitHub
+1. Abre: **https://github.com/Gustpbbr/Gus/settings/secrets/actions**
+2. **"New repository secret"**
+3. **Name:** `GOOGLE_SERVICE_ACCOUNT_JSON`
+4. **Secret:** abre o .json que tu baixou no passo 2 (com qualquer editor de texto, ou Notas no iPhone), **cola o conteúdo inteiro** (incluindo as chaves `{` `}`)
+5. **Add secret**
+
+**Avisa quando terminar.** Aí eu rodo um teste e finalizo.
+
+---
+
+## 💻 Minha parte — código
+
+Começo agora, em paralelo. Vou:
+1. Migrar `sync_to_drive.py` e `import_from_drive.py` pra Service Account (mantém OAuth como fallback se quiser, mas SA vira default)
+2. Adicionar `inbox-mem0-from-chat` na lista de pastas importadas, com lógica especial pra .md sem frontmatter formal
+
+Vou ler os scripts atuais e implementar.
+assistant: Agora implemento. Começo pelo helper compartilhado:
+assistant: Agora modifico os 2 scripts pra usar o helper:
+assistant: Agora `import_from_drive.py` — auth + adicionar `inbox-mem0-from-chat`:
+assistant: Agora preciso ver onde a lógica de roteamento "demanda vs mirror" decide e adicionar a 3ª via "raw inbox":
+assistant: Agora ligo no roteamento principal:
+assistant: Atualizar workflows pra passar `GOOGLE_SERVICE_ACCOUNT_JSON`:
+assistant: Validar sintaxe:
+assistant: Tudo válido. Agora preciso atualizar a demanda do Drive sync e commitar. Mas vou checar se sobrou referência stale ao `Credentials` antigo:
+assistant: Sem referências stale. Vou commit + PR direto pra main. Mas antes, branch nova pra evitar baguça com a anterior:
+assistant: Branch limpa, mudanças carregadas. Commit e push:
+assistant: PR #68 aberto. Antes de mergear, quero teu OK porque uma vez mergeado o workflow vai tentar usar SA na próxima execução — se ainda não tiver setado, **falha** (helper exige um dos dois auths).
+
+**2 caminhos:**
+
+**A — Mergear agora.** Pode quebrar `sync-to-drive` e `import-from-drive` até tu setar o SA (mas eles já estão quebrados por causa do OAuth expirado, então não tem regressão real).
+
+**B — Esperar tu setar o SA, aí mergeio.** Mais conservador.
+
+Qual prefere? Se for A, mergeio já. Se for B, me avisa quando terminar os 4 passos do Google Cloud Console.
+
+Resumo do checklist pra ti, pra recapitular:
+1. Criar Service Account (`gus-drive-sync`) em https://console.cloud.google.com/iam-admin/serviceaccounts
+2. Baixar JSON key
+3. Compartilhar pasta `Gus-Sync` no Drive com email do SA (Editor)
+4. Colar JSON em GitHub Settings → Secrets → `GOOGLE_SERVICE_ACCOUNT_JSON`
+5. Criar pasta `Gus-Sync/dialogos/inbox-mem0-from-chat/` no Drive
+user: Continue from where you left off.
+assistant: No response requested.
+user: CREATE SERVICE ACCOUNT - ja tenho.. ainda tem q fazer outra?
+
+Detalhes da conta de serviço
+Nome
+gus-sync
+Descrição
+Sincroniza .md do GitHub pro Drive
+E-mail
+
+gus-sync@gus-drive-sync.iam.gserviceaccount.com
+
+ID exclusivo
+
+11264514 - apaguei o resto
+
+Status da conta de serviço
+A desativação da conta permite preservar as políticas sem precisar excluí-la.
+
+Ativado
+assistant: Não precisa criar outra! **Usa essa mesma**: `gus-sync@gus-drive-sync.iam.gserviceaccount.com`.
+
+Pula direto pra continuação dos passos:
+
+## Passo 2 — Baixar JSON key
+
+1. Na página do SA `gus-sync` que tu já tem aberta:
+2. Aba **"KEYS"** (ou "Chaves") no topo
+3. **"ADD KEY"** → **"Create new key"** → seleciona **JSON** → **CREATE**
+4. Vai baixar arquivo `.json` (algo tipo `gus-drive-sync-abc123.json`)
+5. **Guarda esse arquivo** — não compartilha com ninguém
+
+> ⚠️ Se já existe key criada antes (pode aparecer na lista), tu pode reusar SE ainda tem o JSON salvo. Se não tem mais, cria uma nova como acima — Google permite múltiplas keys por SA, sem problema.
+
+## Passo 3 — Compartilhar pasta Drive
+
+1. Abre https://drive.google.com
+2. Acha a pasta **`Gus-Sync`**
+3. Botão direito (ou ícone de pessoa+) → **"Compartilhar"**
+4. No campo "Adicionar pessoas e grupos", cola: `gus-sync@gus-drive-sync.iam.gserviceaccount.com`
+5. Permissão: **Editor**
+6. **Desmarca** "Notificar pessoas" (SA não recebe email)
+7. **Compartilhar / Concluído**
+
+## Passo 4 — Adicionar JSON como secret no GitHub
+
+1. Abre https://github.com/Gustpbbr/Gus/settings/secrets/actions
+2. **"New repository secret"**
+3. **Name:** `GOOGLE_SERVICE_ACCOUNT_JSON` (exatamente assim)
+4. **Secret:** abre o `.json` baixado no Passo 2 com qualquer editor (Notas, TextEdit, VS Code), **copia tudo** (incluindo `{` e `}`), cola aqui
+5. **"Add secret"**
+
+## Passo 5 — Criar pasta no Drive (opcional, só se for usar fluxo Chat → Drive)
+
+1. Dentro de `Gus-Sync` no Drive, abre `dialogos/`
+2. Cria pasta nova: **`inbox-mem0-from-chat`**
+3. Pronto. Qualquer .md que tu colocar aqui vira fragmento no Hub em até 45min.
+
+---
+
+**Avisa quando terminar os 4 (ou 5) passos.** Aí eu mergeio o PR #68 e disparo o workflow manual pra validar.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pushed.
+user: Continue from where you left off.
+assistant: No response requested.
+user: nao da
+
+A criação da chave da conta de serviço está desativada
+Uma política da organização que bloqueia a criação de chaves de conta de serviço foi aplicada na sua organização.
+IDs das políticas da organização aplicadas:
+iam.disableServiceAccountKeyCreation
+Possíveis causas: o administrador da política da organização aplicou a política para evitar incidentes de segurança relacionados a chaves de conta de serviço. Também é possível que sua organização tenha aplicado a política automaticamente como parte das aplicações de segurança por padrão .
+
+Próximas etapas recomendadas: as chaves de conta de serviço representam um risco de segurança quando não são gerenciadas corretamente. Escolha uma alternativa mais segura  sempre que possível. Se você precisa se autenticar com uma chave de conta de serviço, um administrador com o papel de Administrador de políticas da organização (roles/orgpolicy.policyAdmin) na organização precisa desativar  as restrições mencionadas acima.
+
+Número de rastreamento: c227541034844751
+
+
+assistant: Ah, a organização do Google Cloud bloqueou criação de JSON key (política de segurança). 3 caminhos:
+
+## A — Desativar a política (mais simples se tu é admin)
+
+1. Abre https://console.cloud.google.com/iam-admin/orgpolicies
+2. No topo, seleciona **a organização** (não o projeto) — algo tipo `gus-drive-sync.iam` ou domínio teu
+3. Procura **"Disable service account key creation"** (ID: `iam.disableServiceAccountKeyCreation`)
+4. Clica nela → botão **"MANAGE POLICY"**
+5. Escolhe **"Customize"** → **"Off"** (ou "Não aplicada") → **"SET POLICY"**
+6. Volta na tela do SA, tenta criar a key de novo
+
+**Funciona se:** tu é admin da organização (geralmente o dono da conta Google que criou o projeto).
+**Não funciona se:** é Workspace gerenciado por outro admin (tipo Workspace de empresa/escola).
+
+## B — Workload Identity Federation (solução definitiva, sem JSON key)
+
+Em vez de JSON estático, GitHub Actions autentica direto via OIDC. Mais seguro, zero manutenção.
+
+**Trabalho:** ~15min no Google Cloud + eu refator pequeno no código (1-2 linhas + workflow).
+
+**Setup que tu faz:**
+1. Google Cloud Console → IAM → **Workload Identity Federation** → "CREATE POOL"
+2. Pool name: `github-actions`
+3. Provider: **OIDC**, issuer: `https://token.actions.githubusercontent.com`
+4. Attribute condition: `assertion.repository == 'Gustpbbr/Gus'`
+5. Conceder role `Workload Identity User` ao SA `gus-sync` pro principal do pool
+
+(Te dou passo-a-passo detalhado se escolheres essa)
+
+## C — Voltar OAuth (paliativo)
+
+Refaz refresh token (expira em 7 dias, loop infinito).
+
+---
+
+## Minha recomendação
+
+**B** se topar 15min de setup uma vez (zero manutenção depois).
+**A** se for rápido (só clica e desabilita).
+**C** se quer já já mas aceita reativar a cada semana.
+
+Qual escolhes? Se **B**, te mando passo-a-passo super detalhado. Se **A**, primeiro confirma se tu vê a opção Manage Policy disponível pra ti (deve aparecer botão se tu é admin da org).
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pushed.
+nao da pra editar, ele fica off (nao da pra clicar em gerenciar)
+
+
+
+user: Continue from where you left off.
+assistant: No response requested.
+user: nao da pra editar, ele fica off (nao da pra clicar em gerenciar)
+
+
+
+assistant: Beleza, sem admin. Caminho A descartado. Vamos pra **B (Workload Identity Federation)** — é melhor mesmo, sem JSON pra vazar.
+
+## Passo 1 — Habilitar APIs necessárias
+
+1. Abre https://console.cloud.google.com/apis/library
+2. Confirma o projeto **`gus-drive-sync`** selecionado no topo
+3. Procura **"IAM Service Account Credentials API"** → clica → **ENABLE** (se não tiver)
+4. Procura **"Cloud Resource Manager API"** → clica → **ENABLE** (se não tiver)
+
+## Passo 2 — Criar Workload Identity Pool
+
+1. Abre https://console.cloud.google.com/iam-admin/workload-identity-pools
+2. Botão **"+ CREATE POOL"** no topo
+3. **Name:** `github-actions`
+4. **Pool ID:** auto-preenche `github-actions`
+5. **Description:** "Auth GitHub Actions sem JSON key"
+6. **Enabled pool:** marcado
+7. **CONTINUE**
+
+## Passo 3 — Adicionar Provider (OIDC)
+
+Continua no fluxo após criar o pool:
+
+1. **Select a provider:** OIDC
+2. **Provider name:** `github`
+3. **Provider ID:** `github`
+4. **Issuer (URL):** `https://token.actions.githubusercontent.com`
+5. **Audiences:** Default
+6. **CONTINUE**
+
+Próxima tela:
+
+7. **Attribute mapping:**
+   - `google.subject` ← `assertion.sub`
+   - Adiciona linha clicando em **"+ ADD MAPPING"**:
+     - `attribute.repository` ← `assertion.repository`
+8. **Attribute conditions:** cola exatamente:
+   ```
+   assertion.repository == 'Gustpbbr/Gus'
+   ```
+   (isso impede outros repos de usarem teu SA)
+9. **SAVE**
+
+## Passo 4 — Dar permissão ao SA pra ser impersonado pelo pool
+
+1. Volta na lista de pools, clica em **`github-actions`**
+2. Vai na aba **"Connected service accounts"** (ou clica no SA na lista)
+3. **GRANT ACCESS** → **"Grant access using service account impersonation"**
+4. **Service account:** seleciona `gus-sync@gus-drive-sync.iam.gserviceaccount.com`
+5. **Select principals:** escolhe **"Only identities matching a filter"**
+6. **Attribute name:** `repository`
+7. **Attribute value:** `Gustpbbr/Gus`
+8. **SAVE**
+
+## Passo 5 — Pegar 2 strings que vou precisar
+
+Depois de salvar, no topo da tela do pool tem **"Default audience"** ou similar — copia o caminho completo do **provider**, vai ser algo tipo:
+
+```
+projects/123456789012/locations/global/workloadIdentityPools/github-actions/providers/github
+```
+
+(o número `123456789012` é o **Project Number** do `gus-drive-sync`, achas em https://console.cloud.google.com/home/dashboard)
+
+**Me manda esses 2 valores:**
+1. **Project Number** (12 dígitos)
+2. O caminho completo do provider (string acima)
+
+Aí eu refator o código pra usar WIF (em vez de JSON key). Sem secret novo no GitHub além desses dados — token OIDC é gerado on-the-fly a cada execução do workflow.
+
+---
+
+**Dificuldade:** maior que JSON key, mas é one-shot. Depois fica pronto pra sempre.
+
+Se der bloqueio de política em algum desses passos também (ex: `iam.workloadIdentityPoolProviderAllowedIssuers`), me manda o erro — aí pulamos pra C (OAuth) como bridge enquanto pensamos em outra coisa.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
