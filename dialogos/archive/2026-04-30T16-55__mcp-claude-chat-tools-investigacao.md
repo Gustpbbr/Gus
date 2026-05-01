@@ -3,13 +3,14 @@ tipo: demanda
 origem: gustavo
 destino: claude-code
 prioridade: alta
-status: pendente
+status: concluido
 criado_em: 2026-04-30T16:55:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: 2026-05-01T11:35:00-03:00
+processado_por: claude-code
 acao_sugerida: investigar
 destino_path: hub/mcp_server.py
 contexto: "Claude Chat conecta no gus-hub MCP (status verde, 9 tools listadas na UI) mas afirma que não consegue invocar as tools — diz que estão 'só disponíveis dentro de Artifacts'. Investigar se é bug no MCP server (transport/protocol) ou comportamento esperado do Claude Chat web."
+resolucao: "Investigado em 30/04-01/05/2026. Não era bug do MCP server. Causa raiz: (1) Claude Chat web confunde 'tool_search' interno dele com tools MCP e diz 'não tenho acesso' mesmo com tools listadas — solução é pedir explicitamente 'use a tool X'. (2) Tentativa via Artifact falha por CORS — Artifacts são sandbox, não acessam Connectors. Quando Gustavo testou diretamente em conversa nova, contar_fragmentos funcionou. Bug colateral descoberto e fixado: lifespan do Starlette wrapper (PR #57). Issue secundária: claude.ai web não suporta Bearer/custom header — só OAuth — resolvido via MCP_URL_SECRET no path (PR #60)."
 ---
 
 # Demanda — investigar por que Claude Chat não invoca tools do gus-hub
