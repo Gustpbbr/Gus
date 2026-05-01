@@ -149,6 +149,30 @@ Detalhes de quando usar cada uma → `gus/system_prompt.md`.
 - `Stop:retro-engine` — log de fim-de-sessão em `_log/retro-engine-claude-code/AAAA-MM-DD.md`
 - `Stop:git-check` — avisa se há mudanças não commitadas
 
+> **AVISO IMPORTANTE — Captura de memória da porta Code quebrada (2026-05-01):**
+>
+> Este ambiente Claude Code on the web não tem `ANTHROPIC_API_KEY`, `QDRANT_URL`
+> nem `QDRANT_API_KEY`. Por causa disso:
+>
+> 1. O hook `Stop:retro-engine` é silent no-op (esperava as vars em
+>    `~/.claude/gus.env`, que não existe aqui). O log de fim-de-sessão agora
+>    registra honestamente "no-op: anthropic_missing" em vez da mentira
+>    anterior "(sessão trivial — nada extraído)".
+>
+> 2. As tools MCP `mcp__mem0-gus__salvar_memoria*` também falham: o servidor
+>    MCP precisa das vars do Qdrant pra escrever no Hub. Captura proativa
+>    via tool MCP **não funciona** neste ambiente. Tentar isso só causa
+>    erro + atrito de UX (cada call pede autorização).
+>
+> **Caminho real (a implementar):** cron GitHub Actions processa transcripts
+> commitados pela porta Code → roda curador (Haiku × GPT) → salva fragmentos
+> bidirecionais (`gus` + `gustavo`) no Hub via secrets do GitHub Actions.
+> Demanda: `dialogos/inbox-claude-code/2026-05-01-curador-bidirecional-cron.md`.
+>
+> **Enquanto não consertar:** conhecimento dessa porta sobrevive só via
+> commits, PRs, docs `gus-XX/*.md` e demandas em `dialogos/inbox-*/`.
+> Não tentar `mcp__mem0-gus__salvar_memoria*` proativamente — vai falhar.
+
 ---
 
 ## Estrutura de pastas do repositório (onde os MDs são salvos)

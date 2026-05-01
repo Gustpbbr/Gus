@@ -180,12 +180,12 @@ def _extrair_fragmentos(transcript: str) -> list[dict]:
         import anthropic
     except ImportError:
         log.warning("anthropic não disponível — hook no-op")
-        return []
+        raise RuntimeError("anthropic_missing")
 
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         log.warning("ANTHROPIC_API_KEY ausente — hook no-op")
-        return []
+        raise RuntimeError("api_key_missing")
 
     client = anthropic.Anthropic(api_key=api_key, timeout=60.0)
     modelo = os.environ.get("MODEL_RETRO_ENGINE", "claude-haiku-4-5")
@@ -334,7 +334,14 @@ def main() -> None:
         return
 
     log.info(f"Processando transcript ({len(transcript)} chars)…")
-    fragmentos = _extrair_fragmentos(transcript)
+    try:
+        fragmentos = _extrair_fragmentos(transcript)
+    except RuntimeError as e:
+        # Distingue env ausente vs sessão genuinamente trivial — log honesto
+        motivo = str(e)
+        log.warning(f"Retro Engine no-op: {motivo}")
+        _logar_sessao(0, 0, [motivo], f"(no-op: {motivo} — Retro Engine inativo neste ambiente)")
+        return
 
     if not fragmentos:
         log.info("Nenhum fragmento autobiográfico extraído — sessão trivial")
