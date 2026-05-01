@@ -38,7 +38,9 @@ Se as vars não estiverem disponíveis, o hook é no-op silencioso.
 import json
 import logging
 import os
+import subprocess
 import sys
+import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -55,6 +57,7 @@ log = logging.getLogger(__name__)
 
 BRT = timezone(timedelta(hours=-3))
 LOG_DIR = REPO_ROOT / "_log" / "retro-engine-claude-code"
+TRANSCRIPTS_DIR = REPO_ROOT / "_log" / "transcripts-claude-code"
 
 # Limite defensivo — sessões muito longas viram custo caro pro Haiku
 MAX_TRANSCRIPT_CHARS = 30_000
@@ -172,6 +175,75 @@ def _ler_transcript(path: str) -> str:
         meio = MAX_TRANSCRIPT_CHARS // 2
         texto = texto[:meio] + "\n\n[…transcript truncado…]\n\n" + texto[-meio:]
     return texto
+
+
+def _persist_transcript_pra_cron(transcript: str) -> tuple[Path | None, list[str]]:
+    """Salva transcript redatado em _log/transcripts-claude-code/ pro cron processar.
+
+    Aplica redação PII via gus.patterns_sensiveis.redact() antes de salvar.
+    Retorna (path, lista_tipos_redatados). path=None se falhou.
+    """
+    try:
+        from gus.patterns_sensiveis import redact
+        transcript_safe, redatados = redact(transcript)
+    except Exception as e:
+        log.warning(f"redact() falhou — não salva transcript: {e}")
+        return None, []
+
+    try:
+        TRANSCRIPTS_DIR.mkdir(parents=True, exist_ok=True)
+        session_id = uuid.uuid4().hex[:12]
+        nome = f"{datetime.now(BRT).strftime('%Y-%m-%dT%H-%M')}__{session_id}.jsonl"
+        out_path = TRANSCRIPTS_DIR / nome
+        out_path.write_text(transcript_safe, encoding="utf-8")
+        return out_path, redatados
+    except Exception as e:
+        log.warning(f"Não consegui escrever transcript: {e}")
+        return None, []
+
+
+def _commit_e_push_transcript(path: Path) -> bool:
+    """git add + commit + push do transcript salvo. Fallback gracioso.
+
+    Retorna True se push bem-sucedido. Se branch não é claude/*, não commita
+    pra evitar mexer em main/dev por engano.
+    """
+    try:
+        branch = subprocess.check_output(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            cwd=REPO_ROOT, text=True, stderr=subprocess.DEVNULL,
+        ).strip()
+    except Exception as e:
+        log.warning(f"git branch falhou: {e}")
+        return False
+
+    if not branch.startswith("claude/"):
+        log.info(f"Branch '{branch}' não é claude/* — transcript fica local, não commita")
+        return False
+
+    try:
+        subprocess.run(
+            ["git", "add", str(path.relative_to(REPO_ROOT))],
+            cwd=REPO_ROOT, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["git", "commit", "-m", f"chore(transcripts): captura sessão {path.stem}"],
+            cwd=REPO_ROOT, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+        )
+        subprocess.run(
+            ["git", "push", "origin", branch],
+            cwd=REPO_ROOT, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+            timeout=30,
+        )
+        log.info(f"Transcript pushed pra origin/{branch}")
+        return True
+    except subprocess.CalledProcessError as e:
+        stderr = e.stderr.decode("utf-8", errors="ignore") if e.stderr else ""
+        log.warning(f"git falhou ({e.returncode}): {stderr[:200]}")
+        return False
+    except Exception as e:
+        log.warning(f"git inesperado: {e}")
+        return False
 
 
 def _extrair_fragmentos(transcript: str) -> list[dict]:
@@ -333,14 +405,31 @@ def main() -> None:
         log.info(f"Transcript vazio ou trivial ({len(transcript)} chars) — no-op")
         return
 
+    # Persiste transcript pro cron processar (caminho 2 da demanda
+    # 2026-05-01-curador-bidirecional-cron). Funciona mesmo sem env vars
+    # — secrets do GitHub Actions cuidam da curadoria.
+    out_path, redatados = _persist_transcript_pra_cron(transcript)
+    pushed = False
+    if out_path:
+        log.info(
+            f"Transcript salvo: {out_path.name} "
+            f"(PII redatada: {len(redatados)} matches)"
+        )
+        pushed = _commit_e_push_transcript(out_path)
+
     log.info(f"Processando transcript ({len(transcript)} chars)…")
     try:
         fragmentos = _extrair_fragmentos(transcript)
     except RuntimeError as e:
-        # Distingue env ausente vs sessão genuinamente trivial — log honesto
+        # Env ausente é o caso esperado em Claude Code on the web.
+        # O transcript já foi salvo pro cron — sessão não fica sem captura.
         motivo = str(e)
-        log.warning(f"Retro Engine no-op: {motivo}")
-        _logar_sessao(0, 0, [motivo], f"(no-op: {motivo} — Retro Engine inativo neste ambiente)")
+        log.warning(f"Retro Engine direto no-op: {motivo} (cron processará transcript)")
+        sufixo = (
+            f"transcript {out_path.name} salvo, push={'ok' if pushed else 'falhou'}"
+            if out_path else "transcript não salvo"
+        )
+        _logar_sessao(0, 0, [motivo], f"(no-op: {motivo} — {sufixo})")
         return
 
     if not fragmentos:

@@ -72,4 +72,25 @@ def escanear(content: str) -> list[str]:
     return encontrados
 
 
-__all__ = ["PATTERNS_SENSIVEIS", "escanear"]
+def redact(content: str) -> tuple[str, list[str]]:
+    """Substitui matches por marcador `[REDACTED-<tipo>]`.
+
+    Args:
+        content: texto a redatar
+
+    Returns:
+        (texto_redatado, lista_de_tipos_redatados). Lista vazia = nada
+        sensível encontrado.
+    """
+    redatados: list[str] = []
+    texto = content
+    for nome, padrao in PATTERNS_SENSIVEIS.items():
+        marcador = f"[REDACTED-{nome.replace(' ', '-')}]"
+        novo, n = padrao.subn(marcador, texto)
+        if n > 0:
+            redatados.extend([nome] * n)
+            texto = novo
+    return texto, redatados
+
+
+__all__ = ["PATTERNS_SENSIVEIS", "escanear", "redact"]

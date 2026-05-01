@@ -3,14 +3,40 @@ tipo: demanda
 origem: gustavo
 destino: claude-code
 prioridade: alta
-status: pendente
+status: concluido
 criado_em: 2026-05-01T02:50:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: 2026-05-01T12:25:00-03:00
+processado_por: claude-code
 acao_sugerida: criar_novo
 destino_path: .github/workflows/curador-claude-code.yml
 contexto: "Captura de memória das portas Claude Code e Claude Chat hoje é zero. Retro Engine quebrado neste ambiente. Captura proativa via MCP falha por env vars. Caminho 2: cron GitHub Actions processa transcripts commitados pela sessão, roda curador bidirecional (gus+gustavo) com secrets do GitHub. Implementar fim-a-fim."
 ---
+
+## Resultado (2026-05-01)
+
+Implementado na branch `claude/curador-claude-code-cron`. Mudanças:
+
+- `gus/patterns_sensiveis.py` — nova função `redact()` que substitui matches
+  por `[REDACTED-<tipo>]` e retorna lista do que foi redatado
+- `.claude/hooks/retro_engine.py` — antes de tentar Haiku direto, salva
+  transcript redatado em `_log/transcripts-claude-code/` e faz git
+  add/commit/push (só em branches `claude/*`, fallback gracioso se push falhar)
+- `.github/scripts/curador_claude_code.py` — novo cron: roda
+  `hub.curador.curar_arquivo` 2x (user_id=gustavo + user_id=gus), move
+  arquivo pra `processados/AAAA-MM/`, commita cleanup
+- `.github/workflows/curador-claude-code.yml` — cron `*/30 * * * *`
+  com secrets ANTHROPIC/OPENAI/QDRANT
+- `_log/transcripts-claude-code/{.gitkeep,README.md}` — pasta + doc
+
+Decisões tomadas com Gustavo:
+- PII: redact (não bloqueio total) — repo privado + porta técnica
+- Auto-commit: hook empurra direto, fallback gracioso
+- Branch: `claude/curador-claude-code-cron` (não a branch padrão da aba)
+- Sem mensagem visual no SessionStart (já é automático via settings.json)
+
+Validação end-to-end vai depender do cron rodar — não testável neste
+ambiente Code on the web (sem env vars QDRANT/ANTHROPIC). Após mergear,
+verificar primeiro run do workflow no GitHub Actions.
 
 # Demanda — curador bidirecional via cron GitHub Actions (Caminho 2)
 
