@@ -149,61 +149,29 @@ Detalhes de quando usar cada uma → `gus/system_prompt.md`.
 - `Stop:retro-engine` — log de fim-de-sessão em `_log/retro-engine-claude-code/AAAA-MM-DD.md`
 - `Stop:git-check` — avisa se há mudanças não commitadas
 
-> **AVISO IMPORTANTE — Retro Engine quebrado no ambiente Web (2026-05-01):**
-> O hook `Stop:retro-engine` espera `ANTHROPIC_API_KEY` e `QDRANT_API_KEY` em
-> `~/.claude/gus.env`, que **não existe** no Claude Code on the web. Resultado:
-> hook é silent no-op desde sempre, registrando "(sessão trivial — nada
-> extraído)" mentirosamente. Enquanto não corrigido (cron processando
-> transcripts no GitHub Actions, ou outro caminho), use o **protocolo de
-> captura proativa abaixo** pra não perder conhecimento.
-
-## Captura proativa de aprendizados (workaround Retro Engine)
-
-Como o Retro Engine não tá funcionando neste ambiente, **você é responsável**
-por salvar fragmentos autobiográficos no Hub durante a sessão, sempre que
-detectar:
-
-| Tipo (gus-18) | Quando salvar | Exemplo |
-|---|---|---|
-| `decisao_arquitetural` | Decisão técnica do sistema com contexto/raciocínio explícito | "Decidimos URL secret no path em vez de OAuth porque claude.ai web não suporta Bearer/custom header" |
-| `meta_reflexao` | Padrão de erro / comportamento detectado nesta porta | "Tendo a alucinar campos da UI quando descrevo fluxos do claude.ai web sem buscar docs primeiro" |
-| `aprendizado_operacional` | Caveat de tool / padrão de como agir | "Railway proxy escuta 8080 por default — setar PORT=8000 manual cria conflito silencioso" |
-| `marco_evolutivo` | Sistema ganhou capacidade nova | "Primeiro deploy MCP server com URL secret no path em 2026-04-30" |
-| `historia_sistema` | Fato sobre evolução do sistema | "Em abril/2026 descobrimos que claude.ai web só aceita OAuth pra Connector custom" |
-| `procedural` | Protocolo / procedimento estabelecido | "Antes de mudar fluxo de auth, sempre buscar docs Anthropic + GitHub issues abertas" |
-
-**Como salvar (use a tool MCP):**
-
-```
-mcp__mem0-gus__salvar_memoria_gus(
-    conteudo="<frase auto-suficiente em pt-BR, sem 'isso'/'ele' sem nomear>",
-    metadata={
-        "tipo": "decisao_arquitetural",  # ou outro tipo da tabela
-        "area": "gus",
-        "camada_temporal": "permanente",  # protegido pra decisao/marco; "rotina" pra meta-reflexão
-        "tipo_esquecimento": "protegido",  # null pra meta-reflexão / aprendizado
-        "via": "claude-code",
-        "confianca": 0.85,
-    }
-)
-```
-
-**Quando NÃO salvar:**
-- Fatos sobre o Gustavo (saúde, projetos pessoais, preferências dele) — esses
-  vão pra `user_id="gustavo"` via outras portas (TioGu, Claude Chat).
-- Trivialidades operacionais ("commitei", "rodei test") — só decisões/aprendizados.
-- Fragmentos repetidos — buscar antes pra evitar duplicação:
-  `mcp__mem0-gus__buscar_memorias_gus(query="...")` checa se já existe.
-
-**Cadência sugerida:**
-- Ao fim de cada conjunto de tarefas significativas (PR mergeado, doc criado, decisão tomada).
-- Ao identificar caveat / pegadinha que próxima sessão precisa saber.
-- NUNCA forçar — se a sessão foi só leitura/triviais, não salvar nada é OK.
-
-> Esse workaround vira obsoleto quando o Retro Engine for consertado
-> (provavelmente via cron em GitHub Actions processando transcripts).
-> Até lá, captura proativa garante que esta porta também alimenta o brain
-> `user_id="gus"`.
+> **AVISO IMPORTANTE — Captura de memória da porta Code quebrada (2026-05-01):**
+>
+> Este ambiente Claude Code on the web não tem `ANTHROPIC_API_KEY`, `QDRANT_URL`
+> nem `QDRANT_API_KEY`. Por causa disso:
+>
+> 1. O hook `Stop:retro-engine` é silent no-op (esperava as vars em
+>    `~/.claude/gus.env`, que não existe aqui). O log de fim-de-sessão agora
+>    registra honestamente "no-op: anthropic_missing" em vez da mentira
+>    anterior "(sessão trivial — nada extraído)".
+>
+> 2. As tools MCP `mcp__mem0-gus__salvar_memoria*` também falham: o servidor
+>    MCP precisa das vars do Qdrant pra escrever no Hub. Captura proativa
+>    via tool MCP **não funciona** neste ambiente. Tentar isso só causa
+>    erro + atrito de UX (cada call pede autorização).
+>
+> **Caminho real (a implementar):** cron GitHub Actions processa transcripts
+> commitados pela porta Code → roda curador (Haiku × GPT) → salva fragmentos
+> bidirecionais (`gus` + `gustavo`) no Hub via secrets do GitHub Actions.
+> Demanda: `dialogos/inbox-claude-code/2026-05-01-curador-bidirecional-cron.md`.
+>
+> **Enquanto não consertar:** conhecimento dessa porta sobrevive só via
+> commits, PRs, docs `gus-XX/*.md` e demandas em `dialogos/inbox-*/`.
+> Não tentar `mcp__mem0-gus__salvar_memoria*` proativamente — vai falhar.
 
 ---
 
