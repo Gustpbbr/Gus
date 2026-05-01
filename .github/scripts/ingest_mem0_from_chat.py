@@ -6,12 +6,14 @@ Fluxo (cron 30min):
   1. Lista .md em dialogos/inbox-mem0-from-chat/ (skip processados/)
   2. Pra cada arquivo:
      a. Parse frontmatter + body
-     b. Curador híbrido (Haiku + Sonnet em paralelo) extrai e classifica
-        fragmentos do body. Cada modelo salva no Hub Qdrant (gus_hub) com
-        metadata.curador distinta + mesmo hash_janela.
+     b. Curador bidirecional roda 2x sobre o mesmo body:
+          - user_id="gustavo" → fatos sobre o Gustavo
+          - user_id="gus"     → autobiografia do agente
+        Cada chamada é o curador híbrido (Haiku + GPT em paralelo). Total:
+        4 conjuntos de fragmentos no Hub por arquivo.
      c. Move arquivo pra processados/AAAA-MM/
-     d. Append linha em _log/resumos-mem0/AAAA-MM-DD.md (uma linha por curador
-        com mesmo hash, igual ao bot Telegram)
+     d. Append linha em _log/resumos-mem0/AAAA-MM-DD.md por (curador, brain)
+        com mesmo hash_janela permitindo parear no Obsidian.
   3. git commit + push das mudanças
 
 Idempotência: depois do move, arquivo não é reentrado. Se Hub falhar antes do
@@ -20,10 +22,15 @@ move, próxima rodada tenta de novo (pode duplicar — risco baixo dado o volume
 Substitui o caminho antigo via Mem0 SaaS (ADR-001 Fase 5 — Mem0 aposentado).
 
 Variáveis de ambiente necessárias:
-  ANTHROPIC_API_KEY  — chamadas Haiku + Sonnet do Curador
+  ANTHROPIC_API_KEY  — Haiku/Sonnet do Curador
+  OPENAI_API_KEY     — GPT do Curador (mini ou full, configurável)
   QDRANT_URL         — Hub vector store
   QDRANT_API_KEY     — idem
   GITHUB_TOKEN       — commit + push automático (já configurado no Actions)
+
+Modelos do curador são configuráveis via MODEL_CURADOR_HAIKU / MODEL_CURADOR_GPT
+(setados no workflow YAML). Default: claude-haiku-4-5 + gpt-4o-mini. Workflow
+do Chat sobe pra claude-sonnet-4-6 + gpt-4o (porta de reflexão profunda).
 """
 
 import logging
@@ -186,39 +193,53 @@ def main() -> None:
             vazios += 1
             continue
 
-        # Roda Curador híbrido sobre o body
-        try:
-            resultado = asyncio.run(
-                curar_arquivo(body_efetivo, via="claude-chat", user_id="gustavo")
+        # Curador bidirecional: roda 2x sobre o mesmo body, brains diferentes.
+        #   user_id="gustavo" → fatos sobre o Gustavo (reflexões, decisões, sentimentos)
+        #   user_id="gus"     → autobiografia do agente (identidade, padrões, autoself)
+        # Chat é a porta de reflexão profunda — captura ambos os lados da conversa.
+        falhou = False
+        salvos_arq_total = 0
+        for user_id in ("gustavo", "gus"):
+            try:
+                resultado = asyncio.run(
+                    curar_arquivo(body_efetivo, via="claude-chat", user_id=user_id)
+                )
+            except Exception as e:
+                log.error(f"  Curador {user_id} falhou: {e}")
+                falhou = True
+                break  # NÃO move — próxima rodada tenta de novo
+
+            hash_j = resultado.get("hash_janela", "")
+            haiku_frags = resultado.get("haiku", [])
+            gpt_frags = resultado.get("gpt", [])
+            salvos_arq_total += resultado.get("salvos", 0)
+            erros_curador = resultado.get("erros", [])
+
+            # Log dual por brain (uma entrada por curador, mesmo hash_janela)
+            for nome, frags in (("haiku", haiku_frags), ("gpt", gpt_frags)):
+                curador_label = f"{nome}/{user_id}"
+                if frags:
+                    preview = "; ".join(f.get("conteudo", "")[:60] for f in frags[:3])
+                    append_log(arq.name, "salvo", curador_label, hash_j, len(frags), preview)
+                else:
+                    append_log(
+                        arq.name, "descartado", curador_label, hash_j, 0, body_efetivo,
+                        motivo="nenhum fragmento extraído",
+                    )
+
+            for err in erros_curador:
+                log.warning(f"  Curador {user_id} erro parcial: {err}")
+
+            log.info(
+                f"  ✓ {user_id}: haiku={len(haiku_frags)} gpt={len(gpt_frags)} "
+                f"salvos+={resultado.get('salvos', 0)} hash={hash_j}"
             )
-        except Exception as e:
-            log.error(f"  Curador falhou (não move arquivo, próxima rodada tenta): {e}")
+
+        if falhou:
             erros += 1
-            continue  # NÃO move — próxima rodada tenta de novo
-
-        hash_j = resultado.get("hash_janela", "")
-        haiku_frags = resultado.get("haiku", [])
-        sonnet_frags = resultado.get("sonnet", [])
-        salvos_arq = resultado.get("salvos", 0)
-        erros_curador = resultado.get("erros", [])
-
-        # Log dual (uma entrada por curador, mesmo hash_janela)
-        for nome, frags in (("haiku", haiku_frags), ("sonnet", sonnet_frags)):
-            if frags:
-                preview = "; ".join(f.get("conteudo", "")[:60] for f in frags[:3])
-                append_log(arq.name, "salvo", nome, hash_j, len(frags), preview)
-            else:
-                append_log(arq.name, "descartado", nome, hash_j, 0, body_efetivo, motivo="nenhum fragmento extraído")
-
-        for err in erros_curador:
-            log.warning(f"  Curador erro parcial: {err}")
-
-        log.info(
-            f"  ✓ haiku={len(haiku_frags)} sonnet={len(sonnet_frags)} "
-            f"salvos={salvos_arq} hash={hash_j}"
-        )
+            continue
         mover_pra_processados(arq)
-        salvos_total += salvos_arq
+        salvos_total += salvos_arq_total
 
     log.info(f"Resumo: {salvos_total} fragmentos salvos no Hub, {vazios} vazios, {erros} erros")
 
