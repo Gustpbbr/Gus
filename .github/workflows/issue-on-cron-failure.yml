@@ -17,11 +17,13 @@ on:
       - "Briefing matinal"
       - "Check saúde"
       - "Export Mem0"
-      - "Gerar estado Claude Chat"
+      - "Full Sync MD to Google Drive"
+      - "Gerar estado atual pro Claude Chat"
       - "Import demandas from Drive"
       - "Ingest Mem0 from Claude Chat"
       - "Reflexão quinzenal"
       - "Retrospectiva semanal"
+      - "Sync MD to Google Drive"
     types: [completed]
 
 permissions:

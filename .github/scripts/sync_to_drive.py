@@ -178,13 +178,18 @@ def main():
             sys.exit(0)
         print(f"Sincronizando {len(files)} arquivo(s) alterado(s)...")
 
+    erros = 0
     for file_path in files:
         print(f"\n→ {file_path}")
         try:
             sync_file(service, file_path, root_folder_id)
         except Exception as e:
             print(f"  ERRO: {e}")
+            erros += 1
 
+    if erros:
+        print(f"\nSync terminou com {erros} erro(s) de {len(files)} arquivo(s).")
+        sys.exit(1)
     print("\nSync completo.")
 
 
