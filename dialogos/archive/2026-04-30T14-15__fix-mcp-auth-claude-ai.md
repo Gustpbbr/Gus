@@ -3,13 +3,14 @@ tipo: demanda
 origem: claude-chat
 destino: claude-code
 prioridade: alta
-status: pendente
+status: concluido
 criado_em: 2026-04-30T14:15:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: 2026-05-01T11:35:00-03:00
+processado_por: claude-code
 acao_sugerida: criar_novo
 destino_path: hub/mcp_server.py
 contexto: "Fix autenticacao MCP server: claude.ai nao suporta custom header Bearer, so OAuth. Adaptar endpoint /mcp para aceitar conexao inicial sem auth e validar Bearer apenas nas chamadas de tools."
+resolucao: "Resolvido via PR #60 (MCP_URL_SECRET no path) em vez de OAuth. claude.ai web só aceita OAuth no UI do Connector (issues #112/#155/#2157 anthropics/claude-ai-mcp). OAuth completo seria overkill (~150 linhas + risco dos bugs conhecidos). Solução pragmática: shared secret in URL — modelo igual webhook Slack/GitHub. MCP_AUTH_DISABLED=true desliga AuthMiddleware, MCP_URL_SECRET monta endpoint em /<secret>/mcp. PR #57 (lifespan) também fixou bug colateral que impedia conexão."
 ---
 
 # Fix: autenticacao MCP server para funcionar com claude.ai
