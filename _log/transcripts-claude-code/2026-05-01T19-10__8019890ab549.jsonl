@@ -1,0 +1,516 @@
+Conversation compacted
+user: This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Summary:
+1. Primary Request and Intent:
+   The user (Gustavo Pratti de Barros, anesthesiologist) is building a personal AI agent called "Gus" with multiple ports (Telegram bot @Tiogubot, Claude Code, Claude Chat, future Custom GPT/Alexa). Across this very long conversation spanning 2026-04-28 through 2026-04-30, the user requested:
+   - Fix multiple cron workflow failures (import_from_drive.py UnicodeDecodeError, archive_completed.py datetime TypeError, ingest_mem0_from_chat ModuleNotFoundError)
+   - Implement gus-29 multi-model routing (text→OpenAI gpt-4o-mini, image→Anthropic Sonnet) in 3 phases
+   - Build complete MCP server (gus-28 Passo 2) with 9 tools to expose Hub Qdrant to Claude Chat
+   - Create comprehensive NeuroGus roadmap doc (gus-30) with 15 sections, written incrementally
+   - Diagnose why Drive sync isn't updating
+   - Explain OAuth options (keep Testing vs migrate to Service Account)
+   - Provide honest project complexity assessment as specialist
+   - Most recent (URGENT): Fix MCP server endpoint that prevents claude.ai Connector from adding gus-hub due to "Task group is not initialized" error
+
+2. Key Technical Concepts:
+   - FastMCP / Model Context Protocol (mcp 1.27.0)
+   - Starlette ASGI lifespan (root cause of final bug)
+   - Railway deployment (services, env vars, Variables UI)
+   - Qdrant Cloud Hub (gus_hub collection, sentence-transformers/all-MiniLM-L6-v2 embeddings)
+   - Curador híbrido (Haiku Anthropic + GPT-4o-mini OpenAI in parallel after PR #44)
+   - SSE (Server-Sent Events) for real-time
+   - 3d-force-graph (Three.js + WebGL) for NeuroGus
+   - Bearer token auth with /health bypass; MCP_AUTH_DISABLED=true mode
+   - Service Account vs OAuth user (Google APIs)
+   - HSL golden-ratio rotation for dynamic colors
+   - PR pattern with merge commits, smoke tests via test-scripts.yml workflow
+
+3. Files and Code Sections:
+   - **`hub/mcp_server.py`** (the critical file in last work)
+      - The MCP server with 9 tools (buscar_hub, ego_cache_atual, fragmentos_recentes, buscar_por_tipo, buscar_por_area, contar_fragmentos, ingestar_fragmento, read_repo_file, list_repo_dir)
+      - Multiple iterations: Optional[str]→str="" (PR #36), MCP_AUTH_DISABLED toggle (commit ab9ed64 by other session), GH_TOKEN→GITHUB_TOKEN, port 8000→8080 (PR #53)
+      - **Final fix in `_create_app()` (PR #57):**
+      ```python
+      def _create_app() -> Starlette:
+          mcp_app = mcp.streamable_http_app()
+          routes = [
+              Route("/health", health, methods=["GET"]),
+              Mount("/", app=mcp_app),
+          ]
+          # Reusa o lifespan do mcp_app — sem isso o session_manager fica órfão
+          lifespan = mcp_app.router.lifespan_context
+
+          if _is_auth_disabled():
+              log.warning(...)
+              return Starlette(routes=routes, middleware=[], lifespan=lifespan)
+
+          expected_token = os.environ.get("MCP_BEARER_TOKEN")
+          expected_header = f"Bearer {expected_token}" if expected_token else None
+          return Starlette(
+              routes=routes,
+              middleware=[Middleware(AuthMiddleware, expected_header=expected_header)],
+              lifespan=lifespan,
+          )
+      ```
+   - **`Dockerfile.mcp`**: EXPOSE 8000 → 8080 (PR #53)
+   - **`projetos/gus/gus-30-neurogus-roadmap.md`** (created): 1513 lines, 15 sections, comprehensive NeuroGus roadmap with frontmatter, TL;DR, definition, philosophy, status, prereqs, architecture, visual design, phase plan, decisions taken/open, cross-references, checklists, risks, anti-patterns
+   - **`projetos/gus/gus-29-roteamento-multimodelo-tiogu.md`**: documents Phases 1, 2, 3 of multi-model routing
+   - **`hub/curador.py`**: replaced Sonnet with GPT-4o-mini in curator (PR #44)
+   - **`gus/dimagem.py`**: replaced Haiku Vision with gpt-4o-mini Vision (PR #45)
+   - **`gus/llm.py`**: dispatcher between Anthropic and OpenAI (PR #31)
+   - **`dialogos/_bootstrap/gus-bootstrap.md`**: would need update for Option A (curator prompts for Claude Chat)
+
+4. Errors and fixes:
+   - **import_from_drive.py UnicodeDecodeError on byte 0xb6**: Fixed by catching exception and moving file to processados-erro/ (PR #24)
+   - **archive_completed.py TypeError 'str' object cannot be interpreted as an integer**: YAML parses ISO datetime to datetime object, not string. Fixed by checking isinstance(datetime) before .replace() (PR #25)
+   - **ingest_mem0_from_chat ModuleNotFoundError 'hub'**: Missing sys.path setup. Fixed (PR #26)
+   - **MCP build conflicts**: mcp 1.27 needed httpx>=0.27.1 (PR #40) and pydantic>=2.11 (PR #41)
+   - **MCP FastMCP TypeError issubclass()**: Optional[str] in @mcp.tool() decorated function. Fixed by using str="" (PR #36)
+   - **Railway deploy 8000 vs 8080 port**: User discovered the issue himself — Railway proxy expects 8080 by default. Fixed default in code + Dockerfile.mcp + setup doc (PR #53)
+   - **MCP "Task group is not initialized" (CURRENT)**: When mcp.streamable_http_app() is wrapped in another Starlette, lifespan doesn't propagate. Fixed by passing `lifespan=mcp_app.router.lifespan_context` (PR #57, just opened)
+   - **User feedback corrections to gus-30**: "conexão por afinidade semântica, não hash_janela"; "cores dinâmicas, não 8 fixas"; "Opus para drift/invalidação"; user is finishing the project, not making it production
+   - **GitHub Actions deploys paused**: Railway paused free/hobby tier on 29/04 incident. User adapted, restored later
+   - **Other Claude tab "API Error 400 cache_control cannot be set for empty text blocks"**: Conversation got too long (218+ messages). Solution: open new tab with handoff doc
+
+5. Problem Solving:
+   - Solved: import-from-drive resilient to invalid files + UnicodeDecodeError
+   - Solved: archive_completed datetime handling
+   - Solved: gus-29 Phases 1, 2, 3 (multi-model routing)
+   - Solved: MCP server creation with iterative bug fixes
+   - Solved: gus-30 NeuroGus roadmap doc complete
+   - Solved: Port 8080 vs 8000 mystery
+   - In progress: MCP `/mcp` endpoint lifespan bug (PR #57 just opened)
+   - Pending: Drive sync issue (likely Google OAuth refresh token expired)
+   - Pending: Curador captures only TioGu, not Claude Chat or Claude Code (Options A/B/C planned)
+   - Pending: Service Account migration for Google
+
+6. All user messages:
+   - Multiple "pode mergear" / "pode seguir" approvals throughout
+   - "vamos fazer um diagnostico por aqui. consegue ver as coisas novas na main, oq pode ter dado problema..."
+   - "consegue mandar os deploys? railway voltou ao normal..."
+   - "ta indo. oq seria isso? image push 2.7 GB"
+   - "Application failed to respond - This error appears to be caused by the application"
+   - "vamos para a fase 2, por favor"
+   - "vc consegue fazer um md, com o maximo de informaçoes para contextualização do neurogus..."
+   - "uma curiosidade, esse projeto é um projeto complexo? medio? facil? inovador ou nao?"
+   - "oq seria algoritmo? rs"
+   - "um novo algoritmo é um novo 'programa', ou nova ia?"
+   - "nem quero virar produto serio, por enquanto so terminar o projeto"
+   - "alias, novidade, descobrimos q o erro era a porta.. tinha q ser 8080 mesmo"
+   - "vamos ver outro ponto agora. Endpoint /hub/claude-chat-context + cron 15min. esta correto? pois o material do drive nao esta atualizado"
+   - "o google OAuth sempre expira??"
+   - "me fale o passo a passo da opção A e da B"
+   - "outro pepino rs. me ajuda nisso aqui. estava conversando com a outra aba, mas agora ta dando isso la qnd mando msg" (with API errors about cache_control empty blocks)
+   - "[image]mas ta dando isso" (showing "A server with this URL already exists")
+   - "descartei, re inseri e deu 'Falha ao adicionar conector'"
+   - "o chat abriu uma demanda pra vc, mas foi agora, entao acho q nao chegou a sincronizar. segue o conteudo pra vc ter conhecimento" (with demand from Claude Chat about MCP auth)
+   - "esses?" (with Deploy Logs showing "RuntimeError: Task group is not initialized")
+   - "mas e as extraçoes daqui e do chat? so o tiogu esta gerando?"
+   - "faca por aqui o passo a passo dd cada uma das opções"
+
+7. Pending Tasks:
+   - Merge PR #57 (lifespan fix) — JUST OPENED, awaiting user OK
+   - User test claude.ai Connector after PR #57 merges and Railway redeploys
+   - User respond to extraction question (Option A: prompt for Claude Chat curator, B: Claude Code Stop hook curator, C: unified system)
+   - Service Account Google Drive migration (user decision pending)
+   - Reset Google OAuth CLIENT_SECRET (depends on Gustavo)
+   - NeuroGus implementation (Fase 0/1) — depends on user confirming open decisions in gus-30 section 11
+   - Suporte a vídeo Telegram
+   - Disparar workflow Migrar gus → gus_hub
+   - ADR-001 Fase 5 — decidir modelo curador final (após 12/05)
+
+8. Current Work:
+   Immediately before this summary request, I was investigating why claude.ai Connector showed "Falha ao adicionar conector" when trying to add the gus-hub MCP server. The user provided Deploy Logs showing the actual error:
+   
+   ```
+   File "/usr/local/lib/python3.11/site-packages/mcp/server/streamable_http_manager.py", line 156, in handle_request
+       raise RuntimeError("Task group is not initialized. Make sure to use run().")
+   INFO: 100.64.0.10:24372 - "POST /mcp HTTP/1.1" 500 Internal Server Error
+   ```
+   
+   I diagnosed this as the classic FastMCP+Starlette wrapper bug where the lifespan of `mcp_app` doesn't propagate when wrapped. Fixed in `hub/mcp_server.py:_create_app()` by passing `lifespan=mcp_app.router.lifespan_context` to both branches (auth disabled and auth enabled paths).
+   
+   I created branch `claude/fix-mcp-lifespan`, committed the fix with message "fix(mcp): passa lifespan do mcp_app pro Starlette wrapper", pushed, and opened **PR #57** at https://github.com/Gustpbbr/Gus/pull/57.
+   
+   The smoke test confirmed `app.router.lifespan_context is not None → True`.
+
+9. Optional Next Step:
+   Await user approval to merge PR #57. From my last message:
+   
+   > "Pushado. Mergeio direto?"
+   
+   And earlier summary of the fix:
+   
+   > "Fix: Passa `lifespan=mcp_app.router.lifespan_context` pro Starlette wrapper. Reusa o lifespan original — `session_manager` inicializa corretamente, task group disponível, `/mcp` responde sem 500."
+   
+   The validation steps after merge (waiting on user) are documented in the PR:
+   - `/health` continues responding 200 OK
+   - POST `/mcp` responds 200 (handshake OK), not 500
+   - claude.ai Settings → Connectors → Add → URL `/mcp` should register
+   - New conversation: "Use `contar_fragmentos` do gus-hub" returns real number
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /root/.claude/projects/-home-user-Gus/fbf9d8f6-b85f-422e-9046-58cb8501b29d.jsonl
+Continue the conversation from where it left off without asking the user any further questions. Resume directly — do not acknowledge the summary, do not recap what was happening, do not preface with "I'll continue" or similar. Pick up the last task as if the break never happened.
+assistant: PR #57 ainda aberto, `mergeable_state: unstable` (provavelmente checks ainda rodando). Pushed e aguardando teu OK pra mergear — o fix do lifespan é o último bloqueio do MCP no claude.ai.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are untracked files in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Log commitado e pushed. Branch limpo.
+user: pode mergear, por favor
+assistant: Mergeado. Railway vai redeployar o MCP automaticamente em ~2-3min.
+
+**Validação depois do redeploy:**
+1. `https://<seu-domain>.up.railway.app/health` → deve responder `{"status":"ok"}`
+2. claude.ai → Settings → Connectors → Add MCP Server com URL `/mcp` — agora deve cadastrar sem "Falha ao adicionar"
+3. Conversa nova: "Quantos fragmentos eu tenho no Hub?" → Claude Chat chama `contar_fragmentos()` e retorna número real
+
+Me avisa se passar/falhar — se ainda der erro no claude.ai, mando você puxar Deploy Logs pra ver se é outro bug.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado e pushed. Branch limpa.
+user: Continue from where you left off.
+assistant: No response requested.
+user: segue um dialogo com aba nova do Gus
+
+oi GUs
+
+15:26
+Claude respondeu: Agora vou ler o estado atual também: Bootstrap e estado carregados.
+
+Usou a integração Google Drive, ferramentas carregadas
+Usou a integração Google Drive, ferramentas carregadas
+Agora vou ler o estado atual também:
+
+
+Search files
+Search files
+Bootstrap e estado carregados. Modo Gus ativo.
+
+Oi Gustavo! Estado de ontem 18h — sistema estava ocioso, 19 fragmentos no brain. Nenhuma novidade fresca nas últimas 6h do Qdrant.
+
+O que tá rolando hoje?
+
+Você disse: sim, ja esta liberado pra vc
+1777573842118_image.png
+sim, ja esta liberado pra vc
+
+15:30
+Claude respondeu: Perfeito, vejo o gus-hub conectado com 9 ferramentas.
+Perfeito, vejo o gus-hub conectado com 9 ferramentas. Vou testar acesso direto agora:
+
+
+Ferramentas carregadas
+Ferramentas carregadas
+Hmm, o tool_search não tá encontrando as ferramentas do gus-hub. Elas aparecem na UI como conectadas mas talvez o MCP não esteja exposto como ferramenta nativa aqui — só via artifacts (API).
+
+Deixa eu confirmar: na imagem vejo buscar_hub, buscar_por_area, buscar_por_tipo, contar_fragmentos, ego_cache_atual, fragmentos_recentes, ingestar_fragmento, list_repo_dir, read_repo_file — tudo com "sempre permitir".
+
+O acesso ao gus-hub via Claude Chat nativo parece não estar disponível como ferramenta direta (só aparece nos conectores, não no meu context de tools). O que funciona é usar dentro de artifacts via API MCP.
+
+Quer que eu teste isso — montar um artifact que chama o gus-hub via mcp_servers na API e puxa o ego_cache? Seria a forma de usar as 9 ferramentas a partir daqui.
+
+Você disse: sim, por favor
+sim, por favor
+
+15:31
+Claude respondeu: Vou montar um artifact que conecta diretamente ao gus-hub via API MCP: O painel já tá tentando chamar egocacheatual automaticamente.
+Vou montar um artifact que conecta diretamente ao gus-hub via API MCP:
+
+
+
+O painel já tá tentando chamar ego_cache_atual automaticamente. Vai aparecer o resultado em segundos — se der erro de autenticação/CORS, significa que o gus-hub via artifacts precisa de header de auth que não temos aqui.
+
+Se falhar, o caminho alternativo é eu chamar direto as ferramentas nativas do MCP (que aparecem nos connectors) — só que pelo tool_search elas não estão expostas como funções nativas neste chat. Estranho, considerando que aparecem na UI.
+
+Me fala o que apareceu no widget.
+
+
+1777575424667_image.png
+
+ta dando isso. mas vc entao vc na
+
+[…transcript truncado…]
+
+top-hook-git-check.sh]: There are 8 unpushed commit(s) on branch 'claude/arquivar-demandas-mcp'. Please push these changes to the remote repository.
+
+assistant: Commitado e pushed. Branch sincronizada — o aviso anterior dos 8 commits unpushed era stale (já tinham sido empurrados pelo auto-commit do PR #64 que tá ativo agora).
+user: Continue from where you left off.
+assistant: No response requested.
+user: foi nessa aba q falamos da linha temporal para o neurogus? que seria transparente, teria como avaliar de forma espiral (dias, semanas..), ou foi em outra?
+assistant: Sim, foi aqui. Você passou o texto da outra aba descrevendo:
+- Linha temporal **invisível** sempre presente (opacidade 0)
+- Toggle pra mostrar como fio luminoso laranja-âmbar
+- Modo "esticar" (override forças do simulador, x = f(criado_em))
+- 4 variações: **linha reta** / **espiral 3D** / **anel cíclico 24h** / **modo cometa**
+- Considerações sobre fragmentos atemporais, jitter em clusters, SSE durante modo temporal, slider complementar
+
+Eu analisei tecnicamente, confirmei que:
+- `criado_em` já existe em todo fragmento (`hub/store.py:150`)
+- 3d-force-graph aceita arestas arbitrárias
+- ~30 linhas frontend, zero backend
+- Cabe perfeitamente no gus-30 (hoje só fala de afinidade semântica + hash_janela, dimensão temporal é buraco real no design)
+
+E te ofereci 2 caminhos:
+1. **Registrar como demanda** `2026-05-01-neurogus-dimensao-temporal.md` pra próxima aba que implementar NeuroGus considerar
+2. **Atualizar direto o gus-30** com 5 itens novos na seção 11 (decisões abertas):
+   - 11.8: modo temporal default? (toggle composto ou separado?)
+   - 11.9: fragmentos atemporais — escondem ou flutuam acima?
+   - 11.10: jitter Y/Z em clusters apertados — quanto?
+   - 11.11: SSE de nó novo no modo temporal — extremidade direita ou jitter?
+   - 11.12: slider temporal complementar — vale ou polui UI?
+
+**Você não respondeu** — desviou pra discussão do retro engine quebrado. **A ideia ainda não foi registrada em lugar nenhum.** Tá só no transcript desta conversa, e quando essa aba fechar, perdido (a menos que o cron do PR #64 capture e o curador extraia, mas seria fragmento solto, não doc).
+
+Quer que eu registre agora? Recomendo **caminho 1** (demanda) — gus-30 é canônico, não devo mexer sem você bater martelo nas 5 decisões. Demanda é o registro intermediário até você decidir.
+
+Posso criar `dialogos/inbox-claude-code/2026-05-01-neurogus-dimensao-temporal.md` em ~3min, sintetizando o que veio da outra aba + minha análise + as 5 decisões pendentes. Topa?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado e pushed.
+user: Continue from where you left off.
+assistant: No response requested.
+user: leia o gus 30 e 30.1, e oq mais foi feito, mas nao faca nada ainda
+assistant: Análise sem ação.
+
+## gus-30.1 não existe
+
+`gus-30-neurogus-roadmap.md` é o único arquivo `gus-30*` no repo. Verifiquei `find` e `git log`:
+- Único arquivo: `projetos/gus/gus-30-neurogus-roadmap.md` (1513 linhas, intacto desde 29/04 — último commit `8cc3226`)
+- Não existe `gus-30.1`, nem `gus-31`, nem `gus-31a`
+- Mas o gus-30 **referencia** "gus-31" como doc futuro (Maturação do grafo) e "gus-31a" (reconciliação de schema) — ambos placeholders
+
+Provavelmente você se confundiu com nome — pode estar pensando em `gus-31` (referenciado no doc) ou em algo de outra aba que ainda não chegou aqui.
+
+## gus-30 atual — estado
+
+- **Seções 1-15 + apêndice A** completos
+- **Decisões abertas (seção 11):** 11.1 a 11.7 — todas as 7 que listei antes
+- **Linha temporal NÃO registrada lá** ainda. Não tem 11.8-11.12 nem subseção em design visual sobre dimensão temporal
+- Status: `pronto-pra-deploy` no frontmatter, mas **nenhuma linha de código de produção escrita** (mock HTML do Claude Chat 28/04 ainda no Drive privado dela)
+
+## O que foi feito desde meu último relato (PR #63 → agora)
+
+### PR #67 — `feat(curador-chat): bidirecional + modelos top-tier` ✅ mergeado
+
+Mudou o ingest Claude Chat → Hub:
+
+1. **Bidirecional** — agora chama `curar_arquivo` **2x** (`user_id="gustavo"` + `"gus"`) sobre o mesmo body. Chat antes só capturava fatos sobre você; agora captura autobiografia do agente também. Mesmo padrão do Telegram e Code (PR #64).
+
+2. **Bug fix histórico** — script lia `resultado["sonnet"]` que **sumiu há semanas** (gus-29 trocou Sonnet por GPT-4o-mini). Logs MD do Chat estavam mostrando "sonnet descartado, 0 fragmentos" há semanas — era mentira: GPT estava salvando, mas log não aparecia. Agora lê `resultado["gpt"]` correto.
+
+3. **Modelos top-tier só no Chat** — workflow força:
+   - `MODEL_CURADOR_HAIKU=claude-sonnet-4-6` (em vez de Haiku 4.5)
+   - `MODEL_CURADOR_GPT=gpt-4o` (em vez de mini)
+   - Telegram e Code seguem defaults baratos. Chat tem volume baixo (~1-2 .md/dia que você cola manual), então custo extra desprezível.
+
+### Outras atividades (auto-commits cron)
+
+- 1 `capture: 2026-05-01 via Gus` (commit `a9b7a8d`)
+- ~6 `auto: estado atual do Hub pra Claude Chat` (mirror periódico)
+- `auto: archive demandas concluidas` (já visto antes)
+- `auto: processa transcripts Claude Code` (cron do PR #64 rodou de novo)
+
+## Estado das 3 portas hoje
+
+| Porta | Captura no Hub | Modelo curador | Bidirecional? |
+|---|---|---|---|
+| Telegram (TioGu) | ✅ contínua, 3 turnos | Haiku 4.5 + GPT-4o-mini | ❌ só `gustavo` |
+| Claude Code | ✅ via cron 30min | Haiku 4.5 + GPT-4o-mini | ✅ **gustavo + gus** |
+| Claude Chat | ✅ via workflow ingest | **Sonnet 4.6 + GPT-4o** | ✅ **gustavo + gus** |
+
+Restante pra equiparar: TioGu Telegram ainda extrai unilateralmente. PR equivalente ao #64/#67 pra TioGu seria o próximo passo natural.
+
+## Pendências NÃO registradas até agora
+
+1. **Linha temporal NeuroGus** — discutida nesta aba, ainda **não virou demanda nem foi adicionada ao gus-30**. Risco de perder com fechamento da aba (mas agora o cron de transcripts do PR #64 captura — então provavelmente vai virar fragmento no Hub).
+
+2. **Curador TioGu bidirecional** — TioGu ainda só extrai pra brain `gustavo`. Único restante depois dos PRs #64/#67. Provavelmente próxima ação natural, mas ninguém criou demanda explícita.
+
+## Inbox claude-code agora
+
+- `2026-05-01-captura-multiporta-curador.md` — **parcialmente obsoleto**: Code resolvido (PR #64) e Chat resolvido (PR #67); só TioGu falta
+- `2026-05-01-drive-sync-oauth-fix.md` — Service Account migration ainda pendente
+- `_frontmatter-referencia.md` — doc
+
+Sem ação tomada. Aguardando teu próximo passo.
+so para seu conhecimento  nao faca nada dd código 
+
+pushado (d1e9931) pra claude/neurogus-fase1-backend-sse. Sem PR pra main, conforme você pediu.
+Fase 1 backend — feito
+Arquivo
+Estado
+LoC
+hub/events.py
+novo
+115
+hub/store.py
++159
+297 → 456
+hub/routes.py
++150
+99 → 254
+Total: +424 LoC (estimativa era ~170, subiu por docstrings detalhadas).
+O que tá funcionando (validado localmente)
+✅ py_compile em todos os 3 arquivos — sintaxe válida
+✅ from hub.events import broadcast, subscribe, broadcast_sync — importa OK
+✅ from hub.store import recentes, esquecer, re_lembrar, _calcular_vizinhos — importa OK
+⚠️ hub.routes precisa de fastapi (não tem no container web, mas tem em produção Railway)
+11 handlers no router (5 novos)
+Código
+Notas importantes
+verify_bearer_flex é o único comportamento alterado pra endpoints existentes. Header tem prioridade (Custom GPT/MCP/claude-code não mudam). Query ?token= ativa só pra /hub/stream.
+lembrar() JÁ filtrava estado='ativo' por default — fragmentos esquecidos já não influenciavam contexto do bot. Não precisei tocar.
+broadcast_sync é no-op silencioso se ninguém estiver conectado no SSE — não afeta latência do ingestar.
+Fragmentos esquecidos preservam payload completo no Qdrant (substrato pra SELF-1 / retro-aprendizado), só ficam invisíveis pras buscas semânticas.
+Smoke test em produção (quando você quiser)
+Bash
+Mas isso só funciona depois de mergear na main e o Railway redeployar. Branch tá pronta pra você revisar quando quiser.
+Próximo passo possível
+Fase 2 — Frontend. Antes preciso que você decida:
+§11.2 Mock HTML — localizar no Drive da Claude Chat ou recriar?
+§11.3 Token na URL aceitável pro v0?
+§11.4 Auto-orbit ON ou OFF default?
+§11.5 Reconnect SSE — retoma ou reload?
+ou continua revisando esse PR primeiro. tua chamada.
+
+
+POST   /hub/ingestar               (existente — agora dispara broadcast)
+POST   /hub/lembrar                (existente)
+GET    /hub/ego-cache              (existente)
+GET    /hub/stats                  (existente)
+GET    /hub/contar                 (existente)
+GET    /hub/recent                 ← NOVO (boot do grafo)
+GET    /hub/stream                 ← NOVO (SSE)
+DELETE /hub/fragmento/{id}         ← NOVO (hard delete)
+PATCH  /hub/fragmento/{id}/esquecer  ← NOVO (soft, reversível)
+PATCH  /hub/fragmento/{id}/lembrar   ← NOVO (reverte soft)
+user: Continue from where you left off.
+assistant: No response requested.
+user: so para seu conhecimento  nao faca nada dd código 
+
+pushado (d1e9931) pra claude/neurogus-fase1-backend-sse. Sem PR pra main, conforme você pediu.
+Fase 1 backend — feito
+Arquivo
+Estado
+LoC
+hub/events.py
+novo
+115
+hub/store.py
++159
+297 → 456
+hub/routes.py
++150
+99 → 254
+Total: +424 LoC (estimativa era ~170, subiu por docstrings detalhadas).
+O que tá funcionando (validado localmente)
+✅ py_compile em todos os 3 arquivos — sintaxe válida
+✅ from hub.events import broadcast, subscribe, broadcast_sync — importa OK
+✅ from hub.store import recentes, esquecer, re_lembrar, _calcular_vizinhos — importa OK
+⚠️ hub.routes precisa de fastapi (não tem no container web, mas tem em produção Railway)
+11 handlers no router (5 novos)
+Código
+Notas importantes
+verify_bearer_flex é o único comportamento alterado pra endpoints existentes. Header tem prioridade (Custom GPT/MCP/claude-code não mudam). Query ?token= ativa só pra /hub/stream.
+lembrar() JÁ filtrava estado='ativo' por default — fragmentos esquecidos já não influenciavam contexto do bot. Não precisei tocar.
+broadcast_sync é no-op silencioso se ninguém estiver conectado no SSE — não afeta latência do ingestar.
+Fragmentos esquecidos preservam payload completo no Qdrant (substrato pra SELF-1 / retro-aprendizado), só ficam invisíveis pras buscas semânticas.
+Smoke test em produção (quando você quiser)
+Bash
+Mas isso só funciona depois de mergear na main e o Railway redeployar. Branch tá pronta pra você revisar quando quiser.
+Próximo passo possível
+Fase 2 — Frontend. Antes preciso que você decida:
+§11.2 Mock HTML — localizar no Drive da Claude Chat ou recriar?
+§11.3 Token na URL aceitável pro v0?
+§11.4 Auto-orbit ON ou OFF default?
+§11.5 Reconnect SSE — retoma ou reload?
+ou continua revisando esse PR primeiro. tua chamada.
+
+
+POST   /hub/ingestar               (existente — agora dispara broadcast)
+POST   /hub/lembrar                (existente)
+GET    /hub/ego-cache              (existente)
+GET    /hub/stats                  (existente)
+GET    /hub/contar                 (existente)
+GET    /hub/recent                 ← NOVO (boot do grafo)
+GET    /hub/stream                 ← NOVO (SSE)
+DELETE /hub/fragmento/{id}         ← NOVO (hard delete)
+PATCH  /hub/fragmento/{id}/esquecer  ← NOVO (soft, reversível)
+PATCH  /hub/fragmento/{id}/lembrar   ← NOVO (reverte soft)
+assistant: Anotado, sem código. Resumo do que vi na branch `claude/neurogus-fase1-backend-sse`:
+
+## Achei o gus-30.1 (estava na branch, não em main)
+
+`projetos/gus/gus-30.1-neurogus-decisoes-v0.md` (215 linhas, commit `ecffe26`). Atualiza decisões abertas do gus-30 com **5 decisões fechadas**:
+
+| ID | Decisão | Resolução |
+|---|---|---|
+| §11.1 | K e threshold afinidade | **K=3, threshold=0.6 cosine** |
+| §11.6 | Hard ou soft delete? | **Ambos.** Hard (irreversível) + soft (`estado="esquecido"` reversível) coexistem |
+| §11.7 | Mostrar só `gustavo` ou ambos brains? | **Ambos.** Brain `gus` ganha anel orbital branco pra distinguir |
+| **Nova** | **Linha temporal — v0 ou v1.1?** | **V0.** Linha reta (default) + espiral 3D + anel cíclico 24h. **Sem cometa.** |
+| §12.3 | Endpoints SSE — hub ou api routes? | **`hub/routes.py`** (já em produção via include_router) |
+
+## Linha temporal entrou no v0
+
+A ideia que a outra aba propôs aqui (e que ficou pendente — não criei demanda) **acabou sendo capturada de outra forma** e virou decisão fechada na sessão dela. Provavelmente:
+- O transcript desta aba foi commitado pelo PR #64
+- Cron processou e gerou fragmentos
+- A outra aba viu o contexto e incorporou
+- Decisão tomada: 3 controles (toggle linha / dropdown modo / toggle "esticar"), sem cometa
+
+Validação prática do PR #64 funcionando: ideia atravessou portas via Hub.
+
+## Decisões ainda pendentes (bloqueiam Fase 2 frontend)
+
+- §11.2 — Mock HTML Claude Chat: localizar ou recriar?
+- §11.3 — Token na URL aceitável pro v0?
+- §11.4 — Auto-orbit ON/OFF default?
+- §11.5 — Reconnect SSE: retoma ou reload?
+
+## Backend Fase 1 — pushado, sem PR ainda
+
+Branch `claude/neurogus-fase1-backend-sse` (commit `d1e9931`):
+
+| Arquivo | Mudança | Endpoints |
+|---|---|---|
+| `hub/events.py` | novo (115 LoC) | `subscribe`, `broadcast`, `broadcast_sync` |
+| `hub/store.py` | +159 LoC | `recentes`, `esquecer`, `re_lembrar`, `_calcular_vizinhos` |
+| `hub/routes.py` | +150 LoC | 5 endpoints novos: `GET /hub/recent`, `GET /hub/stream` (SSE), `DELETE /hub/fragmento/{id}`, `PATCH /hub/fragmento/{id}/esquecer`, `PATCH .../lembrar` |
+
+**Total:** +424 LoC (estimativa era ~170, subiu por docstrings).
+
+## Decisão central importante
+
+> **"Esquecido" é substrato de retro-aprendizado, não lixo.**
+
+Buscas semânticas filtram `estado != "esquecido"` por default — fragmentos soft-delete não influenciam contexto do bot, mas ficam no Qdrant acessíveis pra:
+- SELF-1 (reflexão quinzenal)
+- Auditoria do Hub
+- Curador retro futuro
+- NeuroGus toggle "ver esquecidos"
+
+Isso é uma decisão filosófica forte e elegante. Gosto.
+
+## Estado da arquitetura agora
+
+- **Telegram TioGu:** unidirecional (`gustavo`), 3 turnos
+- **Claude Code:** **bidirecional** (PR #64), cron 30min, defaults (Haiku + GPT-mini)
+- **Claude Chat:** **bidirecional** (PR #67), workflow ingest, **top-tier** (Sonnet 4.6 + GPT-4o)
+- **NeuroGus Fase 1 backend:** pronto na branch `claude/neurogus-fase1-backend-sse`, aguardando você revisar/mergear
+
+## Pendências reais
+
+1. **PR pra main da branch backend Fase 1** (você pediu pra outra aba não criar — sua chamada agora)
+2. **Decidir §11.2-§11.5** antes de Fase 2 frontend
+3. **Service Account Drive** (demanda ainda no inbox)
+4. **TioGu bidirecional** (única porta ainda unilateral)
+
+Sem ação tomada. Aguardando.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado e pushed. Os 2 transcripts agora estão no repo pra próximo cron processar e gerar fragmentos no Hub (incluindo o conteúdo dessa conversa sobre gus-30.1, linha temporal e estado atual da arquitetura).
