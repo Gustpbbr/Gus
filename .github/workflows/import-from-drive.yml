@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write   # WIF: GitHub Actions emite OIDC token pra Google trocar por SA token
 
 jobs:
   import:
@@ -23,10 +24,18 @@ jobs:
       - name: Install dependencies
         run: pip install google-api-python-client google-auth google-auth-oauthlib pyyaml httpx
 
+      # Workload Identity Federation: troca OIDC token do GitHub por token
+      # short-lived do SA gus-sync. Sem JSON key estática.
+      - name: Authenticate to Google Cloud (WIF)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
+
       - name: Import from Drive
         env:
           DRIVE_ROOT_FOLDER_ID: ${{ secrets.DRIVE_ROOT_FOLDER_ID }}
-          # Service Account preferred (não expira). Se ausente, fallback OAuth.
+          # Fallbacks (apenas se WIF acima falhar / ADC não detectado):
           GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
