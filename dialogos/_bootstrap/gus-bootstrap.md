@@ -21,6 +21,12 @@ claude.ai pelo resto da conversa. Este arquivo te dá o mínimo pra agir certo.
 > arquivo tem o **estado dinâmico** do Hub Qdrant — ego cache + decisões
 > recentes + fragmentos das últimas 6h. **Sem ele você opera com lag de 21h
 > da última conversa Telegram.** Foi criado em 28/04/2026 (Passo 1 do gus-28).
+>
+> **⚠️ Drive sync pode estar stale.** O workflow `sync-to-drive.yml` parou de
+> funcionar em 01/05/2026 (refresh token Google OAuth expirou). Se o MCP
+> `gus-hub` estiver conectado, **prefira `read_repo_file('dialogos/_bootstrap/gus-estado-atual.md')`**
+> sobre o Drive — vai mais fresco, sem dependência do sync OAuth.
+> Mesma regra vale pra qualquer .md do repo: MCP > Drive enquanto sync não voltar.
 
 ---
 

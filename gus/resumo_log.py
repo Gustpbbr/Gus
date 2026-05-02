@@ -4,17 +4,18 @@ Log auditável dos resumos / fragmentos curados que vão pro Mem0/Hub.
 A cada 3 turnos, bot.py:_resumir_e_salvar dispara curadoria. Pré-Fase 2
 (legado): Haiku via gus/llm.py:gerar_resumo_turnos + salvar_memorias (Mem0).
 Pós-Fase 2: hub/curador.py:curar_turnos (Haiku + Sonnet em paralelo, ambos
-salvam no Hub Qdrant com metadata.curador distinta).
+salvam no Hub Qdrant com metadata.curador distinta). Pós-29/04 (gus-29 Fase 3):
+Sonnet substituído por GPT-4o-mini — curador atual roda Anthropic + OpenAI.
 
 Esse módulo registra TODOS os eventos (sucesso, descarte, erro, fallback)
 num MD diário no repo, pra o Gustavo auditar no Obsidian.
 
 PATH: _log/resumos-mem0/AAAA-MM-DD.md
 
-FORMATO (atualizado Fase 2):
+FORMATO (atualizado Fase 2.5 — gus-29 trocou Sonnet por GPT-4o-mini):
 ---
 data: AAAA-MM-DD
-fonte: bot Telegram (Hub Curador híbrido Haiku+Sonnet)
+fonte: bot Telegram (Hub Curador híbrido Anthropic+OpenAI)
 tipo: log-resumos-mem0
 ---
 
@@ -27,13 +28,13 @@ tipo: log-resumos-mem0
 > 1. Gustavo decidiu adotar Qdrant direto, aposentar Mem0
 > 2. ...
 
-## HH:MM:SS BRT — salvo (curador: sonnet, janela: a3f29b1c)
+## HH:MM:SS BRT — salvo (curador: gpt, janela: a3f29b1c)
 **Turnos:** 6
 **Fragmentos:** 5
 **Resumo:**
 > 1. ...
 
-(2 entradas com mesmo hash_janela permitem comparar Haiku × Sonnet
+(2 entradas com mesmo hash_janela permitem comparar Anthropic × OpenAI
  para o MESMO trecho de input)
 
 POR QUE: o Gustavo precisa fiscalizar se a curadoria está extraindo
@@ -71,8 +72,9 @@ def _formatar_entrada(
         resumo: texto do resumo / fragmentos extraídos / mensagem de erro
         num_turnos: quantos turnos do trecho cobertos
         status: 'salvo' | 'descartado' | 'erro' | 'fallback-mem0'
-        curador: 'haiku' | 'sonnet' | None (legado/fallback sem curador)
-        hash_janela: sha8 do input — permite parear haiku↔sonnet
+        curador: 'haiku' | 'gpt' | None (legado/fallback sem curador). 'sonnet'
+                 aparece em entradas históricas pré-29/04 (gus-29 Fase 3 trocou).
+        hash_janela: sha8 do input — permite parear curadores diferentes
         num_fragmentos: quantos fragmentos extraídos pelo curador
     """
     agora = datetime.now(BRT).strftime("%H:%M:%S")
@@ -103,7 +105,7 @@ def _frontmatter_inicial(data_iso: str) -> str:
     return (
         f"---\n"
         f"data: {data_iso}\n"
-        f"fonte: bot Telegram (Hub Curador híbrido Haiku+Sonnet)\n"
+        f"fonte: bot Telegram (Hub Curador híbrido Anthropic+OpenAI)\n"
         f"tipo: log-resumos-mem0\n"
         f"---\n\n"
         f"# Resumos pro Hub — {data_br}\n"

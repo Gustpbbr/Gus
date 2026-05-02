@@ -116,6 +116,12 @@ def _has_access_control() -> bool:
     return False
 
 
+# Brains válidos pra escrita via MCP. `gustavo` = fatos sobre Gustavo,
+# `gus` = autobiografia do agente. Sem whitelist, Chat poderia salvar
+# fragmento sob `user_id` arbitrário e quebrar invariante dos brains.
+ALLOWED_USER_IDS = {"gustavo", "gus"}
+
+
 # ---------------------------------------------------------------------------
 # Hub — leitura
 # ---------------------------------------------------------------------------
@@ -254,6 +260,11 @@ def ingestar_fragmento(
             "ok": False,
             "error": "Read-only mode: sem auth (Bearer) nem URL secret configurados. "
                      "Setar MCP_URL_SECRET ou MCP_BEARER_TOKEN pra reativar escrita.",
+        }
+    if user_id not in ALLOWED_USER_IDS:
+        return {
+            "ok": False,
+            "error": f"user_id inválido: {user_id!r}. Aceitos: {sorted(ALLOWED_USER_IDS)}",
         }
     metadata = {
         "tipo": tipo,
@@ -431,13 +442,23 @@ def _create_app() -> Starlette:
 
     if _is_auth_disabled():
         if not secret:
-            log.warning("=" * 60)
-            log.warning("SERVER 100% PÚBLICO — sem Bearer e sem URL secret")
-            log.warning("Qualquer um com a URL pode ler o Hub.")
-            log.warning("Setar MCP_URL_SECRET pra privacidade prática.")
-            log.warning("=" * 60)
-        else:
-            log.info("Bearer auth desligada (MCP_AUTH_DISABLED=true) — privacidade vem do URL secret")
+            # Fail-closed: sem Bearer E sem URL secret = expor todo o Hub
+            # publicamente (Dimagem, saúde, financeiro, identidade) pra qualquer
+            # scanner que descubra o domínio Railway. Antes (V1) só logava warning
+            # — agora retorna 503 em tudo (exceto /health) até alguém configurar
+            # um dos dois. Setar MCP_AUTH_DISABLED=false pra reativar Bearer, OU
+            # MCP_URL_SECRET pra usar shared secret no path.
+            log.error("=" * 60)
+            log.error("FAIL-CLOSED: MCP_AUTH_DISABLED=true sem MCP_URL_SECRET")
+            log.error("Server vai retornar 503 em tudo (exceto /health).")
+            log.error("Reative auth: MCP_URL_SECRET=<32+ chars> ou MCP_AUTH_DISABLED=false")
+            log.error("=" * 60)
+            return Starlette(
+                routes=routes,
+                middleware=[Middleware(AuthMiddleware, expected_header=None)],
+                lifespan=lifespan,
+            )
+        log.info("Bearer auth desligada (MCP_AUTH_DISABLED=true) — privacidade vem do URL secret")
         return Starlette(routes=routes, middleware=[], lifespan=lifespan)
 
     expected_token = os.environ.get("MCP_BEARER_TOKEN")
