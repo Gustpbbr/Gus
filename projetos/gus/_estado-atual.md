@@ -1,166 +1,163 @@
 ---
 tipo: estado-atual-sessao
-atualizado: 2026-04-27T21:30-03:00
+atualizado: 2026-05-02T01:30-03:00
 ---
 
 # Estado atual — handoff entre sessões
 
-Documento vivo. Atualizar no final de cada sessão que deixa algo no meio.
+Documento vivo. Atualizar no fim de cada sessão Code que deixa algo no meio.
 
-## Última sessão (2026-04-27 — sessão maratona Claude Code on the web)
+## Última sessão (2026-05-02 — Fase 1 do plano de saneamento do TioGu)
 
-Resolução de **5 demandas do inbox** + **R2/R6/R7 da auditoria fiscal** +
-**bug 400 do curador** + **finalização da migração Mem0 → Hub Qdrant**.
-Sessão deixou inbox vazio pela primeira vez. Detalhes em commits da branch
-`claude/fix-curador-mem0-cleanup` (ainda aberta com R5 em andamento).
+Sessão de hygiene/manutenção do bot Telegram. Plano completo no chat
+`claude/project-discussion-fkfA8`. Sessões 1 e 2 da Fase 1 concluídas.
 
-### Resumo executivo do dia
+### Resumo executivo
 
-**ADR-001 Fase 3 + 4 + bugfixes** entraram em produção em 4 PRs sequenciais:
+Após análise técnica imparcial do TioGu, listamos pontos severos /
+médios / cosméticos por categoria. Fase 1 = rede de segurança via
+testes + tapar vazamentos críticos. **163 testes verdes**, suite
+roda em ~3.5s.
 
-- **PR #8** (mergeado 20:27 BRT): R6 (MCP Claude Code → Hub) + R7 (patterns
-  sensíveis fonte única) + #4 do inbox (gate confiança OCR Dimagem) + R2
-  (5 scripts cron migram pra Hub) + fix tools TioGu (3 funções leem Hub)
-- **PR #9** (mergeado ~20:50 BRT): cherry-pick fix curador 400 +
-  finalização memory.py (salvar/deletar Hub-first) + bloco-âncora no
-  system_prompt explicando migração
-- **PR #10** (em andamento — branch `claude/fix-curador-mem0-cleanup`):
-  cleanup R2 leftovers (rename `_check_mem0` → `_check_hub`, check-saude.yml
-  pra Hub, mensagem desatualizada bot.py) + R5 documentação (CLAUDE.md,
-  system_prompt limpeza completa, gus-15/gus-23 atualizados, este arquivo)
+### O que foi feito hoje
 
-### Bugs críticos resolvidos
+**Sessão 1 — Testes do caminho crítico (commit `55c1de8`):**
+- Suite `tests/` com 142 testes em 6 arquivos
+- Cobertura: `_chamar_claude_com_retry` (system="" omitido — bug
+  histórico do curador 27/04 agora coberto), `salvar_memorias`
+  (Hub-first com Mem0 fallback), `_load_state`/`_save_state`
+  round-trip, `_validar_path` (traversal), `_extrair_json` (markdown
+  fence), `escanear`/`redact` (PII), regex Dimagem
+- Mocks: `anthropic.AsyncAnthropic`, `hub.store.ingestar/lembrar`
+- Workflow `.github/workflows/tests.yml` em PR + push main
+- `pyproject.toml` config pytest (asyncio_mode=auto)
+- `requirements-dev.txt`
+- Hook `scan_sensivel.py` ganhou `tests/` na ALLOW_PREFIXES (fixtures
+  sintéticas precisam parecer PII pra testar o detector)
 
-1. **Curador erro 400 'temperature and top_p'** — Hub estava vazio o dia
-   inteiro porque o curador errava 100% das chamadas. Causa: `system=""`
-   passado pro SDK Anthropic em chamadas Sonnet 4.6 sem tools ativava
-   defaults conflitantes. Fix: prompt template vai como `system_prompt`
-   (canônico) + helper `_chamar_claude_com_retry` só inclui `system` se
-   truthy. Validado pós-merge: `auto_diagnostico` mostra `Hub Qdrant ✅
-   2+ frags, mais recente há 0.0h`.
+**Sessão 2 — PII output + byte budget + cleanup (commit `d8ee949`):**
+- **S2 PII no output:** `_redigir_resposta()` em `gus/bot.py` reusa
+  `redact()` de `patterns_sensiveis`. Aplicado em `_responder` antes
+  do `reply_text`. Anexa nota visível ao Gustavo listando tipos
+  redatados. Fecha a brecha — antes scan só rodava no save, agora
+  cobre saída direta do bot tb (defesa em layers).
+- **S5 byte budget cache mídia:** `_CACHE_MAX` (count) → `_CACHE_MAX_ITEMS=50`
+  + `_CACHE_MAX_BYTES=200MB`. Ejeção LRU por count OU bytes. Item único
+  maior que budget aceito (PDF max 32MB cabe folgado). Container
+  Railway pequeno protegido contra OOM.
+- **C1** `gus/logger.py`: 3 linhas mortas removidas
+- **C4** `gus/memory.py`: `VIA_DEFAULT` virou `_via_default()` lazy
+- **C5** `gus/llm.py`: `_build_tools_cached` com anchor por nome
+  estável (`rotear_arquivo`); fallback pro último + warn no log se
+  anchor sumir. Reorder acidental detectável.
+- **C6** `gus/llm.py`: fallback openai→anthropic concatena ambas
+  exceções na resposta. Antes só mostrava erro do OpenAI mesmo quando
+  Anthropic também falhava.
+- +21 testes (TestRedigirResposta, TestContentBytes, TestCachePut*)
 
-2. **TioGu reportando "Mem0 silêncio 25h"** — auto_diagnostico lia da
-   coleção morta. Fix: `_check_mem0` (renomeado pra `_check_hub`) lê do
-   Hub via `hub.store.listar`. `buscar_memorias_detalhada` e
-   `buscar_memorias_gus` migrados pra Hub-first também.
+### Validação
 
-3. **OCR Dimagem com nome trocado em prontuário** — risco clínico real.
-   Fix: schema do Haiku Vision ganhou `confianca` (alta/media/baixa).
-   `analisar_os_dimagem` bloqueia preview e pede reenvio se baixa,
-   adiciona ⚠️ se média.
-
-### Demandas resolvidas (inbox-claude-code → archive)
-
-| # | Demanda | Resolução |
-|---|---|---|
-| 1 | fix-qdrant-search-bug | Já estava concluída, só faltava arquivar |
-| 2 | curadoria-mem0-sonnet-nao-haiku | Superada pelo curador híbrido (Haiku × Sonnet em paralelo, não troca-fixa) |
-| 3 | schema-hub-qdrant-salvar-memoria | Resolvida pela Fase 2/3/R6 (schema gus-18 completo em todas as portas) |
-| 4 | ocr-confianca-baixa-nao-salvar | Implementado neste mesmo dia (gate de confiança) |
-| 5 | configurar-railway-api-token | Gustavo configurou `Railway_diagnostic` no Railway |
-
-### Configurações operacionais feitas
-
-- `Railway_diagnostic` token configurado no Railway → `logs_railway` ativo
-- Workflow `Migrar gus → gus_hub` disparado (Hub recebendo dados)
-- Secrets `QDRANT_URL`/`QDRANT_API_KEY` confirmados no GitHub
-- Curador híbrido salvando — Hub tem 2+ fragmentos com mais recente há minutos
-
-### Bot agora em ~21 tools (mesma lista, mas backend Hub)
-
-Mesmas tools de antes, internamente apontando pro Hub Qdrant. `search_memory`,
-`buscar_memoria_gus`, `salvar_memoria_gus`, `deletar_memoria` lêem/escrevem
-no Hub primeiro com fallback Mem0 só pra leitura (escrita Mem0 morta).
+Suite local: **163 passed in 3.54s**. CI verde após push.
 
 ## Pendente pra próxima sessão
 
-### Prioridade 1 — Decisão modelo curador (Fase 5 ADR-001)
+### Fase 2A — Reconciliação docs estáticas (próxima sessão, ~2h)
 
-- **14 dias de coleta dual** Haiku × Sonnet rolando até **12/05/2026**
-- Logs em `_log/resumos-mem0/AAAA-MM-DD.md` com 1 entrada por curador
-  + mesmo `hash_janela` pra parear
-- Após coleta: comparar par-a-par no Obsidian, escolher modelo final
-- Implica também: aposentar Mem0 SaaS totalmente (remover fallbacks no
-  `gus/memory.py`, remover `MEM0_API_KEY` dos secrets, remover `mem0ai`
-  do requirements)
+1. **M8/M10** ✅ FEITO HOJE — `scripts/gerar_lista_tools.py` lê
+   `gus/tools.py:TOOLS` e gera `projetos/gus/_tools-inventario.md` auto.
+   Workflow `sync-docs.yml` cron 04h BRT + push em mudanças.
+   Confirmou **21 tools reais** (system_prompt mente em "22").
+2. **P9** ✅ FEITO HOJE — `_estado-atual.md` (este arquivo) +
+   `gus-26-status-consolidado.md` atualizados pra 02/05.
+3. **P10** decidir `gus-08-plano-proximos-passos.md` (24/04 obsoleto):
+   mover pra `historico/` é o plano (itens A-H foram quase todos feitos).
 
-### Prioridade 2 — Mergear PR #10 + Custom GPT
+### Fase 2B — System prompt (próxima sessão dedicada, ~2h)
 
-- **PR #10** (branch atual) — cleanup R2 leftovers + R5 documentação
-- Após merge: TioGu lê novo `system_prompt` sem confusão sobre Mem0
-- **Custom GPT Action** (DESKTOP obrigatório) — passo-a-passo em
-  `gus-14-custom-gpt-setup.md`
+**Risco alto** — bot lê isso em produção. Vai isolada.
 
-### Prioridade 3 — Features pendentes
+- **S3** reescrever `gus/system_prompt.md` (794 linhas → ~500):
+  - Conta de tools real (21, vai virar `len(TOOLS)`)
+  - Unificar fluxo Dimagem (documentado 2x hoje)
+  - Remover seções pré-migração ADR-001 (Mem0 silêncio, Mem0 fallback
+    histórico, etc.)
+  - Diff explícito mostrado pra Gustavo aprovar antes do commit
 
-- **Suporte a vídeo no Telegram** — sem `filters.VIDEO` registrado em
-  `gus/main.py`. Implementar = extrair áudio (ffmpeg → Whisper) + frames
-  (Vision Sonnet)
-- **Service Account Google Drive** — necessário pro sync pendente
-  desde sempre
-- **Termux + wake word "Gus" no S8** (pós-Alexa) — Opção B aprovada
-- **Alexa Skill V1** (Dot 3, Polly, voz pura) — depois do Custom GPT
+### Fase 3 — Operacional (~3h)
 
-### Pendentes menores
+- **S4** alerta proativo HARD_LIMIT (cron check-cost.yml + 2º canal)
+- **M5** cache `auto_diagnostico` 5min
+- **M7** `/foco` deleta FOCO-ATUAL antigo antes de salvar novo
 
-- Workflow YAML do `enrich_mem0_export.py` — script existe, sem cron
-- Observar dimagem A+B em produção 1-2 semanas, depois decidir tirar A
-- Migrar `gus/memory.py:salvar_memorias` pra remover dependência mem0ai
-  completamente (atualmente já escreve no Hub mas o módulo importa mem0)
-- Limpar 4+ memórias poluídas via MCP local
+### Fase 4 — Refator estrutural (~6h, depende Fase 1 done ✅)
 
-## Decisões importantes tomadas (acumulado)
+Decisões já tomadas:
+- **D3 = C** — `drop_pending_updates=True` mantido + aviso ao Gustavo
+  no boot se houver msgs pendentes
+- **D4 = A** — mover `gus/dimagem.py` → `gus/integrations/dimagem.py`
 
-### Tomadas em 2026-04-27
+Tarefas:
+- **M1** split `gus/bot.py` em `gus/handlers/{text,photo,document,voice,commands}.py`
+  + `gus/state.py`
+- **M2** promover `_chamar_claude_com_retry` → público (curador
+  importa privada, frágil)
+- **C3** split `gus/tools.py` (1140 linhas)
+- **C2** threadsafe `_get_openai_client`
+- **C7** ✅ planejado mover `dimagem.py` na Fase 4
 
-- **ADR-001: aposentar Mem0** — wrapper mem0 self-hosted limita schema rico,
-  Hub direto permite payload completo gus-18. Caminho:
-  Fase 1 (Hub criado) → Fase 2 (curador) → Fase 3 (bot lê Hub) → Fase 4
-  (migrar dados) → Fase 5 (aposentar Mem0)
-- **Curador híbrido** Haiku × Sonnet em paralelo (14 dias) → coleta evidência
-  pra decisão de modelo, não chuta
-- **Patterns sensíveis em fonte única** (`gus/patterns_sensiveis.py`) — antes
-  duplicado em `tools.py` + `scan_sensivel.py`, risco de drift. Adicionados
-  5 patterns novos (Qdrant key, Telegram bot token, Google SA key, Google
-  OAuth secret, Railway token env line)
-- **OCR confiança gate** — schema do Haiku Vision auto-avalia confiança em
-  3 níveis. Baixa bloqueia save. Risco clínico (nome trocado em prontuário)
-  exige defesa em profundidade
-- **Mensagem fallback de mídia atualizada** — "Áudio e vídeo em breve"
-  estava desatualizada (áudio JÁ funciona desde sempre). Trocada por
-  "Vídeo ainda não tem handler"
+### Fase 5 — Decisões pendentes Gustavo (paralelo)
 
-### Tomadas antes (2026-04-25 e anteriores, ainda válidas)
+Tratado em aba separada da Claude Chat:
+- **P1** captura Claude Chat (A/B/C)
+- **P2** Drive sync OAuth (1/2/3)
+- **P3** NeuroGus (decisões 11.1-11.7)
 
-- **Alexa não é o destino final** — porta complementar. Conversa fluida =
-  mobile (Custom GPT + Claude voice)
-- **Câmera no Echo Show inviável via Skill** — caminho real é câmera IP
-  separada (S8 velho com IP Webcam = R$ 0)
-- **Wake word "Gus" no S8** = Termux + openWakeWord (Opção B), pós-Alexa
-- **Conector GitHub nativo do ChatGPT recusado** — bypass de LGPD. Custom
-  GPT acessa GitHub APENAS via Action REST nossa
-- **Claude Chat tem write no Drive** — habilita loop assíncrono real
-- **Canal unificado `dialogos/` por destinatário** — evita explosão N×N
-- **Workflow Drive→GitHub cron 15min** — equilíbrio latência×custo
-- **Auto-execução desabilitada V1** — Gustavo no loop pra revisar antes
+Pendente do Gustavo aqui:
+- **P7** Custom GPT desktop — configurar Action no Builder
+- **P8** limpar 4+ memórias poluídas no brain `gustavo`
+
+### Fase 6 — Aposentar Mem0 (bloqueado até 12/05)
+
+- Coleta dual Haiku × GPT termina **12/05/2026**
+- Após: Gustavo escolhe modelo, Code limpa fallback, remove `mem0ai`,
+  remove secret `MEM0_API_KEY`, upgrade `anthropic` SDK 0.40 → 0.50+
+
+### Fase 7 — NeuroGus (sprint dedicado, depende decisão P3)
+
+~145 LOC: `hub/events.py` + `broadcast()` + 2 endpoints SSE +
+`api/neurogus.py` (PWA). Plano completo em `gus-30-neurogus-roadmap.md`.
+
+## Branch atual
+
+`claude/project-discussion-fkfA8` — onde está rolando o plano de
+saneamento. Commits Fase 1 já mergeáveis pra main.
 
 ## Bugs em aberto (não bloqueantes)
 
-- DDG fallback ativa quando Tavily esgota cota
-- 4+ memórias poluídas no brain `gustavo` aguardando limpeza manual via
-  MCP (deletar_memoria)
-- ~~Mem0 latência de indexação~~ — não importa mais, Hub indexa em segundos
-- ~~Quota Retrieval API Mem0~~ — não importa mais, Mem0 morto
+- 4+ memórias poluídas no brain `gustavo` aguardando limpeza manual
+  via MCP (P8)
+- DDG fallback ativa quando Tavily esgota cota (esperado, sem ação)
+- Hub Qdrant pode ficar ocioso por horas em janela noturna (sem ação)
+
+## Mudanças no projeto desde o último estado-atual (27/04)
+
+PRs entre 27/04 e 02/05:
+- **#57/#58/#60** MCP server público no Railway com URL secret no
+  path — Claude Chat web acessa Hub via MCP
+- **#63** arquiva 2 demandas MCP resolvidas
+- **#64** captura transcripts Claude Code via cron — Stop hook salva
+  transcript redatado, cron */30min processa via curador. Resolve
+  problema de captura no Code web (env vars ausentes)
+- **#67** curador-chat bidirecional (gustavo + gus) com Sonnet 4.6 +
+  GPT-4o top-tier. Bug fix `resultado["sonnet"]` → `["gpt"]` (logs
+  estavam mentindo havia semanas)
 
 ## Como usar este arquivo
 
-1. Próxima sessão: ler PRIMEIRO, depois `gus-10-caminho-alexa.md` se for
-   sessão de dev rumo à Alexa
+1. Próxima sessão Code: ler ANTES de outras coisas. Pega o fio dos PRs
+   recentes, do plano em curso, das decisões já tomadas.
 2. Ao fim da sessão: atualizar "Última sessão" + "Pendente" com o que
-   ficou no meio
-3. Commit + push antes de encerrar
+   ficou no meio. Commit + push antes de encerrar.
 
-Relacionado: [[gus-01-visao-geral]], [[gus-10-caminho-alexa]],
-[[gus-11-tools-roadmap]], [[gus-12-portas-futuras]],
-[[gus-13-tags-canonicas]], [[gus-15-decisao-migracao]],
-[[gus-23-logica-qdrant-mem0]]
+Relacionado: [[gus-01-visao-geral]], [[gus-15-decisao-migracao]],
+[[gus-26-status-consolidado]], [[gus-30-neurogus-roadmap]]
