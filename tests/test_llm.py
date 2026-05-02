@@ -1,0 +1,363 @@
+"""Testes do dispatcher LLM (gus/llm.py).
+
+Foco em funções puras + lógica de fallback de pricing/erros. Chamadas reais
+à API ficam mockadas — sem teste de integração com Anthropic/OpenAI aqui.
+"""
+
+import pytest
+from unittest.mock import patch, AsyncMock, MagicMock
+
+import anthropic
+
+from gus.llm import (
+    _get_pricing, _mensagem_erro_amigavel, _mensagem_erro_amigavel_openai,
+    _anthropic_to_openai_tools, _history_to_openai, _escolher_provider,
+    _build_system_blocks, _build_tools_cached, _chamar_claude_com_retry,
+    MODEL_PRICING, FALLBACK_PRICING,
+)
+
+
+class TestGetPricing:
+    def test_match_exato_gpt_4o_mini(self):
+        # gpt-4o-mini é mais barato que gpt-4o — match exato evita confusão
+        p = _get_pricing("gpt-4o-mini")
+        assert p == MODEL_PRICING["gpt-4o-mini"]
+        assert p["input"] < MODEL_PRICING["gpt-4o"]["input"]
+
+    def test_match_exato_gpt_4o(self):
+        assert _get_pricing("gpt-4o") == MODEL_PRICING["gpt-4o"]
+
+    def test_familia_sonnet(self):
+        # claude-sonnet-4-6 contém "sonnet" — match por substring
+        assert _get_pricing("claude-sonnet-4-6") == MODEL_PRICING["sonnet"]
+
+    def test_familia_haiku(self):
+        assert _get_pricing("claude-haiku-4-5") == MODEL_PRICING["haiku"]
+
+    def test_familia_opus(self):
+        assert _get_pricing("claude-opus-4-7") == MODEL_PRICING["opus"]
+
+    def test_modelo_desconhecido_usa_fallback(self):
+        assert _get_pricing("modelo-totalmente-novo") == FALLBACK_PRICING
+
+    def test_case_insensitive(self):
+        assert _get_pricing("CLAUDE-SONNET-4-6") == MODEL_PRICING["sonnet"]
+
+
+class TestMensagemErroAmigavelAnthropic:
+    def _build_error(self, status, body=None):
+        e = MagicMock(spec=anthropic.APIStatusError)
+        e.status_code = status
+        e.body = body or {}
+        return e
+
+    def test_credit_balance(self):
+        e = self._build_error(400, {"error": {"message": "credit balance is too low"}})
+        msg = _mensagem_erro_amigavel(e)
+        assert "créditos" in msg
+        assert "console.anthropic.com" in msg
+
+    def test_status_401_authentication(self):
+        e = self._build_error(401, {"error": {"type": "authentication_error", "message": "x"}})
+        msg = _mensagem_erro_amigavel(e)
+        assert "ANTHROPIC_API_KEY" in msg
+
+    def test_status_413(self):
+        e = self._build_error(413, {"error": {"type": "request_too_large", "message": "x"}})
+        msg = _mensagem_erro_amigavel(e)
+        assert "/reset" in msg
+
+    def test_status_429(self):
+        e = self._build_error(429, {"error": {"message": "rate limit"}})
+        msg = _mensagem_erro_amigavel(e)
+        assert "rate" in msg.lower() or "30s" in msg
+
+    def test_timeout(self):
+        e = anthropic.APITimeoutError(request=MagicMock())
+        msg = _mensagem_erro_amigavel(e)
+        assert "demorou demais" in msg or "1 min" in msg
+
+    def test_connection_error(self):
+        e = anthropic.APIConnectionError(request=MagicMock())
+        msg = _mensagem_erro_amigavel(e)
+        assert "conectar" in msg.lower() or "rede" in msg.lower()
+
+
+class TestMensagemErroAmigavelOpenAI:
+    def test_quota(self):
+        e = Exception("insufficient_quota: please add billing")
+        msg = _mensagem_erro_amigavel_openai(e)
+        assert "OpenAI" in msg
+        assert "billing" in msg or "créditos" in msg
+
+    def test_invalid_key(self):
+        e = MagicMock()
+        e.status_code = 401
+        e.__str__ = lambda self: "invalid_api_key"
+        msg = _mensagem_erro_amigavel_openai(e)
+        # Espera string neutra com mensagem específica
+        assert isinstance(msg, str)
+
+
+class TestAnthropicToOpenAiTools:
+    def test_converte_estrutura_basica(self):
+        tools = [{
+            "name": "test_tool",
+            "description": "uma tool",
+            "input_schema": {"type": "object", "properties": {"x": {"type": "string"}}}
+        }]
+        out = _anthropic_to_openai_tools(tools)
+        assert len(out) == 1
+        assert out[0]["type"] == "function"
+        assert out[0]["function"]["name"] == "test_tool"
+        assert out[0]["function"]["description"] == "uma tool"
+        assert out[0]["function"]["parameters"]["type"] == "object"
+
+    def test_lista_vazia(self):
+        assert _anthropic_to_openai_tools([]) == []
+
+    def test_sem_input_schema(self):
+        tools = [{"name": "x", "description": "d"}]
+        out = _anthropic_to_openai_tools(tools)
+        assert out[0]["function"]["parameters"] == {"type": "object", "properties": {}}
+
+
+class TestHistoryToOpenAi:
+    def test_user_string(self):
+        msgs = [{"role": "user", "content": "oi"}]
+        out = _history_to_openai(msgs)
+        assert out == [{"role": "user", "content": "oi"}]
+
+    def test_user_lista_blocos(self):
+        msgs = [{"role": "user", "content": [
+            {"type": "text", "text": "primeiro"},
+            {"type": "text", "text": "segundo"},
+        ]}]
+        out = _history_to_openai(msgs)
+        assert "primeiro" in out[0]["content"]
+        assert "segundo" in out[0]["content"]
+
+    def test_imagem_substituida_por_marcador(self):
+        msgs = [{"role": "user", "content": [
+            {"type": "image", "source": {}},
+        ]}]
+        out = _history_to_openai(msgs)
+        assert "[imagem anexada]" in out[0]["content"]
+
+    def test_documento_substituido_por_marcador(self):
+        msgs = [{"role": "user", "content": [
+            {"type": "document", "source": {}},
+        ]}]
+        out = _history_to_openai(msgs)
+        assert "[documento anexado]" in out[0]["content"]
+
+    def test_assistant_string_preservada(self):
+        msgs = [{"role": "assistant", "content": "ok"}]
+        out = _history_to_openai(msgs)
+        assert out[0]["role"] == "assistant"
+        assert out[0]["content"] == "ok"
+
+
+class TestEscolherProvider:
+    def test_texto_puro_va_pra_openai(self):
+        msgs = [{"role": "user", "content": [{"type": "text", "text": "oi"}]}]
+        provider, motivo = _escolher_provider(msgs)
+        assert provider == "openai"
+
+    def test_imagem_va_pra_anthropic(self):
+        msgs = [{"role": "user", "content": [
+            {"type": "image", "source": {}},
+        ]}]
+        provider, motivo = _escolher_provider(msgs)
+        assert provider == "anthropic"
+        assert "image" in motivo
+
+    def test_documento_va_pra_anthropic(self):
+        msgs = [{"role": "user", "content": [
+            {"type": "document", "source": {}},
+        ]}]
+        provider, motivo = _escolher_provider(msgs)
+        assert provider == "anthropic"
+
+    def test_rollback_flag(self, monkeypatch):
+        monkeypatch.setenv("MULTIMODEL_ENABLED", "false")
+        msgs = [{"role": "user", "content": [{"type": "text", "text": "oi"}]}]
+        provider, motivo = _escolher_provider(msgs)
+        assert provider == "anthropic"
+        assert "rollback" in motivo
+
+    def test_string_content_va_pra_openai(self):
+        # content como string (não lista) também roteia
+        msgs = [{"role": "user", "content": "texto direto"}]
+        provider, motivo = _escolher_provider(msgs)
+        assert provider == "openai"
+
+
+class TestBuildSystemBlocks:
+    def test_um_bloco_estavel_com_cache(self):
+        blocks = _build_system_blocks("system estável", "")
+        assert len(blocks) == 1
+        assert blocks[0]["text"] == "system estável"
+        assert blocks[0]["cache_control"] == {"type": "ephemeral"}
+
+    def test_dois_blocos_quando_tem_suffix(self):
+        blocks = _build_system_blocks("estável", "data atual")
+        assert len(blocks) == 2
+        assert blocks[0]["cache_control"] == {"type": "ephemeral"}
+        assert blocks[1]["text"] == "data atual"
+        # bloco variável NÃO tem cache_control
+        assert "cache_control" not in blocks[1]
+
+
+class TestBuildToolsCached:
+    def test_lista_vazia(self):
+        assert _build_tools_cached([]) == []
+
+    def test_marca_apenas_ultimo(self):
+        tools = [
+            {"name": "a", "description": "1"},
+            {"name": "b", "description": "2"},
+            {"name": "c", "description": "3"},
+        ]
+        out = _build_tools_cached(tools)
+        assert "cache_control" not in out[0]
+        assert "cache_control" not in out[1]
+        assert out[2]["cache_control"] == {"type": "ephemeral"}
+
+    def test_nao_muta_lista_original(self):
+        tools = [{"name": "a"}]
+        _build_tools_cached(tools)
+        assert "cache_control" not in tools[0]
+
+
+class TestChamarClaudeComRetry:
+    @pytest.mark.asyncio
+    async def test_omite_system_quando_vazio(self, monkeypatch):
+        """Bug histórico: system='' disparou 400 'temperature and top_p'.
+        Validação: kwargs['system'] não pode existir se system_prompt é falsy."""
+        kwargs_recebido = {}
+
+        async def fake_create(**kwargs):
+            kwargs_recebido.update(kwargs)
+            resp = MagicMock()
+            resp.stop_reason = "end_turn"
+            resp.content = [MagicMock(text="ok", type="text")]
+            resp.usage.input_tokens = 1
+            resp.usage.output_tokens = 1
+            return resp
+
+        with patch("gus.llm.client.messages.create", new=fake_create):
+            await _chamar_claude_com_retry(
+                model="claude-sonnet-4-6",
+                max_tokens=10,
+                system_prompt="",
+                messages=[{"role": "user", "content": "oi"}],
+            )
+
+        assert "system" not in kwargs_recebido
+
+    @pytest.mark.asyncio
+    async def test_inclui_system_quando_truthy(self):
+        kwargs_recebido = {}
+
+        async def fake_create(**kwargs):
+            kwargs_recebido.update(kwargs)
+            resp = MagicMock()
+            resp.stop_reason = "end_turn"
+            resp.content = [MagicMock(text="ok", type="text")]
+            resp.usage.input_tokens = 1
+            resp.usage.output_tokens = 1
+            return resp
+
+        with patch("gus.llm.client.messages.create", new=fake_create):
+            await _chamar_claude_com_retry(
+                model="claude-sonnet-4-6",
+                max_tokens=10,
+                system_prompt="você é o gus",
+                messages=[{"role": "user", "content": "oi"}],
+            )
+
+        assert kwargs_recebido.get("system") == "você é o gus"
+
+    @pytest.mark.asyncio
+    async def test_retry_em_5xx_e_eventual_sucesso(self):
+        chamadas = {"n": 0}
+
+        async def fake_create(**kwargs):
+            chamadas["n"] += 1
+            if chamadas["n"] < 3:
+                err = MagicMock(spec=anthropic.APIStatusError)
+                err.status_code = 503
+                raise anthropic.APIStatusError("overloaded", response=MagicMock(status_code=503), body={})
+            resp = MagicMock()
+            resp.stop_reason = "end_turn"
+            resp.content = [MagicMock(text="recuperou", type="text")]
+            resp.usage.input_tokens = 1
+            resp.usage.output_tokens = 1
+            return resp
+
+        with patch("gus.llm.client.messages.create", new=fake_create):
+            with patch("gus.llm.asyncio.sleep", new=AsyncMock()):  # acelera teste
+                resp = await _chamar_claude_com_retry(
+                    model="claude-sonnet-4-6",
+                    max_tokens=10,
+                    system_prompt="x",
+                    messages=[{"role": "user", "content": "oi"}],
+                    max_tentativas=4,
+                )
+        assert chamadas["n"] == 3
+
+    @pytest.mark.asyncio
+    async def test_4xx_nao_retry_propaga(self):
+        chamadas = {"n": 0}
+
+        async def fake_create(**kwargs):
+            chamadas["n"] += 1
+            raise anthropic.APIStatusError(
+                "bad request",
+                response=MagicMock(status_code=400),
+                body={"error": {"message": "x"}},
+            )
+
+        with patch("gus.llm.client.messages.create", new=fake_create):
+            with patch("gus.llm.asyncio.sleep", new=AsyncMock()):
+                with pytest.raises(anthropic.APIStatusError):
+                    await _chamar_claude_com_retry(
+                        model="claude-sonnet-4-6",
+                        max_tokens=10,
+                        system_prompt="x",
+                        messages=[{"role": "user", "content": "oi"}],
+                        max_tentativas=4,
+                    )
+        # 4xx (exceto 429) não retenta — uma chamada só
+        assert chamadas["n"] == 1
+
+    @pytest.mark.asyncio
+    async def test_429_retenta(self):
+        chamadas = {"n": 0}
+
+        async def fake_create(**kwargs):
+            chamadas["n"] += 1
+            if chamadas["n"] < 2:
+                raise anthropic.APIStatusError(
+                    "rate limit",
+                    response=MagicMock(status_code=429),
+                    body={"error": {"message": "rate limit"}},
+                )
+            resp = MagicMock()
+            resp.stop_reason = "end_turn"
+            resp.content = [MagicMock(text="ok", type="text")]
+            resp.usage.input_tokens = 1
+            resp.usage.output_tokens = 1
+            return resp
+
+        with patch("gus.llm.client.messages.create", new=fake_create):
+            with patch("gus.llm.asyncio.sleep", new=AsyncMock()):
+                await _chamar_claude_com_retry(
+                    model="claude-sonnet-4-6",
+                    max_tokens=10,
+                    system_prompt="x",
+                    messages=[{"role": "user", "content": "oi"}],
+                    max_tentativas=4,
+                )
+        assert chamadas["n"] == 2

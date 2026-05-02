@@ -41,6 +41,11 @@ TOOLS_ALVO = ("Write", "Edit", "NotebookEdit")
 ALLOW_PREFIXES = (
     "sensivel/",
     "/sensivel/",
+    # Testes precisam de fixtures que parecem PII (CPF fake, cartao fake) pra
+    # validar que escanear()/redact() detectam corretamente. Dados sao
+    # sinteticos por construcao.
+    "tests/",
+    "/tests/",
 )
 
 

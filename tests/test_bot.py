@@ -1,0 +1,173 @@
+"""Testes de funções utilitárias e de estado do bot (gus/bot.py).
+
+Não testa handlers Telegram diretamente (precisaria mockar Update/Context).
+Foca em: state load/save, validação, queries, regex de fluxo Dimagem.
+"""
+
+import json
+import importlib
+import time
+from collections import deque
+
+import pytest
+
+
+def _reload_bot(monkeypatch, state_path):
+    """STATE_FILE é avaliado no import — recarrega após setar."""
+    monkeypatch.setenv("STATE_FILE", str(state_path))
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "12345")
+    import gus.bot
+    importlib.reload(gus.bot)
+    return gus.bot
+
+
+class TestLoadSaveState:
+    def test_round_trip(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        # popula state em memória
+        bot.conversation_histories["12345"] = [
+            {"role": "user", "content": "oi"},
+            {"role": "assistant", "content": "olá"},
+        ]
+        bot.turn_counters["12345"] = 5
+        bot.last_saved_turn["12345"] = 3
+        bot.message_timestamps["12345"] = deque([time.time(), time.time()])
+        bot.dimagem_pending["12345"] = {"path": "x.md"}
+
+        bot._save_state()
+        assert tmp_state_file.exists()
+
+        # zera memória, recarrega
+        bot.conversation_histories.clear()
+        bot.turn_counters.clear()
+        bot.last_saved_turn.clear()
+        bot.message_timestamps.clear()
+        bot.dimagem_pending.clear()
+
+        bot._load_state()
+        assert bot.conversation_histories["12345"][0]["content"] == "oi"
+        assert bot.turn_counters["12345"] == 5
+        assert bot.last_saved_turn["12345"] == 3
+        assert len(bot.message_timestamps["12345"]) == 2
+        assert bot.dimagem_pending["12345"]["path"] == "x.md"
+
+    def test_load_arquivo_inexistente_silencioso(self, tmp_path, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_path / "nao-existe.json")
+        # Não deve levantar
+        bot._load_state()
+        assert bot.conversation_histories == {}
+
+    def test_save_atomico_via_tmp(self, tmp_state_file, monkeypatch):
+        """Garante que o save usa write tmp + replace (não corrompe se kill mid-write)."""
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        bot.conversation_histories["1"] = [{"role": "user", "content": "x"}]
+        bot._save_state()
+
+        # arquivo final existe; tmp não deve sobrar
+        assert tmp_state_file.exists()
+        assert not (tmp_state_file.parent / (tmp_state_file.name + ".tmp")).exists()
+
+    def test_save_silent_on_error(self, tmp_path, monkeypatch):
+        # Path inválido (diretório sem permissão simulado por path absurdo)
+        invalid = tmp_path / "subdir" / "file.json"
+        bot = _reload_bot(monkeypatch, invalid)
+        bot.conversation_histories["1"] = [{"role": "user", "content": "x"}]
+        # Mesmo se o save falhar, não deve propagar
+        bot._save_state()
+
+
+class TestAutorizado:
+    def test_chat_id_correto(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        assert bot._autorizado("12345") is True
+
+    def test_chat_id_diferente(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        assert bot._autorizado("99999") is False
+
+    def test_sem_telegram_chat_id_nega_tudo(self, tmp_state_file, monkeypatch):
+        monkeypatch.setenv("STATE_FILE", str(tmp_state_file))
+        monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
+        monkeypatch.setenv("TELEGRAM_CHAT_ID", "")
+        import gus.bot
+        importlib.reload(gus.bot)
+        assert gus.bot._autorizado("12345") is False
+        assert gus.bot._autorizado("") is False
+
+
+class TestTextoDeContent:
+    def test_string_direta(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        assert bot._texto_de_content("oi mundo") == "oi mundo"
+
+    def test_lista_blocos_text(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        content = [
+            {"type": "text", "text": "primeiro"},
+            {"type": "text", "text": "segundo"},
+        ]
+        out = bot._texto_de_content(content)
+        assert "primeiro" in out
+        assert "segundo" in out
+
+    def test_lista_sem_text_blocks(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        content = [{"type": "image", "source": {}}]
+        assert bot._texto_de_content(content) == ""
+
+    def test_outros_tipos(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        assert bot._texto_de_content(None) == ""
+        assert bot._texto_de_content(42) == ""
+
+
+class TestQueryMem0Contextual:
+    def test_pega_ultimas_3_user(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        history = [
+            {"role": "user", "content": "antiga"},
+            {"role": "user", "content": "primeira"},
+            {"role": "assistant", "content": "resp"},
+            {"role": "user", "content": "segunda"},
+            {"role": "user", "content": "terceira"},
+        ]
+        out = bot._query_mem0_contextual(history, "fallback")
+        # Pega as 3 últimas user msgs (primeira, segunda, terceira)
+        assert "primeira" in out
+        assert "segunda" in out
+        assert "terceira" in out
+        assert "antiga" not in out  # passou do limite de 3
+
+    def test_history_vazio_usa_fallback(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        out = bot._query_mem0_contextual([], "fallback msg")
+        assert out == "fallback msg"
+
+    def test_so_assistant_usa_fallback(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        history = [{"role": "assistant", "content": "resp"}]
+        out = bot._query_mem0_contextual(history, "fallback")
+        assert out == "fallback"
+
+
+class TestRegexDimagem:
+    def test_confirma_sim(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        for s in ["sim", "Sim!", "ok", "OK", "pode", "manda", "vai", "bora", "1", "👍", "salva"]:
+            assert bot._DIMAGEM_CONFIRMA_RE.match(s), f"falha em '{s}'"
+
+    def test_confirma_nao_match_random(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        for s in ["talvez", "depois eu vejo", "olha aquilo", "qualquer coisa"]:
+            assert not bot._DIMAGEM_CONFIRMA_RE.match(s), f"falsamente matched '{s}'"
+
+    def test_cancela(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        for s in ["não", "nao", "Cancela", "ignora", "esquece", "deixa pra lá", "aborta"]:
+            assert bot._DIMAGEM_CANCELA_RE.match(s), f"falha em '{s}'"
+
+    def test_cancela_nao_match_confirma(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        # confirmações não devem matchar cancela
+        for s in ["sim", "ok", "pode"]:
+            assert not bot._DIMAGEM_CANCELA_RE.match(s)
