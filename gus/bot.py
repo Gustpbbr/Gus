@@ -13,6 +13,7 @@ from gus.memory import buscar_memorias, salvar_memorias
 from gus.media import processar_imagem, processar_pdf, processar_docx, processar_xlsx, transcrever_audio
 from gus.resumo_log import append_resumo_async
 from gus.dimagem import analisar_os_dimagem, salvar_os_dimagem
+from gus.patterns_sensiveis import redact as _redact_pii
 import re as _re_bot
 import httpx as _httpx_bot
 
@@ -95,6 +96,34 @@ def _save_state() -> None:
 
 # Carrega state ao importar o módulo (startup do bot)
 _load_state()
+
+
+def _redigir_resposta(resposta: str) -> tuple[str, list[str]]:
+    """Aplica scan PII na resposta antes de mandar pro Telegram.
+
+    Defesa em profundidade vs vazamento — o Sonnet/GPT pode incluir CPF,
+    cartão, key etc. resumindo OS Dimagem ou processando arquivo. O
+    `save_to_github` já tinha scan, mas a saída direta do bot não.
+
+    Comportamento:
+      - Substitui matches por `[REDIGIDO-<tipo>]`
+      - Se houve redação, anexa nota visível ao Gustavo (transparência)
+      - Logger já loga via warning no caller
+
+    Retorna (resposta_redatada, lista_de_tipos_redatados).
+    Se nada for redatado, resposta volta inalterada.
+    """
+    if not resposta:
+        return resposta, []
+    redatada, redatados = _redact_pii(resposta)
+    if not redatados:
+        return resposta, []
+    tipos_unicos = sorted(set(redatados))
+    nota = (
+        f"\n\n_⚠️ {len(redatados)} dado(s) sensível(eis) redatado(s) "
+        f"da resposta: {', '.join(tipos_unicos)}_"
+    )
+    return redatada + nota, redatados
 
 
 def _texto_de_content(content) -> str:
@@ -278,8 +307,16 @@ async def _responder(update: Update, chat_id: str, content: list[dict], texto_pr
             last_saved_turn[chat_id] = turn
             asyncio.create_task(_resumir_e_salvar(chat_id, trecho))
 
-        for i in range(0, len(resposta), 4096):
-            await update.message.reply_text(resposta[i:i + 4096])
+        # Scan PII no output antes de enviar — defesa em profundidade.
+        resposta_envio, redatados = _redigir_resposta(resposta)
+        if redatados:
+            logger.warning(
+                f"[PII-OUT] chat={chat_id} {len(redatados)} dado(s) "
+                f"redatado(s): {sorted(set(redatados))}"
+            )
+
+        for i in range(0, len(resposta_envio), 4096):
+            await update.message.reply_text(resposta_envio[i:i + 4096])
 
         # Tokens de cache: se cache_read > 0, prompt caching pegou e a economia
         # real foi maior que o cost_usd sugere (cost já reflete desconto).

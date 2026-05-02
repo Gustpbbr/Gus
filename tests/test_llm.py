@@ -213,19 +213,45 @@ class TestBuildToolsCached:
     def test_lista_vazia(self):
         assert _build_tools_cached([]) == []
 
-    def test_marca_apenas_ultimo(self):
+    def test_marca_anchor_quando_no_final(self):
+        # rotear_arquivo é a anchor configurada — quando está no final, marca lá
         tools = [
             {"name": "a", "description": "1"},
             {"name": "b", "description": "2"},
-            {"name": "c", "description": "3"},
+            {"name": "rotear_arquivo", "description": "3"},
         ]
         out = _build_tools_cached(tools)
         assert "cache_control" not in out[0]
         assert "cache_control" not in out[1]
         assert out[2]["cache_control"] == {"type": "ephemeral"}
 
+    def test_fallback_para_ultimo_se_anchor_ausente(self):
+        # sem rotear_arquivo, marca último
+        tools = [
+            {"name": "a"},
+            {"name": "b"},
+            {"name": "c"},
+        ]
+        out = _build_tools_cached(tools)
+        assert out[-1]["cache_control"] == {"type": "ephemeral"}
+
+    def test_marca_anchor_no_meio_emite_warn(self, caplog):
+        # anchor fora do final — funciona, mas warn no log
+        import logging
+        caplog.set_level(logging.WARNING)
+        tools = [
+            {"name": "a"},
+            {"name": "rotear_arquivo"},
+            {"name": "b"},
+        ]
+        out = _build_tools_cached(tools)
+        assert out[1]["cache_control"] == {"type": "ephemeral"}
+        assert "cache_control" not in out[2]
+        # Warn emitido
+        assert any("CACHE_ANCHOR" in r.message for r in caplog.records)
+
     def test_nao_muta_lista_original(self):
-        tools = [{"name": "a"}]
+        tools = [{"name": "rotear_arquivo"}]
         _build_tools_cached(tools)
         assert "cache_control" not in tools[0]
 

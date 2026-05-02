@@ -150,6 +150,50 @@ class TestQueryMem0Contextual:
         assert out == "fallback"
 
 
+class TestRedigirResposta:
+    def test_resposta_limpa_inalterada(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        out, redatados = bot._redigir_resposta("oi mundo, tudo bem?")
+        assert out == "oi mundo, tudo bem?"
+        assert redatados == []
+
+    def test_redige_cpf_no_output(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        out, redatados = bot._redigir_resposta(
+            "O paciente João tem CPF 111.222.333-44 e foi atendido."
+        )
+        assert "[REDACTED-CPF]" in out
+        assert "111.222.333-44" not in out
+        assert "CPF" in redatados
+
+    def test_anexa_nota_visivel_quando_redige(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        out, _ = bot._redigir_resposta("CPF 111.222.333-44")
+        assert "redatado" in out
+        assert "CPF" in out
+
+    def test_nao_anexa_nota_quando_limpo(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        out, _ = bot._redigir_resposta("texto normal sem dados")
+        assert "redatado" not in out
+
+    def test_resposta_vazia(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        assert bot._redigir_resposta("") == ("", [])
+        assert bot._redigir_resposta(None) == (None, [])
+
+    def test_multiplos_tipos_aparecem_na_nota(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        chave = "sk-" + "A" * 50
+        out, redatados = bot._redigir_resposta(
+            f"CPF 123.456.789-00 e key {chave}"
+        )
+        # Nota lista os tipos únicos em ordem alfabética
+        assert "API key OpenAI" in out
+        assert "CPF" in out
+        assert set(redatados) == {"CPF", "API key OpenAI"}
+
+
 class TestRegexDimagem:
     def test_confirma_sim(self, tmp_state_file, monkeypatch):
         bot = _reload_bot(monkeypatch, tmp_state_file)

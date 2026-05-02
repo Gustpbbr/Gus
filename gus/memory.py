@@ -14,7 +14,16 @@ USER_ID_GUS = "gus"
 USER_ID = USER_ID_GUSTAVO  # default retrocompatível
 
 # Tag de origem default — identifica qual porta gerou essa memória.
-VIA_DEFAULT = os.getenv("MEM0_VIA_TAG", "telegram-claude")
+# Lê env em cada call (em vez de cachear no import) — facilita testes e
+# permite mudança runtime sem restart do processo.
+def _via_default() -> str:
+    return os.getenv("MEM0_VIA_TAG", "telegram-claude")
+
+
+# Mantido como atributo do módulo pra compatibilidade com testes/imports
+# que faziam `from gus.memory import VIA_DEFAULT`. Hoje resolvido via
+# property-like — mas mantemos o nome legacy.
+VIA_DEFAULT = _via_default()
 
 _client = None
 
@@ -147,7 +156,7 @@ async def salvar_memorias(
     """
     from hub.store import ingestar
 
-    via_tag = via or VIA_DEFAULT
+    via_tag = via or _via_default()
     metadata = {
         "user_id": user_id,
         "via": via_tag,
