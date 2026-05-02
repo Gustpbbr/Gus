@@ -1,0 +1,61 @@
+name: Tests
+
+# Unit tests da suite tests/. Roda em PR e push em main pra qualquer caminho
+# que mexa em código de produção (gus/, hub/) ou testes/deps.
+#
+# Complementa test-scripts.yml (que faz só smoke import de scripts cron).
+
+on:
+  pull_request:
+    paths:
+      - 'gus/**.py'
+      - 'hub/**.py'
+      - 'tests/**.py'
+      - 'requirements.txt'
+      - 'requirements-dev.txt'
+      - 'pyproject.toml'
+      - '.github/workflows/tests.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'gus/**.py'
+      - 'hub/**.py'
+      - 'tests/**.py'
+      - 'requirements.txt'
+      - 'requirements-dev.txt'
+      - 'pyproject.toml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Run tests
+        env:
+          # Env vars fake — conftest.py também seta defaults, mas garantir aqui.
+          ANTHROPIC_API_KEY: fake-test-key
+          OPENAI_API_KEY: fake-test-key
+          QDRANT_URL: http://fake.local
+          QDRANT_API_KEY: fake-test-key
+          TELEGRAM_BOT_TOKEN: fake-test-token
+          TELEGRAM_CHAT_ID: "12345"
+          GITHUB_TOKEN: fake-test-token
+        run: |
+          python -m pytest tests/ --tb=short -v

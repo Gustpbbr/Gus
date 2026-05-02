@@ -1,0 +1,64 @@
+name: Sync auto-generated docs
+
+# Regenera docs derivados de código (inventário de tools, futuros).
+# Roda em push em main quando muda código relevante OU diariamente
+# como guarda-redes (caso alguém esqueça de incluir nos paths).
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'gus/tools.py'
+      - '.github/scripts/gerar_lista_tools.py'
+      - '.github/workflows/sync-docs.yml'
+  schedule:
+    # 04:00 BRT = 07:00 UTC. Madrugada, fora dos horários de uso.
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install minimal deps
+        # gus.tools importa transitivamente bastante coisa (anthropic,
+        # mem0, qdrant, etc.). Instalamos requirements completo pra
+        # garantir que o gerador roda como em produção.
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Gerar inventário de tools
+        env:
+          ANTHROPIC_API_KEY: fake-test-key
+          OPENAI_API_KEY: fake-test-key
+          QDRANT_URL: http://fake.local
+          QDRANT_API_KEY: fake-test-key
+        run: |
+          python .github/scripts/gerar_lista_tools.py
+
+      - name: Commit changes
+        run: |
+          git config user.name "gus-bot"
+          git config user.email "gus-bot@users.noreply.github.com"
+          git add projetos/gus/_tools-inventario.md
+          if git diff --staged --quiet; then
+            echo "Nada mudou — pulando commit."
+          else
+            git commit -m "auto: regenera _tools-inventario.md"
+            git push
+          fi

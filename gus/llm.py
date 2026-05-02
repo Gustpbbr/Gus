@@ -260,14 +260,34 @@ def _build_system_blocks(system_estavel: str, suffix_var: str) -> list[dict]:
     return blocks
 
 
+# Tool âncora pra cache_control. Anthropic cacheia toda a lista de tools até
+# o ponto marcado — pra cachear TODAS, marcamos a última. Mas "última por
+# posição" é frágil se alguém reordenar TOOLS sem perceber. Buscar por nome
+# estável (anchor) é mais robusto: se anchor sumir, cai no último por fallback.
+_CACHE_ANCHOR_NAME = "rotear_arquivo"
+
+
 def _build_tools_cached(tools: list[dict]) -> list[dict]:
-    """Marca o último tool com cache_control — Anthropic cacheia toda a lista
-    de tools até o ponto do cache_control. Tools são estáticas no projeto,
-    então cache hit é praticamente garantido entre calls."""
+    """Marca a tool âncora (ou último por fallback) com cache_control.
+
+    Anthropic cacheia toda a lista até a posição marcada. Como queremos
+    cachear todas, marcamos a anchor que por convenção é a última. Se
+    alguém reordenar e a anchor virar do meio, log warn (cache hit cai)
+    e cacheia até ela — melhor que cacheamento errado silencioso.
+    """
     if not tools:
         return tools
     cached = list(tools)
-    cached[-1] = {**cached[-1], "cache_control": {"type": "ephemeral"}}
+    anchor_idx = next(
+        (i for i, t in enumerate(cached) if t.get("name") == _CACHE_ANCHOR_NAME),
+        len(cached) - 1,
+    )
+    if anchor_idx != len(cached) - 1:
+        logger.warning(
+            f"_CACHE_ANCHOR '{_CACHE_ANCHOR_NAME}' não está no final da lista "
+            f"(idx={anchor_idx}/{len(cached)-1}). Cache hit pode estar reduzido."
+        )
+    cached[anchor_idx] = {**cached[anchor_idx], "cache_control": {"type": "ephemeral"}}
     return cached
 
 
@@ -548,7 +568,17 @@ async def _gerar_resposta_openai(messages: list[dict], memory_context: str = "")
                 logger.error(f"Fallback Anthropic também falhou: {e2}")
                 pricing = _get_pricing(model)
                 cost_usd = round(total_in * pricing["input"] + total_out * pricing["output"], 6)
-                texto = _mensagem_erro_amigavel_openai(e)
+                # Mensagem combina origem + fallback pro Gustavo entender que
+                # ambos os providers falharam (não só um).
+                texto_openai = _mensagem_erro_amigavel_openai(e)
+                texto_anthropic = _mensagem_erro_amigavel(e2) if isinstance(
+                    e2, (anthropic.APIStatusError, anthropic.APIConnectionError, anthropic.APITimeoutError)
+                ) else f"Anthropic também falhou: {str(e2)[:200]}"
+                texto = (
+                    f"Os dois providers falharam.\n\n"
+                    f"OpenAI (primeiro): {texto_openai}\n\n"
+                    f"Anthropic (fallback): {texto_anthropic}"
+                )
                 return texto, {
                     "model": model, "tokens_in": total_in,
                     "tokens_out": total_out, "cost_usd": cost_usd,

@@ -41,10 +41,6 @@ def stats_mes_atual() -> dict:
         return base
 
     now = datetime.now()
-    for k in ("tokens_in", "tokens_out", "cache_creation", "cache_read", "calls"):
-        base[k] = 0
-    base["cost_usd"] = 0.0
-
     with open(LOG_FILE, "r", encoding="utf-8") as f:
         for line in f:
             try:
