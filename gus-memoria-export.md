@@ -1,12 +1,12 @@
 ---
-exportado_em: 2026-05-01T04:57:48
+exportado_em: 2026-05-02T04:17:58
 total: 19
 fonte: hub-qdrant
 ---
 
 # Memórias do Gustavo — Export Hub Qdrant
 
-*Última atualização: 01/05/2026 às 04:57*
+*Última atualização: 02/05/2026 às 04:17*
 
 1. 1. Gustavo é anestesiologista e trabalha com o Dimagem (clínica/laboratório de imagem).
 2. Gustavo recebe ordens de serviço do Dimagem e precisa acompanhar pacientes agendados.
