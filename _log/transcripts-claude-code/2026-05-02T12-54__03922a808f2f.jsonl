@@ -1,0 +1,127 @@
+oi Gus, blz? vc consegue atuar como um auditor arquiteto de sistemas?
+user: oi Gus, blz? vc consegue atuar como um auditor arquiteto de sistemas?
+assistant: Blz! Sim, consigo — e neste repositório tenho vantagem: já conheço a arquitetura completa (bot Railway, Hub Qdrant, MCP servers, GitHub Actions, as portas).
+
+O que você quer auditar? Pode ser desde "revisa a arquitetura geral e aponta fragilidades" até algo específico como o fluxo do curador, os workflows cron, ou a estrutura de memória. Me diz o escopo.
+quero começar com a arquitetura geral completo atual, por favor
+user: quero começar com a arquitetura geral completo atual, por favor
+assistant: Vou ler o estado atual do projeto e as demandas pendentes em paralelo para ter uma visão completa antes de auditar.
+assistant: Tenho tudo que preciso. Aqui vai a auditoria completa.
+
+---
+
+## Auditoria de Arquitetura — Gus (2026-05-02)
+
+### Visão geral do sistema
+
+```
+PORTAS DE ENTRADA
+┌──────────────┬──────────────┬──────────────┬──────────────┐
+│   Telegram   │  Claude Code │  Claude Chat │  MCP Server  │
+│  (Railway)   │  (web)       │  (web)       │  (Railway)   │
+└──────┬───────┴──────┬───────┴──────┬───────┴──────┬───────┘
+       │              │              │              │
+       ▼              ▼              ▼              ▼
+    bot.py      Claude Code    Project + Drive  hub/mcp_server
+    llm.py      (sem captura)  (Drive stale)   (sem authn)
+       │
+       ▼
+  curador.py (Haiku × GPT) ──► Hub Qdrant (gus_hub) ◄── memory.py
+                                       │
+                                  Mem0 fallback (⏳ morrendo)
+                                       │
+                               GitHub (.md + workflows)
+```
+
+---
+
+### O que está funcionando bem
+
+**1. ADR-001 bem executado.** A migração Mem0 → Hub tem cronograma, fases, e está seguindo. Schema gus-18 é rico e extensível.
+
+**2. Curador híbrido.** Haiku × GPT-4o-mini em paralelo com `hash_janela` para comparação par-a-par é uma decisão inteligente — resiliência cross-vendor, custo baixo, dado estruturado pra decidir modelo final.
+
+**3. Dispatcher multimodal em `llm.py`.** Rotear texto → OpenAI e mídia → Anthropic reduz custo sem sacrificar capacidade. Bem implementado.
+
+**4. Prompt caching.** Dois blocos (stable/ephemeral + tools) com `cache_control` na última tool. Correto.
+
+**5. Coordenação entre portas via `dialogos/`.** Inbox por destinatário, protocolo de frontmatter + archive. É o ponto mais maduro de governança do sistema.
+
+---
+
+### Fragilidades — ordenadas por severidade
+
+#### 🔴 Crítico
+
+**1. Memória assimétrica entre portas**
+Só o Telegram tem curador automático. Claude Chat depende de workflow manual. Claude Code não captura nada (retro-engine é no-op por falta de `ANTHROPIC_API_KEY` + `QDRANT_*` no ambiente web). Na prática, o Hub Qdrant é um banco de memória do *Telegram Gustavo*, não do Gustavo completo. Toda sessão Code e toda conversa Chat se perdem sem curadoria.
+
+**2. MCP Server sem autenticação**
+`hub/mcp_server.py` roda sem `MCP_URL_SECRET`. Qualquer pessoa com a URL lê memórias do Gustavo. O código tem a lógica de verificação mas a variável não está configurada no Railway. Isso é um vazamento de dados em produção agora.
+
+#### 🟠 Alto
+
+**3. Drive sync quebrado → Claude Chat com contexto stale**
+OAuth expirado desde ~01/05. Claude Chat lê Google Docs desatualizados (estado anterior ao último push). Toda resposta do Chat sobre projetos, saúde, dimagem usa dados velhos.
+
+**4. Dois backends de memória em paralelo com possível divergência**
+`memory.py` faz Hub-first + fallback Mem0. Se Hub falha silenciosamente numa query, o fallback retorna fragmentos diferentes (schema diferente, dados diferentes). Não há log de qual fonte respondeu. Decisões baseadas em "memória" podem usar dados inconsistentes.
+
+**5. 23 workflows sem auditoria de relevância**
+`fix-qdrant-dims.yml` parece one-shot legacy. `migrate-mem0-to-qdrant.yml` e `migrar-gus-para-hub.yml` parecem redundantes. Não há inventário de quais estão ativos × desativados × obsoletos. Risco de workflow rodando cron em cima de infra que já não existe.
+
+#### 🟡 Médio
+
+**6. Embedding model sem plano de migração**
+`all-MiniLM-L6-v2` (dim=384) locked no Hub. Se precisar mudar (qualidade, privacidade, custo), re-indexação total é necessária. Sem estratégia documentada.
+
+**7. Hub sem testes**
+163 testes cobrem o bot Telegram. `hub/store.py` e `hub/curador.py` não têm cobertura. O curador teve bug crítico (`format()` vs `replace()`) que ficou ativo de 30/04 até correção — testes teriam capturado isso.
+
+**8. `gus-memoria-export.json` e `.md` commitados na raiz**
+Arquivos de export de memória na raiz do repo. Provavelmente stale, possivelmente com dados sensíveis. Não deveriam estar na raiz nem versionados sem criptografia.
+
+**9. NeuroGus bloqueado em decisões humanas**
+Fase 2 para em §11.1-11.7. Quanto mais tempo parado, maior o custo de retomada (contexto, arquitetura, dependências). Não é débito técnico mas é risco de projeto.
+
+**10. `roteador.py` existe em `gus/` mas não está inventariado**
+Arquivo existe no código mas não aparece no CLAUDE.md nem na lista de tools. Pode ser dead code ou pode ser um módulo ativo sem documentação.
+
+#### 🔵 Baixo / Arquitetural
+
+**11. Sem rate limiting no bot**
+Nenhum throttle por usuário. Gustavo poderia disparar N mensagens em sequência e cada uma lança um loop LLM completo com tools.
+
+**12. Sem circuit breaker na cadeia de memória**
+Se Hub falha e Mem0 falha, o bot responde sem memória — sem aviso ao usuário, sem alerta para o Gustavo. `auto_diagnostico` existe mas é tool chamada manualmente.
+
+---
+
+### Resumo executivo
+
+| Área | Status | Risco |
+|---|---|---|
+| Bot Telegram | ✅ Sólido | Baixo |
+| Hub Qdrant / curador | ✅ Funcional | Médio (sem testes) |
+| MCP Server | 🔴 Exposto | Alto (sem authn) |
+| Claude Chat | 🟠 Degradado | Alto (Drive stale) |
+| Claude Code | 🟠 Sem captura | Alto (memória assimétrica) |
+| Mem0 SaaS | ⏳ Deadline 12/05 | Médio |
+| NeuroGus | 🚧 Bloqueado | Médio |
+| Workflows | ⚠️ Sem inventário | Baixo-médio |
+
+---
+
+### Próximos 3 movimentos recomendados
+
+**1. Imediato (hoje):** `MCP_URL_SECRET` no Railway — 10min do Gustavo, fecha uma vulnerabilidade real em produção.
+
+**2. Esta semana:** Drive sync → Service Account — resolve Chat degradado, é definitivo (sem reexpiração). A Opção 2 da demanda já está bem descrita.
+
+**3. Esta semana:** Captura multiporta — decidir entre A/B/C. Sem isso, toda sessão Code e Chat continua se perdendo no Hub.
+
+---
+
+Quer aprofundar algum ponto específico, ou partir para priorização e plano de execução?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
