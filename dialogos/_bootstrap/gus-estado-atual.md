@@ -1,12 +1,12 @@
 ---
 tipo: estado-atual-vivo
-gerado_em: 2026-05-02T14:45:06-0300
+gerado_em: 2026-05-02T15:38:53-0300
 fonte: hub-qdrant (gus_hub, user_id=gustavo)
 janela_recentes_horas: 6
 atualizacao: cron 15min
 ---
 
-# Estado atual do Gus — 02/05/2026 às 14:45 BRT
+# Estado atual do Gus — 02/05/2026 às 15:38 BRT
 
 > Documento gerado automaticamente a cada 15 minutos lendo o Hub
 > Qdrant. Substitui o snapshot estático das 03h pra Claude Chat ter
@@ -32,6 +32,7 @@ dinâmico. Sem este arquivo, Claude Chat opera com lag de 21h.
 
 ## Fragmentos das últimas 6h (20 de 50 no brain)
 
+- [fato/projetos] Houve um merge de um pull request relacionado a testes de regressão do curador. _(via telegram-claude)_
 - [fato/projetos] O PR #72 corrigiu um bug em produção que impedia o curador de funcionar. _(via claude-code)_
 - [fato/projetos] Há uma demanda parada chamada `2026-05-01-captura-multiporta-curador.md`. _(via claude-code)_
 - [fato/projetos] A arquitetura do sistema é baseada no processamento paralelo entre vários modelos de linguagem, utilizando fallback em caso de falhas. _(via claude-code)_
@@ -44,7 +45,6 @@ dinâmico. Sem este arquivo, Claude Chat opera com lag de 21h.
 - [fato/projetos] No projeto, as demandas pendentes se referem a quatro tarefas: captura multiporta curador, drive sync oauth fix, pendências da Claude Chat consolidadas, e um template. _(via claude-code)_
 - [decisao/projetos] O primeiro passo para resolver o problema identificado é mergear o PR #72 e aguardar o CI passar. _(via claude-code)_
 - [fato/projetos] Os canais de controle e armazenamento de dados (hub/store) são utilizados para gerenciar a memória do Gus. _(via claude-code)_
-- [fato/projetos] O Hub é mais fresco que `gus-estado-atual.md`, que é um snapshot gerado pelo cron. _(via claude-code)_
 - [fato/projetos] A demanda `2026-05-01-captura-multiporta-curador.md` é parcialmente resolvida pelo PR #67, mas falta o gatilho proativo no Chat. _(via claude-code)_
 - [fato/projetos] O `_estado-atual.md` (27/04) está desatualizado e não reflete muitas atualizações posteriores documentadas no git, como PRs #57, #60, #63, #64 e #67. _(via claude-code)_
 - [fato/gus] O projeto Gus envolve um sistema multi-porta que conecta vários canais, como Telegram, Claude Code e Claude Chat, usando um Hub Qdrant como memória central. _(via claude-code)_
@@ -55,7 +55,7 @@ dinâmico. Sem este arquivo, Claude Chat opera com lag de 21h.
 
 ## Resumo numérico
 
-- **Total no brain `gustavo`**: 526 fragmentos
+- **Total no brain `gustavo`**: 531 fragmentos
 - **Amostra carregada**: 50 mais recentes (limite do listar)
 
 ### Distribuição por tipo (na amostra)
