@@ -1,12 +1,12 @@
 ---
 tipo: estado-atual-vivo
-gerado_em: 2026-05-02T19:00:35-0300
+gerado_em: 2026-05-02T19:58:37-0300
 fonte: hub-qdrant (gus_hub, user_id=gustavo)
 janela_recentes_horas: 6
 atualizacao: cron 15min
 ---
 
-# Estado atual do Gus — 02/05/2026 às 19:00 BRT
+# Estado atual do Gus — 02/05/2026 às 19:58 BRT
 
 > Documento gerado automaticamente a cada 15 minutos lendo o Hub
 > Qdrant. Substitui o snapshot estático das 03h pra Claude Chat ter
@@ -32,6 +32,8 @@ dinâmico. Sem este arquivo, Claude Chat opera com lag de 21h.
 
 ## Fragmentos das últimas 6h (20 de 50 no brain)
 
+- [procedural/gus] As buscas realizadas no Hub Qdrant devem retornar respostas relevantes para questões sobre exames anteriores. _(via telegram-claude)_
+- [fato/projetos] O workflow de sincronização entre o Google Drive e o GitHub ainda não está ativo. _(via telegram-claude)_
 - [fato/projetos] Houve um merge de um pull request relacionado a testes de regressão do curador. _(via telegram-claude)_
 - [fato/projetos] O PR #72 corrigiu um bug em produção que impedia o curador de funcionar. _(via claude-code)_
 - [fato/projetos] Há uma demanda parada chamada `2026-05-01-captura-multiporta-curador.md`. _(via claude-code)_
@@ -48,23 +50,22 @@ dinâmico. Sem este arquivo, Claude Chat opera com lag de 21h.
 - [fato/projetos] A demanda `2026-05-01-captura-multiporta-curador.md` é parcialmente resolvida pelo PR #67, mas falta o gatilho proativo no Chat. _(via claude-code)_
 - [fato/projetos] O `_estado-atual.md` (27/04) está desatualizado e não reflete muitas atualizações posteriores documentadas no git, como PRs #57, #60, #63, #64 e #67. _(via claude-code)_
 - [fato/gus] O projeto Gus envolve um sistema multi-porta que conecta vários canais, como Telegram, Claude Code e Claude Chat, usando um Hub Qdrant como memória central. _(via claude-code)_
-- [fato/projetos] O modelo do bot suporta tanto o LLM da Anthropic quanto o da OpenAI, com implementações robustas de tratamento de erros. _(via claude-code)_
 - [fato/projetos] O cache de mídia não tem limite de bytes, o que pode levar a problemas de memória no container do Railway. _(via claude-code)_
 - [fato/projetos] O projeto NeuroGus está com planejamento 100% pronto e falta a implementação. _(via claude-code)_
-- [fato/projetos] O arquivo 'dialogos/_bootstrap/gus-bootstrap.md' é o manual operacional do Gus, contendo as regras de comportamento e como cada porta usa o Hub. _(via claude-code)_
 
 ## Resumo numérico
 
-- **Total no brain `gustavo`**: 531 fragmentos
+- **Total no brain `gustavo`**: 551 fragmentos
 - **Amostra carregada**: 50 mais recentes (limite do listar)
 
 ### Distribuição por tipo (na amostra)
 
-- `fato`: 37
+- `fato`: 36
 - `decisao`: 5
 - `episodico`: 4
 - `lacuna`: 3
 - `projeto`: 1
+- `procedural`: 1
 
 ## Auto-observações do Gus (brain `gus` — 525 fragmentos)
 
