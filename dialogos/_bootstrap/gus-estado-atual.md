@@ -1,12 +1,12 @@
 ---
 tipo: estado-atual-vivo
-gerado_em: 2026-05-02T11:50:01-0300
+gerado_em: 2026-05-02T12:48:17-0300
 fonte: hub-qdrant (gus_hub, user_id=gustavo)
 janela_recentes_horas: 6
 atualizacao: cron 15min
 ---
 
-# Estado atual do Gus — 02/05/2026 às 11:50 BRT
+# Estado atual do Gus — 02/05/2026 às 12:48 BRT
 
 > Documento gerado automaticamente a cada 15 minutos lendo o Hub
 > Qdrant. Substitui o snapshot estático das 03h pra Claude Chat ter
@@ -29,6 +29,17 @@ _(nenhum fragmento novo nesta janela — sistema ocioso ou curador parado)_
 ### Distribuição por tipo (na amostra)
 
 - `episodico`: 19
+
+## Auto-observações do Gus (brain `gus` — 14 fragmentos)
+
+- [episodico/-] As informações foram registradas como memórias pessoais de Gustavo sobre filmes, gostos e experiências de vida. _(via telegram-claude)_
+- [episodico/-] Gosto de mergulho com cilindro. _(via telegram-claude)_
+- [episodico/-] Gosto de lasanha. _(via telegram-claude)_
+- [episodico/-] Gosto de mergulho com cilindro. _(via telegram-claude)_
+- [episodico/-] Meu filme preferido é Moulin Rouge. _(via telegram-claude)_
+- [episodico/-] Amei o filme do Michael Jackson. _(via telegram-claude)_
+- [episodico/-] Gosto de lasanha. _(via telegram-claude)_
+- [episodico/-] Já tive um cachorro chamado Ralph. _(via telegram-claude)_
 
 ---
 
