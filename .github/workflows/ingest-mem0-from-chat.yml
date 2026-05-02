@@ -34,6 +34,6 @@ jobs:
           # Chat = porta de reflexão profunda. Sobe modelos pra capacidade
           # máxima (Sonnet 4.6 + GPT-4o full). Telegram e Code seguem com
           # haiku/mini default. Custo extra desprezível dado o volume.
-          MODEL_CURADOR_HAIKU: claude-sonnet-4-6
-          MODEL_CURADOR_GPT: gpt-4o
+          MODEL_CURADOR_ANTHROPIC: claude-sonnet-4-6
+          MODEL_CURADOR_OPENAI: gpt-4o
         run: python .github/scripts/ingest_mem0_from_chat.py

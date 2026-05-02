@@ -97,7 +97,7 @@ def append_log(
     if not log_path.exists():
         log_path.write_text(
             f"---\ndata: {hoje}\n"
-            f"fonte: ingest claude-chat (Hub Curador híbrido Haiku+Sonnet)\n"
+            f"fonte: ingest claude-chat (Hub Curador híbrido Anthropic+OpenAI)\n"
             f"tipo: log-resumos-mem0\n---\n\n# Resumos pro Hub — {hoje}\n\n",
             encoding="utf-8",
         )
@@ -143,7 +143,20 @@ def git_commit_push(mensagem: str) -> None:
         log.info("Nada pra commitar")
         return
     subprocess.run(["git", "commit", "-m", mensagem], check=True)
-    subprocess.run(["git", "push"], check=True)
+    # Retry exponencial (2/4/8/16s) — network blip no GH Actions runner não
+    # deve descartar o commit que já entrou no Hub. Fragmentos foram salvos
+    # antes do push; sem retry, próxima rodada commita de novo + duplica.
+    import time as _time
+    for tentativa in range(4):
+        try:
+            subprocess.run(["git", "push", "-u", "origin", "main"], check=True)
+            return
+        except subprocess.CalledProcessError as e:
+            if tentativa == 3:
+                raise
+            espera = 2 ** (tentativa + 1)  # 2, 4, 8, 16
+            log.warning(f"git push falhou (tentativa {tentativa+1}/4), aguardando {espera}s: {e}")
+            _time.sleep(espera)
 
 
 def main() -> None:
