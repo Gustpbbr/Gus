@@ -55,6 +55,7 @@ log = logging.getLogger(__name__)
 BRT = timezone(timedelta(hours=-3))
 INBOX = Path("dialogos/inbox-mem0-from-chat")
 PROCESSADOS = INBOX / "processados"
+PROCESSADOS_ERRO = INBOX / "processados-erro"
 LOG_DIR = Path("_log/resumos-mem0")
 
 
@@ -134,9 +135,40 @@ def mover_pra_processados(arquivo: Path) -> Path:
     return destino
 
 
+def mover_pra_processados_erro(arquivo: Path, motivo: str) -> Path:
+    """Move arquivo que falhou repetidamente pra processados-erro/.
+
+    Antes (V1) arquivos com erro permanecente ficavam no inbox e eram
+    reprocessados a cada 30min — loop infinito que gastava créditos sem
+    resolver. Agora vão pra processados-erro/AAAA-MM/ com header explicando
+    o motivo, e Gustavo decide o que fazer (corrigir, reenviar, descartar).
+    """
+    mes = datetime.now(BRT).strftime("%Y-%m")
+    destino_dir = PROCESSADOS_ERRO / mes
+    destino_dir.mkdir(parents=True, exist_ok=True)
+    destino = destino_dir / arquivo.name
+
+    # Prepende cabeçalho com motivo + timestamp pra debug futuro
+    try:
+        conteudo_original = arquivo.read_text(encoding="utf-8", errors="ignore")
+    except Exception:
+        conteudo_original = "[falha ao ler conteúdo original]"
+
+    cabecalho = (
+        f"<!-- ERRO ao processar este arquivo -->\n"
+        f"<!-- Motivo: {motivo} -->\n"
+        f"<!-- Movido em: {datetime.now(BRT).isoformat()} -->\n\n"
+    )
+    destino.write_text(cabecalho + conteudo_original, encoding="utf-8")
+    arquivo.unlink()
+    return destino
+
+
 def git_commit_push(mensagem: str) -> None:
     subprocess.run(["git", "config", "user.name", "gus-bot"], check=True)
     subprocess.run(["git", "config", "user.email", "gus-bot@users.noreply.github.com"], check=True)
+    # -A em dialogos/inbox-mem0-from-chat captura processados/, processados-erro/
+    # e remove os arquivos movidos do inbox. Inclui _log/ pra registro auditável.
     subprocess.run(["git", "add", "-A", "dialogos/inbox-mem0-from-chat", "_log/resumos-mem0"], check=True)
     diff = subprocess.run(["git", "diff", "--staged", "--quiet"]).returncode
     if diff == 0:
@@ -194,6 +226,8 @@ def main() -> None:
             content = arq.read_text(encoding="utf-8")
         except Exception as e:
             log.error(f"  read falhou: {e}")
+            append_log(arq.name, "erro", None, None, 0, "", motivo=f"read falhou: {e}")
+            mover_pra_processados_erro(arq, f"read falhou: {e}")
             erros += 1
             continue
 
@@ -211,6 +245,7 @@ def main() -> None:
         #   user_id="gus"     → autobiografia do agente (identidade, padrões, autoself)
         # Chat é a porta de reflexão profunda — captura ambos os lados da conversa.
         falhou = False
+        motivo_falha = ""
         salvos_arq_total = 0
         for user_id in ("gustavo", "gus"):
             try:
@@ -220,7 +255,8 @@ def main() -> None:
             except Exception as e:
                 log.error(f"  Curador {user_id} falhou: {e}")
                 falhou = True
-                break  # NÃO move — próxima rodada tenta de novo
+                motivo_falha = f"curador {user_id} falhou: {type(e).__name__}: {str(e)[:200]}"
+                break  # próxima rodada não retenta — vai pra processados-erro
 
             hash_j = resultado.get("hash_janela", "")
             haiku_frags = resultado.get("haiku", [])
@@ -249,16 +285,25 @@ def main() -> None:
             )
 
         if falhou:
+            # Move pra processados-erro/ pra evitar loop infinito.
+            # Se a falha for transitória (Anthropic 5xx, network), Gustavo pode
+            # mover de volta pro inbox manualmente. Pra erros permanentes
+            # (auth, billing, key error de código nosso) vai ficar lá pra debug.
+            append_log(arq.name, "erro", None, None, 0, "", motivo=motivo_falha)
+            mover_pra_processados_erro(arq, motivo_falha)
             erros += 1
             continue
         mover_pra_processados(arq)
         salvos_total += salvos_arq_total
 
-    log.info(f"Resumo: {salvos_total} fragmentos salvos no Hub, {vazios} vazios, {erros} erros")
+    log.info(
+        f"Resumo: {salvos_total} fragmentos salvos no Hub, "
+        f"{vazios} vazios, {erros} erros (movidos pra processados-erro/)"
+    )
 
-    if salvos_total or vazios:
+    if salvos_total or vazios or erros:
         git_commit_push(
-            f"auto: ingest claude-chat → Hub ({salvos_total} fragmentos, {vazios} vazios)"
+            f"auto: ingest claude-chat → Hub ({salvos_total} fragmentos, {vazios} vazios, {erros} erros)"
         )
 
 
