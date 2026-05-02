@@ -1,0 +1,543 @@
+user: oi, blz Gus?  podemos falar do projeto?
+assistant: opa, blz. bora.
+
+vi que tem 3 demandas paradas em `dialogos/inbox-claude-code/`:
+- `2026-05-01-captura-multiporta-curador.md`
+- `2026-05-01-drive-sync-oauth-fix.md`
+- `_frontmatter-referencia.md` (esse é template, não é demanda)
+
+quer atacar alguma dessas ou tem outra coisa na cabeça? se quiser eu leio o `_estado-atual.md` primeiro pra pegar handoff da última sessão, é só falar.
+user: primeiro tenha um panorama geral do projeto. segue um guia para vc ver. depois vamos focar em um assunto específico, mas te falo apos vc ler tudo necessário do projeto. segue uma dica de outra aba do code. analise tudo, e busque tbm as últimas atualizações do projeto q nao estao nos documentos citados
+
+Aqui vai a receita ordenada por valor por contexto. Foco: mínimo necessário pra não inflar contexto à toa.
+Core obrigatório (sempre, em toda aba nova)
+Arquivo
+Pra quê
+dialogos/_bootstrap/gus-bootstrap.md
+manual operacional do Gus, regras de comportamento, como cada porta usa o Hub
+dialogos/_bootstrap/gus-identity.md
+quem é o Gustavo + quem é o Gus enquanto entidade
+dialogos/_bootstrap/gus-estado-atual.md
+handoff auto-gerado pelo cron 03h, snapshot do Hub
+projetos/gus/_estado-atual.md
+onde paramos na sessão anterior (mais "operacional" que o bootstrap)
+Esses 4 dão 80% do contexto pra qualquer aba nova.
+Live — preferir sobre arquivo
+Se a aba tem MCP gus-hub conectado:
+ego_cache_atual() — identidade + últimas 3 decisões + 5 meta-reflexões
+fragmentos_recentes(horas=24) — o que rolou desde ontem
+contar_fragmentos() — sanity check
+Hub é mais fresco que gus-estado-atual.md (que é snapshot das 03h). Sempre que possível, prefira tools MCP a arquivo .md.
+Específicos do contexto da pergunta
+Só ler se a conversa for sobre:
+Tema
+Arquivo
+Próximos passos / NeuroGus
+projetos/gus/gus-08-plano-proximos-passos.md, projetos/gus/gus-30-neurogus-roadmap.md
+Caminho Alexa
+projetos/gus/gus-10-caminho-alexa.md
+MCP / claude.ai connector
+projetos/gus/gus-28-passo2-mcp-server.md
+Roteamento multi-modelo
+projetos/gus/gus-29-roteamento-multimodelo-tiogu.md
+Hub Qdrant arquitetura
+projetos/gus/gus-18-schema-indexacao.md, gus-20-etapa2-hub-qdrant.md, gus-21-etapa3-curador.md
+Decisão migração ADR-001
+projetos/gus/gus-15-decisao-migracao.md
+Demanda da semana
+dialogos/streams/semana-2026-04-21.md (último arquivo da pasta)
+Demandas pendentes pra essa porta
+dialogos/inbox-/
+O que NÃO precisa ler
+gus-01 a gus-09 (a não ser por curiosidade arqueológica — bootstrap já resume)
+pessoal/, dimagem/, receitas/ etc. — só sob demanda explícita
+historico/ — pasta morta de conteúdo legado
+Logs antigos (>3 dias)
+_log/sessoes-claude-code/ — arquivos longos de transcript
+Truque pra Claude Chat web
+Como ele lê via Drive Project knowledge, o boot dele já tem gus-bootstrap.md como project instruction. Aí ele só precisa fazer:
+Ler gus-estado-atual.md (snapshot 03h)
+Chamar ego_cache_atual() via MCP gus-hub (estado vivo)
+Pra Claude Code, o CLAUDE.md na raiz é auto-injetado em toda sessão — então já cobre o "core obrigatório".
+Quer que eu padronize isso num arquivo dialogos/_bootstrap/checklist-boot-aba-nova.md pra deixar canonizado?
+Ah, entendi mal. PRs são histórico, não documentação — uma aba nova não precisa ler nenhum.
+Por que não
+O estado final dos PRs já tá no código + nos docs gus-XX atualizados
+PRs descrevem o caminho, não onde a gente tá. Nova aba quer onde tamo.
+60 PRs = ruído gigante no contexto pra ganho zero
+Quando vale olhar PR
+Situação
+Qual PR
+"Por que esse arquivo tá assim?"
+git log --oneline  → abre o PR específico
+"O que mudou hoje?"
+Lista PRs mergeados nas últimas 24h: gh pr list --state merged --limit 10
+Bug recente
+PR mais recente que tocou o código quebrado
+Decisão arquitetural não-óbvia
+PR description costuma ter o "porquê"
+Boa prática
+O que tem que ficar nos docs (não nos PRs):
+Decisões arquiteturais → ADR (gus-15 é exemplo)
+Como configurar algo → gus-XX-setup
+Estado atual do projeto → gus-26-status-consolidado, _estado-atual
+Se um PR precisa ser lido pra entender o presente, é sinal de doc desatualizado — não de PR importante.
+Receita
+Aba nova só precisa olhar PRs se:
+Você falar "tá quebrando X depois do PR #YY" → aí sim, lê o PR
+Investigar bug específico no código mexido recentemente
+Senão, esquece os 60. Os 7 docs do checklist anterior te dão o estado atual.
+assistant: Beleza, vou ler os 4 core em paralelo + checar git recente e inbox.
+assistant: O `_estado-atual.md` (27/04) está bem desatualizado — git log mostra muita coisa depois (PRs #57, #60, #63, #64, #67, captura multiporta). Vou ler stream da semana, as 2 demandas pendentes, e os PRs recentes pra ter o estado real.
+assistant: Vou ler as 2 demandas pendentes + docs de próximos passos + PRs recentes em paralelo.
+assistant: Faltam o status consolidado, próximos passos, NeuroGus, e os PRs recentes pra fechar o panorama.
+assistant: Vou olhar gus-30 (NeuroGus) por partes + PRs recentes mais relevantes pra fechar o gap pós-27/04.
+assistant: Pronto, panorama montado. Vou resumir o que vi e o gap entre os docs e o estado real (já que o `_estado-atual.md` parou em 27/04).
+
+## Panorama do projeto Gus (02/05/2026, 00h25)
+
+### Identidade e arquitetura
+Sistema multi-porta (Telegram, Claude Code, Claude Chat, futuros: Custom GPT, Alexa) com Hub Qdrant (`gus_hub`) como memória central + GitHub `Gustpbbr/Gus` como conhecimento + Drive como espelho. Você (Gustavo) não programa, IA implementa, validação manual.
+
+### O que está sólido
+- **Bot Telegram (TioGu)** ~21 tools, multimídia, prompt caching, em produção Railway
+- **Custom GPT API** (FastAPI Railway) — 14 endpoints, falta só configurar Action no Builder desktop
+- **Claude Chat** — bootstrap funcional, lê Drive
+- **Canal `dialogos/`** — bidirecional, cron 15min Drive→GitHub, validado
+- **Hub Qdrant** + curador híbrido (Haiku × Sonnet/GPT em paralelo) — coleta dual rola até 12/05
+- **MCP server público** no Railway com URL secret no path (PRs #57/58/60) — Claude Chat web acessa Hub
+- **Captura Claude Code via cron** (PR #64, 01/05) — hook Stop salva transcript redatado, cron */30min processa via curador 2x (gustavo + gus)
+- **Curador-chat bidirecional + top-tier** (PR #67, 01/05) — Chat usa Sonnet 4.6 + GPT-4o, bug `resultado["sonnet"]` que virou `["gpt"]` corrigido (logs estavam mentindo havia semanas)
+
+### Em aberto (pelo que vi nos docs + git + inbox)
+1. **Drive sync parado** — demanda `2026-05-01-drive-sync-oauth-fix.md` ativa. Hipótese: refresh token OAuth expirou (apps Testing expiram 7 dias). 3 opções: reset OAuth (paliativo) / Service Account (definitivo) / aposentar Drive sync (radical). **Aguarda decisão tua.**
+
+2. **Captura multiporta Claude Chat** — demanda `2026-05-01-captura-multiporta-curador.md` parcialmente resolvida pelo PR #67 (curador bidirecional), mas falta o gatilho proativo no Chat (Opção A: prompt no bootstrap ensinando ele a chamar `ingestar_fragmento` quando detecta decisão/preferência). **Aguarda decisão tua.**
+
+3. **NeuroGus** (gus-30, 29/04) — PWA com grafo 3D do Hub. Planejamento 100% pronto, ~145 linhas pra implementar (`hub/events.py`, `broadcast()`, 2 endpoints SSE, frontend). 3 demandas em `inbox-tiogu/` de 28/04 (briefing, arquitetura, código-v1). **Aguarda tu confirmar itens 11.1-11.7 das decisões abertas.**
+
+4. **Decisão final modelo curador** (Fase 5 ADR-001) — após 12/05/2026, comparar pares Haiku × Sonnet/GPT da coleta dual.
+
+5. **Aposentar Mem0 SaaS** — depende da #4.
+
+### Observações
+- `_estado-atual.md` (27/04) e `gus-26-status-consolidado.md` (26/04) estão desatualizados — não refletem PRs #57, #60, #63, #64, #67. Vale atualizar em algum momento.
+- `gus-estado-atual.md` (gerado pelo cron 15min) registra Hub ocioso há 6h+ na janela "fragmentos últimas 6h". Pode ser só horário (00h, sem conversa) ou curador parado — não dá pra distinguir daqui sem checar.
+- Branch atual: `claude/project-discussion-fkfA8` (limpa, só um arquivo `_log/retro-engine` novo desta sessão).
+
+Sobre o que tu quer focar?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are untracked files in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Só o log do retro-engine desta sessão (no-op pq sem `ANTHROPIC_API_KEY` no ambiente, como o CLAUDE.md documenta). Quer que eu commite esse arquivo na branch `claude/project-discussion-fkfA8` antes de continuar? É log automático, baixíssimo risco.
+user: Continue from where you left off.
+assistant: No response requested.
+user: nao entendi  - Só o log do retro-engine desta sessão (no-op pq sem ANTHROPIC_API_KEY no ambiente, como o CLAUDE.md documenta).
+assistant: Desculpa, fui telegráfico. Explicando:
+
+O **retro-engine** é um hook que roda quando uma sessão Claude Code termina (`Stop` hook). Ele deveria:
+1. Pegar o transcript da sessão
+2. Chamar a API da Anthropic pra extrair fragmentos do que rolou
+3. Salvar no Hub Qdrant (brain `user_id="gus"`, auto-observações)
+4. Logar o resultado num MD diário em `_log/retro-engine-claude-code/`
+
+**O que tá acontecendo neste ambiente Claude Code on the web:** falta a variável `ANTHROPIC_API_KEY` (ela viria de `~/.claude/gus.env`, que não existe aqui). Sem essa key, o passo 2 não roda. O hook então registra "no-op: anthropic_missing" e segue.
+
+O arquivo untracked é só esse log honesto:
+```
+00:26:07 BRT — sessão encerrada
+Fragmentos extraídos: 0
+Salvos no Hub: 0
+Erros: anthropic_missing
+Resumo: (no-op: anthropic_missing — transcript salvo, push=ok)
+```
+
+Isso já tá documentado no `CLAUDE.md` (a seção "AVISO IMPORTANTE — Captura de memória da porta Code quebrada"). O caminho real pra resolver isso é o **PR #64** que tu mergeou ontem (01/05) — cron GitHub Actions processa transcripts commitados via curador, usando secrets do Actions. Esse cron já tá rodando, então a captura acontece, só que assíncrona, não no Stop hook.
+
+Resumindo: **arquivo é log inofensivo, comportamento esperado.** Pergunta foi se queres que eu commite ele agora ou se prefere deixar pra um commit futuro junto com outras mudanças.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are untracked files in the repository. Please commit and push these changes to the remote branch.
+
+assistant: O hook vai continuar reclamando a cada turno enquanto o arquivo estiver untracked. Duas opções:
+
+1. **Commitar agora** (eu faço, ~5s) — `chore(log): retro-engine no-op 2026-05-02` na branch `claude/project-discussion-fkfA8`
+2. **Ignorar até o fim da conversa** — aceitamos o aviso aparecer toda resposta minha
+
+Qual preferes?
+user: pode comitar. mas nesse aba vamos falar do tiogu, bot do telegram
+assistant: Commitado e pushado.
+
+Bora falar do TioGu. Já tenho o panorama geral (gus/main.py, bot.py, llm.py, memory.py, tools.py, ~21 tools, multimídia, prompt caching, Hub-first). Mas pra te ajudar bem, qual é o ângulo?
+
+- **Bug ou comportamento estranho** que tá te incomodando?
+- **Feature nova** que quer adicionar (ex: vídeo, novo tool)?
+- **Refator/manutenção** (ex: aposentar Mem0 fallback, limpar tool antiga)?
+- **Custo/performance** (cache, modelo, latência)?
+- **Personalidade/system_prompt**?
+- **Outra coisa** — me conta.
+user: faca uma analise profissional e especializa e imparcial de tudo relacionado a ele e me passe um panorama 
+assistant: Vou ler o código real do bot (não só os docs) pra te dar análise honesta. Começo pelo coração.
+assistant: Vou ver o resto: tools, system_prompt, media, dimagem, logger, hub e dependências em paralelo.
+assistant: Faltam só uns componentes pra fechar. Vou ler mais 3 chave em paralelo.
+assistant: Pronto, li o suficiente pra dar análise séria. Vou organizar.
+
+---
+
+# Análise técnica do TioGu (bot Telegram)
+
+## 1. Arquitetura — em uma página
+
+```
+Telegram polling ──▶ bot.py (handlers + state) ──▶ llm.py
+                                                   ├─▶ Anthropic Sonnet (default + fallback Haiku)
+                                                   └─▶ OpenAI gpt-4o-mini (texto puro)
+                                  │
+                                  ▼
+                              tools.py (21 tools, dispatch por nome)
+                              memory.py ──▶ hub.store (Qdrant) [+ Mem0 fallback leitura]
+                              media.py ──▶ Claude Vision / PDF nativo / Whisper
+                              dimagem.py (fluxo OS, gate de confiança OCR)
+
+main.py: asyncio.gather(run_bot, run_api)  → bot Telegram + FastAPI Custom GPT no mesmo processo Railway
+hub/curador.py: a cada 3 turnos, Haiku × GPT-4o-mini em paralelo extraem fragmentos pro Hub (mesmo hash_janela permite parear)
+```
+
+**~5.800 LOC de aplicação** em `gus/` + `hub/` + `gus/integrations/`. Single user (chat_id allowlist), single tenant, Railway 24/7.
+
+## 2. Stack
+
+| Camada | Tech | Versão | Comentário |
+|---|---|---|---|
+| Bot framework | python-telegram-bot | 21.6 | Recente, ok |
+| LLM Anthropic | anthropic SDK | **0.40.0** | Set/2024 — atrasado ~6 meses |
+| LLM OpenAI | openai | 1.54.0 | Recente |
+| Memória | mem0ai + qdrant-client | 0.1.29 / 1.9-1.12 | mem0ai em aposentadoria (ADR-001) |
+| Mídia | Pillow / pypdf / docx / openpyxl | OK | |
+| API | FastAPI + uvicorn | 0.115 / 0.32 | Custom GPT endpoint |
+| Embeddings | sentence-transformers MiniLM-L6-v2 | local | Bom — sem dep externa |
+| MCP | mcp | 1.27.0 | Recente |
+| Testes | nenhum | — | **0 testes em produção** |
+
+## 3. Pontos fortes (genuínos)
+
+1. **Multi-provider com fallback cross-vendor** (`llm.py`) — se OpenAI cai, tenta Anthropic; se Anthropic 5xx/429, retry exponencial + fallback de modelo (Sonnet → Haiku). Resiliência rara em hobby projects.
+2. **Prompt caching bem-feito** — system + tools com `cache_control: ephemeral` no Anthropic, automático ≥1024 tok no OpenAI. Custo de input cai ~70% em janelas de 5min.
+3. **Retry, timeout e classificação de erros amigável** (`_mensagem_erro_amigavel`) — usuário vê "conta sem créditos" em vez de stack trace.
+4. **Lazy init OpenAI client** com comentário explicando o bug histórico (import explodia em workflows que só importavam Anthropic) — engenharia honesta.
+5. **State persistido com write atômico** (`tmp + replace`), auto-detecta volume Railway, sobrevive a redeploys. Bom design pra restrição de plataforma.
+6. **Curador híbrido com hash_janela pareável** (`hub/curador.py`) — A/B observável, decisão de modelo baseada em evidência. Sofisticação real.
+7. **Cache de mídia por SHA-256** evita reprocessar mesmo arquivo (Vision e Whisper). Transcrição de mesmo áudio = grátis na 2ª vez.
+8. **Bug postmortem inline no código** (system="" → 400 'temperature and top_p', `_chamar_claude_com_retry`) — só inclui `system` se truthy. Prove cuidado pós-incidente.
+9. **Gate de confiança OCR Dimagem** — risco clínico real (nome trocado em prontuário) tratado com bloqueio + reenvio em vez de alerta.
+10. **Patterns sensíveis em fonte única** (`patterns_sensiveis.py`) usado tanto pelo `save_to_github` quanto pelo PreToolUse hook do Claude Code. Sem drift.
+
+## 4. Problemas estruturais (importantes)
+
+### 🔴 Severos
+
+1. **Zero 
+
+[…transcript truncado…]
+
+Gu lê em produção
+   - Aguarda tua revisão visual antes do push
+
+2. **Pausar e mergear o que tá feito**
+   - Branch `claude/project-discussion-fkfA8` tem 4 commits da Fase 1+2A
+   - Mergeia pra main, redeploy Railway, valida 24h
+   - Fase 2B fica pra depois
+
+3. **Pular Fase 2B, ir Fase 3 (operacional)**
+   - S4 alerta cost / M5 cache diag / M7 foco TTL
+   - Quick wins, baixo risco
+   - System_prompt fica pra última
+
+Qual queres?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado. Aguardando tua escolha entre as 3 opções (Fase 2B / pausar pra mergear / pular pra Fase 3).
+user: Continue from where you left off.
+assistant: No response requested.
+user: oq vc sugere? qual o melhor caminho?
+assistant: # Recomendo Opção 2 — pausar e mergear agora
+
+Razões diretas:
+
+## Por quê mergear primeiro
+
+1. **Fase 1+2A já entregam valor real**, não dá pra desperdiçar:
+   - Testes (163 cobrindo caminho crítico) protegem refator futuro
+   - PII no output fecha brecha LGPD real
+   - Byte budget cache evita OOM no Railway
+   - Docs reconciliadas — `_tools-inventario.md` auto, `_estado-atual` fresco
+
+2. **Branch já tem 4 commits + ~1700 linhas mudadas** — passa do tamanho confortável de PR pra review. Mais um commit (Fase 2B) fica gigante.
+
+3. **Risco de drift com main**: workflows commitam em main a cada 15min (`auto: estado atual do Hub`, transcripts, archive demandas). Quanto mais tempo a branch fica aberta, mais conflito potencial.
+
+4. **Validação real em produção**. Testes locais cobrem 80%, mas só produção pega:
+   - Comportamento real do PII redact em respostas Sonnet/GPT verdadeiras
+   - Cache mídia com PDFs/áudios reais do Gustavo
+   - CI workflow `tests.yml` rodando em PR de verdade
+
+5. **Próxima sessão começa de main limpa**. Fase 2B em branch nova, isolada, fácil de reverter se prompt der ruim em produção.
+
+## Plano sugerido
+
+```
+Agora (5min Gustavo):
+  1. Eu abro PR da branch claude/project-discussion-fkfA8 → main
+  2. Tu revisa o resumo do PR
+  3. Mergeia
+  4. Railway redeploya automático (push em main)
+
+Próximas 24h:
+  - Validar em uso real (mandar foto Dimagem, mandar mensagem com CPF
+    pra ver redact, etc.)
+  - Olhar logs Railway pra confirmar nada explodindo
+  - Confirmar /custo /foco /reset funcionando
+
+Próxima sessão Code (quando tu liberar):
+  - Fase 2B em branch nova claude/system-prompt-rewrite
+  - Diff explícito antes de commitar
+  - PR isolado, fácil de reverter
+
+Fase 3 (operacional) e adiante: ordem cronológica do plano original
+```
+
+## Por quê NÃO seguir Fase 2B agora
+
+- Risco alto + branch já carregada = se algo der errado no prompt, bug fica misturado com 4 commits anteriores. Reverte vira pesadelo.
+- Bot em produção tá funcionando OK com prompt atual. Drift de "21 vs 22 tools" não está ferindo ninguém — é dívida, não emergência.
+- 2h de reescrita merece atenção fresca, não fim de sessão acumulada.
+
+## Por quê NÃO Fase 3 antes de mergear
+
+- Mais wins legítimos (cost alert, cache diag, foco TTL) — mas continua acumulando na mesma branch
+- Quanto mais commits na branch sem produção, maior surpresa no merge
+
+---
+
+**Confirma e eu abro o PR pra main agora?** Posso preparar título + descrição com resumo das 4 fases (Sessão 1, Sessão 2, Fase 2A, log retro-engine).
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado. Aguardando tua confirmação pra abrir o PR pra main.
+user: Continue from where you left off.
+assistant: No response requested.
+user: pode fazer
+assistant: Bora. Carrego schema do PR + check do que tá na branch.
+assistant: Branch 99 commits à frente, 0 atrás. Sem conflito. Abrindo PR.
+assistant: **PR #73 aberto.** 🔗 https://github.com/Gustpbbr/Gus/pull/73
+
+Conteúdo:
+- 3 commits de código (Fase 1 sessão 1, Fase 1 sessão 2, Fase 2A)
+- 163 testes verdes na branch
+- 0 conflito com main (99 ahead, 0 behind)
+
+Próximo passo: o CI vai rodar (`tests.yml`). Quer que eu **subscribe nas atividades do PR** (eu te aviso se o CI quebrar e tento autofix)? Ou tu prefere acompanhar manual e mergear quando tiver tempo?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado. PR #73 atualizado com o último log. Aguardando tua decisão sobre subscribe nas atividades do PR.
+user: Continue from where you left off.
+assistant: No response requested.
+user: ta rolando o workflow 
+assistant: Os 2 checks passaram ✅
+
+| Check | Status | Tempo |
+|---|---|---|
+| `pytest` (suite tests/) | ✅ success | 2m30s |
+| `smoke-test` (scripts/hub) | ✅ success | 2m33s |
+
+PR #73 verde, pronto pra mergear quando tu quiser. Após merge → Railway redeploya automático.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado. PR #73 segue verde, aguardando teu merge.
+user: estou com um problema.  tinha um merge pr 72 pra fazer, mas pulei. a outra aba teria q readaptar as coisas ao oq vc fez?
+assistant: Olhei o PR #72. **Sim, vai precisar readaptar — e PR #72 é mais urgente que o meu.**
+
+## O que o PR #72 entrega
+
+A outra aba descobriu **bug crítico em produção**: `hub/curador.py` errava 100% das chamadas há ≥3 dias. Causa: `prompt_template.format()` interpretava `{` `}` literais do JSON example dentro do template como placeholders, gerando `KeyError('"conteudo"')`. Hub não recebia nada via curadoria desde ~29/04.
+
+Corrigi mentalmente: aquela observação minha antes ("Hub ocioso noturno") era falsa — era o **curador morto**. Os logs `_log/resumos-mem0/2026-04-30.md` e `2026-05-01.md` confirmam o erro. **Meu panorama estava incompleto** — não chequei os logs do resumo, presumi.
+
+Além do bug, PR #72 tem:
+- Hardening MCP server (fail-closed sem auth — segurança real)
+- Validação de tipo/camada/area no curador (vocabulário gus-18)
+- Retry no `git push` do ingest
+- Whitelist `user_id` no `ingestar_fragmento`
+- Pipeline `processados-erro/` ativo
+
+## Sobreposições com meu PR #73
+
+| Arquivo | Conflito? | Como resolve |
+|---|---|---|
+| `projetos/gus/_estado-atual.md` | **Sim** — ambos reescrevem | Manual: pego conteúdo do #72 + adiciono minhas atualizações da Fase 1+2A |
+| `hub/curador.py` | Provável | #72 adiciona `_render_prompt()` + validação. Meus testes em `test_curador.py` testam `_extrair_json`, `_validar_fragmento`, `_hash_janela` — funções que continuam existindo, **mas posso ter que ajustar se nomes/assinaturas mudaram**. |
+| `dialogos/_bootstrap/gus-bootstrap.md` | Não — só #72 mexe | — |
+| `projetos/gus/gus-28-passo2-mcp-server.md` | Não — só #72 mexe | — |
+| `projetos/gus/gus-26-status-consolidado.md` | Só meu PR #73 mexe | Sem conflito |
+| Tudo em `gus/` (bot, llm, memory, media, etc.) | Só meu PR #73 mexe | Sem conflito |
+| `tests/` | Só meu PR #73 cria | Sem conflito |
+
+PR #72 já está com `mergeable_state: "dirty"` — significa **já tem conflito com main** (provavelmente porque main moveu desde quando #72 foi criado em 14:43Z). A outra aba vai ter que resolver isso de qualquer jeito.
+
+## Recomendação clara — invertendo a ordem
+
+**Mergeia PR #72 primeiro.** Razões:
+
+1. **Resolve bug crítico em produção AGORA.** Curador morto 3 dias = Hub vazio = TioGu sem memória nova. Cada hora a mais é fragmento perdido.
+2. PR #72 já tem 9 commits, +2877/-177 linhas — drift maior se ficar parado.
+3. Meu PR #73 é hygiene + cleanup, **não corrige bug ativo**. Pode esperar.
+4. Conflito do `_estado-atual.md` é trivial pra eu resolver depois (manual, 5min).
+
+## Plano sugerido
+
+```
+1. Tu mergeia PR #72 → main   (resolve bug + entrega segurança)
+   Railway redeploya. Curador volta a salvar. Hub recebe memórias de novo.
+
+2. Eu atualizo minha branch claude/project-discussion-fkfA8 com main:
+   git fetch origin main
+   git merge origin/main      (ou rebase, decido na hora)
+
+3. Resolvo conflito do _estado-atual.md (combina os dois)
+
+4. Rodo testes. Se algum quebrou pela mudança do hub/curador.py
+   (validação de tipo/camada/area), ajusto teste correspondente.
+
+5. Bonus: posso adicionar teste de regressão pro bug do
+   `_render_prompt()` na minha suite — vira proteção permanente
+   contra esse mesmo erro voltar.
+
+6. Push branch atualizada → PR #73 verde de novo → tu mergeia.
+```
+
+Quer que eu faça o passo 5 já? Posso preparar **o teste de regressão pro bug do `prompt_template.format()`** baseado na descrição do PR #72 — isso a outra aba não conseguiu fazer (não tinha suite de testes ainda). Eu adiciono no meu PR #73 antes de mergear, pra esse bug NUNCA voltar.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado. Aguardando tua decisão: mergeia PR #72 primeiro? E queres que eu prepare o teste de regressão pro bug do `_render_prompt()` antes do meu PR #73?
+user: Continue from where you left off.
+assistant: No response requested.
+user: seja se a pr72 foi mergeada e oq temos q fazer na 73?
+assistant: **Ambos PRs já foram mergeados** — em ordem invertida do que sugeri:
+- PR #73 (meu) mergeado **12:21 BRT**
+- PR #72 (auditoria Chat) mergeado **12:39 BRT**
+
+Tudo em produção agora. Vou checar o estado real local e ver o que precisa.
+assistant: Main atualizada. Workflow `sync-docs.yml` já regenerou `_tools-inventario.md` automático (commit `0c3dd9f`) — funcionou perfeito.
+
+Vou checkout main e rodar testes pra ver se algo quebrou com as mudanças do PR #72 em `hub/curador.py`.
+assistant: # Tudo certo — verificação completa
+
+## Estado pós-merge
+
+| Item | Status |
+|---|---|
+| PR #73 (Fase 1+2A) | ✅ mergeado 12:21 BRT |
+| PR #72 (auditoria Chat) | ✅ mergeado 12:39 BRT |
+| Meus 163 testes contra main pós-PR72 | ✅ todos passando em 6.87s |
+| Workflow `sync-docs.yml` | ✅ regenerou `_tools-inventario.md` automático (commit `0c3dd9f`) |
+| `_estado-atual.md` | ✅ unificado com info das duas sessões |
+| Conflitos | ✅ resolvidos no merge |
+
+**Nada quebrou com as mudanças do PR #72** em `hub/curador.py` (validação tipo/camada/area, `_render_prompt()`). Meus testes continuam testando `_extrair_json`, `_validar_fragmento`, `_hash_janela`, `_serializar_trecho` — funções intactas.
+
+## O que NÃO precisa fazer
+- ✅ Sem rebase manual
+- ✅ Sem ajuste de testes
+- ✅ Sem mudanças de docs (estado-atual já tá unificado)
+
+## O que VALE fazer (opcional, alto ROI)
+
+**Teste de regressão pro bug do `format()`.** O PR #72 corrigiu o bug crítico mas validou só com snippet ad-hoc, sem teste persistido. Se eu adicionar 1 teste em `tests/test_curador.py`, esse bug **nunca volta sem CI quebrar**.
+
+Pseudo-teste:
+```python
+def test_render_prompt_preserva_chaves_json_literais():
+    """Bug do PR #72: prompt_template.format() interpretava {} do
+    JSON example como placeholders → KeyError. Garante que o helper
+    novo não regride."""
+    from hub.curador import _render_prompt, PROMPT_CURADOR, PROMPT_CURADOR_ARQUIVO
+    out = _render_prompt(PROMPT_CURADOR, via="telegram", conversa="oi", conteudo="oi")
+    assert '"conteudo"' in out  # JSON example intacto
+    assert "{conversa}" not in out  # placeholder substituído
+```
+
+Esforço: ~10min, 2-3 testes. Posso fazer agora ou esperar.
+
+## Próximos passos no plano original
+
+Branch `claude/project-discussion-fkfA8` cumprida. Pra continuar o plano:
+
+- **Fase 2B** — reescrever `system_prompt.md` (sessão dedicada)
+- **Fase 3** — operacional (cost alert, cache diag, foco TTL)
+- **Fase 4** — refator (split bot.py, dimagem.py, etc.)
+
+E também preciso checar se a captura da minha sessão do Stop hook funciona pós-merge — não deve ter mudado, mas vale conferir.
+
+**Quer que eu adicione o teste de regressão `_render_prompt()` agora ou pulo direto pra próxima fase?**
+user: pode adicionar o teste
+assistant: Bora. Branch nova a partir de main, pego o `hub/curador.py` atualizado, escrevo testes, push.
+assistant: Vou adicionar 2 grupos de teste — regressão do `format()` + novos validadores enum.
+assistant: **181 testes verdes** (+18 testes de regressão). Commit + push + PR.
+assistant: **PR #74 aberto.** 🔗 https://github.com/Gustpbbr/Gus/pull/74
+
+**Entrega:**
+- Branch nova `claude/curador-regression-tests` a partir de main fresh
+- Apenas adiciona testes (zero código de produção)
+- 18 testes cobrindo `_render_prompt`, `TIPOS_VALIDOS`/`CAMADAS_VALIDAS`/`AREAS_VALIDAS`, `_validar_fragmento` com novos validadores
+- 181 testes total verdes em ~2s
+- Sentinel test garante que se alguém trocar `replace()` de volta pra `format()`, CI quebra
+
+PR pequeno, baixo risco, mergeável direto após CI verde.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are untracked files in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado. PR #74 atualizado. Aguardando CI rodar e tua decisão de mergear.
+pode Mergear 
+mergeado. tem q disparar?
+pode Mergear 
+mergeei. tenho q fazer mais oq?
+mergeei. e agora?
+mergeei. pode confirmar?
+mergeei
+user: Continue from where you left off.
+assistant: No response requested.
+user: pode Mergear 
+assistant: Confirmado — PR #74 mergeado (CI verde). Não precisa disparar nada — Railway redeploya automático em push em main.
+
+# E agora?
+
+Sem ação obrigatória da minha parte agora. Mas tem 3 frentes possíveis:
+
+## Frente 1 — Operacional Gustavo (~30min, no celular)
+Pendente do PR #72 da outra aba — bloqueia segurança do Hub:
+1. **Setar `MCP_URL_SECRET` no Railway** (32+ chars hex). Sem isso o MCP roda público.
+2. **Recadastrar Connector claude.ai** com URL `/<secret>/mcp`.
+3. **Decidir Drive sync** (1/2/3) — recomendação Service Account.
+
+## Frente 2 — Próxima sessão Code (escolher 1)
+- **Fase 2B** — reescrever `system_prompt.md` (~2h, risco alto, mostro diff antes)
+- **Fase 3** — operacional (cost alert, cache diag, foco TTL — ~3h, baixo risco)
+- **Fase 4** — refator estrutural (split bot.py, mover dimagem.py — ~6h, depende Fase 1 ✅)
+
+## Frente 3 — Validar produção (~24h, passivo)
+Confirmar que mudanças do PR #73 + #72 + #74 funcionam em uso real:
+- `_log/resumos-mem0/2026-05-02.md` deve ter entradas `status: salvo` (curador funcionando)
+- Mandar mensagem no TioGu pra ver se PII redact roda
+- `/custo /foco /reset` OK
+- Logs Railway sem erro KeyError
+
+**Recomendação minha:** se tu tem ~30min agora, faz **Frente 1** (destrava segurança). Se quer próxima sessão Code agora, **Fase 3** é melhor candidato (quick wins, baixo risco). Fase 2B/4 merece sessão fresh dedicada.
+
+Qual queres?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado. Aguardando tua escolha entre as 3 frentes (operacional, próxima sessão Code, validação produção).
