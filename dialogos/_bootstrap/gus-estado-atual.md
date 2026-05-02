@@ -1,12 +1,12 @@
 ---
 tipo: estado-atual-vivo
-gerado_em: 2026-05-02T13:51:38-0300
+gerado_em: 2026-05-02T14:45:06-0300
 fonte: hub-qdrant (gus_hub, user_id=gustavo)
 janela_recentes_horas: 6
 atualizacao: cron 15min
 ---
 
-# Estado atual do Gus — 02/05/2026 às 13:51 BRT
+# Estado atual do Gus — 02/05/2026 às 14:45 BRT
 
 > Documento gerado automaticamente a cada 15 minutos lendo o Hub
 > Qdrant. Substitui o snapshot estático das 03h pra Claude Chat ter
@@ -21,59 +21,61 @@ dinâmico. Sem este arquivo, Claude Chat opera com lag de 21h.
 
 - [decisao/projetos] A decisão final sobre o modelo curador será após 12/05/2026, onde será feita a comparação entre os pares Haiku e Sonnet/GPT. _(via claude-code)_
 - [decisao/projetos] Aba nova só precisa olhar PRs se houve uma quebra específica que depende do PR mais recente. _(via claude-code)_
-- [decisao/gus] Gustavo pediu um panorama geral do projeto antes de focar em um assunto específico. _(via claude-code)_
+- [decisao/projetos] O primeiro passo para resolver o problema identificado é mergear o PR #72 e aguardar o CI passar. _(via claude-code)_
 
 ## Meta-reflexões ativas
 
+- [meta_reflexao/projetos] Avanços futuros no projeto incluem a reescrita do system_prompt.md e a revisão de ferramentas e métodos utilizados na integração do bot. _(via claude-code)_
+- [meta_reflexao/projetos] Os 60 PRs são considerados ruído gigante no contexto para ganho zero quando se busca entender o estado atual do projeto. _(via claude-code)_
+- [meta_reflexao/projetos] A regressão do test para o bug do `_render_prompt()` foi sugerida para prevenir que o erro de KeyError volte a ocorrer. _(via claude-code)_
 - [meta_reflexao/projetos] A meta é estabilizar o caminho crítico com testes e reconciliar as documentações com o código devido ao drift. _(via claude-code)_
 
 ## Fragmentos das últimas 6h (20 de 50 no brain)
 
-- [fato/gus] O PR #67 introduziu um curador bidirecional no Chat, utilizando Sonnet 4.6 e GPT-4o. _(via claude-code)_
-- [fato/projetos] O projeto tem 4 demandas pendentes no `dialogos/inbox-claude-code/`: captura-multiporta-curador, drive-sync-oauth-fix, pendencias-claude-chat-consolidacao, e um template. _(via claude-code)_
-- [fato/projetos] O modelo do Chat pode salvar fragmentos sobre Gustavo no brain `gus` sem validação. _(via claude-code)_
-- [fato/projetos] A estrutura atual do sistema de escrita do projeto `claude-code` consiste em três canais distintos: escrita em tempo real através de MCP, upload de arquivos .md e demandas inbox. _(via claude-code)_
-- [decisao/gus] Gustavo pediu um panorama geral do projeto antes de focar em um assunto específico. _(via claude-code)_
-- [decisao/projetos] A captura em tempo real durante a conversa pode ser ativada para aumentar a interação e responsividade do Chat. _(via claude-code)_
-- [fato/projetos] Houve um erro na sincronia entre o Heap e o Drive do Gus. _(via claude-code)_
-- [decisao/projetos] O Hub deve utilizar URL secrets para aumentar a segurança. _(via claude-code)_
-- [fato/projetos] O sistema de captura de fragmentos do Chat estava quebrado devido ao bug. _(via claude-code)_
-- [preferencia/projetos] A atualização dos documentos de estado atual e de projetos deve ser feita sempre que houver mudanças significativas. _(via claude-code)_
-- [decisao/projetos] A mudança de `drop_pending_updates` de True para False pode causar storm de mensagens em caso de downtime. _(via claude-code)_
-- [fato/projetos] O `_estado-atual.md` é gerado pela automática a cada 15 minutos, oferecendo um snapshot do Hub. _(via claude-code)_
-- [fato/projetos] A captura Claude Code via cron salva transcripts redatados a cada 30 minutos. _(via claude-code)_
-- [fato/projetos] As capturas estão funcionando de forma assíncrona no cron GitHub Actions, processadas pelo curador, que já está rodando. _(via claude-code)_
-- [decisao/projetos] A decisão final sobre o modelo curador será após 12/05/2026, onde será feita a comparação entre os pares Haiku e Sonnet/GPT. _(via claude-code)_
-- [decisao/projetos] A demanda de Drive sync (`2026-05-01-drive-sync-oauth-fix.md`) está ativa. Hipótese: refresh token OAuth expirou. Três opções: reset OAuth (paliativo) / Service Account (definitivo) / aposentar Dri... _(via claude-code)_
-- [fato/projetos] O foco do projeto é desenvolver um sistema multi-porta (Telegram, Claude Code, Claude Chat, futuros: Custom GPT, Alexa). _(via claude-code)_
-- [decisao/projetos] O `dimagem.py` é uma integração de domínio e deve ser movido para o diretório `integrations/` para refletir sua natureza. _(via claude-code)_
-- [fato/projetos] Vi que tem 3 demandas paradas em `dialogos/inbox-claude-code/`. _(via claude-code)_
-- [fato/projetos] O sistema multi-porta com Hub Qdrant como memória central opera com GitHub como conhecimento e Drive como espelho. _(via claude-code)_
+- [fato/projetos] O PR #72 corrigiu um bug em produção que impedia o curador de funcionar. _(via claude-code)_
+- [fato/projetos] Há uma demanda parada chamada `2026-05-01-captura-multiporta-curador.md`. _(via claude-code)_
+- [fato/projetos] A arquitetura do sistema é baseada no processamento paralelo entre vários modelos de linguagem, utilizando fallback em caso de falhas. _(via claude-code)_
+- [fato/projetos] Hub é a memória central conectada a vários serviços, como Telegram, Claude Code e Claude Chat. _(via claude-code)_
+- [fato/projetos] O manual operacional do Gus, regras de comportamento e como cada porta usa o Hub estão no arquivo `dialogos/_bootstrap/gus-bootstrap.md`. _(via claude-code)_
+- [fato/projetos] O curador está rodando em loop com 100% de erro há mais de 3 dias. _(via claude-code)_
+- [decisao/-] O connector do Gus Hub precisa ser recadastrado no claude.ai devido ao ponto de falha na URL. _(via claude-code)_
+- [fato/projetos] O PR #72 foi aberto no repositório Gus para abordar as questões identificadas na auditoria do Chat. _(via claude-code)_
+- [fato/projetos] As frentes mais ativas nos últimos dias são relacionadas ao PR #60 (MCP URL secret) e PR #64 (cron captura transcripts Claude Code). _(via claude-code)_
+- [fato/projetos] No projeto, as demandas pendentes se referem a quatro tarefas: captura multiporta curador, drive sync oauth fix, pendências da Claude Chat consolidadas, e um template. _(via claude-code)_
+- [decisao/projetos] O primeiro passo para resolver o problema identificado é mergear o PR #72 e aguardar o CI passar. _(via claude-code)_
+- [fato/projetos] Os canais de controle e armazenamento de dados (hub/store) são utilizados para gerenciar a memória do Gus. _(via claude-code)_
+- [fato/projetos] O Hub é mais fresco que `gus-estado-atual.md`, que é um snapshot gerado pelo cron. _(via claude-code)_
+- [fato/projetos] A demanda `2026-05-01-captura-multiporta-curador.md` é parcialmente resolvida pelo PR #67, mas falta o gatilho proativo no Chat. _(via claude-code)_
+- [fato/projetos] O `_estado-atual.md` (27/04) está desatualizado e não reflete muitas atualizações posteriores documentadas no git, como PRs #57, #60, #63, #64 e #67. _(via claude-code)_
+- [fato/gus] O projeto Gus envolve um sistema multi-porta que conecta vários canais, como Telegram, Claude Code e Claude Chat, usando um Hub Qdrant como memória central. _(via claude-code)_
+- [fato/projetos] O modelo do bot suporta tanto o LLM da Anthropic quanto o da OpenAI, com implementações robustas de tratamento de erros. _(via claude-code)_
+- [fato/projetos] O cache de mídia não tem limite de bytes, o que pode levar a problemas de memória no container do Railway. _(via claude-code)_
+- [fato/projetos] O projeto NeuroGus está com planejamento 100% pronto e falta a implementação. _(via claude-code)_
+- [fato/projetos] O arquivo 'dialogos/_bootstrap/gus-bootstrap.md' é o manual operacional do Gus, contendo as regras de comportamento e como cada porta usa o Hub. _(via claude-code)_
 
 ## Resumo numérico
 
-- **Total no brain `gustavo`**: 257 fragmentos
+- **Total no brain `gustavo`**: 526 fragmentos
 - **Amostra carregada**: 50 mais recentes (limite do listar)
 
 ### Distribuição por tipo (na amostra)
 
-- `fato`: 31
-- `decisao`: 9
-- `episodico`: 5
+- `fato`: 37
+- `decisao`: 5
+- `episodico`: 4
 - `lacuna`: 3
 - `projeto`: 1
-- `preferencia`: 1
 
-## Auto-observações do Gus (brain `gus` — 258 fragmentos)
+## Auto-observações do Gus (brain `gus` — 525 fragmentos)
 
 - [fato/projetos] O `_estado-atual.md` (27/04) está desatualizado — git log mostra muita coisa depois (PRs #57, #60, #63, #64, #67, captura multiporta). _(via claude-code)_
+- [fato/projetos] A demanda `2026-05-01-captura-multiporta-curador.md` está parcialmente resolvida pelo PR #67, mas falta o gatilho proativo no Chat. _(via claude-code)_
+- [fato/gus] As diretrizes de segurança para o MCP incluem a proteção com um URL secreto. _(via claude-code)_
+- [fato/projetos] Os documentos principais que fornecem contexto para novas abas são: `dialogos/_bootstrap/gus-bootstrap.md`, `dialogos/_bootstrap/gus-identity.md`, `dialogos/_bootstrap/gus-estado-atual.md`, e `proj... _(via claude-code)_
 - [fato/projetos] Existem 3 demandas paradas em `dialogos/inbox-claude-code/`. _(via claude-code)_
 - [fato/projetos] PRs descrevem o caminho, não onde a equipe está atualmente em seu trabalho. _(via claude-code)_
-- [episodico/-] As informações foram registradas como memórias pessoais de Gustavo sobre filmes, gostos e experiências de vida. _(via telegram-claude)_
-- [fato/projetos] Os 4 arquivos obrigatórios para o contexto em toda aba nova são: dialogos/_bootstrap/gus-bootstrap.md, dialogos/_bootstrap/gus-identity.md, dialogos/_bootstrap/gus-estado-atual.md, projetos/gus/_es... _(via claude-code)_
-- [procedural/projetos] Para uma nova aba, o core obrigatório dá 80% do contexto: manual operacional, identidade do Gustavo, estado atual do Hub, e o estado atual do projeto. _(via claude-code)_
-- [fato/projetos] A auditoria do Chat envolve todos os aspectos relacionados ao projeto Claude Chat. _(via claude-code)_
-- [fato/gus] Gus está na porta Code, branch `claude/initial-setup-iWTfL`. _(via claude-code)_
+- [procedural/projetos] Decisões arquiteturais devem ser documentadas nos docs, não nos PRs. _(via claude-code)_
+- [fato/gus] Hoje, o MCP Hub está público sem `MCP_URL_SECRET`. _(via claude-code)_
 
 ---
 
