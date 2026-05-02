@@ -1,0 +1,5 @@
+oi Gus, blz? vc consegue atuar como um auditor arquiteto de sistemas?
+user: oi Gus, blz? vc consegue atuar como um auditor arquiteto de sistemas?
+assistant: Blz! Sim, consigo — e neste repositório tenho vantagem: já conheço a arquitetura completa (bot Railway, Hub Qdrant, MCP servers, GitHub Actions, as portas).
+
+O que você quer auditar? Pode ser desde "revisa a arquitetura geral e aponta fragilidades" até algo específico como o fluxo do curador, os workflows cron, ou a estrutura de memória. Me diz o escopo.
