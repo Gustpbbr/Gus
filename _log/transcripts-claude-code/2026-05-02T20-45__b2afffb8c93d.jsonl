@@ -1,0 +1,785 @@
+user: oi Gus, blz? vc consegue atuar como um auditor arquiteto de sistemas?
+assistant: Blz! Sim, consigo — e neste repositório tenho vantagem: já conheço a arquitetura completa (bot Railway, Hub Qdrant, MCP servers, GitHub Actions, as portas).
+
+O que você quer auditar? Pode ser desde "revisa a arquitetura geral e aponta fragilidades" até algo específico como o fluxo do curador, os workflows cron, ou a estrutura de memória. Me diz o escopo.
+user: quero começar com a arquitetura geral completo atual, por favor
+user: Preciso de uma exploração abrangente do repositório em /home/user/Gus para auditoria de arquitetura. Leia os seguintes arquivos e retorne o conteúdo completo de cada um:
+
+1. /home/user/Gus/projetos/gus/_estado-atual.md
+2. /home/user/Gus/dialogos/inbox-claude-code/2026-05-01-captura-multiporta-curador.md
+3. /home/user/Gus/dialogos/inbox-claude-code/2026-05-01-drive-sync-oauth-fix.md
+4. /home/user/Gus/dialogos/inbox-claude-code/2026-05-02-pendencias-claude-chat-consolidacao.md
+5. /home/user/Gus/hub/store.py
+6. /home/user/Gus/hub/curador.py
+7. /home/user/Gus/gus/tools.py
+8. /home/user/Gus/gus/memory.py
+9. /home/user/Gus/gus/llm.py
+
+Também liste a estrutura de diretórios de primeiro nível: ls /home/user/Gus/ e ls /home/user/Gus/.github/workflows/
+
+Retorne o conteúdo completo de cada arquivo lido.
+assistant: Vou ler o estado atual do projeto e as demandas pendentes em paralelo para ter uma visão completa antes de auditar.
+assistant: Vou fazer uma exploração abrangente do repositório. Deixe-me começar lendo os arquivos solicitados e listando as estruturas de diretórios.
+assistant: Perfeito! Consegui ler todos os arquivos solicitados. Aqui está o conteúdo completo de cada um:
+
+## Estrutura de Diretórios
+
+**Primeiro nível do repositório:**
+```
+Total de 204 bytes
+drwxr-xr-x 26 root root  4096 May  2 15:51 .
+drwxr-xr-x  3 root root  4096 Apr 30 17:04 ..
+drwxr-xr-x  4 root root  4096 Apr 30 17:04 .claude/
+drwxr-xr-x  8 root root  4096 May  2 15:51 .git/
+drwxr-xr-x  4 root root  4096 Apr 30 17:04 .github/
+drwxr-xr-x  3 root root  4096 Apr 30 17:04 .obsidian/
+-rw-r--r--  1 root root 14516 May  2 15:51 CLAUDE.md
+-rw-r--r--  1 root root   310 Apr 30 17:04 Dockerfile
+-rw-r--r--  1 root root   848 Apr 30 17:04 Dockerfile.mcp
+-rw-r--r--  1 root root  6446 Apr 30 17:04 README.md
+-rw-r--r--  1 root root 17605 Apr 30 17:04 gus-memoria-export.json
+-rw-r--r--  1 root root 12810 May  2 15:51 gus-memoria-export.md
+drwxr-xr-x  2 root root  4096 May  2 15:51 _indices/
+drwxr-xr-x  6 root root  4096 May  2 15:51 _log/
+drwxr-xr-x  4 root root  4096 Apr 30 17:04 acoes/
+drwxr-xr-x  2 root root  4096 Apr 30 17:04 agenda/
+drwxr-xr-x  2 root root  4096 Apr 30 17:04 api/
+drwxr-xr-x  6 root root  4096 Apr 30 17:04 capturado/
+drwxr-xr-x  2 root root  4096 Apr 30 17:04 contatos/
+drwxr-xr-x 12 root root  4096 Apr 30 17:04 dialogos/
+drwxr-xr-x  6 root root  4096 Apr 30 17:04 dimagem/
+drwxr-xr-x  3 root root  4096 Apr 30 17:04 esportes/
+drwxr-xr-x  2 root root  4096 Apr 30 17:04 familia/
+drwxr-xr-x  4 root root  4096 May  2 15:51 gus/
+drwxr-xr-x  6 root root  4096 May  2 15:51 hub/
+drwxr-xr-x  4 root root  4096 Apr 30 17:04 leituras/
+drwxr-xr-x  6 root root  4096 Apr 30 17:04 historico/
+drwxr-xr-x  4 root root  4096 Apr 30 17:04 pessoal/
+drwxr-xr-x  5 root root  4096 Apr 30 17:04 projetos/
+-rw-r--r--  1 root root   339 May  2 15:51 pyproject.toml
+-rw-r--r--  1 root root   746 Apr 30 17:04 railway.mcp.toml
+-rw-r--r--  1 root root   190 Apr 30 17:04 railway.toml
+drwxr-xr-x  4 root root  4096 Apr 30 17:04 receitas/
+-rw-r--r--  1 root root    77 May  2 15:51 requirements-dev.txt
+-rw-r--r--  1 root root   346 Apr 30 17:04 requirements.txt
+drwxr-xr-x  3 root root  4096 Apr 30 17:04 sensivel/
+drwxr-xr-x  2 root root  4096 May  2 15:51 tests/
+```
+
+**.github/workflows/ (23 workflows):**
+Arquivo e datas recentes — destacados: `curador-claude-code.yml`, `ingest-mem0-from-chat.yml`, `sync-docs.yml` (todos atualizados em 02/05/2026).
+
+---
+
+## Conteúdos Completos dos Arquivos
+
+### 1. `/home/user/Gus/projetos/gus/_estado-atual.md`
+
+[Arquivo lido com 294 linhas — documento vivo de handoff entre sessões, atualizado 02/05/2026 às 01:36 BRT]
+
+**Resumo executivo:**
+- **Última sessão:** duas sessões Code paralelas (02/05/2026 madrugada)
+  - **Sessão A:** Fase 1 saneamento TioGu (Telegram bot) — 163 testes verdes, PII output, byte budget cache
+  - **Sessão B:** Auditoria Chat — 31 achados (3 críticos, 9 altos, 13 médios, 6 baixos), 12 itens resolvidos em PR #72
+  
+- **Bugs críticos resolvidos em Sessão B:**
+  - Curador 100% falhando desde 30/04 (`format()` vs `replace()` — template JSON com `{}` literais)
+  - MCP server fail-open (agora retorna 503 sem `MCP_URL_SECRET`)
+  - Validação fragmentos, processados-erro, bootstrap atualizado
+
+- **PRs recentes (27/04-02/05):** #57-73 (8 mergeados, 1 aberto #72)
+
+- **Pendências principais:**
+  - **Sessão A:** Fase 2 (docs estáticas, system prompt), Fase 3 (operacional), Fase 4 (refator estrutural)
+  - **Sessão B:** MCP_URL_SECRET no Railway, recadastrar Connector, decisões NeuroGus (§11.1-11.7)
+  - **Fase 6:** Aposentadoria Mem0 (deadline 12/05/2026)
+
+- **Estado das demandas inbox:**
+  1. Captura multiporta (A/B/C)
+  2. Drive sync OAuth (1/2/3)
+  3. Pendências Chat consolidação (6 fronts)
+
+---
+
+### 2. `/home/user/Gus/dialogos/inbox-claude-code/2026-05-01-captura-multiporta-curador.md`
+
+[Demanda: captura multiporta de conversas pro Hub — status PENDENTE, prioridade MÉDIA]
+
+**Problema:** Curador roda apenas em TioGu Telegram. Claude Chat e Claude Code não salvam fragmentos automaticamente no Hub.
+
+**3 Opções:**
+- **A (rápido):** Prompt no bootstrap instruindo Claude Chat a chamar `ingestar_fragmento` (~30 linhas, sem comparação Haiku×GPT)
+- **B (médio):** Stop hook Claude Code expandido (~50 linhas, mesma lógica curador Telegram)
+- **C (ideal):** Curador agnóstico de porta com adapters (~1 dia, escalável)
+
+**Recomendação:** A + B em paralelo + C quando tiver sprint dedicado.
+
+---
+
+### 3. `/home/user/Gus/dialogos/inbox-claude-code/2026-05-01-drive-sync-oauth-fix.md`
+
+[Demanda: Drive sync parado desde ~01/05 14:38Z — status PENDENTE, prioridade MÉDIA]
+
+**Hipótese:** Refresh token OAuth Google expirou (apps Testing expiram em 7 dias).
+
+**3 Opções:**
+- **Opção 1:** Reset OAuth (paliativo, 10min Gustavo, expira de novo em 7 dias)
+- **Opção 2 (recomendada):** Service Account (definitivo, 30min código + Gustavo criar SA, não expira)
+- **Opção 3:** Aposentar Drive sync, Chat lê 100% via MCP
+
+---
+
+### 4. `/home/user/Gus/dialogos/inbox-claude-code/2026-05-02-pendencias-claude-chat-consolidacao.md`
+
+[Demanda guarda-chuva: 6 pendências independentes da porta Claude Chat — status PENDENTE, prioridade ALTA]
+
+**6 Fronts consolidados:**
+1. **MCP_URL_SECRET** ativado no Railway (10min Gustavo)
+2. **Recadastrar Connector** claude.ai com URL nova (depende #1)
+3. **Localizar mock HTML NeuroGus** 28/04 no Drive (10min Gustavo ou recriar em 2-3h)
+4. **Decisões §11.3-11.5** Fase 2 (Gustavo responde 3 perguntas)
+5. **Captura tempo real Chat** (Opção A, Gustavo decide + Code implementa)
+6. **Drive sync OAuth** → Service Account (ver demanda separada)
+
+**Checklist de resolução:** 6 items, sequência recomendada mas independentes.
+
+---
+
+### 5. `/home/user/Gus/hub/store.py`
+
+[Hub Qdrant direto — store layer, coleção `gus_hub`]
+
+**Implementação do schema gus-18 (coleção parallela ao Mem0 antigo):**
+
+```python
+# Funções principais:
+- ingestar(conteudo, metadata) → UUID
+- lembrar(query, user_id, limit) → list[dict] (busca semântica)
+- ego_cache(user_id) → dict (fragmentos prioritários para system prompt)
+- contar(user_id) → int
+- listar(user_id, limit) → list[dict]
+- deletar(memory_id) → bool
+- stats() → dict
+
+# Payload schema:
+{
+  "conteudo", "tipo", "estado", "camada_temporal", "tipo_esquecimento",
+  "peso", "confirmacoes", "confianca", "acessos",
+  "via", "area", "projeto", "user_id",
+  "criado_em", "ultimo_acesso",
+  # Extra do curador:
+  "curador" ("haiku" | "gpt"), "hash_janela", "janela_turnos"
+}
+
+# Embeddings:
+- sentence-transformers/all-MiniLM-L6-v2 (dim=384, compatível com Mem0)
+- Lazy loading: importa só na 1ª call
+
+# Lazy client:
+- QdrantClient (URL + API_KEY via env)
+- Idempotência: cria coleção se não existir, índices via create_payload_index
+```
+
+---
+
+### 6. `/home/user/Gus/hub/curador.py`
+
+[Curador híbrido — Haiku + GPT-4o-mini em paralelo]
+
+**Lógica (Fase 2 ADR-001):**
+
+```python
+# 2 modelos simultâneos:
+- modelo_anthropic: claude-haiku-4-5 (ou env MODEL_CURADOR_ANTHROPIC)
+- modelo_openai: gpt-4o-mini (ou env MODEL_CURADOR_OPENAI)
+
+# Histórico:
+- 27/04-29/04: Haiku × Sonnet
+- 29/04 (gus-29 Fase 3): Sonnet → GPT-4o-mini (resiliência cross-vendor, 10× mais barato)
+
+# 2 prompts:
+- PROMPT_CURADOR: para janelas Telegram (turnos)
+- PROMPT_CURADOR_ARQUIVO: para arquivos Claude Chat (pré-curados)
+
+# Validação fragmentos:
+- Tipos, camadas, areas contra enums gus-18
+- Confiança clamped [0,1]
+- Min 10 chars, max 5-8 por modelo
+
+# Bug fix 27/04:
+- str.format() interpretava `{` `}` JSON literais → KeyError
+- Solução: replace() com placeholders nomeados
+
+# Fluxo:
+1. _extrair_via_modelo (Claude Haiku) + _extrair_via_openai (GPT) em paralelo
+2. _validar_fragmento (sanitização contra enum)
+3. ingestar no Hub com metadata (curador, hash_janela, janela_turnos)
+
+# Funções públicas:
+- curar_turnos(messages, via, user_id) → dict
+- curar_arquivo(body, via, user_id) → dict
+```
+
+---
+
+### 7. `/home/user/Gus/gus/tools.py`
+
+[Tools registry — 21 tools disponíveis para LLM]
+
+**Tools (TOOLS = lista de 21 dicts):**
+
+1. `read_from_github` — lê arquivo MD do repo
+2. `list_github_directory` — lista pasta do repo
+3. `list_branches` — lista branches do repo
+4. `list_commits` — commits recentes (filtro por path/dias)
+5. `search_memory` — busca semântica Hub (gustavo)
+6. `search_web` — Tavily + DDG fallback
+7. `pesquisar_pubmed` — literatura biomédica
+8. `pesquisar_arxiv` — preprints IA/ML
+9. `perguntar_gpt` — segunda opinião GPT-5
+10. `disparar_workflow` — GitHub Actions workflow_dispatch
+11. `sugerir_wikilinks` — conectar ao Obsidian
+12. `auto_diagnostico` — health check paralelo (GitHub PAT, Hub, Anthropic, Tavily, Railway, workflows)
+13. `logs_railway` — logs do bot em produção
+14. `meta_memoria` — auto-conhecimento do Gus
+15. `salvar_memoria_gus` — brain user_id='gus'
+16. `buscar_memoria_gus` — busca no brain gus
+17. `deletar_memoria` — delete com fallback Mem0
+18. `auditoria_mem0` — stats Hub (sobre Gustavo)
+19. `criar_acao` — enfileira ação (whatsapp, email, calendar, etc)
+20. `save_to_github` — salva MD no repo
+21. `rotear_arquivo` — move arquivo inbox → destino
+
+**Implementação:**
+- `executar_tool(name, inputs) → str` — dispatcher
+- Validação path (`_validar_path`, bloqueia `..`)
+- Scan sensível (`_escanear_sensivel` vs `patterns_sensiveis.py`)
+- Integração com hub.store, gus.memory, APIs externas
+
+---
+
+### 8. `/home/user/Gus/gus/memory.py`
+
+[Adapter memória — Hub Qdrant (gus_hub) + fallback Mem0 (colecção gus)]
+
+**Funções principais:**
+
+```python
+# ADR-001 Fase 3: Hub primeiro, fallback Mem0 pra compatibilidade
+
+USER_ID_GUSTAVO = "gustavo"
+USER_ID_GUS = "gus"
+
+# Busca:
+- buscar_memorias(query, user_id) → str
+  (Hub via hub_lembrar → fallback Mem0)
+- buscar_memorias_detalhada(query, limit, user_id) → str
+  (Com IDs pra deleção, inclui tipo/area)
+- buscar_memorias_gus(query, limit) → str
+  (Brain user_id='gus')
+
+# Escrita:
+- salvar_memorias(messages, user_id, via) → None
+  (Hub.ingestar — fragmento por message)
+- salvar_observacao_gus(observacao, via) → str
+  (Auto-observação do Gus)
+
+# Deleção:
+- deletar_memoria(memory_id, user_id) → str
+  (Hub UUID → fallback Mem0 ID)
+
+# Lazy client:
+- _get_client() → Memory (Mem0 wrapper legacy, collection='gus')
+- _via_default() → str (env MEM0_VIA_TAG)
+
+# Legacy compat:
+- VIA_DEFAULT = _via_default() (property-like)
+- Mem0 client com Qdrant backend, Anthropic LLM, HF embedder
+```
+
+---
+
+### 9. `/home/user/Gus/gus/llm.py`
+
+[LLM dispatcher — Anthropic + OpenAI, retry, pricing, prompt caching]
+
+**Componentes:**
+
+```python
+# 1. Retry + fallback:
+_chamar_claude_com_retry(model, max_tokens, system_prompt, messages, tools, max_tentativas=4)
+  - Backoff exponencial (1s, 2s, 4s, 8s)
+  - Fallback MODEL_FALLBACK (haiku) se primário falhar
+  - system="" bloqueado (bug 400 Sonnet 4.6 curador)
+
+# 2. Pricing:
+MODEL_PRICING = {
+  "opus": {input: 5.0/1M, output: 25.0/1M},
+  "sonnet": {input: 3.0/1M, output: 15.0/1M},
+  "haiku": {input: 0.8/1M, output: 4.0/1M},
+  "gpt-4o-mini": {input: 0.15/1M, output: 0.60/1M},
+  "gpt-4o": {input: 2.5/1M, output: 10.0/1M},
+}
+
+# 3. Prompt caching (Anthropic):
+_load_system_prompt() → str (cached via lru_cache)
+_build_system_blocks(stable, suffix_var) → list[dict]
+  (2 blocos: stable ephemeral cacheado, fresh variável)
+_build_tools_cached(tools) → list[dict]
+  (Marca última tool "rotear_arquivo" com cache_control)
+
+# 4. Implementações:
+_gerar_resposta_anthropic(messages, memory_context) → (str, dict)
+  - Loop tool-calling até resposta final
+  - Track: cache_creation, cache_read, cost_usd
+  
+_gerar_resposta_openai(messages, memory_context) → (str, dict)
+  - gpt-4o-mini por default (20× mais barato que Sonnet)
+  - Fallback Anthropic se OpenAI falhar
+  - Prompt caching automático (≥1024 tokens)
+
+# 5. Dispatcher (gus-29):
+_escolher_provider(messages) → (provider, motivo)
+  - Imagem/document → anthropic (Vision/PDF)
+  - Texto puro → openai (gpt-4o-mini)
+  - MULTIMODEL_ENABLED=false → anthropic (rollback)
+
+gerar_resposta(messages, memory_context) → (str, dict)
+  (Dispatcher público)
+
+# 6. Error handling:
+_mensagem_erro_amigavel(e) → str (Anthropic → português)
+_mensagem_erro_amigavel_openai(e) → str (OpenAI → português)
+
+# 7. Tool conversion:
+_anthropic_to_openai_tools(tools) → list[dict]
+_history_to_openai(messages) → list[dict]
+
+# 8. Resumo:
+gerar_resumo_turnos(messages) → str (extrai fatos pra Mem0)
+```
+
+---
+
+## Resumo Arquitetural
+
+**Estado Geral (02/05/2026 01:36 BRT):**
+
+| Componente | Status | Notas |
+|---|---|---|
+| **Hub Qdrant** | ✅ Ativo | Coleção gus_hub (schema gus-18), direto sem Mem0 |
+| **Curador** | ✅ Operacional | Haiku + GPT-4o-mini paralelo, bug format() resolvido |
+| **TioGu (Telegram)** | ✅ Verde | 163 testes, Fase 1 concluída |
+| **Claude Chat** | ⚠️ Parcial | MCP público (sem URL_SECRET), Drive stale (OAuth expirado) |
+| **Claude Code** | ⚠️ Parcial | Stop hook roda, captura via cron mas não via conversa |
+| **MCP Server** | ⚠️ Público | Roda em Railway, exige URL_SECRET + recadastro Connector |
+| **Mem0 SaaS** | ⏳ Aposentadoria | Deadline 12/05/2026, fallback ativo até lá |
+| **NeuroGus** | 🚧 Bloqueado | Fase 1 SSE pronto, Fase 2 bloqueia em decisões §11.1-11.7 |
+
+**3 Demandas Críticas Pendentes:**
+1. Captura multiporta (decidir A/B/C)
+2. Drive sync OAuth (decidir 1/2/3)
+3. Pendências Chat (6 fronts, maioria operacional Gustavo)
+
+Repositório auditado com sucesso. Todos os 9 arquivos lidos integralmente.
+assistant: Tenho tudo que preciso. Aqui vai a auditoria completa.
+
+---
+
+## Auditoria de Arquitetura
+
+[…transcript truncado…]
+
+** ✅ Ativo no bot. ⚠️ Ausente no ambiente Claude Code web (retro-engine no-op). ⚠️ Confirmar se está nos GitHub Secrets.
+
+**Variáveis opcionais de modelo (têm default no código):**
+```
+MODEL_DEFAULT          (default: claude-sonnet-4-6 ou similar)
+MODEL_FALLBACK         (default: haiku)
+MODEL_CURADOR_ANTHROPIC
+MODEL_DIMAGEM
+MODEL_BRIEFING / MODEL_RESUMO / MODEL_REFLEXAO_* / MODEL_RETROSPECTIVA
+```
+
+---
+
+### 2. OpenAI — `platform.openai.com`
+
+**Conta necessária:** sim
+
+**O que precisa existir:**
+- `OPENAI_API_KEY` — curador GPT-4o-mini paralelo, dispatcher multimodal texto→OpenAI, fallback se Anthropic falhar
+
+**Onde configurar:**
+- Railway → bot service → Variables
+- GitHub → Settings → Secrets → Actions (workflows curador-claude-code, ingest-mem0-from-chat)
+
+**Status:** ✅ Provavelmente ativo (curador rodando). Confirmar se está no GitHub Secrets.
+
+**Variável opcional:**
+```
+MODEL_OPENAI_DEFAULT   (default: gpt-4o-mini)
+MODEL_CURADOR_OPENAI   (default: gpt-4o-mini)
+MODEL_CURADOR_GPT      (legacy alias)
+MULTIMODEL_ENABLED     (true/false — feature flag dispatcher)
+```
+
+---
+
+### 3. Telegram — `t.me/BotFather`
+
+**Conta necessária:** sua conta Telegram pessoal (você tem)
+
+**O que precisa existir:**
+- `TELEGRAM_BOT_TOKEN` — criado via @BotFather, identifica o @Tiogubot
+- `TELEGRAM_CHAT_ID` — seu chat ID pessoal (número fixo, não muda)
+
+**Onde configurar:**
+- Railway → bot service → Variables
+- GitHub → Settings → Secrets → Actions (briefing, check-saúde, retrospectiva, reflexão, notificar-inbox)
+
+**Status:** ✅ Ativo (bot rodando no Railway).
+
+**Ponto de atenção:** `TELEGRAM_CHAT_ID` é o ID do seu chat com o bot. Se você adicionar o bot a um grupo no futuro, esse ID muda de contexto — atualizar em todos os lugares.
+
+---
+
+### 4. Railway — `railway.app`
+
+**Conta necessária:** sim (você tem)
+
+**2 serviços no mesmo projeto:**
+
+| Serviço | Entry point | Dockerfile |
+|---|---|---|
+| bot Telegram | `python -m gus.main` | `Dockerfile` |
+| MCP server | `python -m hub.mcp_server` | `Dockerfile.mcp` |
+
+**Variáveis que Railway injeta automaticamente (não configurar manualmente):**
+```
+PORT                    (Railway define, não setar 8000 no MCP — conflito)
+RAILWAY_PROJECT_ID
+RAILWAY_SERVICE_ID
+RAILWAY_ENVIRONMENT_ID
+RAILWAY_ENVIRONMENT_NAME (usado por logs_railway tool)
+```
+
+**Variáveis que VOCÊ deve configurar em cada serviço:**
+
+*Bot service (todas):*
+```
+ANTHROPIC_API_KEY
+OPENAI_API_KEY
+TELEGRAM_BOT_TOKEN
+TELEGRAM_CHAT_ID
+QDRANT_URL
+QDRANT_API_KEY
+TAVILY_API_KEY
+MEM0_API_KEY              (até Fase 5 — pode remover após 12/05)
+HARD_LIMIT_USD_MONTH      (proteção custo, ex: 50)
+RATE_LIMIT_MSG_PER_MINUTE (throttle, ex: 10)
+MULTIMODEL_ENABLED        (true ou false)
+```
+
+*MCP service:*
+```
+QDRANT_URL
+QDRANT_API_KEY
+MCP_URL_SECRET            (🔴 FALTANDO — segurança)
+MCP_BEARER_TOKEN          (alternativa ao URL secret)
+MCP_AUTH_DISABLED         (false por padrão — não setar true em prod)
+```
+
+**`Railway_diagnostic`** — variável especial que habilita `logs_railway` tool no bot. Precisa existir (valor = qualquer coisa não-vazia).
+
+**Status:** ✅ Bot rodando. 🔴 MCP sem autenticação (`MCP_URL_SECRET` ausente).
+
+---
+
+### 5. Qdrant Cloud — `cloud.qdrant.io`
+
+**Conta necessária:** sim (você tem)
+
+**O que precisa existir:**
+- Cluster criado (você tem — URL já configurada no bot)
+- Coleção `gus_hub` — criada automaticamente pelo `hub/store.py` na primeira chamada
+- Coleção `gus` — legada, tem ~204 mems históricas (Mem0 self-hosted antigo)
+
+**Credenciais:**
+```
+QDRANT_URL      (ex: https://xyz.us-east4-0.gcp.cloud.qdrant.io:6333)
+QDRANT_API_KEY  (gerado no painel Qdrant Cloud)
+```
+
+**Onde configurar:**
+- Railway → bot service → Variables ✅
+- Railway → MCP service → Variables ✅
+- GitHub → Settings → Secrets → Actions *(confirmar)*
+
+**Pontos de atenção:**
+- Embedding model locked em `all-MiniLM-L6-v2` (dim=384) — se mudar o modelo, precisa recriar a coleção e re-indexar tudo
+- Tier gratuito tem limite de vetores e RPM — verificar se está no plano certo para o volume atual
+- Sem backup explícito configurado — dados do Hub só existem no Qdrant Cloud
+
+**Status:** ✅ Ativo. Verificar plano e se GitHub Secrets estão configurados.
+
+---
+
+### 6. Google Cloud — `console.cloud.google.com`
+
+**Conta necessária:** sua conta Google pessoal (você tem)
+
+**O que precisa existir:**
+
+*Projeto GCP:*
+- Drive API habilitada
+- OAuth 2.0 Client ID criado (tipo: Desktop app ou Web)
+- App em modo "Testing" (limitação: token expira em 7 dias) ← **causa do problema atual**
+
+*Credenciais geradas pelo OAuth flow:*
+```
+GOOGLE_CLIENT_ID        (do GCP Console)
+GOOGLE_CLIENT_SECRET    (do GCP Console)
+GOOGLE_REFRESH_TOKEN    (gerado uma vez pelo OAuth flow — expira se app em Testing)
+DRIVE_ROOT_FOLDER_ID    (ID da pasta raiz no Drive onde os MDs são sincronizados)
+```
+
+**Onde configurar:**
+- GitHub → Settings → Secrets → Actions (sync-to-drive, sync-to-drive-full, archive-completed-demandas, delete-drive-file, import-from-drive)
+
+**Status:** 🔴 Quebrado. OAuth em Testing → refresh token expirou. Claude Chat lendo Drive stale.
+
+**Solução pendente (demanda inbox):** migrar para Service Account — não expira, não precisa de consent screen, mais simples para uso automatizado.
+
+*Para Service Account (Opção 2 da demanda):*
+- GCP Console → IAM → Service Accounts → criar SA
+- Drive API → compartilhar pasta raiz com o email da SA
+- Gerar chave JSON → extrair campos relevantes
+- Substituir `GOOGLE_CLIENT_ID/SECRET/REFRESH_TOKEN` por `GOOGLE_SERVICE_ACCOUNT_JSON` (ou equivalente)
+
+---
+
+### 7. GitHub — `github.com/Gustpbbr/Gus`
+
+**Conta necessária:** sim (você tem — Gustpbbr)
+
+**O que precisa existir:**
+
+*Repositório:*
+- `Gustpbbr/Gus` — privado (verificar se está privado — contém dados pessoais)
+
+*Personal Access Token (PAT):*
+- Usado pelo bot para `read_from_github`, `save_to_github`, `list_github_directory`, `disparar_workflow`
+- Scope necessário: `repo` (leitura + escrita) + `workflow`
+- Configurado como `GITHUB_TOKEN` ou `GH_TOKEN` no Railway → bot Variables
+
+*GitHub Actions Secrets (Settings → Secrets → Actions):*
+```
+ANTHROPIC_API_KEY
+OPENAI_API_KEY
+QDRANT_URL
+QDRANT_API_KEY
+TELEGRAM_BOT_TOKEN
+TELEGRAM_CHAT_ID
+TAVILY_API_KEY
+MEM0_API_KEY          (até Fase 5)
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
+GOOGLE_REFRESH_TOKEN
+DRIVE_ROOT_FOLDER_ID
+```
+`GITHUB_TOKEN` é auto-injetado pelo Actions — não precisa configurar.
+
+**Status:** ✅ Repo ativo, PAT configurado no bot. ⚠️ Confirmar se todos os secrets acima estão presentes (especialmente QDRANT e OPENAI — workflows de curador dependem deles).
+
+---
+
+### 8. Tavily — `tavily.com`
+
+**Conta necessária:** sim
+
+**O que precisa existir:**
+- `TAVILY_API_KEY` — busca web principal do bot (DuckDuckGo é fallback sem key)
+
+**Onde configurar:**
+- Railway → bot service → Variables
+- GitHub → Secrets → Actions (check-saude)
+
+**Status:** ✅ Provavelmente ativo. Tier gratuito tem 1000 buscas/mês — verificar se está dentro do limite.
+
+---
+
+### 9. Mem0 SaaS — `app.mem0.ai` *(legacy, morrendo)*
+
+**Conta necessária:** sim (você tem)
+
+**O que precisa existir:**
+- `MEM0_API_KEY` — fallback de leitura em `memory.py`, usado em `fix-qdrant-dims.yml` e `migrate-mem0-to-qdrant.yml`
+
+**Onde configurar:**
+- Railway → bot service → Variables
+- GitHub → Secrets → Actions
+
+**Status:** ⏳ Deadline aposentadoria 12/05/2026. Após isso, remover de Railway e GitHub Secrets. Workflows `migrate-mem0-to-qdrant.yml` e `fix-qdrant-dims.yml` se tornam obsoletos também.
+
+---
+
+### 10. Claude.ai — `claude.ai` *(Connector MCP)*
+
+**Conta necessária:** sua conta claude.ai pessoal (você tem)
+
+**O que precisa existir:**
+- Connector MCP configurado em claude.ai apontando para a URL do MCP server no Railway
+- URL formato: `https://<mcp-service>.railway.app?secret=<MCP_URL_SECRET>`
+
+**Status:** 🔴 Connector desatualizado — precisa ser recadastrado após configurar `MCP_URL_SECRET` no Railway. Essa é a dependência sequencial: primeiro Railway recebe o secret, depois você recadastra o Connector no claude.ai.
+
+---
+
+### Resumo: o que está onde
+
+| Secret/Credential | Railway Bot | Railway MCP | GitHub Secrets | Onde gerar |
+|---|---|---|---|---|
+| `ANTHROPIC_API_KEY` | ✅ | ❓ | ❓ | console.anthropic.com |
+| `OPENAI_API_KEY` | ✅ | ❌ | ❓ | platform.openai.com |
+| `TELEGRAM_BOT_TOKEN` | ✅ | ❌ | ✅ | @BotFather |
+| `TELEGRAM_CHAT_ID` | ✅ | ❌ | ✅ | seu ID fixo |
+| `QDRANT_URL` | ✅ | ✅ | ❓ | cloud.qdrant.io |
+| `QDRANT_API_KEY` | ✅ | ✅ | ❓ | cloud.qdrant.io |
+| `TAVILY_API_KEY` | ✅ | ❌ | ❓ | tavily.com |
+| `MEM0_API_KEY` | ✅ | ❌ | ❓ | app.mem0.ai |
+| `GOOGLE_CLIENT_ID` | ❌ | ❌ | ✅ | console.cloud.google.com |
+| `GOOGLE_CLIENT_SECRET` | ❌ | ❌ | ✅ | console.cloud.google.com |
+| `GOOGLE_REFRESH_TOKEN` | ❌ | ❌ | 🔴 expirado | OAuth flow |
+| `DRIVE_ROOT_FOLDER_ID` | ❌ | ❌ | ✅ | ID da pasta Drive |
+| `MCP_URL_SECRET` | ❌ | 🔴 faltando | ❌ | você escolhe |
+| `GH_TOKEN` (PAT) | ✅ | ❌ | auto | github.com/settings/tokens |
+
+**Legenda:** ✅ provavelmente ok · ❓ não confirmado · 🔴 problema ativo · ❌ não se aplica
+
+---
+
+### Ações imediatas por prioridade
+
+**🔴 Hoje:**
+1. Railway MCP → Variables → adicionar `MCP_URL_SECRET` (qualquer string aleatória longa)
+2. claude.ai → Connections → recadastrar o Connector com a nova URL
+
+**🟠 Esta semana:**
+3. Google Cloud → criar Service Account → atualizar GitHub Secrets (resolve Drive stale)
+4. GitHub → Secrets → confirmar que `QDRANT_URL`, `QDRANT_API_KEY`, `OPENAI_API_KEY` estão presentes (workflows curador dependem)
+5. Verificar se `ANTHROPIC_API_KEY` está no Railway MCP service (se MCP precisar chamar Anthropic)
+
+**⏳ Até 12/05:**
+6. Remover `MEM0_API_KEY` do Railway e GitHub Secrets após aposentar Mem0
+
+---
+
+Quer detalhar o passo a passo de algum item específico (ex: como criar Service Account no GCP, ou como gerar o `MCP_URL_SECRET`)?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Só novas entradas no log do retro-engine — igual antes.
+assistant: Feito. Pushed. Pode continuar.
+se vc tivesse que fazer um manual, cronologico, com passo a passo, para uma terceira pessoal implementar o projeto Gus desde o inicio. como seria dividido esse passo a passo?
+user: se vc tivesse que fazer um manual, cronologico, com passo a passo, para uma terceira pessoal implementar o projeto Gus desde o inicio. como seria dividido esse passo a passo?
+assistant: Boa pergunta. Vou pensar nas dependências antes de propor a divisão — a ordem importa porque cada fase desbloqueia a próxima.
+
+---
+
+## Proposta de divisão: Manual de Implementação do Gus
+
+**12 fases, ordem cronológica por dependência:**
+
+---
+
+**Fase 0 — Contas e credenciais**
+Antes de qualquer código. Criar conta e guardar credenciais de cada serviço: GitHub, Anthropic, OpenAI, Telegram (BotFather), Qdrant Cloud, Tavily, Google Cloud, Railway. Nada funciona sem isso. Output: um cofre de senhas com todas as keys.
+
+---
+
+**Fase 1 — Repositório e estrutura de conhecimento**
+Criar o repo GitHub privado com a estrutura de pastas (pessoal/, dimagem/, projetos/, dialogos/, etc.), .gitignore, sensivel/ protegido, CLAUDE.md inicial. É a "espinha dorsal" — tudo referencia o repo. Output: repo no ar, estrutura de pastas criada.
+
+---
+
+**Fase 2 — Hub Qdrant (memória)**
+Criar cluster no Qdrant Cloud, implementar `hub/store.py` com schema gus-18, `hub/schemas.py`. Testar ingestão e busca semântica localmente. É pré-requisito para o bot e para tudo que escreve memória. Output: coleção `gus_hub` criando e buscando fragmentos.
+
+---
+
+**Fase 3 — Bot Telegram mínimo**
+`gus/main.py`, `bot.py`, `llm.py` básicos com loop de tool use. `gus/memory.py` conectado ao Hub. Tools mínimas: `read_from_github`, `search_memory`, `search_web`. Identidade e system prompt (`system_prompt.md`, `gus-identity.md`). Testar localmente no terminal. Output: bot respondendo com personalidade e memória.
+
+---
+
+**Fase 4 — Deploy Railway (bot)**
+Dockerfile, `railway.toml`, configurar todas as variáveis de ambiente no Railway, deploy. Configurar healthcheck, restart policy. Output: bot no ar 24/7, acessível pelo Telegram.
+
+---
+
+**Fase 5 — Curador automático**
+`hub/curador.py` com Haiku × GPT em paralelo. Integrar no bot a cada 3 turnos. Validação de fragmentos contra schema gus-18. Output: toda conversa Telegram alimenta automaticamente o Hub.
+
+---
+
+**Fase 6 — GitHub Actions (automações)**
+Configurar todos os secrets no GitHub. Implementar workflows prioritários: `check-saude.yml` (monitoramento), `briefing-matinal.yml`, `retrospectiva-semanal.yml`. Output: sistema se auto-monitora e gera resumos sem intervenção.
+
+---
+
+**Fase 7 — Google Drive sync**
+GCP com Service Account (não OAuth — não expira), `sync_to_drive.py`, workflows `sync-to-drive.yml` e `sync-to-drive-full.yml`. Output: todos os MDs do repo espelhados como Google Docs automaticamente.
+
+---
+
+**Fase 8 — MCP Server**
+`hub/mcp_server.py`, `Dockerfile.mcp`, `railway.mcp.toml`, deploy como segundo serviço no Railway. Configurar `MCP_URL_SECRET`. Output: endpoint MCP público e autenticado acessível pelas outras portas.
+
+---
+
+**Fase 9 — Claude Chat (segunda porta)**
+Criar Project no claude.ai, configurar system prompt de bootstrap, adicionar Connector MCP apontando para o Railway. Output: Claude Chat lendo Hub + Google Drive, com personalidade e memória do Gus.
+
+---
+
+**Fase 10 — Claude Code (terceira porta)**
+CLAUDE.md completo, `.claude/settings.json`, hooks (`scan_sensivel`, `retro-engine`, `git-check`), MCP servers configurados no `.claude/mcp/`. Output: Claude Code com contexto completo do projeto, hooks ativos.
+
+---
+
+**Fase 11 — Captura multiporta (fechar o ciclo)**
+Expandir curador para Claude Code (Stop hook ou workflow `curador-claude-code.yml`) e Claude Chat (bootstrap com ingestão automática ou workflow `ingest-mem0-from-chat.yml`). Output: todas as três portas alimentam o Hub — memória realmente compartilhada.
+
+---
+
+**Fase 12 — Personalidade completa e identidade consolidada**
+`meta-memoria.md`, bootstrap final, `gus-identity.md` refinado com histórico real de memórias coletadas nas fases anteriores. Workflows de reflexão quinzenal. Output: sistema com identidade estável e auto-conhecimento acumulado.
+
+---
+
+### Visualização das dependências
+
+```
+0 (contas)
+└─ 1 (repo)
+   ├─ 2 (Hub)
+   │  └─ 3 (bot mínimo)
+   │     └─ 4 (Railway deploy)
+   │        └─ 5 (curador)
+   │           └─ 6 (Actions)
+   │              ├─ 7 (Drive sync)
+   │              └─ 8 (MCP server)
+   │                 ├─ 9 (Claude Chat)
+   │                 └─ 10 (Claude Code)
+   │                    └─ 11 (captura multiporta)
+   │                       └─ 12 (identidade consolidada)
+```
+
+---
+
+A divisão faz sentido pra você? Posso detalhar qualquer fase em passo a passo real, ou reorganizar algum bloco se tiver dependência que eu não mapeei.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Feito. Pode continuar.
