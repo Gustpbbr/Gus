@@ -264,6 +264,281 @@ def _build_tools_cached(tools: list[dict]) -> list[dict]:
 _TOOLS_CACHED = _build_tools_cached(TOOLS)
 
 
+# ---------------------------------------------------------------------------
+# Vision fallback Anthropic → OpenAI
+# ---------------------------------------------------------------------------
+#
+# Quando Anthropic falha (sem créditos, 5xx persistente) e o user mandou
+# imagem, hoje o bot só responde "API sobrecarregada". Gustavo fica cego —
+# não consegue analisar foto, OS Dimagem, etc.
+#
+# Fallback: converte content multimodal Anthropic → OpenAI Vision format e
+# tenta gpt-4o. PDF não tem fallback (OpenAI não tem PDF nativo) — retorna
+# mensagem específica orientando user a mandar print das páginas.
+
+
+def _detectar_tipos_midia(messages: list[dict]) -> set[str]:
+    """Detecta tipos de bloco multimodal no último user message.
+
+    Retorna set com 'image', 'document' ou ambos. Vazio se for só texto.
+    """
+    tipos: set[str] = set()
+    for msg in reversed(messages):
+        if msg.get("role") != "user":
+            continue
+        content = msg.get("content")
+        if isinstance(content, list):
+            for block in content:
+                if isinstance(block, dict):
+                    btype = block.get("type")
+                    if btype in ("image", "document"):
+                        tipos.add(btype)
+        break  # só o último user message
+    return tipos
+
+
+def _converter_anthropic_para_openai_vision(messages: list[dict]) -> list[dict]:
+    """Converte messages Anthropic multimodal pro formato OpenAI Vision.
+
+    Anthropic:  {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": "..."}}
+    OpenAI:     {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,..."}}
+
+    Blocos `document` (PDF) NÃO são convertidos — OpenAI não tem PDF nativo.
+    Caller deve usar `_detectar_tipos_midia` antes pra recusar PDF.
+
+    Texto e outros blocos passam intactos. Mensagens com role assistant
+    viram string (OpenAI persiste só texto final entre turnos).
+    """
+    out: list[dict] = []
+    for msg in messages:
+        role = msg.get("role", "user")
+        content = msg.get("content")
+
+        if isinstance(content, str):
+            out.append({"role": role, "content": content})
+            continue
+
+        if not isinstance(content, list):
+            out.append({"role": role, "content": str(content) if content is not None else ""})
+            continue
+
+        # Lista multimodal — converte block por block
+        novos_blocos: list[dict] = []
+        for block in content:
+            if not isinstance(block, dict):
+                continue
+            btype = block.get("type")
+            if btype == "text":
+                novos_blocos.append({"type": "text", "text": block.get("text", "")})
+            elif btype == "image":
+                source = block.get("source") or {}
+                media_type = source.get("media_type", "image/jpeg")
+                data = source.get("data", "")
+                if data:
+                    novos_blocos.append({
+                        "type": "image_url",
+                        "image_url": {"url": f"data:{media_type};base64,{data}"},
+                    })
+            elif btype == "document":
+                # PDF não tem fallback — placeholder de texto pra contexto
+                novos_blocos.append({
+                    "type": "text",
+                    "text": "[documento PDF anexado — não convertido pra OpenAI]",
+                })
+
+        if not novos_blocos:
+            out.append({"role": role, "content": ""})
+        elif len(novos_blocos) == 1 and novos_blocos[0]["type"] == "text":
+            # Bloco único de texto vira string simples
+            out.append({"role": role, "content": novos_blocos[0]["text"]})
+        else:
+            out.append({"role": role, "content": novos_blocos})
+
+    return out
+
+
+async def _gerar_resposta_openai_vision(
+    messages: list[dict], memory_context: str = ""
+) -> tuple[str, dict]:
+    """Variante de _gerar_resposta_openai pra fallback de Vision.
+
+    Diferenças vs _gerar_resposta_openai:
+      - Usa MODEL_OPENAI_VISION_FALLBACK (default gpt-4o, NÃO mini —
+        qualidade de vision importa mais que custo no caso de fallback)
+      - Mantém content multimodal (não achata pra string)
+      - Marca metadata provider="openai-vision-fallback"
+      - Sem fallback recursivo pra Anthropic (caller já saiu de Anthropic)
+    """
+    model = os.getenv("MODEL_OPENAI_VISION_FALLBACK", "gpt-4o")
+    max_tokens = int(os.getenv("MAX_TOKENS_RESPONSE", "2048"))
+
+    system_estavel = _load_system_prompt()
+    agora = datetime.now(BRT)
+    dia_semana = DIAS_SEMANA[agora.weekday()]
+    suffix_var = (
+        f"\n\n## Modelo atual\n"
+        f"Esta resposta está sendo gerada por **{model}** (OpenAI Vision, fallback). "
+        f"Anthropic falhou — usei OpenAI como reserva pra você ver a imagem.\n\n"
+        f"## Data e hora atuais\n"
+        f"Hoje é {dia_semana}, {agora.strftime('%d/%m/%Y')}, {agora.strftime('%H:%M')} (horário de Brasília)."
+    )
+    if memory_context:
+        suffix_var += f"\n\n## Memórias relevantes\n{memory_context}"
+    system_prompt = system_estavel + suffix_var
+
+    msgs_convertidas = _converter_anthropic_para_openai_vision(messages)
+    current_messages = [{"role": "system", "content": system_prompt}] + msgs_convertidas
+
+    total_in = 0
+    total_out = 0
+    cached_tokens = 0
+    max_tool_rounds = 10
+
+    for _ in range(max_tool_rounds):
+        try:
+            oai = await _get_openai_client()
+            response = await oai.chat.completions.create(
+                model=model,
+                max_tokens=max_tokens,
+                messages=current_messages,
+                tools=_TOOLS_OPENAI,
+                tool_choice="auto",
+            )
+        except Exception as e:
+            logger.error(f"OpenAI Vision fallback erro: {e}")
+            pricing = _get_pricing(model)
+            cost_usd = round(total_in * pricing["input"] + total_out * pricing["output"], 6)
+            texto_err = _mensagem_erro_amigavel_openai(e)
+            return texto_err, {
+                "model": model, "tokens_in": total_in,
+                "tokens_out": total_out, "cost_usd": cost_usd,
+                "error": "vision_fallback_failed",
+                "provider": "openai-vision-fallback",
+            }
+
+        usage = response.usage
+        total_in += usage.prompt_tokens or 0
+        total_out += usage.completion_tokens or 0
+        details = getattr(usage, "prompt_tokens_details", None)
+        if details:
+            cached_tokens += getattr(details, "cached_tokens", 0) or 0
+
+        choice = response.choices[0]
+        msg = choice.message
+
+        if choice.finish_reason == "tool_calls" and msg.tool_calls:
+            current_messages.append({
+                "role": "assistant",
+                "content": msg.content or "",
+                "tool_calls": [
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {"name": tc.function.name, "arguments": tc.function.arguments},
+                    }
+                    for tc in msg.tool_calls
+                ],
+            })
+            for tc in msg.tool_calls:
+                try:
+                    inputs = json.loads(tc.function.arguments) if tc.function.arguments else {}
+                except json.JSONDecodeError:
+                    inputs = {}
+                result = await executar_tool(tc.function.name, inputs)
+                current_messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": result if isinstance(result, str) else str(result),
+                })
+            continue
+
+        text = msg.content or ""
+        pricing = _get_pricing(model)
+        fresh_in = total_in - cached_tokens
+        cost_input = fresh_in * pricing["input"] + cached_tokens * pricing["input"] * 0.5
+        cost_usd = round(cost_input + total_out * pricing["output"], 6)
+        return text, {
+            "model": model,
+            "tokens_in": total_in,
+            "tokens_out": total_out,
+            "cache_creation": 0,
+            "cache_read": cached_tokens,
+            "cost_usd": cost_usd,
+            "provider": "openai-vision-fallback",
+        }
+
+    pricing = _get_pricing(model)
+    fresh_in = total_in - cached_tokens
+    cost_input = fresh_in * pricing["input"] + cached_tokens * pricing["input"] * 0.5
+    cost_usd = round(cost_input + total_out * pricing["output"], 6)
+    return "Desculpa, entrei em loop interno (vision fallback). Tenta reformular.", {
+        "model": model, "tokens_in": total_in,
+        "tokens_out": total_out,
+        "cache_creation": 0,
+        "cache_read": cached_tokens,
+        "cost_usd": cost_usd,
+        "provider": "openai-vision-fallback",
+    }
+
+
+async def _tentar_vision_fallback(
+    messages: list[dict], memory_context: str, exc_anthropic: Exception
+) -> tuple[str, dict] | None:
+    """Decide se vale tentar fallback de Vision quando Anthropic falhou.
+
+    Retorna (text, metadata) se conseguiu fallback, ou None pra caller
+    usar mensagem de erro original.
+
+    Critérios pra ativar:
+      1. MULTIMODEL_ENABLED não está em rollback (false)
+      2. OPENAI_API_KEY configurada
+      3. Último user message tem imagem
+      4. NÃO tem PDF (OpenAI não suporta — retorna msg específica)
+    """
+    if os.getenv("MULTIMODEL_ENABLED", "true").lower() != "true":
+        return None  # rollback ativo, respeita
+
+    if not os.getenv("OPENAI_API_KEY"):
+        return None  # sem key, sem fallback
+
+    tipos = _detectar_tipos_midia(messages)
+    if not tipos:
+        return None  # texto puro nem chega aqui (já vai pro openai), mas defesa
+
+    if "document" in tipos:
+        # PDF sem fallback — mensagem específica explicando
+        texto = (
+            "A Anthropic API tá indisponível e o PDF não tem fallback "
+            "automático no OpenAI (sem suporte nativo a PDF). Manda um "
+            "print das páginas relevantes ou tenta de novo em alguns "
+            "minutos."
+        )
+        return texto, {
+            "model": "n/a",
+            "tokens_in": 0, "tokens_out": 0, "cost_usd": 0.0,
+            "error": "pdf_sem_fallback",
+            "provider": "anthropic-failed-pdf",
+        }
+
+    if "image" not in tipos:
+        return None  # outros tipos não tratados aqui
+
+    # Tem imagem (sem PDF) → tenta gpt-4o
+    logger.info(f"Vision fallback OpenAI ativado (Anthropic falhou: {exc_anthropic})")
+    try:
+        text, metadata = await _gerar_resposta_openai_vision(messages, memory_context)
+    except Exception as e:
+        logger.error(f"Vision fallback explodiu: {e}")
+        return None  # caller usa erro original
+
+    # Prefixa nota visível pro Gustavo saber que foi fallback
+    text_com_nota = (
+        "_(Anthropic indisponível — usei OpenAI Vision como fallback)_\n\n"
+        + text
+    )
+    return text_com_nota, metadata
+
+
 async def _gerar_resposta_anthropic(messages: list[dict], memory_context: str = "") -> tuple[str, dict]:
     """Implementação Anthropic da geração de resposta — loop tool-calling com
     prompt caching e retry/fallback. Comportamento legado pré-gus-29; agora
@@ -307,6 +582,14 @@ async def _gerar_resposta_anthropic(messages: list[dict], memory_context: str = 
             )
         except (anthropic.APIStatusError, anthropic.APIConnectionError, anthropic.APITimeoutError) as e:
             status = getattr(e, "status_code", None)
+
+            # ANTES de retornar erro pro Gustavo, tenta fallback Vision se
+            # o user mandou imagem. Sem isso, Anthropic offline = bot cego
+            # pra fotos. PDF não tem fallback (msg específica).
+            fallback = await _tentar_vision_fallback(messages, memory_context, e)
+            if fallback is not None:
+                return fallback
+
             pricing = _get_pricing(model)
             cost_input = (
                 total_in * pricing["input"]
