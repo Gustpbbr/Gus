@@ -1,0 +1,40 @@
+name: Meta-relatório Hub (qualidade)
+
+# Roda diariamente 06:50 BRT (após auditoria-hub às 06:40) e permite
+# dispatch manual quando precisar inspecionar estado de qualidade do Hub.
+# Sem LLM — analítico puro. Item 1.8 do plano de saneamento (02/05/2026).
+
+on:
+  schedule:
+    - cron: '50 9 * * *'  # 06:50 BRT
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  relatar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r .github/scripts/requirements.txt
+
+      - name: Gera meta-relatório
+        env:
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+        run: python .github/scripts/meta_relatorio_hub.py
+
+      - name: Commit e push se mudou
+        run: |
+          git config user.name "gus-bot"
+          git config user.email "gus-bot@users.noreply.github.com"
+          git add _indices/_meta-relatorio-hub.md
+          git diff --staged --quiet || git commit -m "auto: meta-relatório Hub ($(date +%Y-%m-%d))"
+          git push || echo "Sem mudanças a pushar"
