@@ -30,15 +30,15 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import yaml
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+
+# Helper compartilhado de auth Drive (WIF preferred, SA JSON e OAuth fallback)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _drive_auth import get_drive_service
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
-SCOPES = ["https://www.googleapis.com/auth/drive"]
 BRT = timezone(timedelta(hours=-3))
 
 INBOXES = ["inbox-tiogu", "inbox-claude-code", "inbox-claude-chat", "inbox-custom-gpt"]
@@ -49,16 +49,7 @@ DIALOGOS = REPO_ROOT / "dialogos"
 
 
 def get_drive():
-    creds = Credentials(
-        token=None,
-        refresh_token=os.environ["GOOGLE_REFRESH_TOKEN"],
-        client_id=os.environ["GOOGLE_CLIENT_ID"],
-        client_secret=os.environ["GOOGLE_CLIENT_SECRET"],
-        token_uri="https://oauth2.googleapis.com/token",
-        scopes=SCOPES,
-    )
-    creds.refresh(Request())
-    return build("drive", "v3", credentials=creds)
+    return get_drive_service()
 
 
 def find_file_in_drive(drive, path, root_id):
