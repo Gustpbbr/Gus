@@ -1,6 +1,6 @@
 ---
 tipo: limpeza-candidatos
-gerado_em: 2026-05-03T20:17:10.289596-03:00
+gerado_em: 2026-05-03T20:35:22.387442-03:00
 total_hub: 7024
 total_brain_gustavo: 3551
 total_brain_gus: 3473
@@ -10,7 +10,7 @@ jaccard_threshold: 0.7
 
 # Limpeza Hub — candidatos a delete
 
-Gerado por `.github/scripts/limpeza_hub_dryrun.py` em 03/05/2026 às 20:17 BRT. **Nada foi deletado** — este é o relatório dryrun pra Gustavo aprovar.
+Gerado por `.github/scripts/limpeza_hub_dryrun.py` em 03/05/2026 às 20:35 BRT. **Nada foi deletado** — este é o relatório dryrun pra Gustavo aprovar.
 
 ## Como aprovar
 
