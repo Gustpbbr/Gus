@@ -36,6 +36,24 @@ def create_app() -> FastAPI:
     async def health():
         return {"status": "ok", "service": "gus-api"}
 
+    # Stat operacional pro alerta proativo de custo (item S4 do plano de
+    # saneamento). Sem auth porque é só agregado mensal — cron GH Actions
+    # consulta sem precisar carregar Bearer.
+    @app.get("/health/cost", include_in_schema=False)
+    async def health_cost():
+        from gus.logger import stats_mes_atual
+        s = stats_mes_atual()
+        limit = float(os.getenv("HARD_LIMIT_USD_MONTH", "30"))
+        pct = (s["cost_usd"] / limit * 100.0) if limit > 0 else 0.0
+        return {
+            "cost_usd": s["cost_usd"],
+            "limit_usd": limit,
+            "percentage": round(pct, 2),
+            "calls": s["calls"],
+            "tokens_in": s["tokens_in"],
+            "tokens_out": s["tokens_out"],
+        }
+
     # PROJETO FUTURO — PWA da câmera do S8.
     # Sem auth (é só uma página HTML). O token é inserido pelo usuário na
     # primeira abertura e salvo em localStorage. Os endpoints que a PWA

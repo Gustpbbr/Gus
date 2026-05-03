@@ -52,16 +52,22 @@ client = anthropic.AsyncAnthropic(
 # gus.llm) em workflows que não usam OpenAI mas ainda assim importam o módulo.
 # Inicialização sob demanda mantém imports seguros.
 _openai_client: AsyncOpenAI | None = None
+_openai_client_lock = asyncio.Lock()
 
 
-def _get_openai_client() -> AsyncOpenAI:
+async def _get_openai_client() -> AsyncOpenAI:
+    """Inicializa AsyncOpenAI sob demanda. Lock previne race em
+    concorrência alta (2 corotinas chamando antes da primeira terminar)."""
     global _openai_client
-    if _openai_client is None:
-        _openai_client = AsyncOpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
-            timeout=120.0,
-        )
-    return _openai_client
+    if _openai_client is not None:
+        return _openai_client
+    async with _openai_client_lock:
+        if _openai_client is None:
+            _openai_client = AsyncOpenAI(
+                api_key=os.getenv("OPENAI_API_KEY"),
+                timeout=120.0,
+            )
+        return _openai_client
 
 
 async def _chamar_claude_com_retry(
@@ -515,7 +521,8 @@ async def _gerar_resposta_openai(messages: list[dict], memory_context: str = "")
 
     for _ in range(max_tool_rounds):
         try:
-            response = await _get_openai_client().chat.completions.create(
+            oai = await _get_openai_client()
+            response = await oai.chat.completions.create(
                 model=model,
                 max_tokens=max_tokens,
                 messages=current_messages,

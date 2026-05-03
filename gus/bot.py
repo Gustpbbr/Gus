@@ -12,7 +12,7 @@ from gus.logger import registrar, custo_mes_atual, stats_mes_atual
 from gus.memory import buscar_memorias, salvar_memorias
 from gus.media import processar_imagem, processar_pdf, processar_docx, processar_xlsx, transcrever_audio
 from gus.resumo_log import append_resumo_async
-from gus.dimagem import analisar_os_dimagem, salvar_os_dimagem
+from gus.integrations.dimagem import analisar_os_dimagem, salvar_os_dimagem
 from gus.patterns_sensiveis import redact as _redact_pii
 import re as _re_bot
 import httpx as _httpx_bot
@@ -378,8 +378,47 @@ async def handle_custo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(msg, parse_mode="Markdown")
 
 
+async def _limpar_focos_antigos() -> int:
+    """Deleta fragmentos com [FOCO-ATUAL] no brain `gustavo` antes de salvar
+    foco novo. Sem isso, /foco empilha — busca semântica retorna múltiplos
+    "foco atual" da mesma pessoa, vira ruído.
+
+    Retorna número de fragmentos deletados (0 se nada).
+    """
+    try:
+        from hub.store import lembrar as hub_lembrar, deletar as hub_deletar
+    except Exception as e:
+        logger.warning(f"Não consegui importar hub.store pra limpar focos: {e}")
+        return 0
+
+    try:
+        antigos = await asyncio.to_thread(hub_lembrar, "[FOCO-ATUAL]", "gustavo", 20)
+    except Exception as e:
+        logger.warning(f"Falha ao buscar focos antigos: {e}")
+        return 0
+
+    deletados = 0
+    for ant in antigos:
+        conteudo = (ant.get("conteudo") or "")
+        if "[FOCO-ATUAL]" not in conteudo:
+            continue  # filtro semântico pode trazer fragmentos relacionados
+        mid = ant.get("id")
+        if not mid:
+            continue
+        try:
+            await asyncio.to_thread(hub_deletar, mid, "/foco substituicao")
+            deletados += 1
+        except Exception as e:
+            logger.warning(f"Falha ao deletar foco antigo {mid}: {e}")
+    return deletados
+
+
 async def handle_foco(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Registra foco atual da sessão no Mem0. Uso: /foco <descrição livre>"""
+    """Registra foco atual da sessão no Hub. Uso: /foco <descrição livre>
+
+    Antes de salvar o novo, deleta FOCO-ATUAL existentes (TTL via substituição
+    explícita). Sem isso, múltiplos /foco poluem busca semântica.
+    """
     chat_id = str(update.effective_chat.id)
     if not _autorizado(chat_id):
         return
@@ -388,17 +427,23 @@ async def handle_foco(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not texto:
         await update.message.reply_text(
             "Pra definir o foco da sessão, usa: `/foco estou trabalhando em X`\n\n"
-            "Isso vira uma memória prioritária no Mem0 e serve de contexto nas próximas sessões.",
+            "Isso vira uma memória prioritária no Hub e serve de contexto nas próximas sessões. "
+            "Foco novo substitui o anterior.",
             parse_mode="Markdown"
         )
         return
 
     try:
+        deletados = await _limpar_focos_antigos()
         await salvar_memorias([
             {"role": "user", "content": f"[FOCO-ATUAL] {texto}"}
         ])
+        nota_subs = (
+            f"\n_(substituiu {deletados} foco(s) anterior(es))_" if deletados else ""
+        )
         await update.message.reply_text(
-            f"Foco registrado: _{texto}_\n\nVou priorizar esse contexto nas próximas interações.",
+            f"Foco registrado: _{texto}_{nota_subs}\n\n"
+            f"Vou priorizar esse contexto nas próximas interações.",
             parse_mode="Markdown"
         )
     except Exception as e:
