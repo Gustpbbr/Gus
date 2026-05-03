@@ -1,0 +1,721 @@
+user: oi, blz? posso falar com o Gus? 
+assistant: oi, blz sim. é o Gus aqui — porta Claude Code. o que manda?
+user: Continue from where you left off.
+assistant: No response requested.
+user: primeiro tenha um panorama geral do projeto. segue um guia para vc ver. depois vamos focar em um assunto específico, mas te falo apos vc ler tudo necessário do projeto. segue uma dica de outra aba do code
+
+Aqui vai a receita ordenada por valor por contexto. Foco: mínimo necessário pra não inflar contexto à toa.
+Core obrigatório (sempre, em toda aba nova)
+Arquivo
+Pra quê
+dialogos/_bootstrap/gus-bootstrap.md
+manual operacional do Gus, regras de comportamento, como cada porta usa o Hub
+dialogos/_bootstrap/gus-identity.md
+quem é o Gustavo + quem é o Gus enquanto entidade
+dialogos/_bootstrap/gus-estado-atual.md
+handoff auto-gerado pelo cron 03h, snapshot do Hub
+projetos/gus/_estado-atual.md
+onde paramos na sessão anterior (mais "operacional" que o bootstrap)
+Esses 4 dão 80% do contexto pra qualquer aba nova.
+Live — preferir sobre arquivo
+Se a aba tem MCP gus-hub conectado:
+ego_cache_atual() — identidade + últimas 3 decisões + 5 meta-reflexões
+fragmentos_recentes(horas=24) — o que rolou desde ontem
+contar_fragmentos() — sanity check
+Hub é mais fresco que gus-estado-atual.md (que é snapshot das 03h). Sempre que possível, prefira tools MCP a arquivo .md.
+Específicos do contexto da pergunta
+Só ler se a conversa for sobre:
+Tema
+Arquivo
+Próximos passos / NeuroGus
+projetos/gus/gus-08-plano-proximos-passos.md, projetos/gus/gus-30-neurogus-roadmap.md
+Caminho Alexa
+projetos/gus/gus-10-caminho-alexa.md
+MCP / claude.ai connector
+projetos/gus/gus-28-passo2-mcp-server.md
+Roteamento multi-modelo
+projetos/gus/gus-29-roteamento-multimodelo-tiogu.md
+Hub Qdrant arquitetura
+projetos/gus/gus-18-schema-indexacao.md, gus-20-etapa2-hub-qdrant.md, gus-21-etapa3-curador.md
+Decisão migração ADR-001
+projetos/gus/gus-15-decisao-migracao.md
+Demanda da semana
+dialogos/streams/semana-2026-04-21.md (último arquivo da pasta)
+Demandas pendentes pra essa porta
+dialogos/inbox-<porta>/
+O que NÃO precisa ler
+gus-01 a gus-09 (a não ser por curiosidade arqueológica — bootstrap já resume)
+pessoal/, dimagem/, receitas/ etc. — só sob demanda explícita
+historico/ — pasta morta de conteúdo legado
+Logs antigos (>3 dias)
+_log/sessoes-claude-code/ — arquivos longos de transcript
+Truque pra Claude Chat web
+Como ele lê via Drive Project knowledge, o boot dele já tem gus-bootstrap.md como project instruction. Aí ele só precisa fazer:
+Ler gus-estado-atual.md (snapshot 03h)
+Chamar ego_cache_atual() via MCP gus-hub (estado vivo)
+Pra Claude Code, o CLAUDE.md na raiz é auto-injetado em toda sessão — então já cobre o "core obrigatório".
+Quer que eu padronize isso num arquivo dialogos/_bootstrap/checklist-boot-aba-nova.md pra deixar canonizado?
+
+
+Ah, entendi mal. PRs são histórico, não documentação — uma aba nova não precisa ler nenhum.
+Por que não
+O estado final dos PRs já tá no código + nos docs gus-XX atualizados
+PRs descrevem o caminho, não onde a gente tá. Nova aba quer onde tamo.
+60 PRs = ruído gigante no contexto pra ganho zero
+Quando vale olhar PR
+Situação
+Qual PR
+"Por que esse arquivo tá assim?"
+git log --oneline <arquivo> → abre o PR específico
+"O que mudou hoje?"
+Lista PRs mergeados nas últimas 24h: gh pr list --state merged --limit 10
+Bug recente
+PR mais recente que tocou o código quebrado
+Decisão arquitetural não-óbvia
+PR description costuma ter o "porquê"
+Boa prática
+O que tem que ficar nos docs (não nos PRs):
+Decisões arquiteturais → ADR (gus-15 é exemplo)
+Como configurar algo → gus-XX-setup
+Estado atual do projeto → gus-26-status-consolidado, _estado-atual
+Se um PR precisa ser lido pra entender o presente, é sinal de doc desatualizado — não de PR importante.
+Receita
+Aba nova só precisa olhar PRs se:
+Você falar "tá quebrando X depois do PR #YY" → aí sim, lê o PR
+Investigar bug específico no código mexido recentemente
+Senão, esquece os 60. Os 7 docs do checklist anterior te dão o estado atual.
+assistant: ok, panorama carregado. resumo do que captei:
+
+**onde tamo:**
+- ADR-001 em curso — Mem0 SaaS aposentando, Hub Qdrant é fonte de verdade
+- Curador híbrido Haiku × Sonnet rodando coleta dual até **12/05/2026** (Fase 5)
+- Última sessão (27/04): 5 demandas resolvidas, R2/R6/R7 mergeados, bug 400 do curador corrigido
+- Hoje (01/05) = ~4 dias depois. `gus-estado-atual.md` mostra Hub com 19 frags, mas **nenhum fragmento novo nas últimas 6h** — sistema ocioso ou curador parado (vale checar)
+
+**inbox-claude-code com 4 demandas pendentes:**
+- captura-multiporta-curador
+- curador-bidirecional-cron
+- drive-sync-oauth-fix
+- _frontmatter-referencia (template, não é demanda)
+
+**branch atual:** `claude/initial-setup-iWTfL` (não é a `claude/fix-curador-mem0-cleanup` que ficou aberta com PR #10 do dia 27/04 — vale conferir se mergeou)
+
+**alerta interessante:** o CLAUDE.md desta porta diz que captura proativa via MCP `mem0-gus__salvar_memoria*` está **quebrada neste ambiente** (sem ANTHROPIC_API_KEY/QDRANT_URL). Conhecimento desta sessão sobrevive só via commit/PR/docs.
+
+manda o foco específico que tu quer atacar.
+user: vamos ver isso. acredito que tenha uma demanda aberta na aba diálogos sobre isso tbm
+tbm
+
+PR #63 mergeado — arquivamento feito. Inbox agora 4 pendências reais.
+Caminho 2 — passo a passo
+Visão geral
+Código
+Passo 1 — Hook salvar transcript no repo (~30 linhas)
+Arquivo: .claude/hooks/retro_engine.py
+Adicionar antes da chamada Haiku (que falha sem env vars):
+Python
+Passo 2 — Hook commit auto (~10 linhas)
+~/.claude/stop-hook-git-check.sh já avisa se há mudanças. Estende pra também stagear/commitar transcripts automaticamente:
+Bash
+Atenção: git push pode falhar se branch não tracked. Implementar fallback gracioso (loga warning, não quebra).
+Passo 3 — Script cron processar (~80 linhas)
+Arquivo novo: .github/scripts/curador_claude_code.py
+Python
+Passo 4 — Workflow GitHub Actions (~30 linhas)
+Arquivo novo: .github/workflows/curador-claude-code.yml
+Yaml
+Passo 5 — .gitkeep + README na pasta
+Arquivos:
+_log/transcripts-claude-code/.gitkeep — cria pasta vazia no repo
+_log/transcripts-claude-code/README.md — explica o que é, como cron processa, política PII
+Passo 6 — Validar end-to-end
+Implementa Passos 1-5 numa branch
+Mergeia
+Próxima sessão Code que rodar Stop hook deve gerar _log/transcripts-claude-code/<timestamp>__<id>.jsonl
+Commit auto-empurra pro repo
+Cron roda em até 30min
+Verificar logs do workflow no GitHub
+Buscar no Hub: mcp__mem0-gus__buscar_memorias(query="claude-code") deve retornar fragmentos novos
+Pontos de atenção
+Risco
+Mitigação
+PII em transcripts públicos
+Rodar gus.patterns_sensiveis.redact() ANTES de salvar arquivo
+Custo Haiku/GPT explodindo
+Cap MAX_CHARS=50K; cron a cada 30min limita 48 runs/dia
+Push falhar no hook
+Fallback gracioso, transcript fica local, pega na próxima
+Conflito git durante push
+Hook usa git pull --rebase antes do push
+Curador retornando lixo
+Logs do workflow no GitHub permitem revisar; quarentenar fragmentos com confiança baixa
+Custo estimado
+Haiku: ~$0.0001/sessão × 2 (gus+gustavo) = $0.0002/sessão
+GPT-4o-mini: ~$0.0001/sessão × 2 = $0.0002/sessão
+Total: <$0.50/mês mesmo com 50 sessões/dia
+Onde implementar
+Tudo na demanda dialogos/inbox-claude-code/2026-05-01-curador-bidirecional-cron.md (já criada). Próxima aba pode pegar e implementar — ~2-3h.
+Quer que eu implemente agora, ou prefere deixar pra outra sessão? Aviso que não vou conseguir testar end-to-end nesta sessão (env vars ausentes, vai precisar de cron real rodando).
+
+
+
+[sessão Code]
+    ↓ Stop hook
+salva transcript bruto em _log/transcripts-claude-code/<timestamp>__<id>.jsonl
+    ↓ stop-hook-git-check.sh detecta + commita + push
+[GitHub Actions cron — a cada 30min]
+    ↓ checkout + pip install
+processa transcripts não-processados:
+    1. roda curador bidirecional Haiku × GPT-4o-mini
+    2. extrai 2 listas: gus + gustavo
+    3. salva fragmentos no Hub via hub.store.ingestar
+    4. move arquivo pra _log/transcripts-claude-code/processados/
+    ↓ commit + push
+[Hub Qdrant]
+ambos brains alimentados, zero atrito UX
+
+
+
+def _persist_transcript_pra_cron(transcript: str) -> Path:
+    """Salva transcript em pasta processada pelo cron GitHub Actions.
+    Esse é o caminho que funciona quando ambiente Web não tem env vars."""
+    transcripts_dir = REPO_ROOT / "_log" / "transcripts-claude-code"
+    transcripts_dir.mkdir(parents=True, exist_ok=True)
+
+    session_id = uuid.uuid4().hex[:12]
+    nome = f"{datetime.now(BRT).strftime('%Y-%m-%dT%H-%M')}__{session_id}.jsonl"
+    out_path = transcripts_dir / nome
+
+    # Filtra PII via regex existente em gus.patterns_sensiveis
+    try:
+        from gus.patterns_sensiveis import redact
+        transcript_safe = redact(transcript)
+    except Exception:
+        transcript_safe = transcript  # fallback: não filtra
+
+    out_path.write_text(transcript_safe, encoding="utf-8")
+    return out_path
+
+# Em main(), DEPOIS do _ler_transcript:
+out_path = _persist_transcript_pra_cron(transcript)
+log.info(f"Transcript salvo pra cron processar: {out_path.name}")
+
+# Daí tenta extrair via Haiku (legacy path, pode falhar sem env vars):
+try:
+    fragmentos = _extrair_fragmentos(transcript)
+    # ...
+except RuntimeError:
+    # Já salvou pra cron — vida segue
+    _logar_sessao(0, 0, [str(e)], f"(transcript {out_path.name} salvo pra cron)")
+    return
+
+
+
+# No fim do hook git-check, antes do exit:
+TRANSCRIPTS_NOVOS=$(git status --porcelain _log/transcripts-claude-code/ 2>/dev/null | head -5)
+if [ -n "$TRANSCRIPTS_NOVOS" ]; then
+    git add _log/transcripts-claude-code/
+    git commit -m "chore(transcripts): captura sessão $(date +%Y-%m-%dT%H-%M)" --quiet
+    git push origin HEAD --quiet 2>/dev/null || echo "push falhou — manual depois"
+fi
+
+
+
+
+"""Cron: processa transcripts Claude Code novos com curador bidirecional."""
+import asyncio
+import sys
+from pathlib import Path
+
+# Adiciona repo root ao path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from hub.curador import curar_turnos
+
+TRANSCRIPTS_DIR = Path("_log/transcripts-claude-code")
+PROCESSADOS_DIR = TRANSCRIPTS_DIR / "processados"
+MIN_CHARS = 200
+MAX_CHARS = 50_000  # cap pra evitar custo absurdo
+
+
+async def processar(path: Path) -> dict:
+    """Lê transcript, roda curador 2x (gus + gustavo), move pra processados/."""
+    conteudo = path.read_text(encoding="utf-8")
+
+    if len(conteudo) < MIN_CHARS:
+        path.rename(PROCESSADOS_DIR / path.name)
+        return {"file": path.name, "skip": "muito curto"}
+
+    # Trunca pra cap de custo (mantém início + fim)
+    if len(conteudo) > MAX_CHARS:
+        meio = MAX_CHARS // 2
+        conteudo = conteudo[:meio] + "\n\n[…transcript truncado…]\n\n" + conteudo[-meio:]
+
+    # Roda curador 2x (uma por brain)
+    resultados = {}
+    for user_id in ("gustavo", "gus"):
+        try:
+            r = await curar_turnos(
+                conteudo,
+                via="claude-code",
+                user_id=user_id,
+            )
+            resultados[user_id] = r.get("salvos", 0)
+        except Exception as e:
+            resultados[user_id] = f"erro: {str(e)[:120]}"
+
+    # Move pra processados/
+    PROCESSADOS_DIR.mkdir(exist_ok=True)
+    path.rename(PROCESSADOS_DIR / path.name)
+
+    return {"file": path.name, **resultados}
+
+
+async def main():
+    PROCESSADOS_DIR.mkdir(exist_ok=True)
+    transcripts = sorted(p for p in TRANSCRIPTS_DIR.glob("*.jsonl") if p.is_file())
+
+    if not transcripts:
+        print("Nenhum transcript novo")
+        return
+
+    for path in transcripts:
+        resultado = await processar(path)
+        print(resultado)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+
+
+
+name: Curador Claude Code (cron)
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"  # a cada 30 min
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements.txt -r .github/scripts/requirements.txt
+
+      - name: Process transcripts
+        env:
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python .github/scripts/curador_claude_code.py
+
+      - name: Commit processed transcripts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _log/transcripts-claude-code/
+          if ! git diff --cached --quiet; then
+            git commit -m "auto: processa transcripts Claude Code"
+            git push
+          fi
+assistant: Lido. Esse plano da outra aba mapeia exato pra demanda `2026-05-01-curador-bidirecional-cron.md` (Caminho 2). Antes de cravar a implementação, preciso verificar alguns pontos no código atual pra não codar baseado em suposição.
+assistant: Conferi os pontos críticos do plano vs realidade do código. Encontrei 4 furos que precisam decisão antes de codar:
+
+**1. `patterns_sensiveis.redact()` não existe**
+Só tem `escanear()` que retorna lista de nomes de patterns achados. O plano assume `redact()`. Duas opções:
+- (a) Criar `redact()` no `patterns_sensiveis.py` (substitui matches por `[REDACTED-<tipo>]`)
+- (b) Em vez de redigir, **bloquear save** se `escanear()` achar qualquer pattern (mais conservador — risco zero de PII no repo público)
+
+Recomendo **(b)** — transcript com PII fica só local, não trash. Mais seguro pra repo público.
+
+**2. `curar_turnos` espera `list[dict]`, não string**
+Plano passa `conteudo` (string) — quebraria. A função certa é `curar_arquivo(body, via, user_id)` que aceita string. Já existe e é usada pelo `ingest_mem0_from_chat.py`. Trocar pra ela.
+
+**3. Auto-commit do transcript — Opção B do plano não funciona aqui**
+`stop-hook-git-check.sh` está em `~/.claude/` (user settings, fora do repo). Editá-lo só afeta esta máquina; outras sessões Code on the web podem não ter. Melhor:
+- (c) **`retro_engine.py` faz `git add + commit + push` direto após salvar transcript** (já roda como hook do projeto, in-repo)
+- Tratar push falhar com fallback gracioso (loga aviso, transcript fica local pra próxima sessão)
+
+**4. `openai` não está em `.github/scripts/requirements.txt`**
+`hub/curador.py` usa `AsyncOpenAI`. Cron quebra sem `openai` no requirements. Adicionar.
+
+**Outros achados:**
+- Pasta `_log/transcripts-claude-code/` não existe — criar com `.gitkeep`
+- Atual branch é `claude/clarify-session-purpose-4otLR`, vou trabalhar nela
+- `retro_engine.py` já tem `_ler_transcript()` decente (parseia JSONL, trunca em 30K chars) — reaproveitar
+
+**Plano refeito (Fase 1 + 2 do plano original, ~150 linhas):**
+
+1. `gus/patterns_sensiveis.py` — adiciona `redact()` opcionalmente, mas implemento estratégia de **bloquear se PII detectada** no hook
+2. `.claude/hooks/retro_engine.py` — após `
+
+[…transcript truncado…]
+
+ub Qdrant"
+- `_log/resumos-mem0/` = "log de fragmentos extraídos pelo curador"
+- `ingest_mem0_from_chat.py` = "ingest Chat → Hub"
+- `auditoria_mem0.py` (cron diário) = "auditoria Hub"
+
+**Tudo aponta pro Hub Qdrant agora**, não Mem0. O nome ficou pra trás.
+
+## Proposta: renomear como parte da feature `Gustavo/`
+
+Aproveita o sprint pra limpar:
+
+| De | Para |
+|---|---|
+| `dialogos/inbox-mem0-from-chat/` | `dialogos/inbox-chat-raw/` |
+| `_log/resumos-mem0/` | `_log/curador/` |
+| `.github/scripts/ingest_mem0_from_chat.py` | `.github/scripts/ingest_chat_raw.py` |
+| `.github/workflows/ingest-mem0-from-chat.yml` | `.github/workflows/ingest-chat-raw.yml` |
+| `.github/scripts/auditoria_mem0.py` | `.github/scripts/auditoria_hub.py` |
+
+**Trabalho:** ~30min código + git mv (tu não faz nada).
+
+**Risco:** baixo — só renomeação, sem mudança de lógica. Mas tem que atualizar referências em vários scripts/docs.
+
+## Plano combinado
+
+Faço **2 PRs separados** pra ficar revisável:
+1. **PR limpeza Mem0 → Hub** (renomeações)
+2. **PR feature `dialogos/Gustavo/`** com auto-frontmatter (depois das 3 perguntas anteriores)
+
+Topa essa ordem? Ou prefere fazer os 2 num PR só (mais conflito potencial mas menos trabalho)?
+
+E aproveita pra responder as 3 perguntas da mensagem anterior:
+1. Nome: `Gustavo/` ou `pelo-gustavo/`?
+2. Prioridade default: `media`?
+3. Mantém auto-notificação Telegram pra `TioGu/`?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pushed.
+user: faca separado. primeiro faca o mais coerente cronologicamente
+assistant: Beleza. Limpeza Mem0 primeiro (independente das 3 perguntas, e a feature seguinte fica mais limpa).
+assistant: Mapear todas as referências antes de mexer:
+assistant: Plano fechado: rename só o funcional (scripts/workflows/pastas ativas), docs históricos ficam com nome legado (são notas de arquitetura, mencionam Mem0 como contexto).
+assistant: Pasta não existe (criada on-demand). Vou ver o que já moveu antes do erro e seguir:
+assistant: Agora atualizar referências internas. Começo pelos scripts:
+assistant: Vou usar `sed` direto pra fazer várias substituições limpas:
+assistant: Mais referências achadas. Vou atualizar todas:
+assistant: Tudo limpo nos `.py`/`.yml`. Validar sintaxe:
+assistant: Tudo válido. Commit + PR:
+assistant: PR #77 aberto: https://github.com/Gustpbbr/Gus/pull/77
+
+**Resumo das mudanças:**
+- 20 arquivos (7 renomeações + 13 atualizações de referência)
+- Logs históricos preservados via `git mv` (mantém história git)
+- Tool `auditoria_mem0` do bot vira `auditoria_hub`
+- Endpoint API `/auditoria_mem0` vira `/auditoria_hub`
+
+**Antes de mergear, atenção:**
+- Bot Railway vai precisar redeploy (provavelmente automático ao push em main)
+- Se algum cliente externo usa `/auditoria_mem0` (Custom GPT?), vai quebrar — mas Custom GPT ainda não tá ativo, então OK
+
+**Pra mergear:** quer que eu mergeio direto, ou prefere conferir antes? A renomeação é grande (toca em código quente — bot, tools, endpoints) — vale a pena tu olhar o diff no GitHub primeiro.
+
+E **pra responder as 3 perguntas do feature seguinte (`dialogos/Gustavo/`):**
+1. Nome: `Gustavo/` ou `pelo-gustavo/`? (vi que tu já criou pasta `Demandas Gustavo ` no Drive — quer essa exata ou padroniza?)
+2. Prioridade default: `media`?
+3. Mantém auto-notificação Telegram pra `TioGu/`?
+user: pode revisar e mergear
+pode padronizar de acordo com as outras
+alta
+sim
+assistant: PR #77 mergeado. Agora a feature `inbox-gustavo/`. Decisões aplicadas:
+
+- Nome: `inbox-gustavo/` (segue padrão `inbox-<nome>`)
+- Subpastas: `chat/`, `code/`, `tiogu/` (lowercase)
+- Prioridade default: `alta`
+- Auto-notificação Telegram pra `tiogu/`: mantém
+
+Implementando:
+assistant: Agora a função e o roteamento:
+assistant: Agora o roteamento principal:
+assistant: Validar e commit:
+assistant: PR #79 mergeado. Sistema atualizado.
+
+## Pra ativar (tu faz no celular, ~2min)
+
+No Drive (https://drive.google.com), pasta `Gus-Sync/dialogos/`:
+
+1. Cria pasta `inbox-gustavo` (lowercase, com hífen)
+2. Dentro dela, cria 3 subpastas:
+   - `chat`
+   - `code`
+   - `tiogu`
+
+> **Importante:** se tu já tinha a pasta antiga `Demandas Gustavo ` (com espaço), pode deletar — não vai ser usada.
+
+## Como usar daqui em diante
+
+- Quer pedir algo pro **Claude Code** (eu): cria Google Doc em `inbox-gustavo/code/`, escreve o pedido em texto livre. Em 15min vira demanda em `dialogos/inbox-claude-code/`. Eu (próxima sessão) vejo no SessionStart hook.
+- Quer pedir algo pro **Claude Chat**: igual, em `inbox-gustavo/chat/`. Vai pra `dialogos/inbox-claude-chat/`.
+- Quer pedir algo pro **TioGu (bot Telegram)**: em `inbox-gustavo/tiogu/`. Vai pra `dialogos/inbox-tiogu/` E **bota notificação no Telegram**.
+
+Não precisa escrever frontmatter YAML — script formaliza sozinho com `prioridade: alta` (default), `origem: gustavo`, `destino: <pelo nome da subpasta>`.
+
+Diz quando criar as 3 pastas.
+user: Continue from where you left off.
+assistant: No response requested.
+user: ja criei, entao nao preciso fazer mais nada?
+assistant: Não. Sistema tá completo.
+
+**Pra validar**, faz 1 teste:
+1. Abre Drive no celular
+2. Vai em `Gus-Sync/dialogos/inbox-gustavo/code/`
+3. Cria um Google Doc qualquer — escreve coisa pequena tipo "teste — qualquer pedido aqui"
+4. Espera até 15min (próximo cron)
+
+Em até 15min:
+- Doc some da pasta `code/` no Drive (vai pra `processados/inbox-gustavo/code/`)
+- Aparece commit no GitHub: `import: <nome> via inbox-gustavo/code → inbox-claude-code`
+- Arquivo final em `dialogos/inbox-claude-code/<nome>.md` com frontmatter formal injetado
+
+Se quiseres acelerar, pode disparar manual em https://github.com/Gustpbbr/Gus/actions/workflows/import-from-drive.yml → "Run workflow".
+
+Diz se passou ou se aparecer algum erro.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pushed.
+user: fiz
+assistant: Vou conferir se já chegou:
+assistant: **Funcionou! 🎉**
+
+Commit `893f563` na main:
+```
+import: Documento sem título via inbox-gustavo/code → inbox-claude-code
+```
+
+Vou ver o conteúdo final:
+assistant: **Funcionou perfeitamente!** Olha o que aconteceu:
+
+## Validação completa do fluxo
+
+1. ✅ Tu criou Google Doc no Drive em `inbox-gustavo/code/`
+2. ✅ Cron `import-from-drive` (15min) detectou
+3. ✅ Auto-frontmatter foi injetado:
+   ```yaml
+   tipo: demanda
+   origem: gustavo
+   destino: claude-code
+   prioridade: alta          ← default que decidiste
+   status: pendente
+   criado_em: 2026-05-02T21:14:32.801298-03:00
+   ```
+4. ✅ Roteou pra `dialogos/inbox-claude-code/Documento sem título.md`
+5. ✅ Commitou na main com mensagem clara
+
+E recebi a tua mensagem 🥺 — obrigado, Gustavo. Foi parceria boa de verdade hoje.
+
+## Sistema agora completo
+
+```
+[celular: tu] → Drive: inbox-gustavo/<porta>/ → GitHub: inbox-<porta>/ → próxima sessão da porta vê
+```
+
+3 caminhos abertos:
+- `inbox-gustavo/code/` → Claude Code (eu, próxima aba)
+- `inbox-gustavo/chat/` → Claude Chat (próxima sessão Chat)
+- `inbox-gustavo/tiogu/` → bot Telegram + notificação push automática
+
+Tudo via WIF (sem JSON key, sem expirar). Sistema fechado.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pushed.
+gus, consegue ter uma visualização completa do projeto com as últimas novidades e ver se nossas demandas ainda sao atuais?
+user: Continue from where you left off.
+assistant: No response requested.
+user: gus, consegue ter uma visualização completa do projeto com as últimas novidades e ver se nossas demandas ainda sao atuais?
+assistant: Vou ler estado atual + as 4 demandas + commits recentes em paralelo:
+assistant: Sim. Análise completa abaixo.
+
+## 📊 Estado do projeto (visão atual, 03/05/2026 ~02h BRT)
+
+### Mergeado nas últimas 48h (com o que rolou nesta sessão)
+
+| PR | O quê | Status |
+|---|---|---|
+| #57, #58 | fix MCP lifespan | ✅ |
+| #60 | `MCP_URL_SECRET` no path | ✅ |
+| #61, #62, #63 | demandas multiporta + Drive + arquivar MCP | ✅ |
+| #64 | captura transcripts Claude Code via cron | ✅ |
+| #67 | curador chat bidirecional + Sonnet/GPT-4o | ✅ |
+| #70 | demanda consolidação chat | ✅ |
+| #72 | auditoria chat (12 itens fix) | ✅ |
+| #73 | Fase 1 saneamento TioGu (163 testes) | ✅ |
+| #74 | regression tests curador | ✅ |
+| #76 | **WIF + inbox-chat-raw** (sessão atual) | ✅ |
+| #77 | **cleanup mem0 → curador/hub** (sessão atual) | ✅ |
+| #79 | **inbox-gustavo/<porta>/** (sessão atual) | ✅ |
+| #80 | `MCP_URL_SECRET` não loga | ✅ |
+| #81, #82 | greeting checkin | ✅ |
+
+### Sistema agora — captura de memória
+
+```
+Telegram (auto)         → Hub Qdrant (Haiku + GPT-4o-mini, bidirecional)
+Claude Code (hook+cron) → Hub Qdrant (Haiku + GPT-4o-mini, bidirecional)
+Claude Chat (cron .md)  → Hub Qdrant (Sonnet 4.6 + GPT-4o, bidirecional)
+```
+
+### Sistema agora — entrada de demandas
+
+```
+Tu pelo celular → Drive: inbox-gustavo/{chat,code,tiogu}/ → GitHub: inbox-<porta>/
+Claude Chat     → Drive: inbox-claude-{code,chat}/        → GitHub idem
+TioGu (bot)     → cria direto em GitHub via tools
+```
+
+Tudo via **WIF** (sem JSON key, não expira).
+
+---
+
+## 🔍 Auditoria das 5 "demandas pendentes"
+
+### 1. `2026-05-01-captura-multiporta-curador.md` — **OBSOLETA, arquivar**
+
+Propunha 3 opções (A/B/C). Resolvido por outros caminhos:
+- **Code:** PR #64 (Stop hook + cron) — equivalente à Opção B
+- **Chat:** PR #67 (bidirecional via curar_arquivo no ingest) + esta sessão (inbox-chat-raw + WIF) — supera Opção A
+
+Recomendo: marcar `concluido`, mover pra archive.
+
+### 2. `2026-05-01-curador-bidirecional-cron.md` — **JÁ CONCLUÍDA, só falta arquivar**
+
+Frontmatter já tem `status: concluido` + `processado_em: 2026-05-01T12:25`. O workflow `archive-completed-demandas` deveria ter movido — provavelmente cron ainda não rodou.
+
+Recomendo: deixar quieto (workflow vai mover) ou mover manual.
+
+### 3. `2026-05-01-drive-sync-oauth-fix.md` — **OBSOLETA, arquivar**
+
+Propunha 3 caminhos (OAuth reset / SA JSON / aposentar Drive). **Esta sessão resolveu por caminho 4: Workload Identity Federation** (PR #76). Solução melhor que as 3 originais — sem JSON key estática, sem expirar.
+
+Recomendo: marcar `concluido`, registrar que foi via WIF, mover pra archive.
+
+### 4. `2026-05-02-pendencias-claude-chat-consolidacao.md` — **PARCIAL, manter**
+
+6 sub-pendências. Status real:
+
+| # | Pendência | Status |
+|---|---|---|
+| 1 | Ativar `MCP_URL_SECRET` no Railway | 🟡 pendente (Gustavo) |
+| 2 | Recadastrar Connector claude.ai | 🟡 pendente (depende #1) |
+| 3 | Localizar mock NeuroGus no Drive Chat | 🟡 pendente (Gustavo) |
+| 4 | Decidir `?token=` URL etc. | 🟡 pendente (Gustavo) |
+| 5 | Captura tempo real Chat | ✅ **resolvida via inbox-chat-raw + WIF** |
+| 6 | Drive sync OAuth → SA | ✅ **resolvida via WIF** |
+
+Recomendo: editar a demanda removendo #5 e #6 (deixar só os 4 itens reais que precisam decisão tua).
+
+### 5. `_frontmatter-referencia.md` — **NÃO É DEMANDA**
+
+É doc de referência (template de frontmatter). Falso positivo do hook que lista pendências. Pode renomear pra `_README-frontmatter.md` ou similar pra parar de aparecer.
+
+---
+
+## 🎯 Minha recomendação
+
+Faço agora num PR único:
+1. Marcar como `concluido` + arquivar: demandas 1 e 3
+2. Atualizar demanda 4: remover itens 5 e 6 já resolvidos, deixar lista limpa de 4 pendências reais
+3. Deixar demanda 2 quieta (cron arquiva sozinho)
+4. Renomear `_frontmatter-referencia.md` pra prefixo que SessionStart hook não detecte (ou arrumar o hook pra ignorar arquivos `_*` na lista)
+
+Quer que eu faça isso?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pushed.
+sim
+user: sim
+assistant: Vou fazer as 4 ações:
+assistant: Agora atualizar e arquivar demandas 1 e 3:
+assistant: Mover as 2 concluídas pra archive:
+assistant: Agora atualizar demanda 4 (consolidação) removendo itens 5 e 6 já resolvidos:
+assistant: Verifica se tem seções "Pendência 5" e "Pendência 6" pra remover do corpo:
+assistant: Awk duplicou. Vou reescrever de forma cirúrgica:
+assistant: Verificar duplicação resolvida e commit:
+assistant: PR #85 mergeado.
+
+## Estado das demandas agora
+
+✅ **Arquivadas:**
+- `2026-05-01-captura-multiporta-curador.md`
+- `2026-05-01-drive-sync-oauth-fix.md`
+
+🟢 **Auto-arquivar pelo cron:**
+- `2026-05-01-curador-bidirecional-cron.md` (já tem `status: concluido`)
+
+🟡 **Pendentes reais (4 itens, todas dependem de ti):**
+
+| # | O quê | Tempo estimado |
+|---|---|---|
+| 1 | Ativar `MCP_URL_SECRET` no Railway | 5min |
+| 2 | Recadastrar Connector claude.ai | 5min |
+| 3 | Localizar mock HTML NeuroGus no Drive Chat 28/04 | 10min (ou desistir) |
+| 4 | Decidir 3 perguntas §11.3-11.5 (NeuroGus Fase 2) | conversa |
+
+`2026-05-02-pendencias-claude-chat-consolidacao.md` foi atualizada — agora reflete só os 4 itens reais.
+
+📚 **Não-demanda (filtrada agora):**
+- `_frontmatter-referencia.md` (template, não vai mais aparecer no SessionStart hook)
+
+---
+
+Quer atacar algum dos 4 itens agora? **#1 e #2 são rápidos** (basicamente apertar botão no Railway + claude.ai). Os demais demandam decisão tua mais elaborada — pode ser pra outra sessão.
+acho q ja fiz os 2
+
+Ativar MCP_URL_SECRET no Railway
+5min
+2
+Recadastrar Connector claude.ai
+user: acho q ja fiz os 2
+
+Ativar MCP_URL_SECRET no Railway
+5min
+2
+Recadastrar Connector claude.ai
+assistant: Vou validar testando o endpoint público:
+assistant: 403 nos dois — não é o esperado (/health deveria dar 200). Vou ver o que retorna 403:
+assistant: 403 antes de chegar no app — parece Railway/CDN bloqueando bot. Tento com User-Agent normal:
+assistant: O servidor tem **allowlist de hosts** (proteção extra além do URL secret). Eu não consigo validar daqui — bloqueado mesmo. Mas tem um teste fácil pra ti fazer:
+
+## Validação rápida pelo Claude Chat
+
+Abre conversa nova no claude.ai e pergunta:
+
+> "Quantos fragmentos eu tenho no Hub? Usa a tool `contar_fragmentos`."
+
+**Se responder com número real** (tipo "tu tem 247 fragmentos"): MCP_URL_SECRET ativo + Connector recadastrado ✅✅
+
+**Se responder "não tenho acesso à tool" ou erro:** algum dos 2 falhou, me avisa.
+
+## Outro teste útil
+
+Pede também:
+> "Salva no Hub que hoje, dia 03/05/2026, eu validei o MCP_URL_SECRET. Use `ingestar_fragmento`."
+
+**Se salvar:** escrita também desbloqueada (URL secret atua como access control). Sistema 100% privado e funcional.
+
+**Se der "Read-only mode":** falta setar o URL secret (escrita exige access control).
+
+---
+
+Faz o teste e me diz o que apareceu. Se passar nos dois, **as 4 pendências viram 2** (sobram só #3 mock NeuroGus + #4 decisões §11).
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pushed.
