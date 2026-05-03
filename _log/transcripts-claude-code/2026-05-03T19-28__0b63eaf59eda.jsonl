@@ -1,0 +1,621 @@
+user: oi, blz Gus?  podemos falar do projeto?
+assistant: opa, blz. bora.
+
+vi que tem 3 demandas paradas em `dialogos/inbox-claude-code/`:
+- `2026-05-01-captura-multiporta-curador.md`
+- `2026-05-01-drive-sync-oauth-fix.md`
+- `_frontmatter-referencia.md` (esse é template, não é demanda)
+
+quer atacar alguma dessas ou tem outra coisa na cabeça? se quiser eu leio o `_estado-atual.md` primeiro pra pegar handoff da última sessão, é só falar.
+user: primeiro tenha um panorama geral do projeto. segue um guia para vc ver. depois vamos focar em um assunto específico, mas te falo apos vc ler tudo necessário do projeto. segue uma dica de outra aba do code. analise tudo, e busque tbm as últimas atualizações do projeto q nao estao nos documentos citados
+
+Aqui vai a receita ordenada por valor por contexto. Foco: mínimo necessário pra não inflar contexto à toa.
+Core obrigatório (sempre, em toda aba nova)
+Arquivo
+Pra quê
+dialogos/_bootstrap/gus-bootstrap.md
+manual operacional do Gus, regras de comportamento, como cada porta usa o Hub
+dialogos/_bootstrap/gus-identity.md
+quem é o Gustavo + quem é o Gus enquanto entidade
+dialogos/_bootstrap/gus-estado-atual.md
+handoff auto-gerado pelo cron 03h, snapshot do Hub
+projetos/gus/_estado-atual.md
+onde paramos na sessão anterior (mais "operacional" que o bootstrap)
+Esses 4 dão 80% do contexto pra qualquer aba nova.
+Live — preferir sobre arquivo
+Se a aba tem MCP gus-hub conectado:
+ego_cache_atual() — identidade + últimas 3 decisões + 5 meta-reflexões
+fragmentos_recentes(horas=24) — o que rolou desde ontem
+contar_fragmentos() — sanity check
+Hub é mais fresco que gus-estado-atual.md (que é snapshot das 03h). Sempre que possível, prefira tools MCP a arquivo .md.
+Específicos do contexto da pergunta
+Só ler se a conversa for sobre:
+Tema
+Arquivo
+Próximos passos / NeuroGus
+projetos/gus/gus-08-plano-proximos-passos.md, projetos/gus/gus-30-neurogus-roadmap.md
+Caminho Alexa
+projetos/gus/gus-10-caminho-alexa.md
+MCP / claude.ai connector
+projetos/gus/gus-28-passo2-mcp-server.md
+Roteamento multi-modelo
+projetos/gus/gus-29-roteamento-multimodelo-tiogu.md
+Hub Qdrant arquitetura
+projetos/gus/gus-18-schema-indexacao.md, gus-20-etapa2-hub-qdrant.md, gus-21-etapa3-curador.md
+Decisão migração ADR-001
+projetos/gus/gus-15-decisao-migracao.md
+Demanda da semana
+dialogos/streams/semana-2026-04-21.md (último arquivo da pasta)
+Demandas pendentes pra essa porta
+dialogos/inbox-/
+O que NÃO precisa ler
+gus-01 a gus-09 (a não ser por curiosidade arqueológica — bootstrap já resume)
+pessoal/, dimagem/, receitas/ etc. — só sob demanda explícita
+historico/ — pasta morta de conteúdo legado
+Logs antigos (>3 dias)
+_log/sessoes-claude-code/ — arquivos longos de transcript
+Truque pra Claude Chat web
+Como ele lê via Drive Project knowledge, o boot dele já tem gus-bootstrap.md como project instruction. Aí ele só precisa fazer:
+Ler gus-estado-atual.md (snapshot 03h)
+Chamar ego_cache_atual() via MCP gus-hub (estado vivo)
+Pra Claude Code, o CLAUDE.md na raiz é auto-injetado em toda sessão — então já cobre o "core obrigatório".
+Quer que eu padronize isso num arquivo dialogos/_bootstrap/checklist-boot-aba-nova.md pra deixar canonizado?
+Ah, entendi mal. PRs são histórico, não documentação — uma aba nova não precisa ler nenhum.
+Por que não
+O estado final dos PRs já tá no código + nos docs gus-XX atualizados
+PRs descrevem o caminho, não onde a gente tá. Nova aba quer onde tamo.
+60 PRs = ruído gigante no contexto pra ganho zero
+Quando vale olhar PR
+Situação
+Qual PR
+"Por que esse arquivo tá assim?"
+git log --oneline  → abre o PR específico
+"O que mudou hoje?"
+Lista PRs mergeados nas últimas 24h: gh pr list --state merged --limit 10
+Bug recente
+PR mais recente que tocou o código quebrado
+Decisão arquitetural não-óbvia
+PR description costuma ter o "porquê"
+Boa prática
+O que tem que ficar nos docs (não nos PRs):
+Decisões arquiteturais → ADR (gus-15 é exemplo)
+Como configurar algo → gus-XX-setup
+Estado atual do projeto → gus-26-status-consolidado, _estado-atual
+Se um PR precisa ser lido pra entender o presente, é sinal de doc desatualizado — não de PR importante.
+Receita
+Aba nova só precisa olhar PRs se:
+Você falar "tá quebrando X depois do PR #YY" → aí sim, lê o PR
+Investigar bug específico no código mexido recentemente
+Senão, esquece os 60. Os 7 docs do checklist anterior te dão o estado atual.
+assistant: Beleza, vou ler os 4 core em paralelo + checar git recente e inbox.
+assistant: O `_estado-atual.md` (27/04) está bem desatualizado — git log mostra muita coisa depois (PRs #57, #60, #63, #64, #67, captura multiporta). Vou ler stream da semana, as 2 demandas pendentes, e os PRs recentes pra ter o estado real.
+assistant: Vou ler as 2 demandas pendentes + docs de próximos passos + PRs recentes em paralelo.
+assistant: Faltam o status consolidado, próximos passos, NeuroGus, e os PRs recentes pra fechar o panorama.
+assistant: Vou olhar gus-30 (NeuroGus) por partes + PRs recentes mais relevantes pra fechar o gap pós-27/04.
+assistant: Pronto, panorama montado. Vou resumir o que vi e o gap entre os docs e o estado real (já que o `_estado-atual.md` parou em 27/04).
+
+## Panorama do projeto Gus (02/05/2026, 00h25)
+
+### Identidade e arquitetura
+Sistema multi-porta (Telegram, Claude Code, Claude Chat, futuros: Custom GPT, Alexa) com Hub Qdrant (`gus_hub`) como memória central + GitHub `Gustpbbr/Gus` como conhecimento + Drive como espelho. Você (Gustavo) não programa, IA implementa, validação manual.
+
+### O que está sólido
+- **Bot Telegram (TioGu)** ~21 tools, multimídia, prompt caching, em produção Railway
+- **Custom GPT API** (FastAPI Railway) — 14 endpoints, falta só configurar Action no Builder desktop
+- **Claude Chat** — bootstrap funcional, lê Drive
+- **Canal `dialogos/`** — bidirecional, cron 15min Drive→GitHub, validado
+- **Hub Qdrant** + curador híbrido (Haiku × Sonnet/GPT em paralelo) — coleta dual rola até 12/05
+- **MCP server público** no Railway com URL secret no path (PRs #57/58/60) — Claude Chat web acessa Hub
+- **Captura Claude Code via cron** (PR #64, 01/05) — hook Stop salva transcript redatado, cron */30min processa via curador 2x (gustavo + gus)
+- **Curador-chat bidirecional + top-tier** (PR #67, 01/05) — Chat usa Sonnet 4.6 + GPT-4o, bug `resultado["sonnet"]` que virou `["gpt"]` corrigido (logs estavam mentindo havia semanas)
+
+### Em aberto (pelo que vi nos docs + git + inbox)
+1. **Drive sync parado** — demanda `2026-05-01-drive-sync-oauth-fix.md` ativa. Hipótese: refresh token OAuth expirou (apps Testing expiram 7 dias). 3 opções: reset OAuth (paliativo) / Service Account (definitivo) / aposentar Drive sync (radical). **Aguarda decisão tua.**
+
+2. **Captura multiporta Claude Chat** — demanda `2026-05-01-captura-multiporta-curador.md` parcialmente resolvida pelo PR #67 (curador bidirecional), mas falta o gatilho proativo no Chat (Opção A: prompt no bootstrap ensinando ele a chamar `ingestar_fragmento` quando detecta decisão/preferência). **Aguarda decisão tua.**
+
+3. **NeuroGus** (gus-30, 29/04) — PWA com grafo 3D do Hub. Planejamento 100% pronto, ~145 linhas pra implementar (`hub/events.py`, `broadcast()`, 2 endpoints SSE, frontend). 3 demandas em `inbox-tiogu/` de 28/04 (briefing, arquitetura, código-v1). **Aguarda tu confirmar itens 11.1-11.7 das decisões abertas.**
+
+4. **Decisão final modelo curador** (Fase 5 ADR-001) — após 12/05/2026, comparar pares Haiku × Sonnet/GPT da coleta dual.
+
+5. **Aposentar Mem0 SaaS** — depende da #4.
+
+### Observações
+- `_estado-atual.md` (27/04) e `gus-26-status-consolidado.md` (26/04) estão desatualizados — não refletem PRs #57, #60, #63, #64, #67. Vale atualizar em algum momento.
+- `gus-estado-atual.md` (gerado pelo cron 15min) registra Hub ocioso há 6h+ na janela "fragmentos últimas 6h". Pode ser só horário (00h, sem conversa) ou curador parado — não dá pra distinguir daqui sem checar.
+- Branch atual: `claude/project-discussion-fkfA8` (limpa, só um arquivo `_log/retro-engine` novo desta sessão).
+
+Sobre o que tu quer focar?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are untracked files in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Só o log do retro-engine desta sessão (no-op pq sem `ANTHROPIC_API_KEY` no ambiente, como o CLAUDE.md documenta). Quer que eu commite esse arquivo na branch `claude/project-discussion-fkfA8` antes de continuar? É log automático, baixíssimo risco.
+user: Continue from where you left off.
+assistant: No response requested.
+user: nao entendi  - Só o log do retro-engine desta sessão (no-op pq sem ANTHROPIC_API_KEY no ambiente, como o CLAUDE.md documenta).
+assistant: Desculpa, fui telegráfico. Explicando:
+
+O **retro-engine** é um hook que roda quando uma sessão Claude Code termina (`Stop` hook). Ele deveria:
+1. Pegar o transcript da sessão
+2. Chamar a API da Anthropic pra extrair fragmentos do que rolou
+3. Salvar no Hub Qdrant (brain `user_id="gus"`, auto-observações)
+4. Logar o resultado num MD diário em `_log/retro-engine-claude-code/`
+
+**O que tá acontecendo neste ambiente Claude Code on the web:** falta a variável `ANTHROPIC_API_KEY` (ela viria de `~/.claude/gus.env`, que não existe aqui). Sem essa key, o passo 2 não roda. O hook então registra "no-op: anthropic_missing" e segue.
+
+O arquivo untracked é só esse log honesto:
+```
+00:26:07 BRT — sessão encerrada
+Fragmentos extraídos: 0
+Salvos no Hub: 0
+Erros: anthropic_missing
+Resumo: (no-op: anthropic_missing — transcript salvo, push=ok)
+```
+
+Isso já tá documentado no `CLAUDE.md` (a seção "AVISO IMPORTANTE — Captura de memória da porta Code quebrada"). O caminho real pra resolver isso é o **PR #64** que tu mergeou ontem (01/05) — cron GitHub Actions processa transcripts commitados via curador, usando secrets do Actions. Esse cron já tá rodando, então a captura acontece, só que assíncrona, não no Stop hook.
+
+Resumindo: **arquivo é log inofensivo, comportamento esperado.** Pergunta foi se queres que eu commite ele agora ou se prefere deixar pra um commit futuro junto com outras mudanças.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are untracked files in the repository. Please commit and push these changes to the remote branch.
+
+assistant: O hook vai continuar reclamando a cada turno enquanto o arquivo estiver untracked. Duas opções:
+
+1. **Commitar agora** (eu faço, ~5s) — `chore(log): retro-engine no-op 2026-05-02` na branch `claude/project-discussion-fkfA8`
+2. **Ignorar até o fim da conversa** — aceitamos o aviso aparecer toda resposta minha
+
+Qual preferes?
+user: pode comitar. mas nesse aba vamos falar do tiogu, bot do telegram
+assistant: Commitado e pushado.
+
+Bora falar do TioGu. Já tenho o panorama geral (gus/main.py, bot.py, llm.py, memory.py, tools.py, ~21 tools, multimídia, prompt caching, Hub-first). Mas pra te ajudar bem, qual é o ângulo?
+
+- **Bug ou comportamento estranho** que tá te incomodando?
+- **Feature nova** que quer adicionar (ex: vídeo, novo tool)?
+- **Refator/manutenção** (ex: aposentar Mem0 fallback, limpar tool antiga)?
+- **Custo/performance** (cache, modelo, latência)?
+- **Personalidade/system_prompt**?
+- **Outra coisa** — me conta.
+user: faca uma analise profissional e especializa e imparcial de tudo relacionado a ele e me passe um panorama 
+assistant: Vou ler o código real do bot (não só os docs) pra te dar análise honesta. Começo pelo coração.
+assistant: Vou ver o resto: tools, system_prompt, media, dimagem, logger, hub e dependências em paralelo.
+assistant: Faltam só uns componentes pra fechar. Vou ler mais 3 chave em paralelo.
+assistant: Pronto, li o suficiente pra dar análise séria. Vou organizar.
+
+---
+
+# Análise técnica do TioGu (bot Telegram)
+
+## 1. Arquitetura — em uma página
+
+```
+Telegram polling ──▶ bot.py (handlers + state) ──▶ llm.py
+                                                   ├─▶ Anthropic Sonnet (default + fallback Haiku)
+                                                   └─▶ OpenAI gpt-4o-mini (texto puro)
+                                  │
+                                  ▼
+                              tools.py (21 tools, dispatch por nome)
+                              memory.py ──▶ hub.store (Qdrant) [+ Mem0 fallback leitura]
+                              media.py ──▶ Claude Vision / PDF nativo / Whisper
+                              dimagem.py (fluxo OS, gate de confiança OCR)
+
+main.py: asyncio.gather(run_bot, run_api)  → bot Telegram + FastAPI Custom GPT no mesmo processo Railway
+hub/curador.py: a cada 3 turnos, Haiku × GPT-4o-mini em paralelo extraem fragmentos pro Hub (mesmo hash_janela permite parear)
+```
+
+**~5.800 LOC de aplicação** em `gus/` + `hub/` + `gus/integrations/`. Single user (chat_id allowlist), single tenant, Railway 24/7.
+
+## 2. Stack
+
+| Camada | Tech | Versão | Comentário |
+|---|---|---|---|
+| Bot framework | python-telegram-bot | 21.6 | Recente, ok |
+| LLM Anthropic | anthropic SDK | **0.40.0** | Set/2024 — atrasado ~6 meses |
+| LLM OpenAI | openai | 1.54.0 | Recente |
+| Memória | mem0ai + qdrant-client | 0.1.29 / 1.9-1.12 | mem0ai em aposentadoria (ADR-001) |
+| Mídia | Pillow / pypdf / docx / openpyxl | OK | |
+| API | FastAPI + uvicorn | 0.115 / 0.32 | Custom GPT endpoint |
+| Embeddings | sentence-transformers MiniLM-L6-v2 | local | Bom — sem dep externa |
+| MCP | mcp | 1.27.0 | Recente |
+| Testes | nenhum | — | **0 testes em produção** |
+
+## 3. Pontos fortes (genuínos)
+
+1. **Multi-provider com fallback cross-vendor** (`llm.py`) — se OpenAI cai, tenta Anthropic; se Anthropic 5xx/429, retry exponencial + fallback de modelo (Sonnet → Haiku). Resiliência rara em hobby projects.
+2. **Prompt caching bem-feito** — system + tools com `cache_control: ephemeral` no Anthropic, automático ≥1024 tok no OpenAI. Custo de input cai ~70% em janelas de 5min.
+3. **Retry, timeout e classificação de erros amigável** (`_mensagem_erro_amigavel`) — usuário vê "conta sem créditos" em vez de stack trace.
+4. **Lazy init OpenAI client** com comentário explicando o bug histórico (import explodia em workflows que só importavam Anthropic) — engenharia honesta.
+5. **State persistido com write atômico** (`tmp + replace`), auto-detecta volume Railway, sobrevive a redeploys. Bom design pra restrição de plataforma.
+6. **Curador híbrido com hash_janela pareável** (`hub/curador.py`) — A/B observável, decisão de modelo baseada em evidência. Sofisticação real.
+7. **Cache de mídia por SHA-256** evita reprocessar mesmo arquivo (Vision e Whisper). Transcrição de mesmo áudio = grátis na 2ª vez.
+8. **Bug postmortem inline no código** (system="" → 400 'temperature and top_p', `_chamar_claude_com_retry`) — só inclui `system` se truthy. Prove cuidado pós-incidente.
+9. **Gate de confiança OCR Dimagem** — risco clínico real (nome trocado em prontuário) tratado com bloqueio + reenvio em vez de alerta.
+10. **Patterns sensíveis em fonte única** (`patterns_sensiveis.py`) usado tanto pelo `save_to_github` quanto pelo PreToolUse hook do Claude Code. Sem drift.
+
+## 4. Problemas estruturais (importantes)
+
+### 🔴 Severos
+
+1. **Zero 
+
+[…transcript truncado…]
+
+401 sem créditos
+   ↓
+Sistema detecta: tem PDF (OpenAI não tem PDF nativo)
+   ↓
+Bot: "A Anthropic API tá indisponível e o PDF não tem fallback
+     automático no OpenAI (sem suporte nativo a PDF). Manda um
+     print das páginas relevantes ou tenta de novo em alguns
+     minutos."
+   ↓
+✋ Você sabe o que fazer (mandar screenshot)
+```
+
+## Cenário 4 — Texto puro (não muda nada)
+
+**Antes e depois:** Texto → OpenAI gpt-4o-mini direto. Se OpenAI cai, fallback Anthropic Sonnet (esse fallback já existia).
+
+## Cenário 5 — Rollback Anthropic-only
+
+Se tu setar `MULTIMODEL_ENABLED=false` (rollback):
+- Imagem ainda vai pra Anthropic
+- Mas se Anthropic cair, **respeitamos a flag** e NÃO tentamos OpenAI fallback
+- Bot dá mensagem de erro original
+
+## Resumo conceitual
+
+| Mídia | Antes (Anthropic falha) | Depois |
+|---|---|---|
+| Imagem | ❌ Bot cego, mensagem genérica | ✅ Tenta gpt-4o, responde com nota fallback |
+| PDF | ❌ Bot cego, mensagem genérica | ✅ Mensagem específica orientando print |
+| Word/Excel | ✅ Já usava OpenAI por default | ✅ Igual (sem mudança) |
+| Áudio | ✅ Whisper OpenAI (independente) | ✅ Igual |
+| Texto | ✅ OpenAI default + fallback Anthropic | ✅ Igual |
+
+**Custo:** quando o fallback ativa, gpt-4o ($2.50/M in, $10/M out) é até **mais barato** que Sonnet ($3/M in, $15/M out). Não é um trade-off ruim — é defesa em profundidade quase grátis.
+
+**Pra validar em produção:** quando a quota Anthropic estiver baixa (ou pra testar agora), `MODEL_DEFAULT=invalid-model-name` no Railway força Anthropic falhar; manda foto, deve ver nota fallback. Reverter env var depois.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado. Aguardando próxima decisão sua (Fase 2B, Fase 4, ou outra).
+user: quais eram os detalhes das fases?
+assistant: # Status das fases — onde estamos
+
+Status atualizado (3 PRs mergeados hoje: #73, #74, #90, #91 + outras abas):
+
+## ✅ Fase 1 — Rede de segurança (FEITA, PR #73 + #74)
+
+**Sessão 1 — Testes do caminho crítico:**
+- `tests/` com 142 testes: `_chamar_claude_com_retry`, `salvar_memorias`, `_load_state`, `_validar_path`, `_extrair_json`, `escanear/redact` PII, regex Dimagem
+- Workflow CI `tests.yml` em PR + push main
+- `pyproject.toml`, `requirements-dev.txt`
+- `scan_sensivel.py` ganhou allowlist `tests/`
+
+**Sessão 2 — Vazamentos críticos:**
+- **S2** PII no output (`_redigir_resposta`)
+- **S5** byte budget cache mídia (200MB)
+- **C1, C4, C5, C6** cleanups cosméticos
+
+**PR #74 — Regressão `_render_prompt`:**
+- 18 testes garantindo bug do `format()` não volta
+
+## ✅ Fase 2A — Reconciliação docs estáticas (FEITA, PR #73)
+
+- **M8/M10** `_tools-inventario.md` auto-gerado por `gerar_lista_tools.py` + workflow `sync-docs.yml`
+- **P9** `_estado-atual.md` + `gus-26-status-consolidado.md` reescritos
+- **P10** `gus-08-plano-proximos-passos.md` arquivado
+
+## ⏳ Fase 2B — System prompt (PENDENTE, ~2h, alto risco)
+
+- **S3** reescrever `gus/system_prompt.md` (794 → ~500 linhas):
+  - Tool count real (21, não 22)
+  - Unificar fluxo Dimagem (hoje documentado 2x)
+  - Remover seções pré-migração ADR-001 ("Mem0 silêncio histórico")
+  - Diff explícito antes do commit
+- **Risco alto:** TioGu lê em produção. Comportamento muda.
+- Sessão dedicada, atenção total.
+
+## ✅ Fase 3 — Operacional (FEITA, PR #90 + #91)
+
+**Quick wins (PR #90):**
+- **S4** alerta proativo HARD_LIMIT (workflow `check-cost.yml` cron 1h)
+- **M5** cache `auto_diagnostico` 5min
+- **M6** aviso pending_updates no boot (D3=C)
+- **M7** `/foco` deleta FOCO-ATUAL antigo
+- **C2** threadsafe `_get_openai_client`
+- **C7** mover `dimagem.py` → `gus/integrations/` (D4=A)
+
+**Vision fallback (PR #91):**
+- Anthropic falha + imagem → tenta gpt-4o
+- PDF tem mensagem específica
+- 21 testes novos
+
+## ⏳ Fase 4 — Refator estrutural (PENDENTE, ~6h)
+
+Depende de Fase 1 ✅ feita (testes em rede).
+
+| Item | Esforço | O que faz |
+|---|---|---|
+| **M1** | ~3h | Split `gus/bot.py` (580 linhas) em `gus/handlers/{text,photo,document,voice,commands}.py` + `gus/state.py`. Bot fica modular, testes ficam fáceis. |
+| **M2** | ~30min | Promover `_chamar_claude_com_retry` (privada) → `chamar_claude_com_retry` (pública). Curador depende dela com `_` (frágil). |
+| **C3** | ~2h | Split `gus/tools.py` (1140 linhas) em `gus/tools/{schemas, github, web, memory, diagnostico, roteador}.py`. |
+| **M4** | ~2h | Upgrade `anthropic` SDK 0.40 → 0.50+ (ganha cache 1h, batch melhor). Liberado pq Mem0 já saiu. |
+
+Total Fase 4: ~7h. Pode dividir em 2-3 sessões (M1 + M2 numa, C3 noutra, M4 isolada).
+
+## ⏳ Fase 5 — Decisões Gustavo (paralelo, em outras abas)
+
+- **P1** captura Claude Chat (A/B/C) — outra aba decide
+- **P2** Drive sync OAuth (1/2/3) — outra aba decide
+- **P3** NeuroGus 11.1-11.7 — outra aba decide
+
+Pendente do Gustavo aqui:
+- **P7** Custom GPT desktop Action (~30min, no PC)
+- **P8** Limpar 4+ memórias poluídas (lista via dryrun, ele aprova quais)
+
+## ✅ Fase 6 — Aposentar Mem0 (PARCIALMENTE FEITA por outras abas)
+
+Estava bloqueada até 12/05 (coleta dual). Outras abas já fizeram parcial:
+- ✅ **P5/M3** `mem0ai` removido do requirements (item 1.9)
+- ✅ **`gus/memory.py`** virou camada fina sobre `hub.store`
+- ⏳ **M4** upgrade Anthropic SDK 0.40 → 0.50+ (movido pra Fase 4)
+
+## ⏳ Fase 7 — NeuroGus (PENDENTE, ~1-2 dias)
+
+Bloqueado por decisões 11.x do Gustavo (Fase 5 P3).
+
+Quando liberado:
+- **Sessão 8 backend (~4h):** `hub/events.py` + `broadcast()` hook em `ingestar()` + `GET /hub/recent` + `GET /hub/stream` SSE
+- **Sessão 9 frontend (~4h):** `api/neurogus.py` (PWA + 3d-force-graph) + deploy
+
+Total ~145 linhas implementação.
+
+## ⏳ Fase 8 — Features extras (sob demanda)
+
+| Item | Esforço | Quando |
+|---|---|---|
+| **P6** vídeo Telegram (ffmpeg + Whisper + frames Vision) | ~3h | Tu pulou antes |
+| **M9** webhook em vez de polling | ~3h | Sob demanda |
+| Custom GPT em produção (P7 feita) | já Fase 5 | — |
+| Alexa Skill V1 | ~6-8h | Pós Custom GPT |
+| Wake word "Gus" no S8 (Termux) | ~5-8h | Pós Alexa |
+
+---
+
+# Recomendação por ROI imediato
+
+Em ordem de valor por hora:
+
+1. **Fase 4 — M2 (~30min)** — promover `_chamar_claude_com_retry` é micro-refator com retorno enorme em desacoplamento. Quick win.
+2. **Fase 4 — M1 (~3h)** — split `bot.py`. Refator estrutural mas viável agora com testes em rede.
+3. **Fase 4 — M4 (~2h)** — upgrade Anthropic SDK. Ganha features novas, mas mais arriscado (mudança de API). Vale isolar.
+4. **Fase 2B (~2h)** — reescrever system_prompt. Médio valor, alto risco. Faz quando for fazer com calma.
+5. **Fase 4 — C3 (~2h)** — split tools.py. Cosmético, baixa urgência.
+6. **Fase 7 — NeuroGus** — só quando outra aba liberar P3.
+
+## Status resumido
+
+```
+Fase 1 ✅✅ Concluída (testes + PII output + cache budget + cleanup)
+Fase 2A ✅ Concluída (docs estáticas)
+Fase 2B ⏳ Pendente (system_prompt)
+Fase 3 ✅✅ Concluída (quick wins + vision fallback)
+Fase 4 ⏳ Pendente (refator estrutural — M1, M2, C3, M4)
+Fase 5 ⏳ Em paralelo (decisões Gustavo, outras abas)
+Fase 6 ✅ Parcialmente feita (Mem0 quase saiu, falta M4)
+Fase 7 ⏳ Bloqueado (NeuroGus, depende P3)
+Fase 8 ⏳ Sob demanda (vídeo, webhook, Alexa, S8)
+```
+
+Quer atacar alguma agora? Recomendo **M2 + M1** (Fase 4 inicial) — ~3.5h pra deixar `bot.py` modular, condição pra qualquer refator futuro.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado. Aguardando tua escolha pra próxima sessão.
+user: pode começar, com atenção 
+assistant: Bora — **M2 + M1 da Fase 4** com atenção. Branch nova, M2 primeiro (rápido), depois M1 (split bot.py). Faço commits separados na mesma branch pra revisão clara.
+assistant: Branch ok. Vou checar onde `_chamar_claude_com_retry` é usado antes de renomear.
+assistant: # M2 — promover `_chamar_claude_com_retry` → público
+assistant: **M2 OK — 208 verdes.** Commit M2 isolado pra revisão limpa.
+assistant: # M1 — split `bot.py`
+assistant: Agora reescrevo `gus/bot.py` slim — só re-export pra preservar API.
+assistant: 3 falhas — `_reload_bot` em test_bot.py recarrega `gus.bot` mas não `gus.state` (state mudou de módulo). Fix:
+assistant: **208 verdes.** Smoke test do `gus/main.py` (que importa de `gus.bot`).
+assistant: `gus/bot.py` foi de 649 → 80 linhas. Commit M1 + push + PR.
+assistant: **PR #92 aberto.** 🔗 https://github.com/Gustpbbr/Gus/pull/92
+
+## Sessão entregue (Fase 4 — M2 + M1)
+
+| Item | Resultado |
+|---|---|
+| M2 promove `_chamar_claude_com_retry` | ✅ commit `35bb4c3` — público + alias compat |
+| M1 split `bot.py` (649 → 80 linhas) | ✅ commit `9daf73a` — 8 módulos focados |
+| Testes | 208 verdes em 2.73s (zero regressão) |
+| Compat | 100% — `gus/main.py` e `tests/` intactos |
+
+## Estrutura nova `gus/`
+```
+gus/
+├── bot.py              ← 80 linhas (re-exports)
+├── state.py            ← state + persistência + validações
+├── handlers/
+│   ├── __init__.py
+│   ├── responder.py    ← _responder + curador + PII (compartilhado)
+│   ├── text.py         ← handle_message
+│   ├── photo.py        ← handle_photo + Dimagem
+│   ├── document.py     ← handle_document
+│   ├── voice.py        ← handle_voice
+│   └── commands.py     ← /start, /custo, /foco, /reset
+└── ...
+```
+
+## Pós-merge — sem ação operacional necessária
+- Refator puro, comportamento idêntico
+- Railway redeploya automático
+
+## Pendente da Fase 4
+- **C3** split `tools.py` (1140 linhas) — sessão futura
+- **M4** upgrade `anthropic` SDK 0.40 → 0.50+ — sessão isolada (mudança de API, mais arriscada)
+
+Aguardando tua revisão/merge do PR #92.
+mergeei, foi. como era antes e coko ta agora?
+user: Continue from where you left off.
+assistant: No response requested.
+user: mergeei, foi. como era antes e coko ta agora?
+assistant: ✅ **Mergeado** às 19:26 BRT (agora mesmo).
+
+# Antes vs Depois — Fase 4 (M2 + M1)
+
+## M2 — `_chamar_claude_com_retry` (privada → pública)
+
+### Antes
+```python
+# hub/curador.py
+from gus.llm import _chamar_claude_com_retry  # privada (com underscore)
+# ...
+response = await _chamar_claude_com_retry(...)
+```
+
+**Problema:** `_função()` em Python convenciona "uso interno". Importar de outro módulo é contrato implícito frágil. Quando assinatura mudou no passado (`system_prompt: str` → `system_prompt: str | list`), curador quebrou silencioso (KeyError em produção, sem teste pegando).
+
+### Depois
+```python
+# gus/llm.py
+async def chamar_claude_com_retry(...):  # pública
+    ...
+
+# alias retrocompatível — não quebra ninguém que ainda importa antiga
+_chamar_claude_com_retry = chamar_claude_com_retry
+
+# hub/curador.py
+from gus.llm import chamar_claude_com_retry  # pública agora
+```
+
+**Ganho:** contrato explícito. Mudança de API agora visível no diff. Alias mantém compatibilidade pra MCP server, scripts cron e qualquer dep externa que ainda use o nome antigo.
+
+## M1 — `gus/bot.py` (649 → 80 linhas)
+
+### Antes — monolito
+
+```
+gus/bot.py (649 linhas, tudo junto)
+├── Imports
+├── Constantes (AUTHORIZED_CHAT_ID, HARD_LIMIT, ...)
+├── Globals (conversation_histories, dimagem_pending, ...)
+├── Regex Dimagem
+├── _load_state / _save_state (persistência)
+├── _redigir_resposta (PII output)
+├── _texto_de_content
+├── _query_mem0_contextual
+├── _resumir_e_salvar (curador fire-and-forget)
+├── _autorizado / _verificar_limite / _verificar_rate_limit
+├── _responder (coração)
+├── handle_start
+├── handle_custo
+├── _limpar_focos_antigos
+├── handle_foco
+├── handle_reset
+├── handle_message
+├── handle_photo
+├── handle_document
+└── handle_voice
+```
+
+**Problemas:**
+- 649 linhas num arquivo só
+- Mudar 1 handler exigia ler tudo
+- Testar 1 handler exigia importar tudo
+- SRP violado (state + handlers + utils + persistência num só lugar)
+- Conflitos de merge frequentes (várias frentes editam o mesmo arquivo)
+
+### Depois — modular
+
+```
+gus/
+├── bot.py (80 linhas — SLIM)
+│   └── Só re-exporta tudo (preserva API antiga)
+│
+├── state.py (~170 linhas)
+│   ├── Constantes (env vars)
+│   ├── Globals (state em memória)
+│   ├── Regex Dimagem
+│   ├── _load_state / _save_state
+│   └── _autorizado / _verificar_limite / _verificar_rate_limit
+│
+└── handlers/
+    ├── __init__.py
+    ├── responder.py (~210 linhas)
+    │   └── _responder + _resumir_e_salvar + PII + queries
+    │       (compartilhado entre text/photo/document/voice)
+    │
+    ├── text.py (~50 linhas)
+    │   └── handle_message + interceptação Dimagem
+    │
+    ├── photo.py (~55 linhas)
+    │   └── handle_photo + fluxo Dimagem OCR
+    │
+    ├── document.py (~60 linhas)
+    │   └── handle_document (PDF/Word/Excel)
+    │
+    ├── voice.py (~45 linhas)
+    │   └── handle_voice (Whisper)
+    │
+    └── commands.py (~120 linhas)
+        └── /start, /custo, /foco (+TTL), /reset
+```
+
+**Ganhos práticos:**
+
+| Antes | Depois |
+|---|---|
+| Editar handler de foto → abre 649 linhas | Editar handler de foto → abre `photo.py` 55 linhas |
+| Testar 1 handler → mock tudo | Testar 1 handler → mock só state + responder |
+| Conflito merge frequente em `bot.py` | Conflito raro (cada feature mexe num módulo diferente) |
+| 1 dev por hora editando bot.py (gargalo) | Múltiplos devs/abas em paralelo (M2 numa, M5 noutra) |
+| Onde está a regex Dimagem? Procure em 649 linhas | `gus/state.py:DIMAGEM_*_RE` |
+| Onde está `_responder`? Procure em 649 linhas | `gus/handlers/responder.py` |
+
+## Compatibilidade preservada
+
+`gus/main.py` continua igual:
+```python
+from gus.bot import (
+    handle_custo, handle_document, handle_foco,
+    handle_message, handle_photo, handle_reset,
+    handle_start, handle_voice,
+)
+```
+
+Como funciona? `gus/bot.py` (slim, 80 linhas) faz:
+```python
+from gus.handlers.commands import handle_start, handle_custo, ...
+from gus.handlers.text import handle_message
+from gus.handlers.photo import handle_photo
+# ... etc
+```
+
+E ainda re-exporta símbolos compat (`_DIMAGEM_*_RE`, `conversation_histories`, `_save_state`) pra que `tests/test_bot.py` e qualquer outro código externo continue acessando como antes.
+
+## Validação
+
+| Item | Antes | Depois |
+|---|---|---|
+| Testes | 208 verdes | 208 verdes (zero regressão) |
+| Tempo suite | 2.7s | 2.7s |
+| Comportamento bot | igual | **idêntico** |
+| `gus/bot.py` linhas | 649 | 80 |
+| Maior arquivo de handler | 649 (todos juntos) | 210 (`responder.py`) |
+
+## Em produção
+Railway redeploya automático. Bot reinicia, importa `gus.main` que importa `gus.bot` que importa cada `handlers/*`. State carrega do volume Railway igual antes. Comportamento idêntico — refator puro.
+
+## Próximos itens da Fase 4
+- **C3** — split `gus/tools.py` (1140 linhas) seguindo mesmo padrão
+- **M4** — upgrade `anthropic` SDK 0.40 → 0.50+ (sessão isolada por risco de mudança de API)
+
+Aguardando tua escolha.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado. Aguardando tua escolha de próxima sessão (C3 split tools.py / M4 upgrade Anthropic SDK / Fase 2B system_prompt / outra).
