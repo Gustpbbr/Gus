@@ -192,8 +192,8 @@ Após cada uma:
 
 ## Checklist de resolução
 
-- [ ] **#1** — `MCP_URL_SECRET` ativado no Railway (Gustavo)
-- [ ] **#2** — Connector recadastrado no claude.ai com URL nova (Gustavo)
+- [x] **#1** — `MCP_URL_SECRET` ativado no Railway (validado 03/05 — Connector retornou 1081 fragmentos via `contar_fragmentos`)
+- [x] **#2** — Connector recadastrado no claude.ai com URL nova (validado junto com #1)
 - [ ] **#3** — Mock HTML localizado OU decidido recriar (Gustavo)
 - [ ] **#4** — Decisões §11.3-11.5 respondidas, gus-30.1 atualizado (Gustavo + Code)
 - [x] **#5** — Captura tempo real (resolvido via PR #79 — `inbox-gustavo/chat/`)
