@@ -24,7 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _hub_compat import get_all_memorias
 
-USER_ID = "gustavo"
+USER_IDS = ("gustavo", "gus")  # Item 1.5: auditoria multi-brain
 BRT = timezone(timedelta(hours=-3))
 OUTPUT_PATH = "_indices/_auditoria-hub.md"
 # Nota: este arquivo NÃO é meta-memória do Gus. É auditoria do armazém de
@@ -145,36 +145,14 @@ def formatar_data(iso: str) -> str:
         return iso[:10] if iso else "(sem data)"
 
 
-def main():
-    if not os.environ.get("QDRANT_URL") or not os.environ.get("QDRANT_API_KEY"):
-        print("QDRANT_URL/QDRANT_API_KEY ausentes. Auditoria pulada.")
-        sys.exit(0)
+def _enriquecer_memorias(memorias: list[dict]) -> tuple[list[dict], dict[str, int]]:
+    """Normaliza tokens, classifica área e calcula dias_atrás. Retorna (lista, contador_por_area).
 
-    print("Carregando memórias do Hub Qdrant (gus_hub)...")
-    memorias = get_all_memorias(user_id=USER_ID, limit=10000)
-    total = len(memorias)
-    print(f"Total de memórias: {total}")
-
-    if not memorias:
-        print("Sem memórias pra auditar. Escrevendo MD vazio.")
-        conteudo = (
-            "---\n"
-            "tipo: meta-memoria\n"
-            f"atualizado: {datetime.now(BRT).isoformat()}\n"
-            "mem0_total: 0\n"
-            "---\n\n"
-            "# Auditoria do Mem0 (memórias sobre o Gustavo)\n\n"
-            "Nenhuma memória no Mem0 ainda. Capture coisas via Telegram e o bot vai alimentando.\n\n"
-            "*Nota: este arquivo é auditoria do Mem0 (memórias sobre o Gustavo). "
-            "Para auto-conhecimento do Gus, ver `gus/meta-memoria.md`.*\n"
-        )
-        os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
-        Path(OUTPUT_PATH).write_text(conteudo, encoding="utf-8")
-        sys.exit(0)
-
-    # Normaliza e classifica
+    Usa `area` do payload primeiro (gus-18); cai pra heurística por keyword
+    só se payload não tiver area. Item 1.5 do plano de saneamento.
+    """
     agora_utc = datetime.now(timezone.utc)
-    enriched = []
+    enriched: list[dict] = []
     por_area: dict[str, int] = {}
 
     for m in memorias:
@@ -189,7 +167,15 @@ def main():
             dt_criacao = agora_utc
         dias_atras = (agora_utc - dt_criacao).total_seconds() / 86400
         tokens = normalizar_texto(texto)
-        areas = classificar_area(tokens)
+
+        # Item 1.5: prefere area do payload, fallback pra heurística
+        meta = m.get("metadata") or {}
+        area_payload = (meta.get("area") or "").strip() if isinstance(meta, dict) else ""
+        if area_payload:
+            areas = [area_payload]
+        else:
+            areas = classificar_area(tokens)
+
         for a in areas:
             por_area[a] = por_area.get(a, 0) + 1
         enriched.append({
@@ -200,6 +186,68 @@ def main():
             "dias_atras": dias_atras,
             "areas": areas,
         })
+
+    return enriched, por_area
+
+
+def _auditar_brain(user_id: str) -> dict:
+    """Executa auditoria de um brain. Retorna dict com stats prontos pra render."""
+    print(f"\n=== Brain: {user_id} ===")
+    memorias = get_all_memorias(user_id=user_id, limit=10000)
+    total = len(memorias)
+    print(f"  Total: {total} memórias")
+
+    if not memorias:
+        return {"user_id": user_id, "total": 0}
+
+    enriched, por_area = _enriquecer_memorias(memorias)
+    return {
+        "user_id": user_id,
+        "total": total,
+        "enriched": enriched,
+        "por_area": por_area,
+    }
+
+
+def main():
+    if not os.environ.get("QDRANT_URL") or not os.environ.get("QDRANT_API_KEY"):
+        print("QDRANT_URL/QDRANT_API_KEY ausentes. Auditoria pulada.")
+        sys.exit(0)
+
+    print("Carregando memórias do Hub Qdrant (gus_hub)...")
+
+    # Item 1.5: auditoria multi-brain
+    brains = [_auditar_brain(uid) for uid in USER_IDS]
+
+    total_geral = sum(b.get("total", 0) for b in brains)
+    if total_geral == 0:
+        print("Sem memórias em nenhum brain. Escrevendo MD vazio.")
+        conteudo = (
+            "---\n"
+            "tipo: meta-memoria\n"
+            f"atualizado: {datetime.now(BRT).isoformat()}\n"
+            "hub_total: 0\n"
+            "---\n\n"
+            "# Auditoria do Hub (memórias do Gus)\n\n"
+            "Nenhuma memória no Hub ainda. Capture coisas via Telegram, Chat ou Code.\n\n"
+            "*Nota: auditoria do armazém de memórias. Auto-conhecimento do Gus em "
+            "`gus/meta-memoria.md` (separado).*\n"
+        )
+        os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+        Path(OUTPUT_PATH).write_text(conteudo, encoding="utf-8")
+        sys.exit(0)
+
+    # Foco do detalhe: brain `gustavo` (memórias sobre o usuário). Brain `gus`
+    # (auto-observações) ganha resumo em seção própria, sem rebuscar duplicatas
+    # cross-brain.
+    brain_gustavo = next((b for b in brains if b["user_id"] == "gustavo"), {"total": 0})
+    brain_gus = next((b for b in brains if b["user_id"] == "gus"), {"total": 0})
+
+    enriched = brain_gustavo.get("enriched", [])
+    por_area = brain_gustavo.get("por_area", {})
+    total = brain_gustavo.get("total", 0)
+    if not enriched:
+        print("Brain `gustavo` vazio — gerando MD só com seção de `gus`.")
 
     # Stats de frescor
     frescor = {f"ultimos_{d}d": 0 for d in DIAS_JANELAS}
@@ -236,20 +284,28 @@ def main():
         "---",
         "tipo: meta-memoria",
         f"atualizado: {datetime.now(BRT).isoformat()}",
-        f"mem0_total: {total}",
+        f"hub_total_geral: {total_geral}",
+        f"hub_total_gustavo: {brain_gustavo.get('total', 0)}",
+        f"hub_total_gus: {brain_gus.get('total', 0)}",
         "---",
         "",
-        "# Auditoria do Mem0 (memórias sobre o Gustavo)",
+        "# Auditoria do Hub Qdrant",
         "",
-        "Análise automática e determinística do estado do armazém de memórias "
-        "SOBRE O GUSTAVO (Mem0). Gerada diariamente via GitHub Action "
-        "(`auditoria_hub.py`). Sem LLM — heurística baseada em keywords e "
+        "Análise automática e determinística do armazém de memórias do Gus "
+        "(coleção `gus_hub`). Gerada diariamente via GitHub Action "
+        "(`auditoria_hub.py`). Sem LLM — heurística baseada em keywords + "
         "similaridade Jaccard.",
         "",
         "**Não confundir com meta-memória do Gus** (`gus/meta-memoria.md`), "
         "que é o auto-conhecimento do próprio Gus.",
         "",
-        "## Estatísticas gerais",
+        f"## Resumo multi-brain (item 1.5)",
+        f"- **Brain `gustavo`** (memórias sobre o usuário): {brain_gustavo.get('total', 0)} fragmentos",
+        f"- **Brain `gus`** (auto-observações do agente): {brain_gus.get('total', 0)} fragmentos",
+        f"- **Total geral:** {total_geral}",
+        "",
+        "## Detalhe — brain `gustavo`",
+        "",
         f"- **Total:** {total} memórias",
     ]
 
@@ -311,6 +367,41 @@ def main():
             linhas.append(f"- **{g}** — índice existe, nenhuma memória classificada nesta área")
     else:
         linhas.append("- Nenhum gap detectado.")
+
+    # Seção brain `gus` — resumo (sem duplicatas/gaps que dependem de _indices)
+    linhas += [
+        "",
+        "## Detalhe — brain `gus` (auto-observações)",
+        "",
+    ]
+    enriched_gus = brain_gus.get("enriched", []) or []
+    por_area_gus = brain_gus.get("por_area", {}) or {}
+    if not enriched_gus:
+        linhas.append("- Brain `gus` vazio — nenhuma auto-observação capturada ainda.")
+    else:
+        # Frescor brain gus
+        frescor_gus = {f"ultimos_{d}d": 0 for d in DIAS_JANELAS}
+        frescor_gus["mais_de_30d"] = 0
+        for e in enriched_gus:
+            bucket_gus = bucket_frescor(e["dias_atras"])
+            frescor_gus[bucket_gus] = frescor_gus.get(bucket_gus, 0) + 1
+        total_gus = brain_gus.get("total", 0)
+        linhas.append(f"- **Total:** {total_gus}")
+        for bucket_gus, cnt in frescor_gus.items():
+            label = {
+                "ultimos_1d": "Últimas 24h",
+                "ultimos_7d": "Últimos 7 dias",
+                "ultimos_30d": "Últimos 30 dias",
+                "mais_de_30d": "Mais de 30 dias",
+            }.get(bucket_gus, bucket_gus)
+            pct = round(100 * cnt / total_gus, 1) if total_gus else 0
+            linhas.append(f"- **{label}:** {cnt} ({pct}%)")
+        if por_area_gus:
+            linhas.append("")
+            linhas.append("**Áreas (brain `gus`):**")
+            for area, cnt in sorted(por_area_gus.items(), key=lambda x: x[1], reverse=True):
+                pct = round(100 * cnt / total_gus, 1) if total_gus else 0
+                linhas.append(f"- **{area}:** {cnt} ({pct}%)")
 
     linhas += [
         "",
