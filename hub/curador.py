@@ -42,6 +42,13 @@ from hub.store import ingestar
 
 logger = logging.getLogger(__name__)
 
+# Versão dos prompts do curador. Sobe quando PROMPT_CURADOR ou
+# PROMPT_CURADOR_ARQUIVO mudar de forma que afete extração — permite
+# distinguir fragmentos de gerações diferentes no Hub via
+# `metadata.prompt_version`. Ex: comparar qualidade de extração antes/depois
+# de uma reformulação do prompt sem precisar reler logs.
+PROMPT_VERSION = "v1-2026-05-02"
+
 _openai_client: Optional[AsyncOpenAI] = None
 
 
@@ -171,19 +178,13 @@ def _extrair_json(texto: str) -> list[dict]:
     return []
 
 
-# Schema gus-18 — enums canônicos. Valores fora desses entram como default
-# em vez de poluir o vocabulário do Hub (modelo invocado às vezes inventa
-# tipos como "reflexivo" ou "importante" que quebram filtros depois).
-TIPOS_VALIDOS = {
-    "identidade_operacional", "biografico", "emocional", "decisao", "procedural",
-    "rotina", "meta_reflexao", "conexao_emergente", "episodico", "cronologico",
-    "fato", "preferencia", "lacuna", "projeto",
-}
-CAMADAS_VALIDAS = {"momento", "sessao", "semana", "rotina", "permanente"}
-AREAS_VALIDAS = {
-    "gus", "saude", "financeiro", "projetos", "pessoal", "dimagem", "pesquisa",
-    "receitas", "esportes",
-}
+# Enums canônicos importados do módulo único `hub.vocabularios` (item 1.1
+# do plano de saneamento — antes havia listas duplicadas que dessincronizavam).
+from hub.vocabularios import (
+    TIPOS_CANONICOS as TIPOS_VALIDOS,
+    CAMADAS_TEMPORAIS as CAMADAS_VALIDAS,
+    AREAS_CANONICAS as AREAS_VALIDAS,
+)
 
 
 def _validar_fragmento(frag: dict) -> Optional[dict]:
@@ -422,6 +423,7 @@ async def _curar_input_hibrido(
                         "curador": curador,
                         "hash_janela": hash_j,
                         "janela_turnos": janela_turnos,
+                        "prompt_version": PROMPT_VERSION,
                     },
                 )
                 salvos += 1

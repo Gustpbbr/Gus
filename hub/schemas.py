@@ -7,56 +7,22 @@ Claude Code, Curador) deve fornecer — campos de lifecycle (estado, peso,
 acessos, criado_em, ultimo_acesso) são preenchidos automaticamente em
 hub.store:ingestar.
 
-Validação `via` (Item 5 do plano):
-- Vias canônicas listadas em VIAS_CANONICAS
-- Aceita também prefixos:
-    - 'workflow-*' (workflows automáticos: briefing, retrospectiva, etc.)
-    - 'emergente:*' (vias novas em validação)
-- Qualquer outro valor → 422 Unprocessable Entity
+Vocabulários canônicos vivem em `hub.vocabularios` — fonte única.
 """
 
 from typing import Optional
 
 from pydantic import BaseModel, Field, field_validator
 
+from hub.vocabularios import (
+    CAMADAS_TEMPORAIS,
+    TIPOS_ESQUECIMENTO,
+    VIAS_CANONICAS,
+    via_valida,
+)
 
-# Tipos canônicos definidos em gus-18 (lista aberta — prefixo 'emergente:' aceito)
-TIPOS_CANONICOS = {
-    "identidade_operacional", "biografico", "emocional", "decisao",
-    "procedural", "rotina", "meta_reflexao", "conexao_emergente",
-    "episodico", "cronologico", "fato", "preferencia", "lacuna", "projeto",
-}
-
-CAMADAS_TEMPORAIS = {"momento", "sessao", "semana", "rotina", "permanente"}
-
-TIPOS_ESQUECIMENTO = {None, "funcional", "deliberado", "superado", "protegido"}
-
-AREAS_CANONICAS = {
-    "gus", "saude", "financeiro", "projetos", "pessoal",
-    "dimagem", "pesquisa", "receitas", "esportes",
-}
-
-# Vias canônicas (Item 5). Aceita também prefixos workflow-* e emergente:*.
-VIAS_CANONICAS = {
-    # Portas humanas (interação direta com Gustavo)
-    "telegram-claude", "telegram-gpt",
-    "claude-code", "claude-chat",
-    "custom-gpt", "alexa", "carro-audio",
-    # Casos especiais
-    "manual",     # entrada manual via Obsidian/CLI
-    "curador",    # quando o próprio curador atribui
-    "api",        # cliente API genérico (default IngestarReq)
-}
-
-
-def _via_valida(v: str) -> bool:
-    if v in VIAS_CANONICAS:
-        return True
-    if v.startswith("workflow-") and len(v) > len("workflow-"):
-        return True
-    if v.startswith("emergente:") and len(v) > len("emergente:"):
-        return True
-    return False
+# Re-exports pra retrocompat de quem ainda importava de hub.schemas
+_via_valida = via_valida
 
 
 class IngestarReq(BaseModel):
@@ -97,8 +63,8 @@ class IngestarReq(BaseModel):
     @field_validator("tipo_esquecimento")
     @classmethod
     def _v_esq(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None and v not in {"funcional", "deliberado", "superado", "protegido"}:
-            raise ValueError(f"tipo_esquecimento inválido: '{v}'")
+        if v is not None and v not in TIPOS_ESQUECIMENTO:
+            raise ValueError(f"tipo_esquecimento inválido: '{v}'. Aceitos: {sorted(TIPOS_ESQUECIMENTO)} ou null.")
         return v
 
 
