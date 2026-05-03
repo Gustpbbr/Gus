@@ -290,7 +290,7 @@ def _render_prompt(template: str, via: str, input_texto: str) -> str:
     Format() pega o trecho entre o primeiro `{` e o próximo `}` e tenta usar
     como chave (`\\n    "conteudo"`), explodindo com KeyError. Esse bug fez o
     curador errar 100% das chamadas a partir de 30/04/2026 (todos logs em
-    `_log/resumos-mem0/AAAA-MM-DD.md` mostram só `status: erro`).
+    `_log/curador/AAAA-MM-DD.md` mostram só `status: erro`).
 
     Replace() é robusto contra braces JSON literais.
     """

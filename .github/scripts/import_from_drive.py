@@ -44,8 +44,8 @@ PORTAS_VALIDAS = {"claude-chat", "tiogu", "claude-code", "custom-gpt", "gustavo"
 INBOXES = ["inbox-tiogu", "inbox-claude-code", "inbox-claude-chat", "inbox-custom-gpt"]
 # Inboxes que recebem qualquer .md (sem frontmatter), usadas pra captura
 # bruta. Não validam, mas movem pra processados/ pra não reprocessar.
-# Conteúdo é processado por outro cron downstream (ex: ingest-mem0-from-chat).
-INBOXES_RAW = ["inbox-mem0-from-chat"]
+# Conteúdo é processado por outro cron downstream (ex: ingest-chat-raw).
+INBOXES_RAW = ["inbox-chat-raw"]
 PROCESSADOS_FOLDER = "processados"
 PROCESSADOS_ERRO_FOLDER = "processados-erro"
 
@@ -341,9 +341,9 @@ def processar_demanda_inbox(drive, repo, gh_token, f, inbox, processados_id, pro
 
 
 def processar_inbox_raw(drive, repo, gh_token, f, inbox, processados_id):
-    """Modo inbox raw: arquivo em inbox_RAW/ (ex: inbox-mem0-from-chat) — não tem
+    """Modo inbox raw: arquivo em inbox_RAW/ (ex: inbox-chat-raw) — não tem
     frontmatter formal, mas precisa ser movido pra processados/ pra não
-    reprocessar. Cron downstream (ex: ingest-mem0-from-chat) processa o conteúdo.
+    reprocessar. Cron downstream (ex: ingest-chat-raw) processa o conteúdo.
     Retorna 'imported' | 'skipped' | 'error'."""
     file_id = f["id"]
     file_name = f["name"]

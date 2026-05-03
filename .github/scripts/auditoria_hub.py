@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Auditoria do Mem0 — gera `_indices/_auditoria-mem0.md` com visão curada do estado
+Auditoria do Hub — gera `_indices/_auditoria-hub.md` com visão curada do estado
 da memória do Gus. Base pra SELF-1 e pra perguntas diretas do bot.
 
 Computa:
@@ -26,7 +26,7 @@ from _hub_compat import get_all_memorias
 
 USER_ID = "gustavo"
 BRT = timezone(timedelta(hours=-3))
-OUTPUT_PATH = "_indices/_auditoria-mem0.md"
+OUTPUT_PATH = "_indices/_auditoria-hub.md"
 # Nota: este arquivo NÃO é meta-memória do Gus. É auditoria do armazém de
 # memórias SOBRE O GUSTAVO (Mem0). Meta-memória (do próprio Gus) mora em
 # gus/meta-memoria.md.
@@ -243,7 +243,7 @@ def main():
         "",
         "Análise automática e determinística do estado do armazém de memórias "
         "SOBRE O GUSTAVO (Mem0). Gerada diariamente via GitHub Action "
-        "(`auditoria_mem0.py`). Sem LLM — heurística baseada em keywords e "
+        "(`auditoria_hub.py`). Sem LLM — heurística baseada em keywords e "
         "similaridade Jaccard.",
         "",
         "**Não confundir com meta-memória do Gus** (`gus/meta-memoria.md`), "
@@ -315,7 +315,7 @@ def main():
     linhas += [
         "",
         "## Uso",
-        "- Bot consulta este arquivo via tool `auditoria_mem0()` quando o Gustavo pergunta sobre o estado das suas próprias memórias no Mem0.",
+        "- Bot consulta este arquivo via tool `auditoria_hub()` quando o Gustavo pergunta sobre o estado das suas próprias memórias no Mem0.",
         "- Não confundir com `meta_memoria()`, que retorna `gus/meta-memoria.md` (auto-conhecimento do Gus).",
         "- SELF-1 (reflexão quinzenal) usa este arquivo pra contextualizar Nosis e Thymos com o estado do armazém de memórias sobre o Gustavo.",
         "- Atualização automática — não editar manualmente.",

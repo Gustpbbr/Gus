@@ -26,12 +26,12 @@ jobs:
         env:
           QDRANT_URL: ${{ secrets.QDRANT_URL }}
           QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
-        run: python .github/scripts/auditoria_mem0.py
+        run: python .github/scripts/auditoria_hub.py
 
       - name: Commit and push if changed
         run: |
           git config user.name "gus-bot"
           git config user.email "gus-bot@users.noreply.github.com"
-          git add _indices/_auditoria-mem0.md
+          git add _indices/_auditoria-hub.md
           git diff --staged --quiet || git commit -m "auto: auditoria Mem0 ($(date +%Y-%m-%d))"
           git push
