@@ -11,17 +11,24 @@ name: Auto-issue on cron failure
 
 on:
   workflow_run:
+    # IMPORTANTE: nomes precisam bater com o `name:` no header de cada workflow.
+    # Confira com `grep -h "^name:" .github/workflows/*.yml` antes de editar.
     workflows:
       - "Archive completed demandas"
-      - "Auditoria Mem0"
+      - "Auditoria Mem0 diária"
       - "Briefing matinal"
-      - "Check saúde"
-      - "Export Mem0"
-      - "Gerar estado Claude Chat"
+      - "Check de saúde diário"
+      - "Curador Claude Code (cron)"
+      - "Export Mem0 diário"
+      - "Full Sync MD to Google Drive"
+      - "Gerar estado atual pro Claude Chat"
       - "Import demandas from Drive"
       - "Ingest Mem0 from Claude Chat"
-      - "Reflexão quinzenal"
+      - "Notificar inbox-tiogu"
+      - "Reflexão quinzenal (SELF-1)"
       - "Retrospectiva semanal"
+      - "Sync MD to Google Drive"
+      - "Sync auto-generated docs"
     types: [completed]
 
 permissions:

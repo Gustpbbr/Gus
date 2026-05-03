@@ -146,11 +146,13 @@ def sync_file(service, local_path, root_folder_id):
 
 
 def main():
-    if not os.environ.get("GOOGLE_REFRESH_TOKEN") or not os.environ.get("DRIVE_ROOT_FOLDER_ID"):
-        print("Credenciais ou DRIVE_ROOT_FOLDER_ID não configurados. Sync pulado.")
+    if not os.environ.get("DRIVE_ROOT_FOLDER_ID"):
+        print("DRIVE_ROOT_FOLDER_ID ausente. Sync pulado.")
         sys.exit(0)
 
     root_folder_id = os.environ["DRIVE_ROOT_FOLDER_ID"]
+    # _drive_auth.get_drive_service() decide a estratégia (WIF > SA JSON > OAuth);
+    # se nenhuma disponível, levanta SystemExit.
     service = get_drive_service()
     full_sync = os.environ.get("FULL_SYNC", "").lower() == "true"
 
@@ -164,13 +166,18 @@ def main():
             sys.exit(0)
         print(f"Sincronizando {len(files)} arquivo(s) alterado(s)...")
 
+    erros = 0
     for file_path in files:
         print(f"\n→ {file_path}")
         try:
             sync_file(service, file_path, root_folder_id)
         except Exception as e:
             print(f"  ERRO: {e}")
+            erros += 1
 
+    if erros:
+        print(f"\nSync terminou com {erros} erro(s) de {len(files)} arquivo(s).")
+        sys.exit(1)
     print("\nSync completo.")
 
 
