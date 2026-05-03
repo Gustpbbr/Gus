@@ -376,7 +376,7 @@ TOOLS = [
             "si mesmo (quem é, como evolui, o que aprendeu sobre si, limitações conscientes, "
             "reflexões). Use quando o Gustavo perguntar sobre o Gus enquanto entidade, "
             "identidade do bot, capacidades com nuances, aprendizados. Não confundir "
-            "com `auditoria_mem0()` (stats das memórias sobre o Gustavo). Dados vêm de "
+            "com `auditoria_hub()` (stats das memórias sobre o Gustavo). Dados vêm de "
             "`gus/meta-memoria.md`."
         ),
         "input_schema": {
@@ -459,13 +459,13 @@ TOOLS = [
         }
     },
     {
-        "name": "auditoria_mem0",
+        "name": "auditoria_hub",
         "description": (
             "Retorna a auditoria do armazém de memórias — estatísticas do Hub Qdrant "
             "SOBRE O GUSTAVO (quantas, por área, frescor, duplicatas suspeitas, gaps). "
             "Use quando o Gustavo perguntar sobre o estado das memórias dele, do que tem "
             "registrado, se há duplicatas, onde tem gap. Não confundir com `meta_memoria()` "
-            "(auto-conhecimento do Gus). Dados vêm de `_indices/_auditoria-mem0.md` "
+            "(auto-conhecimento do Gus). Dados vêm de `_indices/_auditoria-hub.md` "
             "atualizado diariamente pelo cron (nome legado, mas o conteúdo já é do Hub)."
         ),
         "input_schema": {
@@ -1097,8 +1097,8 @@ async def executar_tool(name: str, inputs: dict) -> str:
         )
     elif name == "meta_memoria":
         return await _read_from_github("gus/meta-memoria.md")
-    elif name == "auditoria_mem0":
-        return await _read_from_github("_indices/_auditoria-mem0.md")
+    elif name == "auditoria_hub":
+        return await _read_from_github("_indices/_auditoria-hub.md")
     elif name == "salvar_memoria_gus":
         return await salvar_observacao_gus(inputs["observacao"])
     elif name == "buscar_memoria_gus":

@@ -166,7 +166,7 @@ async def _resumir_e_salvar(chat_id: str, trecho: list[dict]) -> None:
          classificados (tipo, area, camada_temporal). Ambos salvam no
          Hub Qdrant (gus_hub) com metadata.curador distinta + mesmo
          hash_janela (permite parear pra comparação de qualidade).
-      2. Loga UMA entrada por curador no _log/resumos-mem0/AAAA-MM-DD.md
+      2. Loga UMA entrada por curador no _log/curador/AAAA-MM-DD.md
          (mesmo hash_janela visível no Obsidian → comparação lado a lado).
       3. Se hub.curador falhar globalmente (import error ou exceção fora
          do gather interno), fallback pro caminho legado Mem0

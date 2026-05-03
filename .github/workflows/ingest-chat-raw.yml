@@ -36,4 +36,4 @@ jobs:
           # haiku/mini default. Custo extra desprezível dado o volume.
           MODEL_CURADOR_ANTHROPIC: claude-sonnet-4-6
           MODEL_CURADOR_OPENAI: gpt-4o
-        run: python .github/scripts/ingest_mem0_from_chat.py
+        run: python .github/scripts/ingest_chat_raw.py

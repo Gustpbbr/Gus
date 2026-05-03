@@ -3,7 +3,7 @@
 Ingest de memórias geradas pelo Claude Chat → Hub Qdrant (via Curador híbrido).
 
 Fluxo (cron 30min):
-  1. Lista .md em dialogos/inbox-mem0-from-chat/ (skip processados/)
+  1. Lista .md em dialogos/inbox-chat-raw/ (skip processados/)
   2. Pra cada arquivo:
      a. Parse frontmatter + body
      b. Curador bidirecional roda 2x sobre o mesmo body:
@@ -12,7 +12,7 @@ Fluxo (cron 30min):
         Cada chamada é o curador híbrido (Haiku + GPT em paralelo). Total:
         4 conjuntos de fragmentos no Hub por arquivo.
      c. Move arquivo pra processados/AAAA-MM/
-     d. Append linha em _log/resumos-mem0/AAAA-MM-DD.md por (curador, brain)
+     d. Append linha em _log/curador/AAAA-MM-DD.md por (curador, brain)
         com mesmo hash_janela permitindo parear no Obsidian.
   3. git commit + push das mudanças
 
@@ -53,10 +53,10 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
 BRT = timezone(timedelta(hours=-3))
-INBOX = Path("dialogos/inbox-mem0-from-chat")
+INBOX = Path("dialogos/inbox-chat-raw")
 PROCESSADOS = INBOX / "processados"
 PROCESSADOS_ERRO = INBOX / "processados-erro"
-LOG_DIR = Path("_log/resumos-mem0")
+LOG_DIR = Path("_log/curador")
 
 
 def parse_frontmatter(content: str) -> tuple[dict | None, str]:
@@ -85,7 +85,7 @@ def append_log(
     body_preview: str,
     motivo: str = "",
 ) -> None:
-    """Loga uma entrada no MD diário do _log/resumos-mem0/.
+    """Loga uma entrada no MD diário do _log/curador/.
 
     Formato compatível com o bot Telegram pós-Fase 2 (uma entrada por curador
     com mesmo hash_janela permite parear no Obsidian).
@@ -99,7 +99,7 @@ def append_log(
         log_path.write_text(
             f"---\ndata: {hoje}\n"
             f"fonte: ingest claude-chat (Hub Curador híbrido Anthropic+OpenAI)\n"
-            f"tipo: log-resumos-mem0\n---\n\n# Resumos pro Hub — {hoje}\n\n",
+            f"tipo: log-curador\n---\n\n# Resumos pro Hub — {hoje}\n\n",
             encoding="utf-8",
         )
 
@@ -167,9 +167,9 @@ def mover_pra_processados_erro(arquivo: Path, motivo: str) -> Path:
 def git_commit_push(mensagem: str) -> None:
     subprocess.run(["git", "config", "user.name", "gus-bot"], check=True)
     subprocess.run(["git", "config", "user.email", "gus-bot@users.noreply.github.com"], check=True)
-    # -A em dialogos/inbox-mem0-from-chat captura processados/, processados-erro/
+    # -A em dialogos/inbox-chat-raw captura processados/, processados-erro/
     # e remove os arquivos movidos do inbox. Inclui _log/ pra registro auditável.
-    subprocess.run(["git", "add", "-A", "dialogos/inbox-mem0-from-chat", "_log/resumos-mem0"], check=True)
+    subprocess.run(["git", "add", "-A", "dialogos/inbox-chat-raw", "_log/curador"], check=True)
     diff = subprocess.run(["git", "diff", "--staged", "--quiet"]).returncode
     if diff == 0:
         log.info("Nada pra commitar")
@@ -214,7 +214,7 @@ def main() -> None:
         if f.is_file() and PROCESSADOS not in f.parents and not f.name.startswith("_README")
     )
     if not arquivos:
-        log.info("Nenhum arquivo novo em inbox-mem0-from-chat/")
+        log.info("Nenhum arquivo novo em inbox-chat-raw/")
         return
 
     log.info(f"{len(arquivos)} arquivo(s) a processar")

@@ -10,7 +10,7 @@ Sonnet substituído por GPT-4o-mini — curador atual roda Anthropic + OpenAI.
 Esse módulo registra TODOS os eventos (sucesso, descarte, erro, fallback)
 num MD diário no repo, pra o Gustavo auditar no Obsidian.
 
-PATH: _log/resumos-mem0/AAAA-MM-DD.md
+PATH: _log/curador/AAAA-MM-DD.md
 
 FORMATO (atualizado Fase 2.5 — gus-29 trocou Sonnet por GPT-4o-mini):
 ---
@@ -55,7 +55,7 @@ from gus.tools import _read_from_github, _save_to_github
 logger = logging.getLogger(__name__)
 BRT = timezone(timedelta(hours=-3))
 
-PASTA = "_log/resumos-mem0"
+PASTA = "_log/curador"
 
 
 def _formatar_entrada(
