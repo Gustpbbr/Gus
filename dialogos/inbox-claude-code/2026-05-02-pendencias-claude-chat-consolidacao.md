@@ -3,13 +3,18 @@ tipo: demanda
 origem: gustavo
 destino: claude-code
 prioridade: alta
-status: pendente
+status: parcial
 criado_em: 2026-05-02T00:50:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: 2026-05-03T20:15:00-03:00
+processado_por: claude-code
 acao_sugerida: criar_novo
 destino_path: multiplo
 contexto: "Consolida pendências relacionadas à porta Claude Chat discutidas na sessão Code de 30/04-02/05. Inclui ativação de URL secret no MCP, recadastro de Connector, decisões da Fase 2 NeuroGus, captura em tempo real (Opção A) e sync Drive. Cobre 6 fronts; cada um com seção própria + leituras necessárias + critério de resolução."
+status_parcial:
+  - "#1 (URL secret) ✅ feito 02/05/2026"
+  - "#2 (Recadastrar Connector) ✅ feito 02/05/2026"
+  - "#3 (mock HTML NeuroGus) — pendente Gustavo"
+  - "#4 (decisões §11.3-11.5 NeuroGus) — pendente Gustavo"
 ---
 
 # Demanda — Pendências Claude Chat (consolidação)
@@ -21,12 +26,12 @@ Chat (originalmente 6 — itens 5 e 6 resolvidos por outras frentes em
 03/05). Próxima aba pode atacar em qualquer ordem — são **independentes**,
 mas todas dependem de **decisão do Gustavo antes** de codar.
 
-| # | Pendência | Bloqueio | Quem decide / faz |
-|---|---|---|---|
-| 1 | Ativar `MCP_URL_SECRET` no Railway | Hub MCP atualmente público | **Gustavo** (operacional Railway) |
-| 2 | Recadastrar Connector claude.ai com URL nova `/<secret>/mcp` | Depende do #1 | **Gustavo** (UI claude.ai) |
-| 3 | Localizar mock HTML NeuroGus no Drive Claude Chat 28/04 | Bloqueia Fase 2 frontend | **Gustavo** (10min — abrir sessão Chat antiga) |
-| 4 | Decidir `?token=` URL, auto-orbit, reconnect SSE (§11.3-11.5) | Bloqueia Fase 2 frontend | **Gustavo** (decisões de design) |
+| # | Pendência | Bloqueio | Quem decide / faz | Estado |
+|---|---|---|---|---|
+| 1 | Ativar `MCP_URL_SECRET` no Railway | Hub MCP atualmente público | **Gustavo** (operacional Railway) | ✅ feito 02/05/2026 |
+| 2 | Recadastrar Connector claude.ai com URL nova `/<secret>/mcp` | Depende do #1 | **Gustavo** (UI claude.ai) | ✅ feito 02/05/2026 |
+| 3 | Localizar mock HTML NeuroGus no Drive Claude Chat 28/04 | Bloqueia Fase 2 frontend | **Gustavo** (10min — abrir sessão Chat antiga) | ⏳ pendente |
+| 4 | Decidir `?token=` URL, auto-orbit, reconnect SSE (§11.3-11.5) | Bloqueia Fase 2 frontend | **Gustavo** (decisões de design) | ⏳ pendente |
 
 ---
 
