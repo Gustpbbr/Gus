@@ -37,7 +37,7 @@ from typing import Optional
 
 from openai import AsyncOpenAI
 
-from gus.llm import _chamar_claude_com_retry
+from gus.llm import chamar_claude_com_retry
 from hub.store import ingestar
 
 logger = logging.getLogger(__name__)
@@ -316,7 +316,7 @@ async def _extrair_via_modelo(
     """
     prompt = _render_prompt(prompt_template, via, input_texto)
     try:
-        response = await _chamar_claude_com_retry(
+        response = await chamar_claude_com_retry(
             model=modelo,
             max_tokens=2048,
             system_prompt=prompt,
