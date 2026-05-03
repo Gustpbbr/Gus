@@ -1,0 +1,574 @@
+user: oi Gus, blz?
+assistant: oi, blz. tô aqui na branch `claude/initial-setup-iWTfL`, com 6 demandas pendentes em `dialogos/inbox-claude-code/` (algumas com nome quebrado — "Documento sem título.md" provavelmente é lixo de sync).
+
+quer que eu processe as demandas, ou tem algo específico em mente?
+user: enha um panorama geral do projeto. segue um guia para vc ver. depois vamos focar em um assunto específico, mas te falo apos vc ler tudo necessário do projeto. segue uma dica de outra aba do code. analise tudo, e busque tbm as últimas atualizações do projeto q nao estao no texto abaixo citado
+Aqui vai a receita ordenada por valor por contexto. Foco: mínimo necessário pra não inflar contexto à toa.
+Core obrigatório (sempre, em toda aba nova)
+Arquivo
+Pra quê
+dialogos/_bootstrap/[gus-bootstrap.md](http://gus-bootstrap.md)
+manual operacional do Gus, regras de comportamento, como cada porta usa o Hub
+dialogos/_bootstrap/[gus-identity.md](http://gus-identity.md)
+quem é o Gustavo + quem é o Gus enquanto entidade
+dialogos/_bootstrap/[gus-estado-atual.md](http://gus-estado-atual.md)
+handoff auto-gerado pelo cron 03h, snapshot do Hub
+projetos/gus/_[estado-atual.md](http://estado-atual.md)
+onde paramos na sessão anterior (mais "operacional" que o bootstrap)
+Esses 4 dão 80% do contexto pra qualquer aba nova.
+Live — preferir sobre arquivo
+Se a aba tem MCP gus-hub conectado:
+ego_cache_atual() — identidade + últimas 3 decisões + 5 meta-reflexões
+fragmentos_recentes(horas=24) — o que rolou desde ontem
+contar_fragmentos() — sanity check
+Hub é mais fresco que [gus-estado-atual.md](http://gus-estado-atual.md) (que é snapshot das 03h). Sempre que possível, prefira tools MCP a arquivo .md.
+Específicos do contexto da pergunta
+Só ler se a conversa for sobre:
+Tema
+Arquivo
+Próximos passos / NeuroGus
+projetos/gus/[gus-08-plano-proximos-passos.md](http://gus-08-plano-proximos-passos.md), projetos/gus/[gus-30-neurogus-roadmap.md](http://gus-30-neurogus-roadmap.md)
+Caminho Alexa
+projetos/gus/[gus-10-caminho-alexa.md](http://gus-10-caminho-alexa.md)
+MCP / [claude.ai](http://claude.ai) connector
+projetos/gus/[gus-28-passo2-mcp-server.md](http://gus-28-passo2-mcp-server.md)
+Roteamento multi-modelo
+projetos/gus/[gus-29-roteamento-multimodelo-tiogu.md](http://gus-29-roteamento-multimodelo-tiogu.md)
+Hub Qdrant arquitetura
+projetos/gus/[gus-18-schema-indexacao.md](http://gus-18-schema-indexacao.md), [gus-20-etapa2-hub-qdrant.md](http://gus-20-etapa2-hub-qdrant.md), [gus-21-etapa3-curador.md](http://gus-21-etapa3-curador.md)
+Decisão migração ADR-001
+projetos/gus/[gus-15-decisao-migracao.md](http://gus-15-decisao-migracao.md)
+Demanda da semana
+dialogos/streams/[semana-2026-04-21.md](http://semana-2026-04-21.md) (último arquivo da pasta)
+Demandas pendentes pra essa porta
+dialogos/inbox-/
+O que NÃO precisa ler
+gus-01 a gus-09 (a não ser por curiosidade arqueológica — bootstrap já resume)
+pessoal/, dimagem/, receitas/ etc. — só sob demanda explícita
+historico/ — pasta morta de conteúdo legado
+Logs antigos (>3 dias)
+_log/sessoes-claude-code/ — arquivos longos de transcript
+Truque pra Claude Chat web
+Como ele lê via Drive Project knowledge, o boot dele já tem [gus-bootstrap.md](http://gus-bootstrap.md) como project instruction. Aí ele só precisa fazer:
+Ler [gus-estado-atual.md](http://gus-estado-atual.md) (snapshot 03h)
+Chamar ego_cache_atual() via MCP gus-hub (estado vivo)
+Pra Claude Code, o [CLAUDE.md](http://CLAUDE.md) na raiz é auto-injetado em toda sessão — então já cobre o "core obrigatório".
+Quer que eu padronize isso num arquivo dialogos/_bootstrap/[checklist-boot-aba-nova.md](http://checklist-boot-aba-nova.md) pra deixar canonizado?
+Ah, entendi mal. PRs são histórico, não documentação — uma aba nova não precisa ler nenhum.
+Por que não
+O estado final dos PRs já tá no código + nos docs gus-XX atualizados
+PRs descrevem o caminho, não onde a gente tá. Nova aba quer onde tamo.
+60 PRs = ruído gigante no contexto pra ganho zero
+Quando vale olhar PR
+Situação
+Qual PR
+"Por que esse arquivo tá assim?"
+git log --oneline  → abre o PR específico
+"O que mudou hoje?"
+Lista PRs mergeados nas últimas 24h: gh pr list --state merged --limit 10
+Bug recente
+PR mais recente que tocou o código quebrado
+Decisão arquitetural não-óbvia
+PR description costuma ter o "porquê"
+Boa prática
+O que tem que ficar nos docs (não nos PRs):
+Decisões arquiteturais → ADR (gus-15 é exemplo)
+Como configurar algo → gus-XX-setup
+Estado atual do projeto → gus-26-status-consolidado, _estado-atual
+Se um PR precisa ser lido pra entender o presente, é sinal de doc desatualizado — não de PR importante.
+Receita
+Aba nova só precisa olhar PRs se:
+Você falar "tá quebrando X depois do PR #YY" → aí sim, lê o PR
+Investigar bug específico no código mexido recentemente
+Senão, esquece os 60. Os 7 docs do checklist anterior te dão o estado atual.
+assistant: Li tudo. Panorama:
+
+## O que é o Gus
+Sistema de agente pessoal multi-porta (Telegram/TioGu, Claude Code, Claude Chat, futuras: Custom GPT mobile, Alexa). Memória central no **Hub Qdrant** (`gus_hub`), arquivos .md no GitHub (`Gustpbbr/Gus`), espelhados no Drive. Gustavo é anestesiologista, não programa — toda implementação passa por mim/Tiogu.
+
+## Estado de migração
+**ADR-001** em curso: aposentar Mem0 SaaS, Hub Qdrant é fonte da verdade. Coleta dual de modelos no curador (Haiku × GPT-4o-mini, mudou de Sonnet em 29/04 por custo/resiliência) termina **12/05/2026** — depois Gustavo escolhe modelo definitivo, fase 5 remove fallback Mem0.
+
+## Fronts ativos (do `_estado-atual.md` + PRs recentes)
+
+**TioGu (Fase 1 saneamento — concluída, PR #73):** 163 testes verdes, PII no output redatado, byte budget no cache, hygiene em `bot.py/llm.py/memory.py`. Próximo: Fase 2A docs, Fase 2B reescrita do `system_prompt.md`, Fase 4 split de `bot.py/tools.py`.
+
+**Claude Chat (auditoria — PR #72 mergeado):** 12 fixes de 31 achados. Bug crítico do curador (`format()` falhando 100% desde 30/04 com KeyError no JSON literal) corrigido. MCP fail-closed default. Whitelist user_id. Validação enum gus-18.
+
+**Pendências Gustavo (operacional):**
+- Setar `MCP_URL_SECRET` no Railway + recadastrar Connector claude.ai (privacidade)
+- Decidir Drive sync (OAuth quebrado desde 01/05 14:38Z)
+- 4+ memórias poluídas pra deletar manualmente
+
+**NeuroGus (gus-30) bloqueado:** decisões UX 11.1-11.5 + mock HTML do 28/04. Backend SSE pronto pra começar.
+
+## Atualizações desde o `_estado-atual.md` (que é de 02/05 01:36)
+
+PRs mergeados depois disso, não documentados ainda:
+
+| PR | O que entrou |
+|---|---|
+| #74 | testes de regressão do curador (bug `format()` + validadores enum) |
+| #76 | feat(drive): WIF + inbox-mem0-from-chat raw |
+| #77 | chore(cleanup): renomeia legacy `mem0` → `curador`/`hub` |
+| #79 | feat(drive): `inbox-gustavo/<porta>/` — captura por origem com auto-frontmatter |
+| #80 | fix(mcp,security): não logar `MCP_URL_SECRET` + pattern de redação |
+
+Importações recentes pelo Drive: 3 arquivos novos em `inbox-tiogu/` (origem claude-chat) sobre ingestão de exames no Hub e protocolo truncado.
+
+## Demandas no inbox-claude-code (6 listadas, mas...)
+- 3 demandas reais: captura multiporta, curador bidirecional cron, drive-sync OAuth
+- 1 guarda-chuva: pendências Chat consolidadas (6 fronts)
+- "Documento sem título.md" = só agradecimento do Gustavo, não é demanda
+- "_frontmatter-referencia.md" = template, não demanda
+
+Pode mandar o foco específico.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado e pushado pra `claude/greeting-checkin-EHt9Z`. Era só o log do retro-engine auto-gerado (no-op por falta de `ANTHROPIC_API_KEY` no ambiente, comportamento conhecido).
+user: Continue from where you left off.
+assistant: No response requested.
+user: vc vai focar nas memorias e Hub. atue como um auditor profissional e imparcial, e detalhe os principais pontos desse assunto
+assistant: Vou auditar a stack de memória end-to-end. Lendo código + docs em paralelo.
+assistant: # Auditoria — Memórias e Hub Qdrant
+
+**Escopo:** stack de memória end-to-end (`hub/`, `gus/memory.py`, `.github/scripts/curador_*`, `ingest_chat_raw.py`, `auditoria_hub.py`, `migrar_gus_para_hub.py`, MCP `mem0_server.py`, schemas Pydantic, cron workflows).
+**Método:** leitura crítica de código + comparação contra contrato gus-18 + cross-check com auditoria existente (`projetos/gus/auditorias/2026-05-02-chat.md`) pra não redobrar.
+**Posição:** auditor independente. Não estou propondo fixes ainda — só listando o que vi.
+
+---
+
+## Resumo executivo
+
+A stack está em **estado intermediário arriscado**: Hub Qdrant (`gus_hub`) é a fonte nova, mas a coleção legada `gus` (Mem0 self-hosted) tem ~204 fragmentos não-migrados e o código de leitura em `gus/memory.py` ainda faz fallback pra ela. Há **3 produções simultâneas** de fragmentos (Telegram, Chat, Code) com **4× multiplicação de chamadas LLM** por unidade de input (Haiku × GPT × {gustavo, gus}) e **sem mecanismo de dedup**. O contrato schema gus-18 está parcialmente implementado: lifecycle (`peso`, `acessos`, promoção `ativo→estavel`, `tipo_esquecimento`) é **declarado mas não executado**. A auditoria diária (`auditoria_hub.py`) é **cega para o brain `gus`** e classifica por keywords ignorando o `area` que o curador já preencheu. Há ainda inconsistências de vocabulário `via` entre doc, Pydantic schema, MCP e curador.
+
+**Severidade global:** 🟠 **alto.** Sistema funcional pra captura, mas com débitos que vão estourar quando volume crescer (NeuroGus, Alexa) e com risco moderado de perda silenciosa / poluição cross-brain hoje.
+
+---
+
+## Mapa do sistema (estado em 02/05/2026)
+
+```
+                                     ENTRADAS
+                                        │
+   ┌────────────┬──────────────┬───────┴──────────┬─────────────────┐
+   │  Telegram  │ Claude Chat  │  Claude Code     │  MCP claude.ai  │
+   │  (TioGu)   │  (.md upload)│  (transcript     │  (gus-hub       │
+   │            │              │   .jsonl cron)   │   Connector)    │
+   └─────┬──────┴──────┬───────┴────────┬─────────┴────────┬────────┘
+         │             │                │                  │
+   gus.memory.    ingest_chat_raw   curador_claude_  hub MCP server
+   salvar_mems    + curar_arquivo   code + curar_arq Railway
+         │             │                │                  │
+         │      ┌──────┴────────────────┴──────┐           │
+         │      │ HUB CURADOR HÍBRIDO          │           │
+         │      │ Haiku + GPT-4o-mini paralelo │           │
+         │      │ × 2 brains (gustavo+gus)     │           │
+         │      │ = 4 chamadas LLM por input   │           │
+         │      └──────────────┬───────────────┘           │
+         │                     │                           │
+         └─────────────────────▼───────────────────────────┘
+                          hub.store.ingestar
+                                │
+                       ┌────────▼─────────┐
+                       │ Qdrant Cloud     │
+                       │ ─ gus_hub (novo) │  ← lê: lembrar/scroll
+                       │ ─ gus (legado    │  ← fallback Mem0 SaaS
+                       │   ~204 mems)     │
+                       └──────────────────┘
+                                │
+                                ▼
+                        SAÍDAS / LEITURA
+   buscar_memorias (MCP) │ ego_cache │ auditoria diária │ briefing
+   bot Telegram tools    │ NeuroGus  │ retrospectiva    │ etc
+```
+
+3 caminhos de escrita coexistem com regras parcialmente compatíveis.
+
+---
+
+## Achados por severidade
+
+### 🔴 Crítico — bloqueia ou corrompe silenciosamente
+
+#### M-CRIT-1 · Bidirecional cria 4× custo + risco alto de cross-brain pollution
+`ingest_chat_raw.py:250` e `curador_claude_code.py:72` rodam o curador **2 vezes** sobre o mesmo body, mudando só o `user_id`. Internamente cada chamada já é Haiku + GPT em paralelo (`_curar_input_hibrido`). Resultado: **4 chamadas de LLM** com o **MESMO prompt** (`PROMPT_CURADOR_ARQUIVO`) por arquivo.
+
+O prompt **não diferencia** `gustavo` vs `gus` — é literalmente o mesmo texto. A separação só acontece no `user_id` passado pra `ingestar()`. Logo, o brain `gus` (autobiografia do agente) recebe os mesmos fragmentos sobre o Gustavo, classificados igual.
+
+**Evidência:** `hub/curador.py:232-282` — único template `PROMPT_CURADOR_ARQUIVO`. Não há prompt distinto que diga "extraia só meta-observações sobre o agente" pro brain gus.
+
+**Impacto:** ARCH-2 da auditoria de 02/05 já marcou pendente. Em volume crescente, brain `gus` vira cópia ruidosa do brain `gustavo`. Buscar identidade do Gus retorna fato sobre Gustavo.
+
+---
+
+#### M-CRIT-2 · Lifecycle do schema gus-18 declarado mas não implementado
+gus-18 promete:
+- `peso` sobe com acessos, desce com tempo
+- `confirmacoes` incrementa quando fragmento é validado
+- `acessos` incrementa em busca
+- `ultimo_acesso` atualiza em busca
+- Promoção automática `ativo → estavel` após 30d + ≥2 acessos
+- `tipo_esquecimento=protegido` nunca é sobrescrito
+
+Realidade do código:
+- `hub/store.py:140-152` — `ingestar` define `peso=0.5, confirmacoes=0, acessos=0` e nunca atualiza
+- `hub/store.py:179-200` — `lembrar` faz `query_points` e retorna sem nenhum `client.set_payload` ou update de `ultimo_acesso`/`acessos`
+- Não existe job/cron de promoção `ativo → estavel`
+- `tipo_esquecimento` é aceito no Pydantic schema mas `lembrar()` filtra só por `estado`, ignorando esquecimento
+
+**Consequência prática:** todo fragmento fica `estado="ativo"` pra sempre. **`ego_cache()` em `hub/store.py:222-227` busca `estado="estavel"` em `identidade_operacional` e `procedural` — retorna sempre vazio em produção.** Componente da Etapa 4 (gus-22) está estruturalmente quebrado.
+
+---
+
+#### M-CRIT-3 · Coleção legada `gus` ainda viva, fallback Mem0 ativo em leitura/delete
+`gus/memory.py:114-128` e `:262-268` ainda fazem fallback pro Mem0 SaaS (coleção `gus`). Comentário em `_estado-atual.md` confirma que `migrar_gus_para_hub.py` é **dispatch manual e não foi rodado ainda** ("Disparar workflow `Migrar gus → gus_hub` se ainda não rodou — preenche Hub com 204 mems históricas").
+
+**Riscos:**
+1. **Buscas inconsistentes** — Hub `lembrar` retorna primeiro; se vazio, cai no Mem0. Conjuntos de resposta variam entre chamadas se Hub for ocioso.
+2. **Deletar_memoria com fallback** — se ID for híbrido (UUID Hub vs ID Mem0), o sistema tenta os dois. Operador acha que deletou só do Hub mas pode ter falhado nos dois ou só num.
+3. **Poluição persistente** — qualquer fragmento criado **antes** da migração e **depois** da Fase 3 vai existir só na coleção antiga, fora do Hub novo.
+
+---
+
+### 🟠 Alto — comprometem confiabilidade ou auditabilidade
+
+#### M-ALTO-1 · Dedup ausente, cron `ingest_chat_raw` documenta risco aceito
+`ingest_chat_raw.py:21` literalmente: *"Se Hub falhar antes do move, próxima rodada tenta de novo (pode duplicar — risco baixo dado o volume)"*. **Não há checagem de `hash_janela` antes de ingestar
+
+[…transcript truncado…]
+
+## Minha recomendação: **Opção 1**
+
+Razão: itens 1.1-1.4 são tão isolados que estragar algo é improvável, e pra revisão você só precisa olhar diff por diff. Nada acoplado a runtime crítico até 1.6. Fica fácil você abrir o PR e dar scroll pra ver o que mudou em cada commit.
+
+**Mas tem um caveat:** os itens 1.6 e 1.7 envolvem **decisões suas durante execução**:
+
+- **1.6:** vou descobrir o caminho `_resumir_e_salvar`. Se ele estiver tentando escrever no Mem0 SaaS via `mem0ai`, vou matar. Se estiver fazendo coisa razoável, ajustamos. Posso te avisar antes de remover.
+- **1.7:** vou listar candidatos a delete (duplicatas + cross-brain). Você aprova lista antes de eu rodar delete em massa.
+
+Aceita Opção 1 com esses 2 checkpoints? Ou prefere Opção 2 pra ter merge intermediário antes dos itens críticos?
+vamos de 1, pode começar 
+user: vamos de 1, pode começar 
+assistant: Começando Fase 1. **Item 1.1 — Vocabulário `via` consolidado.**
+assistant: Agora atualizo `hub/curador.py` que tem listas duplicadas:
+assistant: Agora atualizo doc gus-18 com lista canônica corrigida:
+assistant: Agora um teste rápido pra garantir que nada quebrou (smoke import):
+assistant: **1.1 ✅** Vou direto pro **Item 1.2 — Tag `prompt_version` no payload do curador.**
+assistant: Agora preciso fazer `hub/store.py:ingestar` preservar o campo `prompt_version` no payload (hoje só preserva `curador`, `hash_janela`, `janela_turnos`):
+assistant: **1.2 ✅** Vou pro **Item 1.3 — Trilha de auditoria em `hub.store.deletar()`.**
+assistant: Agora atualizo o caller MCP pra passar `motivo` quando disponível:
+assistant: Atualizo também a chamada em `gus/memory.py:deletar_memoria` pra passar motivo:
+assistant: **1.3 ✅** **Item 1.4 — MCP tools aceitam `tipo`/`camada_temporal` opcionais.**
+assistant: Agora atualizo as implementações dos handlers pra repassar os params:
+assistant: **1.4 ✅** **Item 1.5 — `auditoria_hub.py` multi-brain + usar `area` do payload.**
+assistant: Agora adiciono a seção `gus` no fim e ajusto o "Uso":
+assistant: **1.5 ✅** Vou pausar antes de matar caminhos. **Item 1.6 — investigar `_resumir_e_salvar`** (checkpoint).
+assistant: # Item 1.6 — Investigação completa, decisão sua
+
+## O que achei
+
+```python
+# gus/bot.py:160-217  →  _resumir_e_salvar
+#   tenta hub.curador.curar_turnos (Haiku + GPT em paralelo)
+#   se exception → _fallback_mem0
+
+# gus/bot.py:219-240  →  _fallback_mem0
+#   gera resumo bruto via LLM
+#   chama gus.memory.salvar_memorias  ← e AQUI vem o twist
+#   loga status="fallback-mem0" ou "fallback-mem0-vazio"
+```
+
+**Twist importante:** olhei `gus/memory.py:salvar_memorias` linha 131:
+
+```python
+"""Salva fragmentos no Hub Qdrant (gus_hub) com tag de origem.
+ADR-001 Fase 3: Hub primeiro. Antes escrevia no Mem0 SaaS via client.add,
+agora escreve direto no Hub via hub.store.ingestar (...)
+Sem fallback Mem0: ..."""
+```
+
+**O `_fallback_mem0` HOJE não escreve no Mem0 SaaS — ele escreve no Hub novo.** O nome do status `fallback-mem0` no log é **artefato histórico/enganoso**.
+
+## Diagnóstico real (corrige minha hipótese A4)
+
+| Período | "fallback-mem0" foi pra... | Por quê |
+|---|---|---|
+| Antes ADR-001 Fase 3 (≤27/04) | **Mem0 SaaS** | `salvar_memorias` escrevia em `mem0ai.client.add()` |
+| Pós Fase 3 (≥28/04) | **Hub Qdrant novo** | `salvar_memorias` foi migrada — `hub.store.ingestar` |
+
+**As 18 entradas `fallback-mem0` de 28/04** foram pro Mem0 SaaS porque a migração ainda não estava 100% deploy-ada nesse dia. **Hoje** (02/05 em diante), qualquer "fallback-mem0" novo já vai pro Hub.
+
+Então o caminho **não é vetor de perda silenciosa hoje** (como eu temia). Mas é vetor de **poluição silenciosa** — porque escreve **resumo bruto sem schema gus-18** (tipo padrão `episodico`, sem classificação).
+
+## Problemas reais
+
+1. **Nome do status mente** — log diz "fallback-mem0" mas vai pro Hub
+2. **Sem schema** — resumo bruto entra como `tipo=episodico, camada=sessao, area=""` (defaults do `ingestar`). Polui Hub com fragmentos não-classificados
+3. **Sem dedup** — qualquer falha do curador gera fragmento bruto, próximas tentativas geram mais
+4. **Decisão silenciosa** — quando curador híbrido falha (Anthropic AND OpenAI ambos), entrar com resumo cru pode ser pior do que **simplesmente registrar erro + perder a janela**
+
+## 3 opções
+
+### A — Matar `_fallback_mem0` completamente
+- Curador híbrido novo (Haiku + GPT cross-vendor) já é redundante. Se ambos caem ao mesmo tempo, melhor logar `erro_curador_total` e o Gustavo recaptura depois manualmente.
+- Memória perdida em 1 janela é melhor que Hub poluído.
+- **Esforço:** 30min. **Risco:** baixo. **Janela perdida em 5 dias:** ~0 (curador novo é robusto).
+
+### B — Manter mas renomear status + classificar mínimo
+- Renomear status `fallback-mem0` → `fallback-bruto`
+- No `_fallback_mem0`, passar `via="curador"` + `tipo="episodico"` + `area="emergente:fallback"` pro `ingestar` — assim auditoria detecta esses casos
+- **Esforço:** 45min. **Risco:** baixo.
+
+### C — Manter como está
+- Aceita poluição em troca de resiliência teórica
+- Mas mostra que doc engana e não temos visibilidade
+
+## Minha recomendação: **A**
+
+Razões:
+1. Curador híbrido cross-vendor já cobre "1 vendor caiu"
+2. Casos onde **ambos** caem em produção: nunca vimos nos logs disponíveis (28/04 a 02/05). Cenário hipotético.
+3. Mesmo se acontecer, o curso correto é falhar **alto e claro** (alerta Telegram pra Gustavo recapturar), não silenciosamente injetar lixo no Hub
+4. Hub atual já tem 70% de meta-lixo — não vale arriscar mais
+
+**Plano se A aprovado:**
+- Remover `_fallback_mem0` de `gus/bot.py`
+- `_resumir_e_salvar` no try/except passa a só `logger.error` + `append_resumo_async(status="erro_curador_total")`
+- Adicionar alerta opcional via `notificar_telegram` se Gustavo quiser saber em tempo real (requer secret do Telegram bot — fora de escopo do 1.6)
+
+Aceita A, B ou C?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado. Aguardando sua decisão A/B/C pro item 1.6.
+a
+user: a
+assistant: Agora removo a função `_fallback_mem0`:
+assistant: Verifico se `gerar_resumo_turnos` continua usado em outro lugar (pra ver se posso remover a função de `gus/llm.py` também — mas isso é tangente, talvez deixar pra cleanup futuro):
+assistant: Smoke test final:
+assistant: Só comentários explicando a decisão. Código vivo está limpo. Verifico testes:
+assistant: **1.6 ✅** Próximo é **1.7 — Limpeza ativa do Hub** que tem checkpoint (você aprova lista de candidatos antes de eu deletar). Mas antes vou pelos seguros restantes pra fechar volume rápido.
+
+**Item 1.8 — `meta_relatorio_hub.py` recorrente** (1.5h, sem risco).
+assistant: **1.8 ✅** Vou pro **Item 1.9 — Remover fallback Mem0 de `gus/memory.py` + `mem0ai` do requirements**:
+assistant: **1.9 ✅** Status da Fase 1:
+
+| # | Item | Status |
+|---|---|---|
+| 1.1 | Vocabulários canônicos | ✅ |
+| 1.2 | `prompt_version` no payload | ✅ |
+| 1.3 | Trilha auditoria `deletar()` | ✅ |
+| 1.4 | MCP tools params opcionais | ✅ |
+| 1.5 | Auditoria multi-brain | ✅ |
+| 1.6 | Mata `_fallback_mem0` | ✅ |
+| 1.7 | **Limpeza ativa do Hub** | **CHECKPOINT** |
+| 1.8 | `meta_relatorio_hub.py` | ✅ |
+| 1.9 | Remove fallback Mem0 + `mem0ai` | ✅ |
+
+8 de 9 prontos. Falta só **1.7 — Limpeza ativa do Hub** (CHECKPOINT, você aprova lista antes de eu deletar).
+
+## Estratégia pra 1.7
+
+Não vou deletar nada agora. Plano:
+
+1. **Criar script `.github/scripts/limpeza_hub_dryrun.py`** — gera relatório `_indices/_limpeza-hub-candidatos.md` listando:
+   - Duplicatas semânticas (Jaccard ≥ 0.7) — agrupa "X demandas pendentes" e similares
+   - Cross-brain pollution (frags do `gustavo` que estão no brain `gus`)
+   - Frags `tipo=episodico, area=""` (lixo não-classificado)
+   - Cada candidato com ID + texto + razão proposta
+
+2. **Você revisa** o doc e marca quais aprovam delete
+
+3. **Crio script `limpeza_hub_aplicar.py`** que lê IDs aprovados e deleta (com trilha 1.3 ativada)
+
+Posso fazer o script de dryrun agora (etapa 1)? Ou prefere primeiro fechar PR da Fase 1 com 8 itens, mergear, e o 1.7 vira PR separado?
+
+**Sugestão prática:** PR da Fase 1 agora com 8 itens (os "engine"). 1.7 (limpeza com dados) vira PR separado depois — porque depende de você revisar lista de candidatos, e o ciclo "gera candidatos → você revisa → aplica delete" merece isolamento.
+
+Qual prefere?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are 3 unpushed commit(s) on branch 'claude/greeting-checkin-EHt9Z'. Please push these changes to the remote repository.
+
+assistant: Pushed. Aguardando sua escolha pra prosseguir 1.7:
+
+**Opção 1:** Abrir PR da Fase 1 com 8 itens prontos agora, mergear, e 1.7 vira PR separado depois (recomendo)
+**Opção 2:** Fazer dryrun do 1.7 antes do PR, lista de candidatos vai junto no mesmo PR
+1
+user: 1
+assistant: PR aberto: **https://github.com/Gustpbbr/Gus/pull/84**
+
+## Pra você
+
+1. **Abrir PR #84** e revisar os 8 commits (cada um isolado por item)
+2. **Mergear** quando aprovar
+3. **Pós-merge, 2 ações operacionais (3min):**
+   - Disparar `meta-relatorio-hub.yml` manual → vai gerar `_indices/_meta-relatorio-hub.md` com baseline atual de qualidade
+   - Disparar `auditoria-hub.yml` manual → atualiza `_indices/_auditoria-hub.md` com formato multi-brain
+
+   Esses 2 outputs vão ser cruciais pro item 1.7 (limpeza) — eu uso eles pra gerar a lista de candidatos a delete sem precisar adivinhar.
+
+4. **Confirmar pra mim quando mergear** → eu sincronizo branch e parto pra 1.7 (script dryrun de limpeza)
+
+## Stats consolidados da Fase 1
+
+| Métrica | Valor |
+|---|---|
+| Commits funcionais | 8 |
+| Linhas adicionadas | ~700 |
+| Linhas removidas | ~430 |
+| Arquivos novos | 3 (vocabularios.py, meta_relatorio_hub.py, meta-relatorio-hub.yml) |
+| Arquivos apagados | 2 (migrate_mem0.py, migrate-mem0-to-qdrant.yml) |
+| Deps removidas | 1 (mem0ai) |
+| Caminhos legacy mortos | 2 (_fallback_mem0, _resumir_turnos) |
+
+Aguardando mergear pra continuar.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado.
+mergeei
+user: mergeei
+ok
+assistant: Branch sincronizada com main. Agora **Item 1.7 — Limpeza ativa do Hub** (CHECKPOINT).
+
+## Estratégia
+
+Vou construir 2 scripts:
+
+1. **`limpeza_hub_dryrun.py`** — gera relatório `_indices/_limpeza-hub-candidatos.md` com lista nominal de IDs candidatos a delete + razão de cada um. **Não deleta nada.**
+2. **`limpeza_hub_aplicar.py`** — lê IDs aprovados manualmente (marcados em arquivo separado `_indices/_limpeza-hub-aprovados.txt`) e deleta com motivo.
+
+Você revisa entre as duas etapas. Vou começar pelo dryrun.
+assistant: Recebi seu "ok" — continuo. Smoke test no dryrun + criar o aplicar + workflow.
+assistant: Bug no regex de "Nasci em" — precisa de 2+ espaços, mas só tem 1. Corrigindo.
+assistant: Agora o `aplicar`:
+assistant: Smoke do aplicar (parser de IDs):
+assistant: Item 1.7 entregue + PR aberto. **Fase 1 fechada (9/9).**
+
+PR: **https://github.com/Gustpbbr/Gus/pull/86**
+
+## Pra você
+
+### 1. Mergear PR #86
+
+### 2. Pós-merge, fluxo de limpeza (sequência precisa):
+
+**a) Disparar `limpeza-hub-dryrun.yml` manualmente**
+- Actions → `Limpeza Hub — DRYRUN` → Run workflow → main → Run
+- Aguarda 1min
+- Vai aparecer commit `auto: dryrun limpeza Hub (...)` em main com `_indices/_limpeza-hub-candidatos.md`
+
+**b) Revisar o MD de candidatos**
+- Abre `_indices/_limpeza-hub-candidatos.md` no GitHub
+- Vai ter ~28-30 candidatos divididos por brain × severidade
+- Pra cada um vê: ID + razão + texto preview
+
+**c) Se aprovar todos:** pula direto pro passo (e)
+
+**c-alt) Se quer manter alguns:** cria `_indices/_limpeza-hub-rejeitados.txt` com 1 ID por linha. Commit no main (pode editar pelo web).
+
+**d) Verificação final (dryrun do aplicar):**
+- Actions → `Limpeza Hub — APLICAR` → Run workflow
+- Input `dryrun=true`
+- Vai gerar sumário em `_log/limpeza-hub/AAAA-MM-DD.md` mostrando o que **seria** deletado
+
+**e) Aplicar de verdade:**
+- Mesmo workflow, input `dryrun=false`
+- Deleta no Qdrant
+- Trilha em `_log/deletar-hub/AAAA-MM-DD.jsonl` com snapshot completo (recovery possível se quiser reverter algum)
+
+### 3. Reportar pra mim
+
+Quando terminar limpeza me confirma:
+- Quantos candidatos apareceram
+- Quantos rejeitou (manteve)
+- Quantos foram deletados
+- Erros se tiver
+
+Aí vamos pra **Fase 2** (comparar curadores, prazo 12/05) — ou paramos aqui se quiser pausa.
+mergeei. e agora?
+user: mergeei. e agora?
+assistant: Branch sincronizada. Agora você executa, eu observo.
+
+# Sequência de execução (passo a passo)
+
+## Passo 1 — Gerar lista de candidatos (1min)
+
+Abra: https://github.com/Gustpbbr/Gus/actions/workflows/limpeza-hub-dryrun.yml
+
+Clique **"Run workflow"** → branch `main` → **"Run workflow"** (botão verde)
+
+Aguarda ~1min. Quando terminar, vai aparecer commit `auto: dryrun limpeza Hub (...)` em main.
+
+---
+
+## Passo 2 — Revisar a lista
+
+Abra: https://github.com/Gustpbbr/Gus/blob/main/_indices/_limpeza-hub-candidatos.md
+
+Vai ter algo tipo:
+- Brain `gustavo` — severidade forte (X candidatos)
+- Brain `gus` — severidade forte (Y candidatos)
+- Brain `gustavo` — severidade médio (Z candidatos)
+
+Cada candidato tem ID, razão, texto. **Lê.**
+
+### Decisão por candidato
+- **Aprovar (deletar)**: não faz nada
+- **Manter (rejeitar)**: copia o ID
+
+### Se quer manter algum:
+Cria arquivo `_indices/_limpeza-hub-rejeitados.txt` com 1 ID por linha (pode editar direto no web do GitHub: "Add file" → "Create new file"). Commit direto em main.
+
+### Se aprova todos:
+Pula direto pro passo 3.
+
+---
+
+## Passo 3 — Verificar com dryrun (segurança extra)
+
+Abra: https://github.com/Gustpbbr/Gus/actions/workflows/limpeza-hub-aplicar.yml
+
+Clique **"Run workflow"**:
+- Branch: `main`
+- **Dryrun:** `true`
+- "Run workflow"
+
+Aguarda ~1min. Confere `_log/limpeza-hub/AAAA-MM-DD.md` — vai dizer "**DRYRUN** — nada foi deletado" + lista do que **seria** deletado.
+
+Se a lista fizer sentido, vai pro 4. Se algo não bater, volta pro 2 e ajusta `_limpeza-hub-rejeitados.txt`.
+
+---
+
+## Passo 4 — Deletar de verdade ⚠️
+
+Mesmo workflow:
+- **Dryrun:** `false`
+- "Run workflow"
+
+**IRREVERSÍVEL** mas com trilha completa em `_log/deletar-hub/AAAA-MM-DD.jsonl` (snapshot de cada delete pra recovery se precisar).
+
+---
+
+## Passo 5 — Reportar
+
+Me manda o conteúdo de `_log/limpeza-hub/AAAA-MM-DD.md` (o sumário). Tipo:
+
+```
+candidatos_total: 28
+rejeitados_total: 3
+deletados_sucesso: 25
+deletados_erro: 0
+```
+
+E aí decidimos: **partir pra Fase 2** (script comparar_curadores, prazo 12/05) ou **pausa**.
+
+---
+
+## Recomendação prática
+
+**Faz o passo 1 agora** (1 clique). Quando o workflow terminar, me manda o link do MD de candidatos que eu olho com você antes de decidir o que rejeitar — economiza você ler tudo sozinho.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.

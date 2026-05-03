@@ -13,9 +13,20 @@ import pytest
 
 
 def _reload_bot(monkeypatch, state_path):
-    """STATE_FILE é avaliado no import — recarrega após setar."""
+    """STATE_FILE é avaliado no import — recarrega após setar.
+
+    Como gus.bot agora só re-exporta gus.state (split M1 do plano de
+    saneamento), recarregamos state PRIMEIRO pra constantes pegarem env
+    novas, depois bot pra re-exports apontarem pros símbolos atualizados.
+    """
     monkeypatch.setenv("STATE_FILE", str(state_path))
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "12345")
+    import gus.state
+    importlib.reload(gus.state)
+    import gus.handlers.responder
+    importlib.reload(gus.handlers.responder)
+    import gus.handlers.commands
+    importlib.reload(gus.handlers.commands)
     import gus.bot
     importlib.reload(gus.bot)
     return gus.bot
@@ -89,6 +100,9 @@ class TestAutorizado:
         monkeypatch.setenv("STATE_FILE", str(tmp_state_file))
         monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
         monkeypatch.setenv("TELEGRAM_CHAT_ID", "")
+        # Recarrega state (fonte real das env vars) E bot (re-export)
+        import gus.state
+        importlib.reload(gus.state)
         import gus.bot
         importlib.reload(gus.bot)
         assert gus.bot._autorizado("12345") is False
@@ -148,6 +162,86 @@ class TestQueryMem0Contextual:
         history = [{"role": "assistant", "content": "resp"}]
         out = bot._query_mem0_contextual(history, "fallback")
         assert out == "fallback"
+
+
+class TestLimparFocosAntigos:
+    """M7 — /foco deleta FOCO-ATUAL existentes antes de salvar novo."""
+
+    @pytest.mark.asyncio
+    async def test_deleta_apenas_com_marker(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        # Mock retorna 3 fragmentos: 2 com [FOCO-ATUAL], 1 sem (relacionado mas não é foco)
+        from unittest.mock import patch, MagicMock
+        fake_lembrar = MagicMock(return_value=[
+            {"id": "id1", "conteudo": "[FOCO-ATUAL] phronesis"},
+            {"id": "id2", "conteudo": "Gustavo gosta de foco profundo"},  # filtrado
+            {"id": "id3", "conteudo": "[FOCO-ATUAL] mge"},
+        ])
+        deletados = []
+        fake_deletar = MagicMock(side_effect=lambda mid, motivo: deletados.append((mid, motivo)))
+
+        with patch("hub.store.lembrar", fake_lembrar):
+            with patch("hub.store.deletar", fake_deletar):
+                count = await bot._limpar_focos_antigos()
+
+        assert count == 2
+        assert ("id1", "/foco substituicao") in deletados
+        assert ("id3", "/foco substituicao") in deletados
+        # id2 não tem marker — não deleta
+        assert "id2" not in [d[0] for d in deletados]
+
+    @pytest.mark.asyncio
+    async def test_lembrar_falha_retorna_zero(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        from unittest.mock import patch, MagicMock
+        fake_lembrar = MagicMock(side_effect=RuntimeError("Hub down"))
+
+        with patch("hub.store.lembrar", fake_lembrar):
+            count = await bot._limpar_focos_antigos()
+        assert count == 0
+
+    @pytest.mark.asyncio
+    async def test_deletar_falha_continua(self, tmp_state_file, monkeypatch):
+        """Se deletar falha em 1 fragmento, segue tentando os outros."""
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        from unittest.mock import patch, MagicMock
+        fake_lembrar = MagicMock(return_value=[
+            {"id": "id1", "conteudo": "[FOCO-ATUAL] a"},
+            {"id": "id2", "conteudo": "[FOCO-ATUAL] b"},
+        ])
+
+        chamadas = []
+        def fake_deletar(mid, motivo):
+            chamadas.append(mid)
+            if mid == "id1":
+                raise RuntimeError("oops")
+
+        with patch("hub.store.lembrar", fake_lembrar):
+            with patch("hub.store.deletar", side_effect=fake_deletar):
+                count = await bot._limpar_focos_antigos()
+
+        # id1 falhou, id2 OK — count = 1
+        assert count == 1
+        assert chamadas == ["id1", "id2"]
+
+    @pytest.mark.asyncio
+    async def test_lista_vazia(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        from unittest.mock import patch, MagicMock
+        with patch("hub.store.lembrar", MagicMock(return_value=[])):
+            count = await bot._limpar_focos_antigos()
+        assert count == 0
+
+
+class TestDimagemImportPath:
+    """C7 — dimagem.py movido pra gus/integrations/."""
+
+    def test_dimagem_importa_de_integrations(self, tmp_state_file, monkeypatch):
+        bot = _reload_bot(monkeypatch, tmp_state_file)
+        # Se import quebrou, _reload_bot já teria explodido. Confirma path.
+        import gus.integrations.dimagem as d
+        assert hasattr(d, "analisar_os_dimagem")
+        assert hasattr(d, "salvar_os_dimagem")
 
 
 class TestRedigirResposta:

@@ -1,27 +1,12 @@
-"""Testes da camada de memória (gus/memory.py) — Hub-first com fallback Mem0."""
+"""Testes da camada de memória (gus/memory.py) — Hub-only após item 1.9."""
 
 import pytest
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import patch, MagicMock
 
 from gus.memory import (
-    salvar_memorias, buscar_memorias, _normalizar_results,
+    salvar_memorias, buscar_memorias,
     USER_ID_GUSTAVO, USER_ID_GUS, VIA_DEFAULT,
 )
-
-
-class TestNormalizarResults:
-    def test_dict_com_results(self):
-        raw = {"results": [{"memory": "x"}]}
-        assert _normalizar_results(raw) == [{"memory": "x"}]
-
-    def test_dict_sem_results(self):
-        assert _normalizar_results({}) == []
-
-    def test_lista_direta(self):
-        assert _normalizar_results([{"memory": "a"}]) == [{"memory": "a"}]
-
-    def test_none(self):
-        assert _normalizar_results(None) == []
 
 
 class TestSalvarMemorias:
@@ -125,36 +110,33 @@ class TestBuscarMemorias:
 
     @pytest.mark.asyncio
     async def test_hub_vazio_retorna_string_vazia(self):
+        """Item 1.9: sem fallback Mem0 — Hub vazio retorna '' direto."""
         hub_mock = MagicMock(return_value=[])
-        # com Hub vazio cai no fallback Mem0; mockamos Memory.search vazio
         with patch("hub.store.lembrar", hub_mock):
-            with patch("gus.memory._get_client") as get_client_mock:
-                client_mock = MagicMock()
-                client_mock.search.return_value = {"results": []}
-                get_client_mock.return_value = client_mock
-                out = await buscar_memorias("query")
+            out = await buscar_memorias("query")
         assert out == ""
 
     @pytest.mark.asyncio
-    async def test_hub_falha_cai_pro_mem0(self):
+    async def test_hub_falha_retorna_vazio(self):
+        """Item 1.9: sem fallback. Exception no Hub vira string vazia
+        (busca é silenciosa, não propaga erro pra resposta do bot)."""
         def hub_fail(*args, **kwargs):
             raise RuntimeError("Hub timeout")
 
         with patch("hub.store.lembrar", hub_fail):
-            with patch("gus.memory._get_client") as get_client_mock:
-                client_mock = MagicMock()
-                client_mock.search.return_value = {"results": [{"memory": "do mem0"}]}
-                get_client_mock.return_value = client_mock
-                out = await buscar_memorias("query")
-        assert "do mem0" in out
+            out = await buscar_memorias("query")
+        assert out == ""
 
     @pytest.mark.asyncio
-    async def test_ambos_falham_retorna_vazio(self):
-        def hub_fail(*args, **kwargs):
-            raise RuntimeError("Hub timeout")
-
-        with patch("hub.store.lembrar", hub_fail):
-            with patch("gus.memory._get_client") as get_client_mock:
-                get_client_mock.side_effect = ValueError("Mem0 sem config")
-                out = await buscar_memorias("query")
-        assert out == ""
+    async def test_filtra_conteudo_vazio(self):
+        """Hub pode retornar fragmentos sem 'conteudo' — filtrar."""
+        hub_mock = MagicMock(return_value=[
+            {"conteudo": "ok", "id": "1"},
+            {"conteudo": "", "id": "2"},  # filtrado
+            {"id": "3"},  # sem campo conteudo, filtrado
+        ])
+        with patch("hub.store.lembrar", hub_mock):
+            out = await buscar_memorias("query")
+        assert "ok" in out
+        # Conta linhas (1 fragmento => 1 linha)
+        assert out.count("\n") == 0

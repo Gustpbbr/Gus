@@ -37,10 +37,17 @@ from typing import Optional
 
 from openai import AsyncOpenAI
 
-from gus.llm import _chamar_claude_com_retry
+from gus.llm import chamar_claude_com_retry
 from hub.store import ingestar
 
 logger = logging.getLogger(__name__)
+
+# Versão dos prompts do curador. Sobe quando PROMPT_CURADOR ou
+# PROMPT_CURADOR_ARQUIVO mudar de forma que afete extração — permite
+# distinguir fragmentos de gerações diferentes no Hub via
+# `metadata.prompt_version`. Ex: comparar qualidade de extração antes/depois
+# de uma reformulação do prompt sem precisar reler logs.
+PROMPT_VERSION = "v1-2026-05-02"
 
 _openai_client: Optional[AsyncOpenAI] = None
 
@@ -171,19 +178,13 @@ def _extrair_json(texto: str) -> list[dict]:
     return []
 
 
-# Schema gus-18 — enums canônicos. Valores fora desses entram como default
-# em vez de poluir o vocabulário do Hub (modelo invocado às vezes inventa
-# tipos como "reflexivo" ou "importante" que quebram filtros depois).
-TIPOS_VALIDOS = {
-    "identidade_operacional", "biografico", "emocional", "decisao", "procedural",
-    "rotina", "meta_reflexao", "conexao_emergente", "episodico", "cronologico",
-    "fato", "preferencia", "lacuna", "projeto",
-}
-CAMADAS_VALIDAS = {"momento", "sessao", "semana", "rotina", "permanente"}
-AREAS_VALIDAS = {
-    "gus", "saude", "financeiro", "projetos", "pessoal", "dimagem", "pesquisa",
-    "receitas", "esportes",
-}
+# Enums canônicos importados do módulo único `hub.vocabularios` (item 1.1
+# do plano de saneamento — antes havia listas duplicadas que dessincronizavam).
+from hub.vocabularios import (
+    TIPOS_CANONICOS as TIPOS_VALIDOS,
+    CAMADAS_TEMPORAIS as CAMADAS_VALIDAS,
+    AREAS_CANONICAS as AREAS_VALIDAS,
+)
 
 
 def _validar_fragmento(frag: dict) -> Optional[dict]:
@@ -290,7 +291,7 @@ def _render_prompt(template: str, via: str, input_texto: str) -> str:
     Format() pega o trecho entre o primeiro `{` e o próximo `}` e tenta usar
     como chave (`\\n    "conteudo"`), explodindo com KeyError. Esse bug fez o
     curador errar 100% das chamadas a partir de 30/04/2026 (todos logs em
-    `_log/resumos-mem0/AAAA-MM-DD.md` mostram só `status: erro`).
+    `_log/curador/AAAA-MM-DD.md` mostram só `status: erro`).
 
     Replace() é robusto contra braces JSON literais.
     """
@@ -315,7 +316,7 @@ async def _extrair_via_modelo(
     """
     prompt = _render_prompt(prompt_template, via, input_texto)
     try:
-        response = await _chamar_claude_com_retry(
+        response = await chamar_claude_com_retry(
             model=modelo,
             max_tokens=2048,
             system_prompt=prompt,
@@ -422,6 +423,7 @@ async def _curar_input_hibrido(
                         "curador": curador,
                         "hash_janela": hash_j,
                         "janela_turnos": janela_turnos,
+                        "prompt_version": PROMPT_VERSION,
                     },
                 )
                 salvos += 1
