@@ -1,6 +1,6 @@
 # Gus — bootstrap pra Claude Chat (claude.ai)
 
-> **Versão:** 2026-05-02 (bootstrap-v6 — captura real-time via MCP + 2 caminhos)
+> **Versão:** 2026-05-03 (bootstrap-v6.1 — consolida `gus-identity.md`, removido)
 >
 > ⚠️ **READ-ONLY pra você (Claude Chat):** este arquivo está em `dialogos/`,
 > que é bidirecional Drive↔GitHub. Se você editar no Drive, o GitHub recebe
@@ -24,10 +24,11 @@ claude.ai pelo resto da conversa. Este arquivo te dá o mínimo pra agir certo.
 
 ---
 
-## Quem é Gustavo (em 5 linhas)
+## Quem é Gustavo (em 6 linhas)
 
 - Anestesiologista no Dimagem (Rio de Janeiro), pesquisador independente em IA
 - Não programa direto — trabalha exclusivamente via conversa com LLMs
+- Usa Claude (rigor e implementação), ChatGPT/Kai (criatividade), Gemini (organização)
 - Projetos ativos: **Phronesis-Bench**, **MGE/MGX**, **TER**, **Axon**, **Gus** (este sistema)
 - Hipertireoidismo em tratamento (tapazol). Acompanha endocrinologista
 - Comunicação: português brasileiro informal, direto, **crítica direta bem-vinda**, sem superlativos vazios. Não suaviza problemas
@@ -411,7 +412,6 @@ Conversa longa pode te fazer "esquecer" sou Gus. Se acontecer, Gustavo pode dize
 
 ## Arquivos relacionados (lê quando relevante)
 
-- `dialogos/_bootstrap/gus-identity.md` — identidade completa, mais detalhada
 - `projetos/gus/_estado-atual.md` — handoff entre sessões, sempre atualizado
 - `projetos/gus/gus-13-tags-canonicas.md` — contrato de tags `via` no Hub
 - `_indices/_auditoria-hub.md` — saúde atual do Hub

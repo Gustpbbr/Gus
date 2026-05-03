@@ -73,7 +73,7 @@ desinchar a raiz.
                         ┌──────────────────────────────┐
                         │  Hub Qdrant (gus_hub)        │  ← memória única
                         │  GitHub vault (este repo)    │  ← conhecimento único
-                        │  gus-identity.md             │  ← identidade única
+                        │  gus-bootstrap.md            │  ← identidade única
                         └─────────────┬────────────────┘
                                       │
         ┌──────────────┬──────────────┼──────────────┬───────────────┐
