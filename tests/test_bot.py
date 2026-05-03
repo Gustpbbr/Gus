@@ -13,9 +13,20 @@ import pytest
 
 
 def _reload_bot(monkeypatch, state_path):
-    """STATE_FILE é avaliado no import — recarrega após setar."""
+    """STATE_FILE é avaliado no import — recarrega após setar.
+
+    Como gus.bot agora só re-exporta gus.state (split M1 do plano de
+    saneamento), recarregamos state PRIMEIRO pra constantes pegarem env
+    novas, depois bot pra re-exports apontarem pros símbolos atualizados.
+    """
     monkeypatch.setenv("STATE_FILE", str(state_path))
     monkeypatch.setenv("TELEGRAM_CHAT_ID", "12345")
+    import gus.state
+    importlib.reload(gus.state)
+    import gus.handlers.responder
+    importlib.reload(gus.handlers.responder)
+    import gus.handlers.commands
+    importlib.reload(gus.handlers.commands)
     import gus.bot
     importlib.reload(gus.bot)
     return gus.bot
@@ -89,6 +100,9 @@ class TestAutorizado:
         monkeypatch.setenv("STATE_FILE", str(tmp_state_file))
         monkeypatch.delenv("TELEGRAM_CHAT_ID", raising=False)
         monkeypatch.setenv("TELEGRAM_CHAT_ID", "")
+        # Recarrega state (fonte real das env vars) E bot (re-export)
+        import gus.state
+        importlib.reload(gus.state)
         import gus.bot
         importlib.reload(gus.bot)
         assert gus.bot._autorizado("12345") is False
