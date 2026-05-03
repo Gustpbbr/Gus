@@ -601,3 +601,43 @@ class TestTentarVisionFallback:
         text, metadata = out
         assert "PDF" in text
         assert metadata["error"] == "pdf_sem_fallback"
+
+
+# ===========================================================================
+# Regressão SDK Anthropic (M4 — upgrade 0.40 → 0.50+)
+# ===========================================================================
+#
+# gus/llm.py depende de campos específicos do anthropic.types.Usage e
+# anthropic.types.Message. Se o SDK Anthropic mudar/remover esses campos,
+# `_gerar_resposta_anthropic` quebra silencioso (cost_tracking errado,
+# cache_hit_ratio sempre zero, etc.). Estes testes verificam que os
+# nomes dos campos continuam disponíveis no SDK instalado.
+
+
+class TestAnthropicSDKContrato:
+    def test_usage_tem_campos_criticos(self):
+        """Campos que gus/llm.py:_gerar_resposta_anthropic lê do response.usage."""
+        from anthropic.types import Usage
+        campos = set(Usage.model_fields.keys())
+        # Ler em response.usage.X
+        assert "input_tokens" in campos
+        assert "output_tokens" in campos
+        assert "cache_creation_input_tokens" in campos
+        assert "cache_read_input_tokens" in campos
+
+    def test_message_tem_campos_criticos(self):
+        """Campos lidos do response Message no loop tool-use."""
+        from anthropic.types import Message
+        campos = set(Message.model_fields.keys())
+        assert "content" in campos
+        assert "stop_reason" in campos
+        assert "usage" in campos
+
+    def test_excecoes_basicas_existem(self):
+        """gus/llm.py importa anthropic.APIStatusError, APIConnectionError,
+        APITimeoutError. Se SDK renomear, import quebra no boot."""
+        import anthropic
+        assert hasattr(anthropic, "APIStatusError")
+        assert hasattr(anthropic, "APIConnectionError")
+        assert hasattr(anthropic, "APITimeoutError")
+        assert hasattr(anthropic, "AsyncAnthropic")
