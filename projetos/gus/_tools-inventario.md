@@ -1,7 +1,7 @@
 ---
 tipo: inventario-auto
 area: gus
-atualizado: 2026-05-02 12:23 BRT
+atualizado: 2026-05-03 05:47 BRT
 fonte: gus/tools.py:TOOLS (geração automática — não editar)
 ---
 
@@ -35,7 +35,7 @@ fonte: gus/tools.py:TOOLS (geração automática — não editar)
 | 15 | `salvar_memoria_gus` | Salva uma observação no SEU PRÓPRIO brain no Hub Qdrant (user_id='gus', separado das memórias sobre o Gustavo). |
 | 16 | `buscar_memoria_gus` | Busca nas SUAS PRÓPRIAS memórias no Hub Qdrant (user_id='gus'). |
 | 17 | `deletar_memoria` | DELETA uma memória pelo ID (Hub Qdrant primário, Mem0 fallback pra IDs históricos pré-migração). |
-| 18 | `auditoria_mem0` | Retorna a auditoria do armazém de memórias — estatísticas do Hub Qdrant SOBRE O GUSTAVO (quantas, por área, frescor, duplicatas suspeitas, gaps). |
+| 18 | `auditoria_hub` | Retorna a auditoria do armazém de memórias — estatísticas do Hub Qdrant SOBRE O GUSTAVO (quantas, por área, frescor, duplicatas suspeitas, gaps). |
 | 19 | `criar_acao` | Enfileira uma ação pra ser executada no mundo real (mandar WhatsApp, email, criar evento no calendário, lembrete). |
 | 20 | `save_to_github` | Salva conteúdo como arquivo Markdown no repositório do Gustavo no GitHub. |
 | 21 | `rotear_arquivo` | Roteia um arquivo de dialogos/inbox-tiogu/ (ou outra inbox) pro destino correto no repo. |
@@ -156,7 +156,7 @@ _Sem parâmetros._
 | `memory_id` | string | ✓ | ID exato da memória (UUID retornado por search_memory entre colchetes). |
 | `user_id` | string | — | Brain alvo: 'gustavo' (default) ou 'gus' (auto-observações). Use 'gustavo' a menos que o Gustavo peça especificamente pra apagar do brain do Gus. |
 
-### `auditoria_mem0`
+### `auditoria_hub`
 
 _Sem parâmetros._
 
@@ -186,4 +186,4 @@ _Sem parâmetros._
 
 ---
 
-_Auto-gerado em 2026-05-02 12:23 BRT por `.github/scripts/gerar_lista_tools.py`._
+_Auto-gerado em 2026-05-03 05:47 BRT por `.github/scripts/gerar_lista_tools.py`._
