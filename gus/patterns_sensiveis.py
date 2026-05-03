@@ -51,6 +51,20 @@ PATTERNS_SENSIVEIS: dict[str, re.Pattern] = {
     "Railway token (env line)": re.compile(
         r"RAILWAY[_A-Z]*TOKEN\s*[:=]\s*['\"]?[\w-]{20,}", re.IGNORECASE
     ),
+
+    # === MCP URL secret ===
+    # Hex puro 32-128 chars não tem prefixo distintivo (colide com hashes git,
+    # UUIDs, etc.). Pra evitar falsos positivos, capturamos só os 2 contextos
+    # onde ele aparece de fato:
+    #   1. linha env: MCP_URL_SECRET=<hex>
+    #   2. path do log Railway: /<32-128 hex>/mcp (formato do mount path)
+    # Cobre o caso real do vazamento de 02/05/2026 sem afetar SHAs.
+    "MCP URL secret (env line)": re.compile(
+        r"MCP_URL_SECRET\s*[:=]\s*['\"]?[a-fA-F0-9]{32,}", re.IGNORECASE
+    ),
+    "MCP URL secret (path)": re.compile(
+        r"/[a-fA-F0-9]{32,128}/mcp\b"
+    ),
 }
 
 

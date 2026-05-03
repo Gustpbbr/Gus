@@ -436,7 +436,10 @@ def _create_app() -> Starlette:
     lifespan = mcp_app.router.lifespan_context
 
     if secret:
-        log.info(f"MCP montado em /{secret}/mcp (URL secret ativo)")
+        # NUNCA logar o valor do secret — vaza pra logs Railway, transcripts
+        # Code (via Stop hook), e qualquer pessoa com read access. Mostrar só
+        # que está ativo + tamanho pra debug.
+        log.info(f"MCP montado em /<URL_SECRET ({len(secret)} chars)>/mcp")
     else:
         log.info("MCP montado em /mcp (sem URL secret)")
 
