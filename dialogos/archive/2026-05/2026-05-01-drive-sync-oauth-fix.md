@@ -3,14 +3,40 @@ tipo: demanda
 origem: gustavo
 destino: claude-code
 prioridade: media
-status: pendente
+status: concluido
 criado_em: 2026-05-01T00:12:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: 2026-05-03T02:00:00-03:00
+processado_por: claude-code
 acao_sugerida: investigar
 destino_path: .github/scripts/sync_to_drive.py
 contexto: "Workflow sync-to-drive parou de empurrar arquivos GitHub→Drive. Hipótese: refresh token OAuth expirado (Google Testing apps expiram em 7 dias). Decidir entre reset OAuth (paliativo) ou Service Account (definitivo)."
 ---
+
+## Resultado (2026-05-03)
+
+Resolvida via **caminho 4 (não estava nas 3 opções originais)**:
+**Workload Identity Federation (WIF)**.
+
+Por quê WIF em vez de Service Account JSON: organização Google Cloud
+bloqueia criação de keys (política `iam.disableServiceAccountKeyCreation`),
+sem admin pra mudar política. WIF é mais seguro (sem JSON estático
+vazável) e zero manutenção.
+
+Mudanças (PR #76):
+- `_drive_auth.py`: tenta ADC (WIF) primeiro, SA JSON e OAuth como fallbacks
+- `sync-to-drive.yml` + `import-from-drive.yml`: step `google-github-actions/auth@v2`
+  com `workload_identity_provider` + `service_account` (vindos de secrets)
+- Permissions `id-token: write` nos workflows
+
+Setup feito por Gustavo:
+- SA `gus-sync@gus-drive-sync.iam.gserviceaccount.com`
+- Pool `github-pool` + provider `github-provider` OIDC
+- Impersonation grant pra `Gustpbbr/Gus`
+- Pasta `Gus-Sync` compartilhada com SA (Editor)
+- Secrets `GCP_WIF_PROVIDER` + `GCP_WIF_SERVICE_ACCOUNT` no GitHub
+
+Validado end-to-end: cron `import-from-drive` rodando, importou Google Doc
+de teste do Drive pro GitHub via WIF (commit `893f563`).
 
 # Demanda — Drive sync parado, decidir fix OAuth vs Service Account
 
