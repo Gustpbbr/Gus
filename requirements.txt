@@ -1,5 +1,5 @@
 python-telegram-bot==21.6
-anthropic==0.40.0
+anthropic>=0.50,<1.0
 python-dotenv==1.0.1
 # mem0ai removido no item 1.9 do plano de saneamento (02/05/2026) —
 # gus/memory.py é fina camada sobre hub.store agora; coleção legada vazia.
