@@ -1,12 +1,12 @@
 ---
 tipo: estado-atual-vivo
-gerado_em: 2026-05-03T14:30:55-0300
+gerado_em: 2026-05-03T13:31:56-0300
 fonte: hub-qdrant (gus_hub, user_id=gustavo)
 janela_recentes_horas: 6
 atualizacao: cron 15min
 ---
 
-# Estado atual do Gus — 03/05/2026 às 14:30 BRT
+# Estado atual do Gus — 03/05/2026 às 13:31 BRT
 
 > Documento gerado automaticamente a cada 15 minutos lendo o Hub
 > Qdrant. Substitui o snapshot estático das 03h pra Claude Chat ter
@@ -31,9 +31,8 @@ dinâmico. Sem este arquivo, Claude Chat opera com lag de 21h.
 - [meta_reflexao/gus] A futura auditoria (no fluxo do projeto) deve rastrear `motivo` do delete com mais evidência e relatar mudanças relevantes no hub Qdrant. _(via claude-code)_
 - [meta_reflexao/gus] O Hub atual já tem 70% de meta-lixo — não vale arriscar mais. _(via claude-code)_
 
-## Fragmentos das últimas 6h (17 de 50 no brain)
+## Fragmentos das últimas 6h (20 de 50 no brain)
 
-- [fato/projetos] O `_estado-atual.md` na pasta projetos/gus foi atualizado em 27/04 e está desatualizado para o processo atual. _(via claude-code)_
 - [procedural/gus] O script `limpeza_hub_dryrun.py` gera relatório de IDs candidatos a delete sem afetar a base atual. _(via claude-code)_
 - [fato/projetos] O Drive sync GitHub→Drive parece quebrado, com commits indicando atividade até 01/05 e depois nenhum. _(via claude-code)_
 - [fato/gus] A migração para o Hub Qdrant está em curso, com o objetivo de aposentadoria do Mem0 SaaS. _(via claude-code)_
@@ -50,10 +49,14 @@ dinâmico. Sem este arquivo, Claude Chat opera com lag de 21h.
 - [fato/projetos] O bot do Telegram, TioGu, possui 21 ferramentas distintas integradas. _(via claude-code)_
 - [decisao/projetos] A fase 4 do projeto envolve a promoção automática de fragmentos da memória de ativo para estável após 30 dias. _(via claude-code)_
 - [identidade_operacional/gus] O Gus é um sistema de agente pessoal multi-porta que se comunica através de diferentes plataformas como Telegram, Claude Code e Claude Chat. _(via claude-code)_
+- [episodico/projetos] Os arquivos de estado do projeto sempre devem ser lidos, preferindo a consulta no Hub sobre o arquivo `gus-estado-atual.md`. _(via claude-code)_
+- [decisao/gus] A comunicação com a API do Mem0 SaaS deve ser verificada para confirmar a existência de conteúdos históricos e decidir sobre a eliminação do secret. _(via claude-code)_
+- [fato/gus] A coleta dual de modelos no curador (Haiku × GPT-4o-mini) terminará em 12/05/2026. _(via claude-code)_
+- [fato/projetos] O bot do Telegram, TioGu, possui cerca de 21 ferramentas. _(via claude-code)_
 
 ## Resumo numérico
 
-- **Total no brain `gustavo`**: 3122 fragmentos
+- **Total no brain `gustavo`**: 3049 fragmentos
 - **Amostra carregada**: 50 mais recentes (limite do listar)
 
 ### Distribuição por tipo (na amostra)
@@ -68,7 +71,7 @@ dinâmico. Sem este arquivo, Claude Chat opera com lag de 21h.
 - `procedural`: 1
 - `biografico`: 1
 
-## Auto-observações do Gus (brain `gus` — 3059 fragmentos)
+## Auto-observações do Gus (brain `gus` — 2988 fragmentos)
 
 - [decisao/gus] Há necessidade de um script que pareie os resultados de Haiku e GPT para avaliação de desempenho antes da escolha final do modelo a ser adotado. _(via claude-code)_
 - [decisao/gus] O Mem0 SaaS é um vetor de perda contínua se ainda escreve dados. _(via claude-code)_
