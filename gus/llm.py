@@ -186,50 +186,14 @@ def _mensagem_erro_amigavel(e: Exception) -> str:
 
     return f"Problema inesperado com a API Anthropic: {str(e)[:200]}"
 
-RESUMO_SYSTEM_PROMPT = """Você analisa um trecho de conversa entre Gustavo e o Gus (seu agente pessoal) e extrai o que vale ser gravado no Mem0 como memória de longo prazo.
-
-Extraia APENAS:
-- Decisões tomadas e o porquê
-- Preferências reveladas (comunicação, hábitos, gostos)
-- Fatos novos sobre Gustavo (saúde, projetos, pessoas, rotina, compromissos)
-- Ações prometidas ou combinadas
-- Contexto técnico relevante pra futuras conversas (arquitetura, bugs resolvidos, caminhos)
-
-Ignore:
-- Saudações e confirmações curtas
-- Conversa pequena sem conteúdo
-- Informação genérica que qualquer um saberia
-- Repetição do que já é óbvio pelo system prompt
-
-Formato: lista numerada. Cada item um fato curto e direto, em português. Se não houver nada relevante, responde exatamente: sem conteúdo relevante.
-"""
-
-
-async def gerar_resumo_turnos(messages: list[dict]) -> str:
-    """Gera resumo extrativo dos turnos pra salvar no Mem0."""
-    linhas = []
-    for msg in messages:
-        role = "Gustavo" if msg["role"] == "user" else "Gus"
-        content = msg["content"]
-        if isinstance(content, list):
-            partes = [c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text"]
-            content = " ".join(p for p in partes if p).strip() or "[mídia]"
-        linhas.append(f"{role}: {content}")
-
-    conversa = "\n\n".join(linhas)
-    model = os.getenv("MODEL_RESUMO", "claude-haiku-4-5")
-
-    response = await _chamar_claude_com_retry(
-        model=model,
-        max_tokens=1024,
-        system_prompt=RESUMO_SYSTEM_PROMPT,
-        messages=[{
-            "role": "user",
-            "content": f"Trecho de conversa pra analisar:\n\n{conversa}\n\nExtraia o que vale gravar como memória:"
-        }],
-    )
-    texto = next((b.text for b in response.content if hasattr(b, "text")), "")
-    return texto.strip()
+# NOTA: gerar_resumo_turnos + RESUMO_SYSTEM_PROMPT removidos no item 1.6 do
+# plano de saneamento (02/05/2026). Eram usados pelo `_fallback_mem0` legado
+# em gus/bot.py — quando o curador híbrido falhava totalmente, gerava resumo
+# bruto sem schema gus-18 e gravava no Hub. Decisão: preferir perder a janela
+# (alta visibilidade via status=erro_curador_total) a poluir Hub com fragmentos
+# não-classificados. Curador híbrido cross-vendor (Anthropic + OpenAI) já é
+# resiliente — ambos caírem simultaneamente é cenário extremo que merece
+# alerta, não fallback silencioso.
 
 
 @functools.lru_cache(maxsize=1)
