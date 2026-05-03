@@ -171,19 +171,13 @@ def _extrair_json(texto: str) -> list[dict]:
     return []
 
 
-# Schema gus-18 — enums canônicos. Valores fora desses entram como default
-# em vez de poluir o vocabulário do Hub (modelo invocado às vezes inventa
-# tipos como "reflexivo" ou "importante" que quebram filtros depois).
-TIPOS_VALIDOS = {
-    "identidade_operacional", "biografico", "emocional", "decisao", "procedural",
-    "rotina", "meta_reflexao", "conexao_emergente", "episodico", "cronologico",
-    "fato", "preferencia", "lacuna", "projeto",
-}
-CAMADAS_VALIDAS = {"momento", "sessao", "semana", "rotina", "permanente"}
-AREAS_VALIDAS = {
-    "gus", "saude", "financeiro", "projetos", "pessoal", "dimagem", "pesquisa",
-    "receitas", "esportes",
-}
+# Enums canônicos importados do módulo único `hub.vocabularios` (item 1.1
+# do plano de saneamento — antes havia listas duplicadas que dessincronizavam).
+from hub.vocabularios import (
+    TIPOS_CANONICOS as TIPOS_VALIDOS,
+    CAMADAS_TEMPORAIS as CAMADAS_VALIDAS,
+    AREAS_CANONICAS as AREAS_VALIDAS,
+)
 
 
 def _validar_fragmento(frag: dict) -> Optional[dict]:
