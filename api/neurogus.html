@@ -875,7 +875,234 @@ body.view-list .hint {
 </style>
 </head>
 <body>
-<!--__BODY_PLACEHOLDER__-->
+<header class="header">
+  <div class="brand">
+    <span class="brand__name">NeuroGus</span>
+    <span class="brand__sub">
+      <span class="brand__pulse"></span>
+      memória viva
+    </span>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab is-active" data-view="cosmos" id="tab-cosmos">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <circle cx="8" cy="8" r="5.5"/>
+        <ellipse cx="8" cy="8" rx="5.5" ry="2"/>
+      </svg>
+      <span>cosmos</span>
+    </button>
+    <button class="tab" data-view="list" id="tab-list">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M3 4 H13 M3 8 H13 M3 12 H13"/>
+        <circle cx="3" cy="4" r="0.8" fill="currentColor"/>
+        <circle cx="3" cy="8" r="0.8" fill="currentColor"/>
+        <circle cx="3" cy="12" r="0.8" fill="currentColor"/>
+      </svg>
+      <span>lista</span>
+    </button>
+  </nav>
+
+  <div class="stats">
+    <div class="stat">
+      <span class="stat__value" id="stat-frags">0</span>
+      <span class="stat__label">fragmentos</span>
+    </div>
+    <div class="stat">
+      <span class="stat__value" id="stat-conns">0</span>
+      <span class="stat__label">conexões</span>
+    </div>
+    <div class="stat">
+      <span class="stat__value stat__value--accent" id="stat-today">0</span>
+      <span class="stat__label">hoje</span>
+    </div>
+  </div>
+</header>
+
+<nav class="filters" id="filters">
+  <button class="filters__header" id="filters-toggle" aria-expanded="true">
+    <span class="filters__active-dot" id="filters-dot" style="background:#fff"></span>
+    <span id="filters-label">todos</span>
+    <span class="filters__chevron">
+      <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 4 L5 7 L8 4"/>
+      </svg>
+    </span>
+  </button>
+  <div class="filters__list" id="filters-list">
+    <button class="chip is-active" data-filter="all">
+      <span class="chip__dot" style="background:#fff"></span>
+      <span>todos</span>
+    </button>
+    <button class="chip chip--none" data-filter="none">
+      <span class="chip__dot"></span>
+      <span>sem labels</span>
+    </button>
+    <button class="chip" data-filter="identidade_operacional" style="color:var(--c-identidade)">
+      <span class="chip__dot" style="background:var(--c-identidade)"></span>
+      <span>identidade</span>
+    </button>
+    <button class="chip" data-filter="decisao" style="color:var(--c-decisao)">
+      <span class="chip__dot" style="background:var(--c-decisao)"></span>
+      <span>decisão</span>
+    </button>
+    <button class="chip" data-filter="episodico" style="color:var(--c-episodico)">
+      <span class="chip__dot" style="background:var(--c-episodico)"></span>
+      <span>episódico</span>
+    </button>
+    <button class="chip" data-filter="procedural" style="color:var(--c-procedural)">
+      <span class="chip__dot" style="background:var(--c-procedural)"></span>
+      <span>procedural</span>
+    </button>
+    <button class="chip" data-filter="meta_reflexao" style="color:var(--c-meta)">
+      <span class="chip__dot" style="background:var(--c-meta)"></span>
+      <span>meta-reflexão</span>
+    </button>
+    <button class="chip" data-filter="biografico" style="color:var(--c-biografico)">
+      <span class="chip__dot" style="background:var(--c-biografico)"></span>
+      <span>biográfico</span>
+    </button>
+    <button class="chip" data-filter="preferencia" style="color:var(--c-preferencia)">
+      <span class="chip__dot" style="background:var(--c-preferencia)"></span>
+      <span>preferência</span>
+    </button>
+    <button class="chip" data-filter="rotina" style="color:var(--c-rotina)">
+      <span class="chip__dot" style="background:var(--c-rotina)"></span>
+      <span>rotina</span>
+    </button>
+
+    <button class="chip" data-filter="emocional" style="color:#fb7185">
+      <span class="chip__dot" style="background:#fb7185"></span>
+      <span>emocional</span>
+    </button>
+    <button class="chip" data-filter="fato" style="color:#94a3b8">
+      <span class="chip__dot" style="background:#94a3b8"></span>
+      <span>fato</span>
+    </button>
+    <button class="chip" data-filter="cronologico" style="color:#a78bfa">
+      <span class="chip__dot" style="background:#a78bfa"></span>
+      <span>cronológico</span>
+    </button>
+    <button class="chip" data-filter="conexao_emergente" style="color:#fcd34d">
+      <span class="chip__dot" style="background:#fcd34d"></span>
+      <span>conexão</span>
+    </button>
+    <button class="chip" data-filter="projeto" style="color:#22d3ee">
+      <span class="chip__dot" style="background:#22d3ee"></span>
+      <span>projeto</span>
+    </button>
+    <button class="chip" data-filter="lacuna" style="color:#fda4af">
+      <span class="chip__dot" style="background:#fda4af"></span>
+      <span>lacuna</span>
+    </button>
+
+    <div style="height:1px;background:var(--hairline);margin:6px 4px"></div>
+
+    <button class="chip chip--toggle is-active" id="halo-toggle" data-filter="__halo">
+      <span class="chip__dot" style="background:var(--text-soft);box-shadow:0 0 6px var(--text-soft)"></span>
+      <span>halo</span>
+    </button>
+  </div>
+</nav>
+
+<div class="edge-indicators" id="edge-indicators"></div>
+<div class="label-canvas" id="label-canvas"></div>
+<div id="graph"></div>
+
+<!-- View: Lista por área -->
+<div class="list-view" id="list-view">
+  <div class="list-view__header">
+    <h2 class="list-view__title">fragmentos por área</h2>
+    <div class="list-view__sub">toque num fragmento pra ver detalhes</div>
+  </div>
+  <div class="list-view__body" id="list-view-body"></div>
+</div>
+
+<!-- Controles 3D -->
+<div class="controls">
+  <div class="ctrl-group ctrl-group--zoom">
+    <button class="ctrl-btn ctrl-btn--small" id="zoom-in" aria-label="Aproximar">
+      <span class="ctrl-btn__tooltip">aproximar</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 8 H12 M8 4 V12"/>
+      </svg>
+    </button>
+    <div class="zoom-slider" id="zoom-slider">
+      <div class="zoom-slider__track"></div>
+      <div class="zoom-slider__fill" id="zoom-slider-fill"></div>
+      <div class="zoom-slider__thumb" id="zoom-slider-thumb"></div>
+    </div>
+    <button class="ctrl-btn ctrl-btn--small" id="zoom-out" aria-label="Afastar">
+      <span class="ctrl-btn__tooltip">afastar</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 8 H12"/>
+      </svg>
+    </button>
+    <div class="ctrl-divider"></div>
+    <button class="ctrl-btn ctrl-btn--small" id="zoom-fit" aria-label="Enquadrar tudo">
+      <span class="ctrl-btn__tooltip">enquadrar tudo</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 5 V2 H5 M11 2 H14 V5 M14 11 V14 H11 M5 14 H2 V11"/>
+        <circle cx="8" cy="8" r="2.5"/>
+      </svg>
+    </button>
+  </div>
+  <div class="ctrl-group">
+    <button class="ctrl-btn" id="rotate-left" aria-label="Rotacionar esquerda">
+      <span class="ctrl-btn__tooltip">girar ←</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 8 A5 5 0 1 1 8 13"/>
+        <path d="M3 5 V8 H6"/>
+      </svg>
+    </button>
+    <button class="ctrl-btn" id="rotate-right" aria-label="Rotacionar direita">
+      <span class="ctrl-btn__tooltip">girar →</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M13 8 A5 5 0 1 0 8 13"/>
+        <path d="M13 5 V8 H10"/>
+      </svg>
+    </button>
+    <button class="ctrl-btn is-active" id="auto-rotate" aria-label="Auto-rotação">
+      <span class="ctrl-btn__tooltip">auto-rotação</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <ellipse cx="8" cy="8" rx="6" ry="2.5"/>
+        <ellipse cx="8" cy="8" rx="2.5" ry="6"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<aside class="panel" id="panel">
+  <div class="panel__glow" id="panel-glow"></div>
+  <div class="panel__head">
+    <div style="flex:1;min-width:0">
+      <div class="panel__type" id="panel-type"></div>
+      <div class="panel__content" id="panel-content">—</div>
+    </div>
+    <button class="panel__close" id="panel-close" aria-label="Fechar">
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 2 L10 10 M10 2 L2 10"/>
+      </svg>
+    </button>
+  </div>
+  <div class="panel__body" id="panel-body"></div>
+  <button class="panel__delete" id="panel-delete">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3">
+      <path d="M2 3h8 M4 3v-1.5h4V3 M3 3l0.6 7.5h4.8L9 3"/>
+    </svg>
+    apagar fragmento
+  </button>
+</aside>
+
+<div class="toast" id="toast">
+  <div class="toast__indicator" id="toast-dot"></div>
+  <div class="toast__body">
+    <div class="toast__label" id="toast-label"></div>
+    <div class="toast__text" id="toast-text"></div>
+  </div>
+</div>
+
+<div class="hint" id="hint">arraste pra girar · scroll pra zoom</div>
 <script>
 /*__SCRIPT_PLACEHOLDER__*/
 </script>
