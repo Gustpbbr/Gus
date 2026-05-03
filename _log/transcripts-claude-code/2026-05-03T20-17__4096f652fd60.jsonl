@@ -1,0 +1,35 @@
+oi, blz?
+user: oi, blz?
+assistant: blz. tô na branch `claude/initial-setup-iWTfL`, repo Gus, tudo carregado.
+
+vi que tem uma demanda pendente no inbox: `2026-05-02-pendencias-claude-chat-consolidacao.md`. quer que eu abra e processe agora, ou tem algo mais urgente?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are untracked files in the repository. Please commit and push these changes to the remote branch.
+
+chama o Gus.
+
+essa aba aqui vamos resolver demandas. quais demandas nos temos?
+assistant: só um update auto do retro-engine log. commitando.
+assistant: commitado e pushado. agora as demandas.
+assistant: ó cara, tá aqui:
+
+**1 demanda ativa no inbox** (`2026-05-02-pendencias-claude-chat-consolidacao.md`), status `parcial`. Cobre 4 frentes da porta Claude Chat — 2 já feitas, 2 pendentes:
+
+| # | Pendência | Bloqueio | Quem faz |
+|---|---|---|---|
+| 1 | `MCP_URL_SECRET` no Railway | — | ✅ feito 02/05 |
+| 2 | Recadastrar Connector claude.ai | — | ✅ feito 02/05 |
+| **3** | **Localizar mock HTML NeuroGus** (sessão Chat 28/04) | Bloqueia Fase 2 frontend | **tu** (10min abrindo Chat antigo) |
+| **4** | **Decisões §11.3–11.5** (`?token=`, auto-orbit, reconnect SSE) | Bloqueia Fase 2 frontend | **tu** (3 perguntas) |
+
+**O que falta de tu (Gustavo):**
+
+- **#3:** abre claude.ai → conversa antiga 28/04 sobre NeuroGus → pede o HTML mock e baixa. Se não achar em 15min, abandona e eu recrio do zero (custo: 2-3h minhas).
+- **#4:** responde 3 perguntas (recomendações minhas em parênteses):
+  - §11.3 — `?token=X` na URL ok pra v0, ou cookie HttpOnly? *(rec: `?token=X`)*
+  - §11.4 — Auto-orbit ON ou OFF default? *(rec: ON com pause-on-interaction)*
+  - §11.5 — Reconnect SSE retoma do Last-Event-ID ou reload completo? *(rec: reload)*
+
+**Próximo passo natural:** tu me responde #4 agora (rapidinho, 3 perguntas) e eu já atualizo `gus-30.1`. #3 tu faz quando tiver o claude.ai aberto.
+
+por onde quer começar?
