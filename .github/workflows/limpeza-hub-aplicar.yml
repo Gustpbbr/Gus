@@ -1,0 +1,51 @@
+name: Limpeza Hub — APLICAR (deleta candidatos aprovados)
+
+# Item 1.7 do plano de saneamento (02/05/2026). Dispatch manual.
+# IRREVERSÍVEL. Lê _indices/_limpeza-hub-candidatos.md, exclui IDs em
+# _indices/_limpeza-hub-rejeitados.txt, deleta o resto. Trilha em
+# _log/deletar-hub/AAAA-MM-DD.jsonl + sumário em _log/limpeza-hub/AAAA-MM-DD.md.
+#
+# Modo dryrun: input `dryrun=true` no dispatch — loga sem deletar.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dryrun:
+        description: 'Dryrun (true = só loga, false = deleta de verdade)'
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+permissions:
+  contents: write
+
+jobs:
+  aplicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r .github/scripts/requirements.txt
+
+      - name: Aplica limpeza
+        env:
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          LIMPEZA_DRYRUN: ${{ inputs.dryrun == 'true' && '1' || '0' }}
+        run: python .github/scripts/limpeza_hub_aplicar.py
+
+      - name: Commit e push trilha
+        run: |
+          git config user.name "gus-bot"
+          git config user.email "gus-bot@users.noreply.github.com"
+          git add _log/limpeza-hub/ _log/deletar-hub/ 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "auto: limpeza Hub aplicada ($(date +%Y-%m-%d), dryrun=${{ inputs.dryrun }})"
+          git push || echo "Sem mudanças"

@@ -1,0 +1,38 @@
+name: Limpeza Hub — DRYRUN (gera lista de candidatos)
+
+# Item 1.7 do plano de saneamento (02/05/2026). Dispatch manual.
+# Gera _indices/_limpeza-hub-candidatos.md sem deletar nada.
+# Gustavo revisa e roda `limpeza-hub-aplicar.yml` quando aprovar.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  dryrun:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r .github/scripts/requirements.txt
+
+      - name: Gera relatório dryrun
+        env:
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+        run: python .github/scripts/limpeza_hub_dryrun.py
+
+      - name: Commit e push
+        run: |
+          git config user.name "gus-bot"
+          git config user.email "gus-bot@users.noreply.github.com"
+          git add _indices/_limpeza-hub-candidatos.md
+          git diff --staged --quiet || git commit -m "auto: dryrun limpeza Hub ($(date +%Y-%m-%d))"
+          git push || echo "Sem mudanças"
