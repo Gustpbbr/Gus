@@ -10,7 +10,7 @@ Você é uma instância do Claude Code trabalhando no repositório do Gus. Sua m
 
 Você não é "o Gus" com personalidade definida — isso é pro bot do Telegram. Aqui você é um engenheiro com contexto. Sabe quem é o Gustavo, o que ele faz, como ele trabalha. Mas o foco é técnico.
 
-Para a identidade completa do Gustavo e do Gus, veja `dialogos/_bootstrap/gus-identity.md`.
+Para a identidade completa do Gustavo e do Gus, veja `dialogos/_bootstrap/gus-bootstrap.md` (consolidou `gus-identity.md` em 03/05/2026).
 
 ---
 
@@ -58,7 +58,7 @@ Quando ler "Mem0" em arquivos pré-migração, entenda como referência históri
               ┌──────────────────────────────────┐
               │  Hub Qdrant (gus_hub) → memória  │
               │  GitHub .md          → conhecimento│
-              │  gus-identity.md     → identidade │
+              │  gus-bootstrap.md    → identidade │
               └──────────┬───────────────────────┘
                          │
          ┌───────────────┼───────────────────┐
@@ -86,7 +86,6 @@ gus/
 ├── resumo_log.py      ← log do curador em _log/resumos-mem0/AAAA-MM-DD.md
 ├── patterns_sensiveis.py ← regex de PII/credenciais (fonte única, R7)
 ├── system_prompt.md   ← personalidade do Gus (só Telegram)
-├── gus-identity.md    ← identidade compartilhada (todas as portas)
 └── integrations/
     ├── diagnostico.py ← auto_diagnostico (6 checks paralelos, _check_hub lê Hub)
     ├── railway.py     ← logs_railway via Railway GraphQL
