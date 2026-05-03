@@ -1,0 +1,707 @@
+user: blz? pode chamar o Gus pra gente começar a mexer no projeto neurogus?
+assistant: opa, blz. neurogus tem roadmap em `projetos/gus/gus-30-neurogus-roadmap.md` e três briefings na inbox-tiogu. deixa eu ler tudo antes de falar besteira.
+assistant: bom, peguei a essência. agora o roadmap (28k tokens, leio em partes — começo do início e do fim, que costuma ter "estado atual").
+assistant: Já tenho briefing, arquitetura, mock-spec e roadmap completo. Antes de propor passo concreto, deixa eu conferir branch atual.
+assistant: opa, branch `claude/start-neurogus-project-NZAoF` ja criada, working tree limpo. tudo lido. resumo do estado:
+
+## o que é o neurogus
+PWA com grafo 3D que mostra a memória do Hub Qdrant viva em tempo real — cada fragmento é uma esfera, conexão por afinidade semântica (cosine top-K), nasce branco quando o curador salva e migra pra cor do tipo. Roda no mesmo Railway do bot, sem custo extra.
+
+## status hoje
+- backend (Hub, curador, embeddings, FastAPI, Bearer): **pronto**
+- código novo do NeuroGus: **0 linhas escritas** (só mock visual da Claude Chat, perdido no Drive dela)
+- roadmap canônico: `projetos/gus/gus-30-neurogus-roadmap.md` (1513 linhas, Fase 1 = backend SSE)
+
+## o que precisa de você antes de eu começar (decisões abertas, seção 11)
+3 dessas bloqueiam Fase 1:
+
+1. **Top-K e threshold de afinidade.** Default proposto: K=3, threshold=0.6 (cosine). Aceita?
+2. **Apagar fragmento é hard ou soft delete?** Hard = `store.deletar()` direto. Soft = marcar `estado: "esquecido"` (já existe no schema). Recuperabilidade vs minimalismo.
+3. **Coleção mostrada: só `user_id=gustavo` ou também `gus` (auto-observações)?** Default: só `gustavo` no v0.
+
+As outras 4 (mock HTML, token na URL, auto-orbit, reconnect SSE) só importam na Fase 2 (frontend) — dá pra decidir depois.
+
+## se você confirmar os defaults, primeiro passo concreto é
+1. criar `hub/events.py` (fila SSE, ~50 linhas)
+2. adicionar `_calcular_vizinhos()` + `broadcast()` em `hub/store.py:ingestar()`
+3. adicionar `GET /hub/recent` e `GET /hub/stream` em `hub/routes.py`
+4. smoke test local com `curl --no-buffer` antes de subir
+
+vou nessa? confirma (ou ajusta) os 3 defaults e eu começo pela Fase 1.
+user: Continue from where you left off.
+assistant: No response requested.
+user: mas antes, leia sobre todo o projeto. pra ter um panorama geral. busque em todo repo
+user: Você é um agente de exploração mapeando o repositório Gus (`/home/user/Gus`) pra dar contexto a outra sessão Claude Code que vai trabalhar no projeto NeuroGus.
+
+Objetivo: produzir um panorama geral do repo. Não detalhe demais — seja específico onde há decisão arquitetural ou estado em transição, e seja conciso onde for óbvio.
+
+Cobre estes pontos (em ordem):
+
+## 1. Estrutura de pastas top-level
+Liste o que tem em `/home/user/Gus` (raiz). Pra cada pasta principal (`gus/`, `hub/`, `api/`, `.claude/`, `.github/`, `projetos/`, `dialogos/`, `pessoal/`, `dimagem/`, `_log/`, `_indices/`, etc.) diga em 1 linha o que ela é. Foca no que é código vs conteúdo (.md).
+
+## 2. Código-fonte ativo (Python)
+- `gus/`: liste os módulos principais (main, bot, llm, memory, tools, media) e quantas linhas tem cada um
+- `hub/`: liste os módulos (store, curador, routes, schemas, mcp_server, events?) e estado de cada
+- `api/`: liste o que tem dentro (server, dashboard, camera, neurogus?, etc.) 
+- `.claude/mcp/`: MCP servers existentes
+- `.github/scripts/` e `.github/workflows/`: lista breve de scripts e workflows ativos
+
+Pra cada arquivo importante, diga 1 linha sobre o que faz. Marque com ❌ os arquivos referenciados em docs mas que não existem ainda (tipo `hub/events.py`, `api/neurogus.py`).
+
+## 3. Documentos canônicos `projetos/gus/gus-NN-*.md`
+Liste todos os docs com prefixo `gus-NN-` em `projetos/gus/`. Pra cada um, leia o frontmatter + primeiras 30 linhas e resuma em 1-2 linhas: tema + status (planejamento/implementado/abandonado).
+
+## 4. Estado da migração ADR-001 (Mem0 → Hub Qdrant)
+Procura referências a "ADR-001", "Fase X", "Hub", "Mem0" em arquivos de status. Tem `projetos/gus/_estado-atual.md`? Leia ele inteiro se existir. Resuma em qual fase a migração está.
+
+## 5. Demandas pendentes
+- Liste arquivos em `dialogos/inbox-claude-code/`, `dialogos/inbox-tiogu/` (com 1 linha cada sobre o tema)
+- Liste arquivos em `dialogos/streams/semana-*.md` mais recentes (só o nome)
+- Aponta quais são relacionadas ao NeuroGus
+
+## 6. Workflows ativos (.github/workflows)
+Lista nome + 1 linha do que faz. Marca os que são relevantes pro Hub/curador/NeuroGus.
+
+## 7. Sinais de "tá rodando em produção" vs "rascunho"
+Pasta `historico/` tem o quê (legado)? Tem TODOs marcados em código? Tem arquivos `.draft` ou similares? Quais arquivos tem "TODO"/"FIXME"/"XXX" em comentários de código?
+
+## 8. Tamanho e idiomas
+- Total de linhas Python no repo
+- Total de arquivos .md
+- Última semana de commits (resumo via `git log --oneline --since='7 days ago'`)
+
+## Formato do relatório
+- Markdown estruturado, seções como acima
+- Caminhos relativos a `/home/user/Gus`
+- ~600-900 linhas (use as palavras com economia, mas cubra tudo)
+- Não duplique info do CLAUDE.md (eu já tenho ele); foque no que CLAUDE.md NÃO diz ou onde ele está desatualizado vs realidade
+- Termina com seção "## Inconsistências/dúvidas" listando 3-5 coisas que parecem contraditórias entre docs e código
+
+Não precisa rodar nada — só ler arquivos e listar diretórios. Sem WebFetch/WebSearch. Sem git fetch — só git log local se útil.
+assistant: beleza, faz sentido. vou mapear o repo inteiro com um agente de exploração antes de continuar.
+assistant: Vou explorar o repositório Gus sistematicamente. Começarei com uma visão geral da estrutura.
+assistant: Agora vou estruturar a exploração. Vou fazer múltiplas buscas em paralelo:
+assistant: Vou explorar a estrutura de código Python em paralelo:
+assistant: Agora vou contar linhas de código e explorar documentação:
+assistant: Agora vou examinar conteúdo das demandas pendentes e status do NeuroGus:
+assistant: Vou verificar MCP servers e workflows mais detalhadamente:
+assistant: Agora vou ler alguns docs importantes do NeuroGus e ADR-001:
+assistant: Agora vou verificar arquivos de APIs e rotas do Hub:
+assistant: Agora vou verificar alguns workflows e ver padrão de referências:
+assistant: Vou mapear o repositório Gus de forma completa. Começarei pela estrutura geral e depois dos pontos específicos.
+assistant: agente de exploração rodando em background. te aviso assim que ele terminar com o panorama. enquanto isso fico parado pra não pisar no que ele tá lendo.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Agora vou explorar os principais diretórios em paralelo:
+assistant: Agora vou contar linhas de código e verificar documentos:
+assistant: São só appends automáticos do hook Stop (retro-engine). Commit e push.
+assistant: commitado e pushado pra `claude/start-neurogus-project-NZAoF` (commit `b28e75d`). Agente de exploração ainda mapeando o repo — te aviso quando ele terminar.
+assistant: Perfeito! Agora tenho informação suficiente para o relatório. Deixe-me compilar tudo:
+
+---
+
+# Panorama do Repositório Gus — Mapa para NeuroGus
+
+## 1. Estrutura de pastas top-level
+
+| Pasta | Tipo | Descrição |
+|-------|------|-----------|
+| **gus/** | Código | Bot TioGu (Telegram). Módulos: main, bot, llm, memory, tools, media, roteador, logger, patterns_sensiveis, integrations/ |
+| **hub/** | Código | Hub Qdrant direto (ADR-001 Fase 2+). Módulos: store, curador, routes, schemas, mcp_server |
+| **api/** | Código | FastAPI (Railway). Rotas REST, auth, dashboard, camera, server principal |
+| **.claude/** | Config | MCP servers (mem0_server, gus_server) + settings |
+| **.github/** | Config | Workflows (19 cron + manual), scripts deploy, diagnostics |
+| **projetos/** | Conteúdo | Documentação projeto: gus-NN-*.md (30 docs), auditorias, decisões arquiteturais (ADRs) |
+| **dialogos/** | Conteúdo | Inbox (claude-code, tiogu, gustavo), streams semana, bootstrap (identidade, prompts) |
+| **pessoal/** | Conteúdo | Saúde, financeiro, relacionamentos, histórico pessoal |
+| **dimagem/** | Conteúdo | Clínica (obras, pacientes, sistema OCR em produção) |
+| **capturado/** | Conteúdo | Captura rápida via bot (não estruturada) |
+| **historico/** | Arquivo | Legacy: textos-antigos (v1), scripts one-shot, docs setup. Seguro deletar. |
+| **_indices/** | Gerado | Índices automáticos (auditoria-mem0.md, etc.) |
+| **_log/** | Gerado | Logs resumidos, histórico de execuções |
+| **acoes/, agenda/, familia/, receitas/, contatos/, esportes/, leituras/** | Conteúdo | Dados pessoais do Gustavo (fora de escopo técnico) |
+
+---
+
+## 2. Código-fonte ativo (Python)
+
+### `gus/` — Bot Telegram (579-675 LOC principais)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `main.py` | ~50 | Boot: registra handlers Telegram (foto, doc, voz, texto, comandos) |
+| `bot.py` | 579 | Lógica de handlers: captura foto/PDF/voz → OCR/Whisper + Hub |
+| `llm.py` | 675 | Chamadas Claude (Haiku 4.5, Sonnet 4.6): retry, streaming, tools |
+| `memory.py` | 279 | Leitura/escrita Hub Qdrant via `hub/store.py` + fallback Mem0 (morto em escrita) |
+| `tools.py` | ~700 | ~21 tools: buscar_memoria, salvar_memoria, diagnostico, wikilinks, pesquisa, etc. |
+| `media.py` | ~150 | Whisper (voz → texto), Haiku Vision (foto → OCR), ffmpeg placeholder vídeo |
+| `integrations/` | 4 files | Railway logs, diagnostico, wikilinks, pesquisa (Tavily/DDG) |
+| `roteador.py`, `logger.py`, `patterns_sensiveis.py` | ~200 | Roteamento entre modelos, logging estruturado, patterns de segurança |
+
+**Estado:** Em produção. Handlers completos exceto VIDEO (TODO mencionado em main.py).
+
+### `hub/` — Hub Qdrant (297-434 LOC principais)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `store.py` | 297 | Qdrant direto com sentence-transformers. CRUD + busca semântica. Schema gus-18. |
+| `curador.py` | 434 | Híbrido Haiku × GPT-4o-mini (paralelo). Fragmentos com `hash_janela` + `via` metadata. |
+| `routes.py` | ~50 | Endpoints REST: `/hub/ingestar`, `/hub/lembrar`, `/hub/ego-cache`, `/hub/stats` |
+| `schemas.py` | ~80 | Pydantic: IngestarReq/Resp, LembrarReq/Resp, Payload (16 campos) |
+| `mcp_server.py` | ~200 | MCP wrapper pro Claude Code. Expõe 8-9 tools (buscar_memoria, deletar_memoria, etc.) |
+| ❌ `events.py` | — | **Não existe**. Pré-requisito NeuroGus (asyncio.Queue p/ SSE) |
+
+**Estado:** Produção desde 27/04. Migração Mem0 → Hub completa (Fase 4 concluída). Mem0 SaaS em fallback-only (morte programada pós-14 dias coleta dual = ~12/05).
+
+### `api/` — FastAPI server (Railway)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `server.py` | ~100 | Starlette + FastAPI. Registra routers: bot routes, Hub routes, dashboard |
+| `routes.py` | ~200 | Routes do bot: `/memo` (POST memória), `/mirror` (log), etc. |
+| `auth.py` | ~50 | Bearer token validation pra Hub + MCP |
+| `dashboard.py` | ~80 | Minimal dashboard (status página) |
+| `camera.py` | ~100 | IP webcam (futuro: camera Echo Show via S8 Termux) |
+| `schemas.py` | ~50 | Pydantic: requisições/respostas |
+| ❌ `neurogus.py` | — | **Não existe**. Frontend SSE + grafo 3D (pré-requisito NeuroGus Fase 1) |
+
+**Estado:** Em produção. Últimos 4 PRs (27-30/04) fixaram issues MCP auth pro claude.ai (Bearer header → OAuth adaptação). PR #60 mergeado 30/04.
+
+### `.claude/mcp/` — MCP servers
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `mem0_server.py` | ~300 | ⚠️ Legado. Conecta MCP à Mem0 SaaS. Será aposentado pós-14 dias. |
+| `gus_server.py` | ~250 | Expõe tools do bot: auto_diagnostico, sugerir_wikilinks, perguntar_gpt (GPT-5) |
+
+### `.github/scripts/` — Utilitários
+
+Principais:
+- `export_mem0.py` — exporta Mem0 SaaS pra JSON (cron diário)
+- `enrich_mem0_export.py` — enriquece export com embeddings (script existe, sem cron)
+- `audit_mem0.py` — auditoria Mem0 (será migrado pra Hub)
+
+**Total Python:** 13,459 linhas entre `gus/`, `hub/`, `api/`, `.claude/mcp/`, `.github/scripts/`
+
+---
+
+## 3. Documentos canônicos `projetos/gus/gus-NN-*.md` (30 docs)
+
+| ID | Título | Status | Resumo |
+|----|--------|--------|--------|
+| 01 | visao-geral | ✅ Implementado | Arquitetura multi-portal: Telegram, Claude Code, Claude Chat, ChatGPT |
+| 02 | implementado | ✅ Implementado | Feature checklist v1 (OCR, memória, tools) |
+| 03 | configuracao-manual | ✅ Implementado | Passo-a-passo setup bot Telegram + Railway |
+| 04 | seguranca-protecao | ✅ Implementado | Patterns sensíveis, gate confiança OCR, fallbacks |
+| 05 | portas-capacidades | ✅ Implementado | Feature matrix por porta (Telegram, Claude, etc.) |
+| 06 | autonomia-acoes | ✅ Implementado | Ações automáticas pendentes (vídeo, Google SA, Alexa) |
+| 07 | decisoes-descartadas | ✅ Implementado | Por que NOT Ollama, NOT llama.cpp, etc. |
+| 08 | plano-proximos-passos | ✅ Implementado | Roadmap até Alexa (descontinuado, vide gus-10) |
+| 09 | guia-uso-diario | ✅ Implementado | Como usar o Gus no dia-a-dia |
+| 10 | caminho-alexa | ✅ Implementado | Roadmap revisado: Alexa V1 (Dot 3) → Custom GPT → Termux |
+| 11 | tools-roadmap | ✅ Implementado | Roadmap de 21 tools (maioria pronto) |
+| 12 | portas-futuras | ✅ Implementado | Portas planejadas (Alexa, mobile voz, webcam) |
+| 13 | tags-canonicas | ✅ Implementado | Nomenclatura tags de origem (via) e tipos memória |
+| 14 | custom-gpt-setup | ✅ Implementado | Passo-a-passo Custom GPT com Actions |
+| 15 | decisao-migracao | ✅ Implementado | Por que migrar de Mem0 (SaaS lento) para Hub Qdrant |
+| 16 | canal-unificado | ✅ Implementado | Arquitetura pasta `dialogos/` por destinatário |
+| 17 | setup-ambiente | ✅ Implementado | Vars env, secrets, Railway, Qdrant Cloud |
+| 18 | schema-indexacao | ✅ Implementado | Schema payload Hub (16 campos: tipo, camada_temporal, area, confiança, via, etc.) |
+| 19 | etapa1-mem0-selfhost | ✅ Implementado | Fase 1 ADR-001 (Qdrant via wrapper Mem0) |
+| 20 | etapa2-hub-qdrant | ✅ Implementado | Fase 2 ADR-001 (Hub direto com payload rico) |
+| 21 | etapa3-curador | ✅ Implementado | Fase 3: curador híbrido Haiku × Sonnet (depois GPT) |
+| 22 | etapas4-5-ego-autorelato | 🔄 Parcial | Fase 4-5: ego_cache + auto-relatório (Fase 4 concluída, Fase 5 pendente) |
+| 23 | logica-qdrant-mem0 | ✅ Implementado | Explicação convivência dual até aposentadoria Mem0 |
+| 24 | hub-pre-agi-visao | ✅ Implementado | Visão de longo prazo: Hub como infraestrutura pré-AGI |
+| 25 | roadmap-ativacao | ✅ Implementado | Sequência: Hub → Curador → Portas customizadas |
+| 26 | status-consolidado | ✅ Implementado | Status Q1 2026 (completo até 26/04) |
+| 27 | protocolo-portas-tools | ✅ Implementado | Padronização: como portas acessam tools via MCP |
+| 28 | acesso-hub-claude-chat | ✅ Implementado | Como Claude Chat lê Hub (início, precisa OAuth fix) |
+| 28-passo2 | mcp-server | ✅ Implementado | Setup MCP server gus-hub em claude.ai |
+| 29 | roteamento-multimodelo-tiogu | ✅ Implementado | Decisão: Son
+
+[…transcript truncado…]
+
+ition: opacity 0.2s;
+}
+
+.tab:hover {
+  color: var(--text-soft);
+}
+.tab:hover svg { opacity: 1; }
+
+.tab.is-active {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+.tab.is-active svg {
+  opacity: 1;
+  color: var(--c-identidade);
+}
+
+/* ─── View Lista ─── */
+.list-view {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  background: var(--bg-deep);
+  display: none;
+  flex-direction: column;
+  padding-top: 110px;
+}
+
+.list-view.is-active {
+  display: flex;
+}
+
+.list-view::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 30% 30%, rgba(0, 245, 255, 0.025), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 80% 70%, rgba(192, 132, 252, 0.02), transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.list-view__header {
+  padding: 0 var(--s-8) var(--s-5);
+  flex-shrink: 0;
+}
+
+.list-view__title {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.list-view__sub {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+
+.list-view__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--s-4) var(--s-8) var(--s-10);
+}
+
+.list-view__body::-webkit-scrollbar { width: 4px; }
+.list-view__body::-webkit-scrollbar-track { background: transparent; }
+.list-view__body::-webkit-scrollbar-thumb {
+  background: var(--hairline);
+  border-radius: 2px;
+}
+
+.area-group {
+  margin-bottom: var(--s-8);
+}
+
+.area-group__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding-bottom: var(--s-3);
+  margin-bottom: var(--s-3);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.area-group__name {
+  font-family: 'Instrument Serif', serif;
+  font-size: 20px;
+  font-style: italic;
+  color: var(--text);
+  text-transform: lowercase;
+  letter-spacing: -0.005em;
+}
+
+.area-group__count {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.area-group__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  background: var(--glass);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.list-item:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateX(2px);
+}
+
+.list-item__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.list-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.list-item__top {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.list-item__type {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.list-item__meta {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+
+.list-item__content {
+  font-family: 'Instrument Serif', serif;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text-soft);
+  letter-spacing: -0.005em;
+}
+
+.list-item__conf {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: 0.12em;
+  color: var(--text-mute);
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.list-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-faint);
+  font-size: var(--fs-small);
+  letter-spacing: 0.1em;
+}
+
+/* Quando lista está ativa, esconder elementos da view cosmos */
+body.view-list #graph,
+body.view-list .filters,
+body.view-list .controls,
+body.view-list .label-canvas,
+body.view-list .edge-indicators,
+body.view-list .hint {
+  display: none;
+}
+
+/* ─── Responsivo ─── */
+@media (max-width: 768px) {
+  .header { padding: var(--s-4) var(--s-5); }
+  .brand__name { font-size: 26px; }
+  .stats { gap: var(--s-5); }
+  .stat__value { font-size: 22px; }
+  .filters { top: 88px; left: var(--s-5); }
+  .filters__header { width: 140px; }
+  .panel { width: 100vw; }
+  .controls { bottom: var(--s-4); right: var(--s-4); }
+  .zoom-slider { height: 90px; }
+  .toast { bottom: 110px; right: var(--s-5); left: var(--s-5); max-width: none; }
+
+  .tab { padding: 8px 10px; }
+  .tab span { display: none; }
+  .tab svg { width: 16px; height: 16px; }
+
+  .list-view { padding-top: 90px; }
+  .list-view__header { padding: 0 var(--s-5) var(--s-4); }
+  .list-view__title { font-size: 22px; }
+  .list-view__body { padding: var(--s-3) var(--s-5) var(--s-10); }
+  .area-group { margin-bottom: var(--s-6); }
+  .area-group__name { font-size: 17px; }
+}
+
+@media (max-width: 480px) {
+  .stats { display: none; }
+}
+</style>
+</head>
+```
+
+avisa quando colar pra eu mandar a **Parte 2/3** (HTML body com 14 chips).
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`2e1a8ca`).
+pode mandar 2/3
+user: pode mandar 2/3
+assistant: **Parte 2/3** — HTML body com header, filtros (14 chips, 6 novos), graph, list view, controles, painel, toast e hint. Cole imediatamente após o `</head>` da Parte 1.
+
+**Modificação inclusa nesta parte:** 6 chips novos no `nav.filters` (emocional, fato, cronologico, conexao_emergente, projeto, lacuna), entre "rotina" e o divider do toggle halo.
+
+```html
+<body>
+
+<header class="header">
+  <div class="brand">
+    <span class="brand__name">NeuroGus</span>
+    <span class="brand__sub">
+      <span class="brand__pulse"></span>
+      memória viva
+    </span>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab is-active" data-view="cosmos" id="tab-cosmos">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <circle cx="8" cy="8" r="5.5"/>
+        <ellipse cx="8" cy="8" rx="5.5" ry="2"/>
+      </svg>
+      <span>cosmos</span>
+    </button>
+    <button class="tab" data-view="list" id="tab-list">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M3 4 H13 M3 8 H13 M3 12 H13"/>
+        <circle cx="3" cy="4" r="0.8" fill="currentColor"/>
+        <circle cx="3" cy="8" r="0.8" fill="currentColor"/>
+        <circle cx="3" cy="12" r="0.8" fill="currentColor"/>
+      </svg>
+      <span>lista</span>
+    </button>
+  </nav>
+
+  <div class="stats">
+    <div class="stat">
+      <span class="stat__value" id="stat-frags">0</span>
+      <span class="stat__label">fragmentos</span>
+    </div>
+    <div class="stat">
+      <span class="stat__value" id="stat-conns">0</span>
+      <span class="stat__label">conexões</span>
+    </div>
+    <div class="stat">
+      <span class="stat__value stat__value--accent" id="stat-today">0</span>
+      <span class="stat__label">hoje</span>
+    </div>
+  </div>
+</header>
+
+<nav class="filters" id="filters">
+  <button class="filters__header" id="filters-toggle" aria-expanded="true">
+    <span class="filters__active-dot" id="filters-dot" style="background:#fff"></span>
+    <span id="filters-label">todos</span>
+    <span class="filters__chevron">
+      <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 4 L5 7 L8 4"/>
+      </svg>
+    </span>
+  </button>
+  <div class="filters__list" id="filters-list">
+    <button class="chip is-active" data-filter="all">
+      <span class="chip__dot" style="background:#fff"></span>
+      <span>todos</span>
+    </button>
+    <button class="chip chip--none" data-filter="none">
+      <span class="chip__dot"></span>
+      <span>sem labels</span>
+    </button>
+    <button class="chip" data-filter="identidade_operacional" style="color:var(--c-identidade)">
+      <span class="chip__dot" style="background:var(--c-identidade)"></span>
+      <span>identidade</span>
+    </button>
+    <button class="chip" data-filter="decisao" style="color:var(--c-decisao)">
+      <span class="chip__dot" style="background:var(--c-decisao)"></span>
+      <span>decisão</span>
+    </button>
+    <button class="chip" data-filter="episodico" style="color:var(--c-episodico)">
+      <span class="chip__dot" style="background:var(--c-episodico)"></span>
+      <span>episódico</span>
+    </button>
+    <button class="chip" data-filter="procedural" style="color:var(--c-procedural)">
+      <span class="chip__dot" style="background:var(--c-procedural)"></span>
+      <span>procedural</span>
+    </button>
+    <button class="chip" data-filter="meta_reflexao" style="color:var(--c-meta)">
+      <span class="chip__dot" style="background:var(--c-meta)"></span>
+      <span>meta-reflexão</span>
+    </button>
+    <button class="chip" data-filter="biografico" style="color:var(--c-biografico)">
+      <span class="chip__dot" style="background:var(--c-biografico)"></span>
+      <span>biográfico</span>
+    </button>
+    <button class="chip" data-filter="preferencia" style="color:var(--c-preferencia)">
+      <span class="chip__dot" style="background:var(--c-preferencia)"></span>
+      <span>preferência</span>
+    </button>
+    <button class="chip" data-filter="rotina" style="color:var(--c-rotina)">
+      <span class="chip__dot" style="background:var(--c-rotina)"></span>
+      <span>rotina</span>
+    </button>
+
+    <button class="chip" data-filter="emocional" style="color:#fb7185">
+      <span class="chip__dot" style="background:#fb7185"></span>
+      <span>emocional</span>
+    </button>
+    <button class="chip" data-filter="fato" style="color:#94a3b8">
+      <span class="chip__dot" style="background:#94a3b8"></span>
+      <span>fato</span>
+    </button>
+    <button class="chip" data-filter="cronologico" style="color:#a78bfa">
+      <span class="chip__dot" style="background:#a78bfa"></span>
+      <span>cronológico</span>
+    </button>
+    <button class="chip" data-filter="conexao_emergente" style="color:#fcd34d">
+      <span class="chip__dot" style="background:#fcd34d"></span>
+      <span>conexão</span>
+    </button>
+    <button class="chip" data-filter="projeto" style="color:#22d3ee">
+      <span class="chip__dot" style="background:#22d3ee"></span>
+      <span>projeto</span>
+    </button>
+    <button class="chip" data-filter="lacuna" style="color:#fda4af">
+      <span class="chip__dot" style="background:#fda4af"></span>
+      <span>lacuna</span>
+    </button>
+
+    <div style="height:1px;background:var(--hairline);margin:6px 4px"></div>
+
+    <button class="chip chip--toggle is-active" id="halo-toggle" data-filter="__halo">
+      <span class="chip__dot" style="background:var(--text-soft);box-shadow:0 0 6px var(--text-soft)"></span>
+      <span>halo</span>
+    </button>
+  </div>
+</nav>
+
+<div class="edge-indicators" id="edge-indicators"></div>
+<div class="label-canvas" id="label-canvas"></div>
+<div id="graph"></div>
+
+<!-- View: Lista por área -->
+<div class="list-view" id="list-view">
+  <div class="list-view__header">
+    <h2 class="list-view__title">fragmentos por área</h2>
+    <div class="list-view__sub">toque num fragmento pra ver detalhes</div>
+  </div>
+  <div class="list-view__body" id="list-view-body"></div>
+</div>
+
+<!-- Controles 3D -->
+<div class="controls">
+  <div class="ctrl-group ctrl-group--zoom">
+    <button class="ctrl-btn ctrl-btn--small" id="zoom-in" aria-label="Aproximar">
+      <span class="ctrl-btn__tooltip">aproximar</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 8 H12 M8 4 V12"/>
+      </svg>
+    </button>
+    <div class="zoom-slider" id="zoom-slider">
+      <div class="zoom-slider__track"></div>
+      <div class="zoom-slider__fill" id="zoom-slider-fill"></div>
+      <div class="zoom-slider__thumb" id="zoom-slider-thumb"></div>
+    </div>
+    <button class="ctrl-btn ctrl-btn--small" id="zoom-out" aria-label="Afastar">
+      <span class="ctrl-btn__tooltip">afastar</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 8 H12"/>
+      </svg>
+    </button>
+    <div class="ctrl-divider"></div>
+    <button class="ctrl-btn ctrl-btn--small" id="zoom-fit" aria-label="Enquadrar tudo">
+      <span class="ctrl-btn__tooltip">enquadrar tudo</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 5 V2 H5 M11 2 H14 V5 M14 11 V14 H11 M5 14 H2 V11"/>
+        <circle cx="8" cy="8" r="2.5"/>
+      </svg>
+    </button>
+  </div>
+  <div class="ctrl-group">
+    <button class="ctrl-btn" id="rotate-left" aria-label="Rotacionar esquerda">
+      <span class="ctrl-btn__tooltip">girar ←</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 8 A5 5 0 1 1 8 13"/>
+        <path d="M3 5 V8 H6"/>
+      </svg>
+    </button>
+    <button class="ctrl-btn" id="rotate-right" aria-label="Rotacionar direita">
+      <span class="ctrl-btn__tooltip">girar →</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M13 8 A5 5 0 1 0 8 13"/>
+        <path d="M13 5 V8 H10"/>
+      </svg>
+    </button>
+    <button class="ctrl-btn is-active" id="auto-rotate" aria-label="Auto-rotação">
+      <span class="ctrl-btn__tooltip">auto-rotação</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <ellipse cx="8" cy="8" rx="6" ry="2.5"/>
+        <ellipse cx="8" cy="8" rx="2.5" ry="6"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<aside class="panel" id="panel">
+  <div class="panel__glow" id="panel-glow"></div>
+  <div class="panel__head">
+    <div style="flex:1;min-width:0">
+      <div class="panel__type" id="panel-type"></div>
+      <div class="panel__content" id="panel-content">—</div>
+    </div>
+    <button class="panel__close" id="panel-close" aria-label="Fechar">
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 2 L10 10 M10 2 L2 10"/>
+      </svg>
+    </button>
+  </div>
+  <div class="panel__body" id="panel-body"></div>
+  <button class="panel__delete" id="panel-delete">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3">
+      <path d="M2 3h8 M4 3v-1.5h4V3 M3 3l0.6 7.5h4.8L9 3"/>
+    </svg>
+    apagar fragmento
+  </button>
+</aside>
+
+<div class="toast" id="toast">
+  <div class="toast__indicator" id="toast-dot"></div>
+  <div class="toast__body">
+    <div class="toast__label" id="toast-label"></div>
+    <div class="toast__text" id="toast-text"></div>
+  </div>
+</div>
+
+<div class="hint" id="hint">arraste pra girar · scroll pra zoom</div>
+```
+
+avisa quando colar pra eu mandar a **Parte 3/3** (todo o JavaScript com TYPE_COLOR/LABEL/AREA_COLOR expandidos + getNodeColor + REAL_NODES + render).
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
