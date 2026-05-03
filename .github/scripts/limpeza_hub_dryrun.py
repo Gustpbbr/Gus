@@ -26,14 +26,18 @@ Tipos de candidatos identificados:
    (MCP antigo, fallback antigo). Sinal forte de poluição.
 
 Output: `_indices/_limpeza-hub-candidatos.md` com cada candidato:
-- ID
-- Brain (gustavo / gus)
-- Razão proposta
-- Texto do fragmento (até 200 chars)
-- Severidade da recomendação (forte / médio / fraco)
+- ID + brain + severidade + razão
+- Texto COMPLETO (sem trunc)
+- Metadata completa: tipo, camada_temporal, area, via, curador,
+  prompt_version, confianca, criado_em, estado, hash_janela, janela_turnos
+- Para duplicatas: também mostra texto+metadata do fragmento mantido
 
 Não deleta nada. Gustavo revisa o doc, edita pra remover candidatos que
-quer manter, depois roda `limpeza_hub_aplicar.py`.
+quer manter (cria `_limpeza-hub-rejeitados.txt`), depois roda
+`limpeza_hub_aplicar.py`.
+
+Lê payload completo do Qdrant via scroll (não usa `_hub_compat` porque
+esse só preserva 5 campos no metadata).
 
 Variáveis de ambiente:
   QDRANT_URL, QDRANT_API_KEY
@@ -48,11 +52,50 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _hub_compat import get_all_memorias
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 BRT = timezone(timedelta(hours=-3))
 OUTPUT_PATH = "_indices/_limpeza-hub-candidatos.md"
 JACCARD_DUP = float(os.environ.get("LIMPEZA_JACCARD", "0.7"))
+
+
+def listar_payload_completo(user_id: str, limit: int = 10000) -> list[dict]:
+    """Scroll Qdrant direto pra pegar payload completo (todos os campos).
+
+    `_hub_compat.get_all_memorias` só preserva 5 campos no metadata
+    (tipo/estado/via/area/curador). Pra revisão humana precisamos de
+    camada_temporal, prompt_version, confianca, criado_em, hash_janela, etc.
+    """
+    from qdrant_client import QdrantClient
+    from qdrant_client.models import Filter, FieldCondition, MatchValue
+
+    client = QdrantClient(
+        url=os.environ["QDRANT_URL"],
+        api_key=os.environ["QDRANT_API_KEY"],
+        timeout=60,
+    )
+    flt = Filter(must=[FieldCondition(key="user_id", match=MatchValue(value=user_id))])
+
+    todos: list[dict] = []
+    offset = None
+    while True:
+        pontos, prox = client.scroll(
+            collection_name="gus_hub",
+            scroll_filter=flt,
+            limit=200,
+            offset=offset,
+            with_payload=True,
+            with_vectors=False,
+        )
+        for p in pontos:
+            payload = dict(p.payload or {})
+            payload["id"] = str(p.id)
+            todos.append(payload)
+        if not prox:
+            break
+        offset = prox
+
+    return todos
 
 
 # Padrões de meta-lixo de bot — frags cujo conteúdo só descreve o sistema
@@ -121,22 +164,28 @@ def _is_unclassified(meta: dict) -> bool:
            (not area)
 
 
-def coletar_candidatos(brain_data: dict, user_id: str) -> list[dict]:
-    """Para um brain, gera lista de candidatos com razão e severidade."""
+def coletar_candidatos(payloads: list[dict], user_id: str) -> list[dict]:
+    """Para um brain, gera lista de candidatos com razão e severidade.
+
+    `payloads` é a lista vinda de `listar_payload_completo` — cada item
+    é o payload completo do Qdrant + campo 'id' adicionado.
+    """
     candidatos: list[dict] = []
-    mems = brain_data.get("memorias", [])
 
     enriched = []
-    for m in mems:
-        meta = m.get("metadata") or {}
-        texto = m.get("memory") or ""
+    for p in payloads:
+        texto = p.get("conteudo") or ""
+        try:
+            confianca = float(p.get("confianca", 0.7))
+        except (TypeError, ValueError):
+            confianca = 0.7
         enriched.append({
-            "id": m.get("id"),
+            "id": p.get("id"),
             "texto": texto,
             "tokens": normalizar(texto),
-            "meta": meta,
-            "created_at": m.get("created_at") or "",
-            "confianca": float(meta.get("confianca", 0.7)) if isinstance(meta, dict) else 0.7,
+            "meta": p,           # payload completo
+            "created_at": p.get("criado_em") or "",
+            "confianca": confianca,
         })
 
     # 1) Meta-lixo (forte)
@@ -145,9 +194,12 @@ def coletar_candidatos(brain_data: dict, user_id: str) -> list[dict]:
             candidatos.append({
                 "id": e["id"],
                 "user_id": user_id,
-                "texto": e["texto"][:200],
-                "razao": "META-LIXO: fragmento descreve o próprio sistema (demandas pendentes, contagem de tools, etc.) — sem valor biográfico",
+                "texto": e["texto"],
+                "meta": e["meta"],
+                "razao": "META-LIXO",
+                "razao_long": "fragmento descreve o próprio sistema (demandas pendentes, contagem de tools, etc.) — sem valor biográfico",
                 "severidade": "forte",
+                "extras": {},
             })
 
     # 2) Cross-brain pollution (forte)
@@ -156,9 +208,12 @@ def coletar_candidatos(brain_data: dict, user_id: str) -> list[dict]:
             candidatos.append({
                 "id": e["id"],
                 "user_id": user_id,
-                "texto": e["texto"][:200],
-                "razao": "CROSS-BRAIN: fragmento no brain `gus` mas conteúdo é fato sobre Gustavo (deveria estar em `gustavo`). Recomendado: deletar daqui — se valer recuperar, importa via Fase 5.6 (legacy-mem0-saas backup)",
+                "texto": e["texto"],
+                "meta": e["meta"],
+                "razao": "CROSS-BRAIN",
+                "razao_long": "fragmento no brain `gus` mas conteúdo é fato sobre Gustavo (deveria estar em `gustavo`). Recomendado: deletar daqui — se valer recuperar, importa via Fase 5.6 (legacy-mem0-saas backup)",
                 "severidade": "forte",
+                "extras": {},
             })
 
     # 3) Unclassified (médio — pode ser conteúdo bom mas mal classificado)
@@ -170,14 +225,15 @@ def coletar_candidatos(brain_data: dict, user_id: str) -> list[dict]:
             candidatos.append({
                 "id": e["id"],
                 "user_id": user_id,
-                "texto": e["texto"][:200],
-                "razao": "UNCLASSIFIED: tipo+camada+area todos defaults (entrou sem classificação — caminho não-curador). Considerar delete OU re-classificar manualmente",
+                "texto": e["texto"],
+                "meta": e["meta"],
+                "razao": "UNCLASSIFIED",
+                "razao_long": "tipo+camada+area todos defaults (entrou sem classificação — caminho não-curador). Considerar delete OU re-classificar manualmente",
                 "severidade": "medio",
+                "extras": {},
             })
 
     # 4) Duplicatas semânticas (Jaccard ≥ JACCARD_DUP)
-    # Agrupa por similaridade transitiva. Mantém o "melhor" (mais antigo + maior confiança)
-    # e marca os outros.
     grupos: list[list[int]] = []
     visitado = [False] * len(enriched)
     for i in range(len(enriched)):
@@ -197,8 +253,6 @@ def coletar_candidatos(brain_data: dict, user_id: str) -> list[dict]:
 
     ids_ja_marcados = {c["id"] for c in candidatos}
     for grupo in grupos:
-        # Escolhe o mantido: mais antigo (proxy de "primeira ocorrência") +
-        # maior confianca em desempate
         ordenado = sorted(
             grupo,
             key=lambda idx: (enriched[idx]["created_at"], -enriched[idx]["confianca"]),
@@ -212,16 +266,49 @@ def coletar_candidatos(brain_data: dict, user_id: str) -> list[dict]:
             candidatos.append({
                 "id": e["id"],
                 "user_id": user_id,
-                "texto": e["texto"][:200],
-                "razao": (
-                    f"DUPLICATA semântica do fragmento mais antigo "
-                    f"`{manter['id']}` (Jaccard ≥ {JACCARD_DUP}). "
-                    f"Manter '{manter['texto'][:80]}...'"
+                "texto": e["texto"],
+                "meta": e["meta"],
+                "razao": "DUPLICATA",
+                "razao_long": (
+                    f"Duplicata semântica (Jaccard ≥ {JACCARD_DUP}) do "
+                    f"fragmento mais antigo `{manter['id']}`. Mantém este, "
+                    f"deleta os outros do grupo."
                 ),
                 "severidade": "forte",
+                "extras": {
+                    "manter_id": manter["id"],
+                    "manter_texto": manter["texto"],
+                    "manter_meta": manter["meta"],
+                },
             })
 
     return candidatos
+
+
+def _render_payload(meta: dict) -> list[str]:
+    """Renderiza linhas de metadata legíveis pra revisão humana."""
+    campos = [
+        ("tipo", meta.get("tipo")),
+        ("camada_temporal", meta.get("camada_temporal") or meta.get("camada")),
+        ("area", meta.get("area")),
+        ("via", meta.get("via")),
+        ("curador", meta.get("curador")),
+        ("prompt_version", meta.get("prompt_version")),
+        ("confianca", meta.get("confianca")),
+        ("estado", meta.get("estado")),
+        ("tipo_esquecimento", meta.get("tipo_esquecimento")),
+        ("criado_em", meta.get("criado_em")),
+        ("ultimo_acesso", meta.get("ultimo_acesso")),
+        ("acessos", meta.get("acessos")),
+        ("hash_janela", meta.get("hash_janela")),
+        ("janela_turnos", meta.get("janela_turnos")),
+    ]
+    linhas = []
+    for k, v in campos:
+        if v is None or v == "":
+            continue
+        linhas.append(f"  - **{k}:** `{v}`")
+    return linhas
 
 
 def main() -> None:
@@ -230,11 +317,13 @@ def main() -> None:
         sys.exit(0)
 
     candidatos_total: list[dict] = []
+    totais_brain: dict[str, int] = {}
     for user_id in ("gustavo", "gus"):
         print(f"\n=== Brain: {user_id} ===")
-        mems = get_all_memorias(user_id=user_id, limit=10000)
-        print(f"  Total: {len(mems)}")
-        candidatos = coletar_candidatos({"memorias": mems}, user_id)
+        payloads = listar_payload_completo(user_id, limit=10000)
+        print(f"  Total: {len(payloads)}")
+        totais_brain[user_id] = len(payloads)
+        candidatos = coletar_candidatos(payloads, user_id)
         print(f"  Candidatos: {len(candidatos)}")
         candidatos_total.extend(candidatos)
 
@@ -249,10 +338,14 @@ def main() -> None:
 
     # Renderiza MD
     agora = datetime.now(BRT)
+    total_hub = sum(totais_brain.values())
     linhas = [
         "---",
         "tipo: limpeza-candidatos",
         f"gerado_em: {agora.isoformat()}",
+        f"total_hub: {total_hub}",
+        f"total_brain_gustavo: {totais_brain.get('gustavo', 0)}",
+        f"total_brain_gus: {totais_brain.get('gus', 0)}",
         f"total_candidatos: {len(candidatos_unicos)}",
         f"jaccard_threshold: {JACCARD_DUP}",
         "---",
@@ -265,49 +358,81 @@ def main() -> None:
         "",
         "## Como aprovar",
         "",
-        "1. Revise cada candidato abaixo. Se um deve ser **mantido** (não "
-        "deletar), copie o ID e adicione em "
+        "1. Revise cada candidato abaixo (texto completo + metadata). Se um "
+        "deve ser **mantido**, copie o ID e adicione em "
         "`_indices/_limpeza-hub-rejeitados.txt` (um ID por linha).",
-        "2. Se aprova **todos** os candidatos: deixe `_limpeza-hub-rejeitados.txt` vazio "
-        "(ou inexistente).",
-        "3. Rode `limpeza_hub_aplicar.py` (workflow `limpeza-hub-aplicar.yml`) — "
-        "deleta todos os candidatos *exceto* os listados em rejeitados.",
+        "2. Se aprova **todos**: não cria o arquivo de rejeitados (ou deixa vazio).",
+        "3. Rode `limpeza-hub-aplicar.yml` workflow — deleta todos exceto rejeitados.",
         "",
         "Trilha de auditoria automática em `_log/deletar-hub/AAAA-MM-DD.jsonl` "
-        "(item 1.3 do plano). Snapshot completo de cada delete pra recovery "
-        "se precisar.",
+        "(snapshot completo de cada delete pra recovery se precisar).",
         "",
         f"## Resumo",
-        f"- **Total de candidatos:** {len(candidatos_unicos)}",
+        f"- **Hub total:** {total_hub} fragmentos",
+        f"  - brain `gustavo`: {totais_brain.get('gustavo', 0)}",
+        f"  - brain `gus`: {totais_brain.get('gus', 0)}",
+        f"- **Candidatos a delete:** {len(candidatos_unicos)} ({round(100*len(candidatos_unicos)/total_hub, 1) if total_hub else 0}%)",
     ]
 
-    # Estatísticas por severidade e razão-prefix
+    # Estatísticas
     by_sev: dict[str, int] = {}
-    by_razao_prefix: dict[str, int] = {}
+    by_razao: dict[str, int] = {}
     by_brain: dict[str, int] = {}
     for c in candidatos_unicos:
         by_sev[c["severidade"]] = by_sev.get(c["severidade"], 0) + 1
-        prefix = c["razao"].split(":")[0]
-        by_razao_prefix[prefix] = by_razao_prefix.get(prefix, 0) + 1
+        by_razao[c["razao"]] = by_razao.get(c["razao"], 0) + 1
         by_brain[c["user_id"]] = by_brain.get(c["user_id"], 0) + 1
 
     linhas.append(f"- **Por severidade:** " + ", ".join(f"{k}={v}" for k, v in sorted(by_sev.items())))
-    linhas.append(f"- **Por razão:** " + ", ".join(f"{k}={v}" for k, v in sorted(by_razao_prefix.items())))
+    linhas.append(f"- **Por razão:** " + ", ".join(f"{k}={v}" for k, v in sorted(by_razao.items())))
     linhas.append(f"- **Por brain:** " + ", ".join(f"{k}={v}" for k, v in sorted(by_brain.items())))
     linhas.append("")
 
-    # Lista cada candidato agrupado por brain → severidade
-    by_brain_sev: dict[tuple[str, str], list[dict]] = defaultdict(list)
+    # Lista cada candidato agrupado por brain → severidade → razão
+    # Ordenação interna: por created_at (mais antigos primeiro) pra revisão temporal
+    by_grupo: dict[tuple[str, str, str], list[dict]] = defaultdict(list)
     for c in candidatos_unicos:
-        by_brain_sev[(c["user_id"], c["severidade"])].append(c)
+        by_grupo[(c["user_id"], c["severidade"], c["razao"])].append(c)
 
-    for (brain, sev), grupo in sorted(by_brain_sev.items()):
-        linhas.append(f"## Brain `{brain}` — severidade {sev} ({len(grupo)} candidatos)")
+    for (brain, sev, razao_curta), grupo in sorted(by_grupo.items()):
+        # Ordena cronologicamente
+        grupo.sort(key=lambda c: (c["meta"] or {}).get("criado_em", "") or "")
+        linhas.append(f"## Brain `{brain}` — {sev} — {razao_curta} ({len(grupo)} candidatos)")
         linhas.append("")
+        # Razão detalhada uma vez por grupo
+        razao_detalhe = grupo[0].get("razao_long", "")
+        if razao_detalhe:
+            linhas.append(f"_{razao_detalhe}_")
+            linhas.append("")
+
         for c in grupo:
             linhas.append(f"### `{c['id']}`")
-            linhas.append(f"- **Razão:** {c['razao']}")
-            linhas.append(f"- **Texto:** {c['texto']}")
+            linhas.append("")
+            linhas.append("**Texto:**")
+            linhas.append("")
+            linhas.append("```")
+            linhas.append(c["texto"])
+            linhas.append("```")
+            linhas.append("")
+            linhas.append("**Metadata:**")
+            payload_lines = _render_payload(c.get("meta") or {})
+            if payload_lines:
+                linhas.extend(payload_lines)
+            else:
+                linhas.append("  - _(sem metadata)_")
+            # Pra duplicatas, mostra o fragmento mantido
+            extras = c.get("extras") or {}
+            if extras.get("manter_id"):
+                linhas.append("")
+                linhas.append(f"**Mantém este (mais antigo do grupo):** `{extras['manter_id']}`")
+                linhas.append("")
+                linhas.append("```")
+                linhas.append(extras.get("manter_texto", ""))
+                linhas.append("```")
+                linhas.append("")
+                linhas.append("Metadata do mantido:")
+                manter_payload = _render_payload(extras.get("manter_meta") or {})
+                linhas.extend(manter_payload or ["  - _(sem metadata)_"])
             linhas.append("")
 
     Path(os.path.dirname(OUTPUT_PATH)).mkdir(parents=True, exist_ok=True)
