@@ -1104,7 +1104,1210 @@ body.view-list .hint {
 
 <div class="hint" id="hint">arraste pra girar · scroll pra zoom</div>
 <script>
-/*__SCRIPT_PLACEHOLDER__*/
+// ─── Configuração ───
+const TYPE_COLOR = {
+  identidade_operacional: '#00f5ff', decisao: '#c084fc',
+  episodico: '#fbbf24',              procedural: '#34d399',
+  meta_reflexao: '#f9a8d4',          biografico: '#818cf8',
+  preferencia: '#fb923c',            rotina: '#86efac',
+  // Tipos adicionados na Parte 1A (schema gus-18 completo: 14 tipos)
+  emocional: '#fb7185',              fato: '#94a3b8',
+  cronologico: '#a78bfa',            conexao_emergente: '#fcd34d',
+  projeto: '#22d3ee',                lacuna: '#fda4af',
+};
+const TYPE_LABEL = {
+  all: 'todos', none: 'sem labels',
+  identidade_operacional: 'identidade', decisao: 'decisão',
+  episodico: 'episódico', procedural: 'procedural',
+  meta_reflexao: 'meta-reflexão', biografico: 'biográfico',
+  preferencia: 'preferência', rotina: 'rotina',
+  emocional: 'emocional', fato: 'fato',
+  cronologico: 'cronológico', conexao_emergente: 'conexão',
+  projeto: 'projeto', lacuna: 'lacuna',
+};
+const TYPES = Object.keys(TYPE_COLOR);
+
+// ─── DADOS REAIS DO HUB (snapshot 01/05/2026, hardcoded pra Parte 1A) ───
+// Etapa 1B substitui isso por fetch /hub/recent + EventSource /hub/stream.
+// user_id=gustavo: 19 fragmentos (todos episodico via telegram-claude)
+// user_id=gus: 14 fragmentos (brain do agente)
+const REAL_NODES = [
+  // ── user_id: gustavo ──
+  {
+    id: 'cb860bdb', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'semana', confianca: 0.82, criado_em: '2026-04-27T22:42:58.905671-03:00',
+    conteudo: 'Hub Qdrant + curador híbrido Haiku×Sonnet operacionais. 16 workflows ativos. Experimento 14 dias encerra ~12/05.',
+  },
+  {
+    id: '06caf6bb', tipo: 'episodico', area: 'dimagem', curador: 'telegram-claude',
+    camada: 'rotina', confianca: 0.90, criado_em: '2026-04-28T16:52:13.259826-03:00',
+    conteudo: 'Gustavo é anestesiologista no Dimagem. Gus descreve OS com dados factuais apenas — sem análise clínica.',
+  },
+  {
+    id: 'f6dc75c7', tipo: 'episodico', area: 'dimagem', curador: 'telegram-claude',
+    camada: 'rotina', confianca: 0.85, criado_em: '2026-04-27T21:13:20.235049-03:00',
+    conteudo: 'Pacientes organizados por plano: Assim Taquara vs Intermédica + Leve Saúde. Arquivos .md separados por data e plano.',
+  },
+  {
+    id: 'bf6e32f3', tipo: 'episodico', area: 'dimagem', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.78, criado_em: '2026-04-28T16:54:42.753593-03:00',
+    conteudo: 'Padrão de resposta OS: detecta imagem, lista pacientes do dia, solicita confirmação. Roberta Xavier Lins — RM Coluna Dorsal+Lombar 15h-19h30, Intermédica.',
+  },
+  {
+    id: '0ccf0b81', tipo: 'episodico', area: 'dimagem', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.75, criado_em: '2026-04-28T17:11:16.171835-03:00',
+    conteudo: 'Protocolo de análise de fotos de OS estabelecido. Analete da Silva Pinto — RM Crânio+Espectroscopia+Fluxo Liquórico, Assim São Gonçalo. Questão aberta: arquivar OS com datas históricas.',
+  },
+  {
+    id: '474e334c', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'rotina', confianca: 0.88, criado_em: '2026-04-28T14:14:00.787655-03:00',
+    conteudo: 'Gus pode disparar os 8 workflows manualmente. Auto-diagnóstico com health check completo (GitHub, Qdrant, Anthropic, Tavily, Railway).',
+  },
+  {
+    id: '9aabe8eb', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.72, criado_em: '2026-04-27T23:17:13.803912-03:00',
+    conteudo: 'Decisão: limpar backlog desatualizado. Migração Mem0→Qdrant pendente — grosso das 204 memórias ainda no Mem0.',
+  },
+  {
+    id: '3c58cbb8', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.80, criado_em: '2026-04-28T09:43:02.465881-03:00',
+    conteudo: 'Workflow migração Mem0→Qdrant rodando. Infra estável: GitHub PAT, Qdrant, Haiku, Tavily, Railway todos OK.',
+  },
+  {
+    id: '11b98c82', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.82, criado_em: '2026-04-28T10:43:06.928236-03:00',
+    conteudo: 'Pasta demandas: Gustpbbr/Gus/dialogos/inbox-tiogu/. PR #14 mergeado (protocolo portas e tools). Auditoria automática e export diário funcionando.',
+  },
+  {
+    id: '6855c44f', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.76, criado_em: '2026-04-28T12:39:42.427990-03:00',
+    conteudo: 'Gus dispara workflows sem justificar execução recente. Ciclo de importação: 15min. 7 arquivos processados (4 antigas dia 26 + 3 do NeuroGus).',
+  },
+  {
+    id: 'c95ad8c6', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'rotina', confianca: 0.85, criado_em: '2026-04-28T12:14:07.555970-03:00',
+    conteudo: 'Gus = identidade unificada. Tiogu = bot no Telegram. Mesma entidade em múltiplas plataformas: Claude Chat, Claude Code, futuro Alexa e Custom GPT.',
+  },
+  {
+    id: '772f611d', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'rotina', confianca: 0.90, criado_em: '2026-04-28T11:16:00.100735-03:00',
+    conteudo: 'Drive inbox: Gus-Sync/dialogos/inbox-tiogu/. Arquivos .md com frontmatter obrigatório. Convenção: <timestamp>__<descricao>.md.',
+  },
+  {
+    id: '2b68d542', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.65, criado_em: '2026-04-27T21:03:00.110331-03:00',
+    conteudo: 'Post-merge: auto_diagnóstico acessa Hub Qdrant. Problema: 0 fragmentos para user_id=gustavo. Workflow "Ingest Mem0" falhando pós-merge.',
+  },
+  {
+    id: '0f7a70ea', tipo: 'episodico', area: 'projetos', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.78, criado_em: '2026-04-28T12:33:29.493521-03:00',
+    conteudo: 'Projeto NeuroGus: 3 demandas chegaram (briefing, arquitetura, código v1). Sistema de múltiplos canais com o Gus.',
+  },
+  {
+    id: 'e414b653', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.80, criado_em: '2026-04-28T14:46:41.619831-03:00',
+    conteudo: 'Schema gus-18 não tem campo "origem". Melhorias documentadas como sugestões. Demandas de código em inbox-claude-code/.',
+  },
+  {
+    id: '6b589952', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.82, criado_em: '2026-04-28T14:40:03.833598-03:00',
+    conteudo: 'Bug resolvido: UnicodeDecodeError fallback UTF-8→Latin-1. Gus Chat salva em UTF-8 sem BOM. Gaps de memória: áreas financeira e receitas sem fragmentos.',
+  },
+  {
+    id: '9608b85a', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.78, criado_em: '2026-04-28T13:19:58.940137-03:00',
+    conteudo: 'Bug download_content linha 150: byte 0xB6 inválido. Solução: fallback UTF-8→Latin-1 ou errors="replace". Gustavo autorizou correção.',
+  },
+  {
+    id: '7ef3b811', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'rotina', confianca: 0.83, criado_em: '2026-04-28T14:07:55.607223-03:00',
+    conteudo: 'Workflows sync-to-drive-full e sync-to-drive executados regularmente. Pasta sensivel/ excluída da sync. Drive = espelho do GitHub.',
+  },
+  {
+    id: '809ba3f9', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.76, criado_em: '2026-04-28T12:42:16.364256-03:00',
+    conteudo: 'Script import_from_drive.py linha 150: implementar fallback encoding UTF-8→Latin-1. Arquivo 2026-04-28T14-30__frontmatter-referencia.md com byte 0xB6 inválido.',
+  },
+
+  // ── user_id: gus (brain do agente) ──
+  {
+    id: '863b1659', tipo: 'procedural', area: 'dimagem', curador: 'telegram-claude',
+    camada: 'rotina', confianca: 0.95, criado_em: '2026-04-28T16:53:13.683158-03:00',
+    conteudo: 'Padrão OS Dimagem obrigatório: detecta data, lista pacientes em tabela, pede confirmação. Nunca expandir análise clínica.',
+  },
+  {
+    id: '0571de21', tipo: 'episodico', area: 'pessoal', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.60, criado_em: '2026-04-30T19:24:36.695117-03:00',
+    conteudo: 'Memórias pessoais de Gustavo sobre filmes, gostos e experiências de vida registradas.',
+  },
+  {
+    id: 'a0211b7b', tipo: 'preferencia', area: 'pessoal', curador: 'telegram-claude',
+    camada: 'permanente', confianca: 0.92, criado_em: '2026-04-30T18:23:45.808851-03:00',
+    conteudo: 'Filme preferido: Moulin Rouge.',
+  },
+  {
+    id: '9ce9a144', tipo: 'episodico', area: 'pessoal', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.75, criado_em: '2026-04-30T18:19:03.474238-03:00',
+    conteudo: 'Gostou muito do filme do Michael Jackson.',
+  },
+  {
+    id: 'c8d68c55', tipo: 'biografico', area: 'pessoal', curador: 'telegram-claude',
+    camada: 'permanente', confianca: 0.98, criado_em: '2026-04-30T18:23:45.858415-03:00',
+    conteudo: 'Nasceu em Vitória.',
+  },
+  {
+    id: 'f53183d9', tipo: 'biografico', area: 'pessoal', curador: 'telegram-claude',
+    camada: 'permanente', confianca: 0.95, criado_em: '2026-04-30T18:23:45.947064-03:00',
+    conteudo: 'Já teve um cachorro chamado Ralph.',
+  },
+];
+
+// ─── Cor por área (expandido na Parte 1A — 9 áreas canônicas gus-18 + fallback) ───
+const AREA_COLOR = {
+  gus:        '#00f5ff',
+  dimagem:    '#c084fc',
+  projetos:   '#fbbf24',
+  pessoal:    '#f9a8d4',
+  pesquisa:   '#818cf8',
+  saude:      '#34d399',
+  // Áreas adicionadas na Parte 1A
+  financeiro: '#a3e635',
+  receitas:   '#f97316',
+  esportes:   '#67e8f9',
+  '':         '#94a3b8',  // sem área (cinza neutro)
+};
+
+// ─── Cor por tipo (≠ episodico) com fallback pra área (gus-30.1 §1, regra meio-termo) ───
+// Tipo é mais informativo que área, mas hoje quase tudo vem do curador como
+// 'episodico' — então sem fallback o grafo fica monocromático. Quando o curador
+// melhorar e diferenciar tipos, mais nós caem na primeira regra.
+function getNodeColor(node) {
+  const tipo = node.tipo;
+  if (tipo && tipo !== 'episodico' && TYPE_COLOR[tipo]) {
+    return TYPE_COLOR[tipo];
+  }
+  return AREA_COLOR[node.area || ''] || AREA_COLOR[''] || '#94a3b8';
+}
+
+// ─── Estado ───
+const state = {
+  nodes: [], links: [],
+  nextId: 1, selectedId: null,
+  filter: 'all',
+  showLabels: true,
+  showHalo: true,
+  spinning: true,
+  selectedNeighbors: new Set(),
+  labelEls: new Map(),
+  nodeMap: new Map(),
+  edgeDots: new Map(),
+};
+
+const rand = (a) => a[Math.floor(Math.random() * a.length)];
+const randF = (a, b) => a + Math.random() * (b - a);
+const $ = (id) => document.getElementById(id);
+
+// Construir nós a partir dos dados reais — COR via getNodeColor (regra meio-termo)
+REAL_NODES.forEach((raw, i) => {
+  const color = getNodeColor(raw);
+  const node = {
+    id: raw.id,
+    conteudo: raw.conteudo,
+    tipo: raw.tipo,
+    area: raw.area,
+    curador: raw.curador,
+    camada: raw.camada,
+    confianca: raw.confianca,
+    timestamp: raw.criado_em,
+    color,
+    val: 0.8 + raw.confianca * 0.8,
+    _isNew: false,
+  };
+  state.nodes.push(node);
+  state.nodeMap.set(node.id, node);
+  state.nextId = i + 2;
+});
+
+// ─── CONEXÕES baseadas em afinidade real (3 estratégias — Etapa 1B substitui por relacionados[] cosine) ───
+const linkSet = new Set();
+function addLink(a, b) {
+  const key = [a, b].sort().join('||');
+  if (!linkSet.has(key)) {
+    linkSet.add(key);
+    state.links.push({ source: a, target: b });
+  }
+}
+
+// 1. Conectar vizinhos na MESMA ÁREA
+const byArea = {};
+state.nodes.forEach(n => {
+  if (!byArea[n.area]) byArea[n.area] = [];
+  byArea[n.area].push(n);
+});
+Object.values(byArea).forEach(group => {
+  for (let i = 0; i < group.length - 1; i++) {
+    addLink(group[i].id, group[i+1].id);
+  }
+});
+
+// 2. Conectar fragmentos do MESMO DIA
+const byDay = {};
+state.nodes.forEach(n => {
+  const day = (n.timestamp || '').slice(0, 10);
+  if (!day) return;
+  if (!byDay[day]) byDay[day] = [];
+  byDay[day].push(n);
+});
+Object.values(byDay).forEach(group => {
+  if (group.length <= 4) {
+    for (let i = 0; i < group.length - 1; i++) {
+      addLink(group[i].id, group[i+1].id);
+    }
+  } else {
+    for (let i = 0; i < group.length - 1; i += 2) {
+      addLink(group[i].id, group[i+1].id);
+    }
+  }
+});
+
+// 3. Ponte entre áreas: mais recentes de cada área (hub backbone)
+const areaLatest = {};
+state.nodes.forEach(n => {
+  if (!areaLatest[n.area] || n.timestamp > areaLatest[n.area].timestamp) {
+    areaLatest[n.area] = n;
+  }
+});
+const latestNodes = Object.values(areaLatest);
+for (let i = 0; i < latestNodes.length - 1; i++) {
+  addLink(latestNodes[i].id, latestNodes[i+1].id);
+}
+
+function getFilteredData() {
+  const ns = (state.filter === 'all' || state.filter === 'none')
+    ? state.nodes
+    : state.nodes.filter((n) => n.tipo === state.filter);
+  const ids = new Set(ns.map((n) => n.id));
+  const ls = state.links.filter((l) => {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    return ids.has(s) && ids.has(t);
+  });
+  return { nodes: ns, links: ls };
+}
+
+function linkExtract(l) {
+  const s = typeof l.source === 'object' ? l.source.id : l.source;
+  const t = typeof l.target === 'object' ? l.target.id : l.target;
+  return { s, t };
+}
+
+// ─── Textura de halo (nuvem radial) ───
+const haloTextures = {};
+function makeHaloTexture(color) {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+  grad.addColorStop(0,    color + 'cc');
+  grad.addColorStop(0.2,  color + '80');
+  grad.addColorStop(0.5,  color + '30');
+  grad.addColorStop(0.8,  color + '10');
+  grad.addColorStop(1,    color + '00');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  const imgData = ctx.getImageData(0, 0, size, size);
+  const d = imgData.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const noise = (Math.random() - 0.5) * 18;
+    d[i+3] = Math.max(0, Math.min(255, d[i+3] + noise));
+  }
+  ctx.putImageData(imgData, 0, 0);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  return tex;
+}
+TYPES.forEach((t) => { haloTextures[t] = makeHaloTexture(TYPE_COLOR[t]); });
+
+// ─── Construir nó: esfera + halo nuvem ───
+function buildNodeObject(node) {
+  const group = new THREE.Group();
+  const radius = node.confianca * 4 + (node._isNew ? 5 : 0);
+
+  const sphereGeo = new THREE.SphereGeometry(radius, 20, 20);
+  const sphereMat = new THREE.MeshBasicMaterial({
+    color: node._isNew ? '#ffffff' : node.color,
+    transparent: true,
+    opacity: 0.95,
+  });
+  const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+  group.add(sphere);
+
+  if (state.showHalo) {
+    const tex = haloTextures[node.tipo] || haloTextures['episodico'];
+    const haloMat = new THREE.SpriteMaterial({
+      map: tex,
+      transparent: true,
+      opacity: 0.45,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const halo = new THREE.Sprite(haloMat);
+    const haloSize = radius * 15;
+    halo.scale.set(haloSize, haloSize, 1);
+    halo.renderOrder = -1;
+    group.add(halo);
+
+    const innerHaloMat = new THREE.SpriteMaterial({
+      map: tex,
+      transparent: true,
+      opacity: 0.6,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const innerHalo = new THREE.Sprite(innerHaloMat);
+    const innerSize = radius * 7.5;
+    innerHalo.scale.set(innerSize, innerSize, 1);
+    group.add(innerHalo);
+  }
+
+  group.userData = { node };
+  return group;
+}
+
+// ─── 3D Force Graph ───
+const Graph = ForceGraph3D({ controlType: 'orbit' })(document.getElementById('graph'))
+  .backgroundColor('#050514')
+  .nodeThreeObject(buildNodeObject)
+  .nodeThreeObjectExtend(false)
+  .linkColor((l) => {
+    const sId = typeof l.source === 'object' ? l.source.id : l.source;
+    const s = state.nodeMap.get(sId);
+    return s ? s.color + '55' : '#ffffff33';
+  })
+  .linkOpacity(0.45)
+  .linkWidth(0.6)
+  .linkDirectionalParticles(3)
+  .linkDirectionalParticleWidth(1.6)
+  .linkDirectionalParticleSpeed(0.005)
+  .linkDirectionalParticleColor((l) => {
+    const sId = typeof l.source === 'object' ? l.source.id : l.source;
+    const s = state.nodeMap.get(sId);
+    return s ? s.color : '#fff';
+  })
+  .onNodeClick((n) => { openPanel(n); state.spinning = false; updateAutoRotateBtn(); })
+  .onBackgroundClick(() => closePanel())
+  .graphData(getFilteredData());
+
+// ─── Contenção esférica ───
+const CONTAINER_RADIUS = 100;
+const SOFT_RADIUS = 75;
+
+const chargeForce = Graph.d3Force('charge');
+if (chargeForce) chargeForce.strength(-50);
+
+const linkForce = Graph.d3Force('link');
+if (linkForce && linkForce.distance) linkForce.distance(28);
+if (linkForce && linkForce.strength) linkForce.strength(0.7);
+
+const centerForce = Graph.d3Force('center');
+if (centerForce) centerForce.strength(0.02);
+
+Graph.d3Force('shellGravity', function() {
+  for (let i = 0; i < state.nodes.length; i++) {
+    const n = state.nodes[i];
+    if (n.x === undefined || n.x === null) continue;
+    const dist = Math.sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
+    if (dist < 0.001) continue;
+
+    if (dist > SOFT_RADIUS) {
+      const ux = -n.x / dist;
+      const uy = -n.y / dist;
+      const uz = -n.z / dist;
+      const overshoot = (dist - SOFT_RADIUS) / (CONTAINER_RADIUS - SOFT_RADIUS);
+      const force = Math.min(overshoot * overshoot * 0.6, 2.0);
+      n.vx = (n.vx || 0) + ux * force;
+      n.vy = (n.vy || 0) + uy * force;
+      n.vz = (n.vz || 0) + uz * force;
+    }
+
+    if (dist > CONTAINER_RADIUS) {
+      const factor = CONTAINER_RADIUS / dist;
+      n.x *= factor; n.y *= factor; n.z *= factor;
+      if (n.vx !== undefined && n.vy !== undefined && n.vz !== undefined) {
+        const dot = n.vx*n.x + n.vy*n.y + n.vz*n.z;
+        if (dot > 0) {
+          const f = 1.5 * dot / (CONTAINER_RADIUS * CONTAINER_RADIUS);
+          n.vx -= f * n.x;
+          n.vy -= f * n.y;
+          n.vz -= f * n.z;
+        }
+      }
+    }
+  }
+});
+
+const renderer = Graph.renderer();
+if (renderer) {
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
+}
+
+Graph.cameraPosition({ x: 0, y: 0, z: 280 });
+
+// ─── Esfera contenedora visível ───
+const scene = Graph.scene();
+
+const sphereGeo = new THREE.SphereGeometry(CONTAINER_RADIUS, 8, 5);
+const wireframe = new THREE.Mesh(sphereGeo, new THREE.MeshBasicMaterial({
+  color: 0x00f5ff, wireframe: true, transparent: true, opacity: 0.06,
+}));
+scene.add(wireframe);
+
+const innerGeo = new THREE.SphereGeometry(CONTAINER_RADIUS * 0.99, 48, 32);
+const innerSurface = new THREE.Mesh(innerGeo, new THREE.MeshBasicMaterial({
+  color: 0x00f5ff,
+  transparent: true,
+  opacity: 0.018,
+  side: THREE.BackSide,
+  depthWrite: false,
+}));
+scene.add(innerSurface);
+
+const containerGlowTex = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(64,64,0,64,64,64);
+  g.addColorStop(0, '#00f5ffcc'); g.addColorStop(0.2, '#00f5ff80');
+  g.addColorStop(0.5, '#00f5ff30'); g.addColorStop(1, '#00f5ff00');
+  ctx.fillStyle = g; ctx.fillRect(0,0,128,128);
+  return new THREE.CanvasTexture(c);
+})();
+const containerGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: containerGlowTex, transparent: true, opacity: 0.13,
+  blending: THREE.AdditiveBlending, depthWrite: false,
+}));
+containerGlow.scale.set(CONTAINER_RADIUS*3.4, CONTAINER_RADIUS*3.4, 1);
+scene.add(containerGlow);
+
+// Estrelas de fundo
+const starGeo = new THREE.BufferGeometry();
+const starPositions = [];
+for (let i = 0; i < 700; i++) {
+  const r = 400 + Math.random() * 1000;
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(2 * Math.random() - 1);
+  starPositions.push(
+    r*Math.sin(phi)*Math.cos(theta),
+    r*Math.sin(phi)*Math.sin(theta),
+    r*Math.cos(phi)
+  );
+}
+starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({
+  color: 0xffffff, size: 1.2, transparent: true, opacity: 0.55, depthWrite: false,
+})));
+
+// ─── Rotação automática ───
+let cameraAngle = 0;
+let cameraRadius = 280;
+(function spin() {
+  if (state.spinning && !state.selectedId) {
+    cameraAngle += 0.0006;
+    Graph.cameraPosition({
+      x: cameraRadius * Math.sin(cameraAngle),
+      z: cameraRadius * Math.cos(cameraAngle),
+    });
+  }
+  requestAnimationFrame(spin);
+})();
+
+// ─── Controles 3D ───
+function getCameraDistance() {
+  const cam = Graph.camera();
+  return Math.sqrt(cam.position.x ** 2 + cam.position.y ** 2 + cam.position.z ** 2);
+}
+
+function rotateCamera(direction) {
+  state.spinning = false;
+  updateAutoRotateBtn();
+  cameraAngle += direction * 0.3;
+  const cam = Graph.camera();
+  const r = Math.sqrt(cam.position.x ** 2 + cam.position.z ** 2);
+  Graph.cameraPosition({
+    x: r * Math.sin(cameraAngle),
+    y: cam.position.y,
+    z: r * Math.cos(cameraAngle),
+  }, undefined, 500);
+}
+
+function fitAll() {
+  state.spinning = false;
+  updateAutoRotateBtn();
+  const newDist = ZOOM_MAX;
+  cameraRadius = newDist;
+  cameraAngle = 0;
+  Graph.cameraPosition({ x: 0, y: 0, z: newDist }, { x: 0, y: 0, z: 0 }, 700);
+  updateSliderPosition(newDist);
+}
+
+function updateAutoRotateBtn() {
+  $('auto-rotate').classList.toggle('is-active', state.spinning);
+}
+
+const ZOOM_MIN = 130;
+const ZOOM_MAX = 700;
+
+function clampZoom(d) {
+  return Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, d));
+}
+
+function distToSliderPos(dist) {
+  const logMin = Math.log(ZOOM_MIN);
+  const logMax = Math.log(ZOOM_MAX);
+  const t = (Math.log(dist) - logMin) / (logMax - logMin);
+  return Math.max(0, Math.min(1, t));
+}
+
+function sliderPosToDist(t) {
+  const logMin = Math.log(ZOOM_MIN);
+  const logMax = Math.log(ZOOM_MAX);
+  return Math.exp(logMin + t * (logMax - logMin));
+}
+
+function setZoomDistance(newDist, animate = true) {
+  newDist = clampZoom(newDist);
+  const cam = Graph.camera();
+  const dist = getCameraDistance() || 1;
+  const scale = newDist / dist;
+  Graph.cameraPosition({
+    x: cam.position.x * scale,
+    y: cam.position.y * scale,
+    z: cam.position.z * scale,
+  }, undefined, animate ? 250 : 0);
+  cameraRadius = newDist;
+  updateSliderPosition(newDist);
+}
+
+function setZoom(factor) {
+  setZoomDistance(getCameraDistance() * factor);
+}
+
+function updateSliderPosition(dist) {
+  const t = distToSliderPos(dist);
+  const trackEl = $('zoom-slider');
+  if (!trackEl) return;
+  const h = trackEl.clientHeight;
+  const thumbH = 14;
+  const range = h - thumbH;
+  const topPx = thumbH/2 + t * range;
+  const fillPct = (1 - t) * 100;
+
+  $('zoom-slider-thumb').style.top = topPx + 'px';
+  $('zoom-slider-thumb').style.transform = 'translateY(-50%)';
+  $('zoom-slider-fill').style.height = fillPct + '%';
+}
+
+$('zoom-in').addEventListener('click', () => setZoom(0.78));
+$('zoom-out').addEventListener('click', () => setZoom(1.28));
+$('zoom-fit').addEventListener('click', fitAll);
+$('rotate-left').addEventListener('click', () => rotateCamera(-1));
+$('rotate-right').addEventListener('click', () => rotateCamera(1));
+$('auto-rotate').addEventListener('click', () => {
+  state.spinning = !state.spinning;
+  if (state.spinning) {
+    const cam = Graph.camera();
+    cameraAngle = Math.atan2(cam.position.x, cam.position.z);
+    cameraRadius = Math.sqrt(cam.position.x ** 2 + cam.position.z ** 2) || 280;
+  }
+  updateAutoRotateBtn();
+});
+
+// ─── Zoom slider: drag/click/touch ───
+const sliderEl = $('zoom-slider');
+let sliderDragging = false;
+
+function handleSliderInteraction(clientY) {
+  const rect = sliderEl.getBoundingClientRect();
+  const thumbH = 14;
+  const range = rect.height - thumbH;
+  const localY = Math.max(thumbH/2, Math.min(rect.height - thumbH/2, clientY - rect.top));
+  const t = (localY - thumbH/2) / range;
+  const newDist = sliderPosToDist(t);
+  setZoomDistance(newDist, false);
+}
+
+sliderEl.addEventListener('mousedown', (e) => {
+  sliderDragging = true;
+  sliderEl.classList.add('is-dragging');
+  handleSliderInteraction(e.clientY);
+  e.preventDefault();
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!sliderDragging) return;
+  handleSliderInteraction(e.clientY);
+});
+
+window.addEventListener('mouseup', () => {
+  if (sliderDragging) {
+    sliderDragging = false;
+    sliderEl.classList.remove('is-dragging');
+  }
+});
+
+sliderEl.addEventListener('touchstart', (e) => {
+  sliderDragging = true;
+  sliderEl.classList.add('is-dragging');
+  if (e.touches.length) handleSliderInteraction(e.touches[0].clientY);
+  e.preventDefault();
+}, { passive: false });
+
+window.addEventListener('touchmove', (e) => {
+  if (!sliderDragging) return;
+  if (e.touches.length) handleSliderInteraction(e.touches[0].clientY);
+}, { passive: false });
+
+window.addEventListener('touchend', () => {
+  if (sliderDragging) {
+    sliderDragging = false;
+    sliderEl.classList.remove('is-dragging');
+  }
+});
+
+setInterval(() => {
+  if (sliderDragging) return;
+  updateSliderPosition(getCameraDistance());
+}, 200);
+
+setTimeout(() => updateSliderPosition(getCameraDistance()), 100);
+
+// ─── Edge indicators ───
+const edgeContainer = $('edge-indicators');
+
+function getOrCreateEdgeDot(id, color) {
+  let dot = state.edgeDots.get(id);
+  if (!dot) {
+    dot = document.createElement('div');
+    dot.className = 'edge-dot';
+    dot.style.color = color;
+    dot.style.background = color;
+    edgeContainer.appendChild(dot);
+    state.edgeDots.set(id, dot);
+  }
+  return dot;
+}
+
+function removeEdgeDot(id) {
+  const dot = state.edgeDots.get(id);
+  if (dot) {
+    dot.remove();
+    state.edgeDots.delete(id);
+  }
+}
+
+// ─── Labels com throttle ───
+const labelCanvas = $('label-canvas');
+let lastLabelUpdate = 0;
+const LABEL_THROTTLE = 80;
+
+function makeLabel(node) {
+  if (state.labelEls.has(node.id)) return;
+  const el = document.createElement('div');
+  el.className = 'node-label';
+  el.id = `label-${node.id}`;
+  el.style.color = node.color;
+  el.innerHTML = `
+    <div class="label-card" style="border-color:${node.color}33">
+      <div class="label-card__type" style="color:${node.color}">
+        ${node.tipo.replace(/_/g, ' ')}
+      </div>
+      <div class="label-card__text">${node.conteudo}</div>
+    </div>
+  `;
+  labelCanvas.appendChild(el);
+  state.labelEls.set(node.id, el);
+}
+
+function removeLabel(id) {
+  const el = state.labelEls.get(id);
+  if (el) { el.remove(); state.labelEls.delete(id); }
+}
+
+function clearAllLabels() {
+  for (const id of [...state.labelEls.keys()]) removeLabel(id);
+}
+
+function updateLabelsAndIndicators() {
+  const now = performance.now();
+  if (now - lastLabelUpdate < LABEL_THROTTLE) return;
+  lastLabelUpdate = now;
+
+  const cam = Graph.camera();
+  const r = Graph.renderer();
+  if (!cam || !r) return;
+
+  const W = r.domElement.clientWidth;
+  const H = r.domElement.clientHeight;
+  const data = getFilteredData();
+
+  const projected = data.nodes.map((n) => {
+    const pos = n.__threeObj
+      ? n.__threeObj.position.clone()
+      : new THREE.Vector3(n.x || 0, n.y || 0, n.z || 0);
+    const worldPos = pos.clone();
+    pos.project(cam);
+    const x = (pos.x * 0.5 + 0.5) * W;
+    const y = (pos.y * -0.5 + 0.5) * H;
+    const dx = worldPos.x - cam.position.x;
+    const dy = worldPos.y - cam.position.y;
+    const dz = worldPos.z - cam.position.z;
+    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const onScreen = pos.z < 1 && x > 0 && x < W && y > 0 && y < H;
+    return { node: n, x, y, dist, onScreen, worldPos };
+  });
+
+  const visibleEdgeIds = new Set();
+  const MARGIN = 28;
+  projected.forEach((p) => {
+    if (p.onScreen) return;
+    visibleEdgeIds.add(p.node.id);
+    const dot = getOrCreateEdgeDot(p.node.id, p.node.color);
+
+    let dx = p.x - W / 2;
+    let dy = p.y - H / 2;
+    if (p.worldPos && p.worldPos.distanceTo(cam.position) > 0) {
+      const cameraForward = new THREE.Vector3();
+      cam.getWorldDirection(cameraForward);
+      const toNode = p.worldPos.clone().sub(cam.position);
+      if (toNode.dot(cameraForward) < 0) {
+        dx = -dx; dy = -dy;
+      }
+    }
+    const angle = Math.atan2(dy, dx);
+    const halfW = W / 2 - MARGIN;
+    const halfH = H / 2 - MARGIN;
+    let edgeX, edgeY;
+    const tanA = Math.tan(angle);
+    if (Math.abs(halfW * tanA) <= halfH) {
+      edgeX = (dx > 0 ? halfW : -halfW);
+      edgeY = edgeX * tanA;
+    } else {
+      edgeY = (dy > 0 ? halfH : -halfH);
+      edgeX = edgeY / tanA;
+    }
+    dot.style.left = (W / 2 + edgeX) + 'px';
+    dot.style.top  = (H / 2 + edgeY) + 'px';
+    dot.classList.add('is-visible');
+  });
+  for (const id of state.edgeDots.keys()) {
+    if (!visibleEdgeIds.has(id)) {
+      const d = state.edgeDots.get(id);
+      d.classList.remove('is-visible');
+      setTimeout(() => {
+        if (!visibleEdgeIds.has(id)) removeEdgeDot(id);
+      }, 350);
+    }
+  }
+
+  if (!state.showLabels) {
+    clearAllLabels();
+    return;
+  }
+
+  const onScreenSorted = projected.filter(p => p.onScreen).sort((a, b) => a.dist - b.dist);
+  const topN = new Set(onScreenSorted.slice(0, 5).map(p => p.node.id));
+  const visibleSet = new Set([...topN, ...state.selectedNeighbors]);
+
+  for (const [id, el] of state.labelEls) {
+    if (!visibleSet.has(id)) {
+      el.classList.remove('is-visible', 'is-selected');
+      setTimeout(() => {
+        if (!visibleSet.has(id) && state.labelEls.has(id)) removeLabel(id);
+      }, 450);
+    }
+  }
+
+  visibleSet.forEach((id) => {
+    const node = state.nodeMap.get(id);
+    if (!node) return;
+    makeLabel(node);
+    const el = state.labelEls.get(id);
+    const p = projected.find(pp => pp.node.id === id);
+    if (!p || !p.onScreen) {
+      el.classList.remove('is-visible', 'is-selected');
+      return;
+    }
+    el.style.left = p.x + 'px';
+    el.style.top = p.y + 'px';
+    if (state.selectedNeighbors.has(id)) {
+      el.classList.remove('is-visible');
+      el.classList.add('is-selected');
+    } else {
+      el.classList.remove('is-selected');
+      el.classList.add('is-visible');
+    }
+  });
+}
+
+Graph.onEngineTick(updateLabelsAndIndicators);
+
+// ─── Stats ───
+function updateStats() {
+  $('stat-frags').textContent = state.nodes.length;
+  $('stat-conns').textContent = state.links.length;
+  const today = new Date().toISOString().slice(0, 10);
+  $('stat-today').textContent = state.nodes.filter((n) => n.timestamp.startsWith(today)).length;
+}
+updateStats();
+
+// ─── Abas: alternância Cosmos / Lista ───
+state.view = 'cosmos';
+
+const tabCosmosBtn = $('tab-cosmos');
+const tabListBtn = $('tab-list');
+const listViewEl = $('list-view');
+
+function setView(view) {
+  state.view = view;
+  tabCosmosBtn.classList.toggle('is-active', view === 'cosmos');
+  tabListBtn.classList.toggle('is-active', view === 'list');
+  listViewEl.classList.toggle('is-active', view === 'list');
+  document.body.classList.toggle('view-list', view === 'list');
+
+  if (view === 'list') {
+    renderList();
+    state.spinning = false;
+    if (typeof updateAutoRotateBtn === 'function') updateAutoRotateBtn();
+  } else {
+    if (!state.selectedId) {
+      state.spinning = true;
+      if (typeof updateAutoRotateBtn === 'function') updateAutoRotateBtn();
+    }
+  }
+}
+
+tabCosmosBtn.addEventListener('click', () => setView('cosmos'));
+tabListBtn.addEventListener('click', () => setView('list'));
+
+// ─── Renderização da Lista por área ───
+function renderList() {
+  const body = $('list-view-body');
+  body.innerHTML = '';
+
+  if (!state.nodes.length) {
+    body.innerHTML = '<div class="list-empty">nenhum fragmento</div>';
+    return;
+  }
+
+  const byArea = {};
+  for (const n of state.nodes) {
+    const area = n.area || 'sem área';
+    if (!byArea[area]) byArea[area] = [];
+    byArea[area].push(n);
+  }
+
+  const sortedAreas = Object.keys(byArea).sort((a, b) =>
+    byArea[b].length - byArea[a].length
+  );
+
+  const connCount = new Map();
+  state.links.forEach(l => {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    connCount.set(s, (connCount.get(s) || 0) + 1);
+    connCount.set(t, (connCount.get(t) || 0) + 1);
+  });
+
+  for (const area of sortedAreas) {
+    const items = byArea[area];
+
+    const groupEl = document.createElement('section');
+    groupEl.className = 'area-group';
+
+    const head = document.createElement('div');
+    head.className = 'area-group__head';
+    head.innerHTML = `
+      <span class="area-group__name">${area}</span>
+      <span class="area-group__count">${items.length} ${items.length === 1 ? 'fragmento' : 'fragmentos'}</span>
+    `;
+    groupEl.appendChild(head);
+
+    const itemsList = document.createElement('div');
+    itemsList.className = 'area-group__items';
+
+    items.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+
+    for (const node of items) {
+      const item = document.createElement('button');
+      item.className = 'list-item';
+      const dataFmt = node.timestamp
+        ? new Date(node.timestamp).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+        : '—';
+      const conns = connCount.get(node.id) || 0;
+      item.innerHTML = `
+        <span class="list-item__dot" style="background:${node.color};color:${node.color}"></span>
+        <div class="list-item__body">
+          <div class="list-item__top">
+            <span class="list-item__type" style="color:${node.color}">${node.tipo.replace(/_/g, ' ')}</span>
+            <span class="list-item__meta">${dataFmt} · ${node.curador}</span>
+            ${conns ? `<span class="list-item__meta">${conns} ${conns === 1 ? 'conexão' : 'conexões'}</span>` : ''}
+          </div>
+          <div class="list-item__content">${node.conteudo}</div>
+          <div class="list-item__conf">confiança ${(node.confianca * 100).toFixed(0)}%</div>
+        </div>
+      `;
+      item.addEventListener('click', () => {
+        setView('cosmos');
+        setTimeout(() => openPanel(node), 50);
+      });
+      itemsList.appendChild(item);
+    }
+
+    groupEl.appendChild(itemsList);
+    body.appendChild(groupEl);
+  }
+}
+
+// ─── Filtros ───
+const filtersEl = $('filters');
+const filtersToggle = $('filters-toggle');
+const filtersList = $('filters-list');
+
+filtersToggle.addEventListener('click', () => {
+  const collapsed = filtersEl.classList.toggle('is-collapsed');
+  filtersToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+});
+
+function applyFilter(f) {
+  state.filter = f;
+  state.showLabels = f !== 'none';
+
+  document.querySelectorAll('.chip').forEach((b) => {
+    if (b.dataset.filter === '__halo') return;
+    b.classList.toggle('is-active', b.dataset.filter === f);
+  });
+
+  $('filters-label').textContent = TYPE_LABEL[f] || f;
+  const dotEl = $('filters-dot');
+  if (f === 'all') {
+    dotEl.style.background = '#fff';
+    dotEl.style.border = 'none';
+  } else if (f === 'none') {
+    dotEl.style.background = 'transparent';
+    dotEl.style.border = '1px dashed var(--text-faint)';
+  } else {
+    dotEl.style.background = TYPE_COLOR[f];
+    dotEl.style.border = 'none';
+    dotEl.style.boxShadow = `0 0 6px ${TYPE_COLOR[f]}`;
+  }
+
+  clearAllLabels();
+  state.selectedNeighbors = new Set();
+  Graph.graphData(getFilteredData());
+
+  setTimeout(() => {
+    filtersEl.classList.add('is-collapsed');
+    filtersToggle.setAttribute('aria-expanded', 'false');
+  }, 250);
+}
+
+document.querySelectorAll('.chip').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.filter === '__halo') {
+      state.showHalo = !state.showHalo;
+      btn.classList.toggle('is-active', state.showHalo);
+      Graph.graphData(getFilteredData());
+      return;
+    }
+    applyFilter(btn.dataset.filter);
+  });
+});
+
+// ─── Painel ───
+function openPanel(node) {
+  state.selectedId = node.id;
+  state.spinning = false;
+  updateAutoRotateBtn();
+  const data = getFilteredData();
+
+  const neighbors = new Set([node.id]);
+  data.links.forEach((l) => {
+    const { s, t } = linkExtract(l);
+    if (s === node.id) neighbors.add(t);
+    if (t === node.id) neighbors.add(s);
+  });
+  state.selectedNeighbors = neighbors;
+
+  const c = node.color;
+  $('panel-glow').style.color = c;
+  $('panel-type').textContent = node.tipo.replace(/_/g, ' ');
+  $('panel-type').style.color = c;
+  $('panel-content').textContent = node.conteudo;
+
+  const body = $('panel-body');
+  body.innerHTML = '';
+
+  const meta = [
+    { k: 'curador',  v: node.curador },
+    { k: 'área',     v: node.area },
+    { k: 'camada',   v: node.camada },
+    { k: 'id',       v: node.id },
+    { k: 'data', v: new Date(node.timestamp).toLocaleDateString('pt-BR', {
+        day: '2-digit', month: 'short', year: 'numeric',
+    }) },
+  ];
+
+  meta.forEach(({ k, v }) => {
+    const r = document.createElement('div');
+    r.className = 'meta-row';
+    r.innerHTML = `<span class="meta-row__key">${k}</span><span class="meta-row__value">${v}</span>`;
+    body.appendChild(r);
+  });
+
+  const conf = document.createElement('div');
+  conf.className = 'confidence';
+  conf.innerHTML = `
+    <div class="confidence__row">
+      <span class="meta-row__key">confiança</span>
+      <span class="meta-row__value" style="color:${c};font-family:'Instrument Serif',serif;font-size:18px">
+        ${(node.confianca * 100).toFixed(0)}<span style="font-size:11px;opacity:0.6">%</span>
+      </span>
+    </div>
+    <div class="confidence__bar">
+      <div class="confidence__fill" style="width:${node.confianca * 100}%;background:${c};color:${c}"></div>
+    </div>
+  `;
+  body.appendChild(conf);
+
+  const conns = data.links.filter((l) => {
+    const { s, t } = linkExtract(l);
+    return s === node.id || t === node.id;
+  });
+
+  if (conns.length) {
+    const title = document.createElement('div');
+    title.className = 'section-title';
+    title.innerHTML = `conexões <span class="section-title__count">· ${conns.length}</span>`;
+    body.appendChild(title);
+
+    conns.forEach((l) => {
+      const { s, t } = linkExtract(l);
+      const otherId = s === node.id ? t : s;
+      const other = state.nodeMap.get(otherId);
+      if (!other) return;
+      const ci = document.createElement('div');
+      ci.className = 'connection';
+      ci.innerHTML = `
+        <span class="connection__type" style="color:${other.color}">${other.tipo.replace(/_/g, ' ')}</span>
+        <span class="connection__preview">${other.conteudo}</span>
+      `;
+      ci.addEventListener('click', () => openPanel(other));
+      body.appendChild(ci);
+    });
+  }
+
+  $('panel').classList.add('is-open');
+  $('hint').style.opacity = '0';
+}
+
+function closePanel() {
+  $('panel').classList.remove('is-open');
+  state.selectedId = null;
+  state.selectedNeighbors = new Set();
+  state.spinning = true;
+  updateAutoRotateBtn();
+  setTimeout(() => { $('hint').style.opacity = '1'; }, 600);
+}
+
+$('panel-close').addEventListener('click', closePanel);
+
+// Atual: hard delete só client-side. Etapa 1B conecta no DELETE /hub/fragmento/{id}
+// e Parte 2 troca por modal de soft+hard delete.
+$('panel-delete').addEventListener('click', () => {
+  if (!state.selectedId) return;
+  const id = state.selectedId;
+  state.nodes = state.nodes.filter((n) => n.id !== id);
+  state.nodeMap.delete(id);
+  state.links = state.links.filter((l) => {
+    const { s, t } = linkExtract(l);
+    return s !== id && t !== id;
+  });
+  removeLabel(id);
+  state.selectedNeighbors = new Set();
+  Graph.graphData(getFilteredData());
+  updateStats();
+  closePanel();
+  showToast('fragmento removido', 'apagado', '#f87171');
+});
+
+// ─── Toast ───
+function showToast(text, label, color) {
+  $('toast-label').textContent = label || 'novo fragmento';
+  $('toast-label').style.color = color || 'var(--c-identidade)';
+  $('toast-text').textContent = text;
+  $('toast-dot').style.background = color || 'var(--c-identidade)';
+  $('toast-dot').style.color = color || 'var(--c-identidade)';
+  const el = $('toast');
+  el.classList.add('is-shown');
+  setTimeout(() => el.classList.remove('is-shown'), 3800);
+}
+
+// ─── Adicionar fragmento (handler pra SSE ativado na Etapa 1B) ───
+function addFragment(raw) {
+  if (!raw || !raw.conteudo) return;
+  const color = getNodeColor(raw);
+  const node = {
+    id: raw.id || ('new_' + (++state.nextId)),
+    conteudo: raw.conteudo,
+    tipo: raw.tipo || 'episodico',
+    area: raw.area || '',
+    curador: raw.curador || 'desconhecido',
+    camada: raw.camada || 'sessao',
+    confianca: raw.confianca || 0.7,
+    timestamp: raw.criado_em || new Date().toISOString(),
+    color,
+    val: 0.8 + (raw.confianca || 0.7) * 0.8,
+    _isNew: true,
+  };
+  state.nodes.push(node);
+  state.nodeMap.set(node.id, node);
+  const peers = state.nodes.filter((p) => p.tipo === node.tipo && p.id !== node.id);
+  if (peers.length) {
+    state.links.push({ source: node.id, target: peers[peers.length - 1].id });
+  }
+  Graph.graphData(getFilteredData());
+  setTimeout(() => {
+    node._isNew = false;
+    Graph.graphData(getFilteredData());
+  }, 2200);
+  updateStats();
+  showToast(
+    node.conteudo.length > 70 ? node.conteudo.slice(0, 70) + '…' : node.conteudo,
+    node.tipo.replace(/_/g, ' '),
+    color
+  );
+}
+
+// ─── Resize ───
+window.addEventListener('resize', () => {
+  Graph.width(window.innerWidth).height(window.innerHeight);
+});
+
+// ─── Keyboard ───
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state.selectedId) closePanel();
+  if (e.key === '+' || e.key === '=') setZoom(0.85);
+  if (e.key === '-' || e.key === '_') setZoom(1.18);
+  if (e.key === '0') fitAll();
+});
+
+// Inicial: filtros recolhidos por padrão depois de 2.5s
+setTimeout(() => {
+  filtersEl.classList.add('is-collapsed');
+  filtersToggle.setAttribute('aria-expanded', 'false');
+}, 2500);
 </script>
 </body>
 </html>
