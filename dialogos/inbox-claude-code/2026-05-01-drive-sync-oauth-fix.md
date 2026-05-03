@@ -3,14 +3,47 @@ tipo: demanda
 origem: gustavo
 destino: claude-code
 prioridade: media
-status: pendente
+status: concluido
 criado_em: 2026-05-01T00:12:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: 2026-05-02T22:50:00-03:00
+processado_por: claude-code
 acao_sugerida: investigar
 destino_path: .github/scripts/sync_to_drive.py
 contexto: "Workflow sync-to-drive parou de empurrar arquivos GitHub→Drive. Hipótese: refresh token OAuth expirado (Google Testing apps expiram em 7 dias). Decidir entre reset OAuth (paliativo) ou Service Account (definitivo)."
 ---
+
+## Resultado (2026-05-02)
+
+Hipótese confirmada via logs do run falhado de `import-from-drive`:
+`google.auth.exceptions.RefreshError: invalid_grant: Token has been expired
+or revoked.`
+
+**Resolvido pelo PR #76 (`feat(drive): Workload Identity Federation +
+inbox-mem0-from-chat raw`)** — caminho diferente das 3 opções originais
+(escolheu **WIF**, não OAuth reset nem Service Account JSON):
+
+- `_drive_auth.py` novo (helper compartilhado): tenta ADC/WIF primeiro,
+  Service Account JSON e OAuth refresh token como fallbacks
+- Workflows `sync-to-drive.yml` e `import-from-drive.yml` ganham step
+  `google-github-actions/auth@v2` + `permissions: id-token: write`
+- Setup Google Cloud feito por Gustavo: SA `gus-sync@gus-drive-sync.iam`,
+  pool `github-pool`, provider `github-provider`, impersonation grant
+  pra repo `Gustpbbr/Gus`, pasta `Gus-Sync` compartilhada com SA
+- Secrets novos: `GCP_WIF_PROVIDER` + `GCP_WIF_SERVICE_ACCOUNT`
+
+Validação pós-merge: commits `mirror:` e `import:` em main confirmam que
+os workflows voltaram a rodar verde após o merge.
+
+**Cleanup adicional** (PR `claude/drive-sync-cleanup`, follow-up):
+- WIF em `sync-to-drive-full.yml` (ficou de fora do #76)
+- Remove guard frágil de `GOOGLE_REFRESH_TOKEN` em `sync_to_drive.py:main()`
+- Exit ≠ 0 quando algum arquivo falha no upload
+- Atualiza nomes de workflows no `issue-on-cron-failure.yml` (PR #77
+  renomeou alguns arquivos, monitor parou de disparar pra eles silente)
+- Adiciona Sync workflows + Curador Claude Code + outros ao monitor
+
+Issues fechadas: #65, #75 (ambas "Import demandas from Drive falhou",
+mesma causa).
 
 # Demanda — Drive sync parado, decidir fix OAuth vs Service Account
 
