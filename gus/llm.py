@@ -70,7 +70,7 @@ async def _get_openai_client() -> AsyncOpenAI:
         return _openai_client
 
 
-async def _chamar_claude_com_retry(
+async def chamar_claude_com_retry(
     model: str,
     max_tokens: int,
     system_prompt,  # str OU lista de blocos (pra prompt caching)
@@ -139,6 +139,13 @@ async def _chamar_claude_com_retry(
         logger.warning(f"Desistindo de {modelo_atual} após {max_tentativas} tentativas")
 
     raise ultima_excecao if ultima_excecao else RuntimeError("Claude indisponível")
+
+
+# Alias retrocompatível — código que importa o nome privado continua
+# funcionando. Removível após próxima auditoria confirmar zero usos
+# externos. Hoje: hub.curador, tests/test_llm.py (sendo migrados
+# nesta mesma PR).
+_chamar_claude_com_retry = chamar_claude_com_retry
 
 
 def _mensagem_erro_amigavel(e: Exception) -> str:
@@ -573,7 +580,7 @@ async def _gerar_resposta_anthropic(messages: list[dict], memory_context: str = 
     # Loop de tool calling — continua até Claude retornar texto final
     for _ in range(max_tool_rounds):
         try:
-            response = await _chamar_claude_com_retry(
+            response = await chamar_claude_com_retry(
                 model=model,
                 max_tokens=max_tokens,
                 system_prompt=system_blocks,

@@ -12,7 +12,7 @@ import anthropic
 from gus.llm import (
     _get_pricing, _mensagem_erro_amigavel, _mensagem_erro_amigavel_openai,
     _anthropic_to_openai_tools, _history_to_openai, _escolher_provider,
-    _build_system_blocks, _build_tools_cached, _chamar_claude_com_retry,
+    _build_system_blocks, _build_tools_cached, chamar_claude_com_retry,
     _detectar_tipos_midia, _converter_anthropic_para_openai_vision,
     _tentar_vision_fallback,
     MODEL_PRICING, FALLBACK_PRICING,
@@ -275,7 +275,7 @@ class TestChamarClaudeComRetry:
             return resp
 
         with patch("gus.llm.client.messages.create", new=fake_create):
-            await _chamar_claude_com_retry(
+            await chamar_claude_com_retry(
                 model="claude-sonnet-4-6",
                 max_tokens=10,
                 system_prompt="",
@@ -298,7 +298,7 @@ class TestChamarClaudeComRetry:
             return resp
 
         with patch("gus.llm.client.messages.create", new=fake_create):
-            await _chamar_claude_com_retry(
+            await chamar_claude_com_retry(
                 model="claude-sonnet-4-6",
                 max_tokens=10,
                 system_prompt="você é o gus",
@@ -326,7 +326,7 @@ class TestChamarClaudeComRetry:
 
         with patch("gus.llm.client.messages.create", new=fake_create):
             with patch("gus.llm.asyncio.sleep", new=AsyncMock()):  # acelera teste
-                resp = await _chamar_claude_com_retry(
+                resp = await chamar_claude_com_retry(
                     model="claude-sonnet-4-6",
                     max_tokens=10,
                     system_prompt="x",
@@ -350,7 +350,7 @@ class TestChamarClaudeComRetry:
         with patch("gus.llm.client.messages.create", new=fake_create):
             with patch("gus.llm.asyncio.sleep", new=AsyncMock()):
                 with pytest.raises(anthropic.APIStatusError):
-                    await _chamar_claude_com_retry(
+                    await chamar_claude_com_retry(
                         model="claude-sonnet-4-6",
                         max_tokens=10,
                         system_prompt="x",
@@ -381,7 +381,7 @@ class TestChamarClaudeComRetry:
 
         with patch("gus.llm.client.messages.create", new=fake_create):
             with patch("gus.llm.asyncio.sleep", new=AsyncMock()):
-                await _chamar_claude_com_retry(
+                await chamar_claude_com_retry(
                     model="claude-sonnet-4-6",
                     max_tokens=10,
                     system_prompt="x",
