@@ -3,13 +3,31 @@ tipo: demanda
 origem: gustavo
 destino: claude-code
 prioridade: media
-status: pendente
+status: concluido
 criado_em: 2026-05-01T00:12:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: 2026-05-02T23:35:00-03:00
+processado_por: claude-code
 acao_sugerida: investigar
 destino_path: hub/curador.py
 contexto: "Curador hoje só processa TioGu Telegram. Conversas Claude Chat e Claude Code não viram fragmento. Decidir entre A/B/C e implementar (precisa aprovação Gustavo antes de codar)."
+resolucao: |
+  Opção A + C escolhida pelo Gustavo:
+  - Caminho 1 (default): real-time via MCP `ingestar_fragmento` durante a conversa
+  - Caminho 2 (escape): upload .md em Gus-Sync/dialogos/inbox-chat-raw/ pra
+    sessões >20 turnos onde curador post-hoc agrega valor
+  - Adicional: Chat também deve salvar autoreflexão sobre si-agente no
+    brain `gus` (tipo=meta_reflexao | identidade_operacional | procedural)
+
+  Implementação em `dialogos/_bootstrap/gus-bootstrap.md` (PR #81 a abrir):
+  - Reescrita seção "Como você captura memória pro Hub" com 2 caminhos
+  - Tabelas de tipos por brain (gustavo / gus)
+  - Frequência balanceada (2-4 fragmentos/conversa típica)
+  - Disciplina anti-esquecimento atualizada pra refletir 2 caminhos
+  - Limpeza de referências obsoletas a Mem0 e paths renomeados (PR #77)
+
+  Opção B (Stop hook Code expandido) NÃO implementada nesta rodada —
+  curador-claude-code via cron (PR #64) já cobre Claude Code de forma
+  similar. Opção C (refator agnóstico) fica pra sprint futura.
 ---
 
 # Demanda — captura multiporta de conversas pro Hub
