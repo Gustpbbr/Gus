@@ -6,7 +6,7 @@ data: 2026-05-02
 autor: Claude Code (sessão claude/greeting-checkin-EHt9Z)
 gerado_em: 2026-05-02T22:30-03:00
 fase: 0 do plano de saneamento da memória
-status: parcial — 0.1 e 0.3 concluídos, 0.2 pendente Gustavo
+status: concluído — 0.1, 0.2, 0.3 todos fechados
 ---
 
 # Diagnóstico da stack de memória — Fase 0
@@ -132,19 +132,39 @@ Gustavo executou via TioGu em 02/05 22:40 BRT. Total **40 fragmentos no Hub**:
 **Resultado:** 20 + 20 = 40 fragmentos. Confirma A1 (Hub seco) E
 descobre A5 (qualidade catastrófica) — ver seção acima.
 
-### 0.2 — Status migração `gus → gus_hub` (pendente Gustavo)
+### 0.2 — Status migração `gus → gus_hub` ✅ Concluído (Gustavo dispatch, 02/05 22:48)
 
-**Tarefa:** abrir https://github.com/Gustpbbr/Gus/actions/workflows/migrar-gus-para-hub.yml
+Workflow rodou em modo **dry-run**. Conexão Qdrant OK. Resultado:
 
-**Reportar:**
-1. Quantos runs aparecem
-2. Última execução: data + status (success/failure)
-3. Modo do último run: `dry-run` ou `migrar`?
+```
+[migracao] Encontrados: 0 fragmentos com conteúdo
+[migracao] Nada a migrar. Saindo.
+```
 
-**Decisão derivada:**
-- Nunca rodou OU só dry-run → Fase 3.1 vira primeira execução
-- Já rodou em `migrar` com sucesso → checar se 200+ fragmentos aparecem com
-  `metadata.curador="haiku-migracao"` no Hub (parte de 0.1)
+**Coleção `gus` (Mem0 self-hosted) está vazia.** Ver Achado A8 abaixo.
+
+## Achado A8 · Coleção legada `gus` está vazia
+
+Múltiplos docs do projeto afirmam que há ~204 fragmentos históricos lá.
+**Não há.** Hipóteses:
+
+1. **Sempre estiveram no Mem0 SaaS** (`api.mem0.ai`), não no Qdrant Cloud
+   self-hosted. Nome "gus" como coleção Qdrant nunca foi populado.
+2. **Foram apagados** em algum reset (`reset_qdrant_collection.py` existe).
+3. Estavam lá sem campo `data`/`memory` válido — improvável.
+
+## Achado A9 · 18 entradas `fallback-mem0` de 28/04 não estão acessíveis
+
+Se a coleção `gus` está vazia, as 18 entradas marcadas `fallback-mem0` em
+28/04 **não foram pra lá**. Provavelmente caíram no Mem0 SaaS via
+`gus/memory.py` antigo. Vetor de perda silenciosa que continua aberto se
+o caminho `fallback-mem0` ainda existe (Achado A4).
+
+## Achado A10 · Hub novo (`gus_hub`) é todo o histórico que existe
+
+40 fragmentos (20+20) é tudo. Não há legacy a recuperar. Decisão
+arquitetural: **tratar Hub atual como ponto zero** e focar em qualidade
+da captura daqui pra frente.
 
 ## Achado adicional fora do escopo planejado
 
@@ -180,10 +200,15 @@ arquitetura proposta — só ajustou prioridades + revelou débito extra.
 
 ## Próximo passo
 
-Gustavo executa 0.1 + 0.2 (5min Telegram + 1min navegador). Eu atualizo
-este documento com os números. Depois disparamos Fase 1 (quick wins).
+Fase 0 concluída. Próximo: **Fase 1 (quick wins) com refinamentos** dos
+achados A1-A10. Plano original ganha:
 
----
+- **NOVO 1.7** Limpeza ativa do Hub (deletar duplicatas + cross-brain)
+- **NOVO 1.8** `meta_relatorio_hub.py` recorrente
+- **NOVO 1.6** Investigar e matar caminho `fallback-mem0` em bot.py
+- **NOVO 1.9** Verificar se Mem0 SaaS ainda tem conteúdo histórico
+  (decisão Gustavo: recuperar ou descartar)
+- **CANCELADA Fase 3.1** (migração) — coleção vazia confirmada
+- **MOVIDA Fase 3.2** (remover fallback Mem0 do código) pra dentro de Fase 1
 
-_Atualização ao receber dados de 0.1 e 0.2 — campo "Achados" ganha seção
-A5 com volume confirmado, e A6 com status de migração._
+Total Fase 1 estimado: ~7-8h Code + 1 chamada API Gustavo.
