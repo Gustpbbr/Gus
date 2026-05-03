@@ -46,6 +46,17 @@ INBOXES = ["inbox-tiogu", "inbox-claude-code", "inbox-claude-chat", "inbox-custo
 # bruta. Não validam, mas movem pra processados/ pra não reprocessar.
 # Conteúdo é processado por outro cron downstream (ex: ingest-chat-raw).
 INBOXES_RAW = ["inbox-chat-raw"]
+# Inbox especial do Gustavo: subpastas mapeiam pra destino. Permite UX dele
+# pelo celular — abre Drive em inbox-gustavo/<porta>/ e cola o pedido.
+# Auto-gera frontmatter formal (origem=gustavo, prioridade=alta, status=pendente,
+# destino mapeado pela subpasta), commita no inbox de destino, notifica Telegram
+# se destino == tiogu.
+INBOX_GUSTAVO = "inbox-gustavo"
+GUSTAVO_SUBFOLDER_TO_INBOX = {
+    "chat": "inbox-claude-chat",
+    "code": "inbox-claude-code",
+    "tiogu": "inbox-tiogu",
+}
 PROCESSADOS_FOLDER = "processados"
 PROCESSADOS_ERRO_FOLDER = "processados-erro"
 
@@ -340,6 +351,98 @@ def processar_demanda_inbox(drive, repo, gh_token, f, inbox, processados_id, pro
     return "imported"
 
 
+def gerar_frontmatter_gustavo(destino):
+    """Gera frontmatter formal pra demanda criada via inbox-gustavo/.
+
+    Defaults: origem=gustavo, prioridade=alta, status=pendente, criado_em=now.
+    Destino vem da subpasta (chat/code/tiogu mapeado).
+    """
+    now = datetime.now(BRT).isoformat()
+    return (
+        "---\n"
+        "tipo: demanda\n"
+        "origem: gustavo\n"
+        f"destino: {destino}\n"
+        "prioridade: alta\n"
+        "status: pendente\n"
+        f"criado_em: {now}\n"
+        "---\n\n"
+    )
+
+
+def processar_inbox_gustavo(drive, repo, gh_token, f, sub, processados_id):
+    """Modo inbox-gustavo: arquivo em inbox-gustavo/<sub>/ — Gustavo coloca pedido,
+    sistema injeta frontmatter formal (se ausente) e roteia pro inbox de destino
+    correto. Gera commit no inbox-<destino>/, move arquivo no Drive pra
+    processados/inbox-gustavo/<sub>/, notifica Telegram se destino == tiogu.
+    Retorna 'imported' | 'skipped' | 'error'."""
+    file_id = f["id"]
+    file_name = f["name"]
+    mime = f.get("mimeType", "")
+
+    inbox_destino = GUSTAVO_SUBFOLDER_TO_INBOX.get(sub)
+    if not inbox_destino:
+        log.warning(f"    Subpasta inválida em inbox-gustavo: {sub} (skip)")
+        return "skipped"
+
+    if not is_text_mime(mime):
+        log.info(f"    inbox-gustavo/{sub}/{file_name} ({mime}) não é texto, skip")
+        return "skipped"
+
+    try:
+        content = download_content(drive, file_id, mime)
+    except HttpError as e:
+        log.error(f"    Falha ao baixar {file_name}: {e}")
+        return "error"
+    except UnicodeDecodeError as e:
+        log.error(f"    {file_name} não-UTF-8 (byte {hex(e.object[e.start])}) — pulando")
+        return "error"
+
+    # Se já tem frontmatter, valida. Se não, injeta auto.
+    fm, body = parse_frontmatter(content)
+    if fm is None:
+        # Auto-injecta frontmatter formal — destino vindo da subpasta
+        destino = inbox_destino.replace("inbox-", "")
+        content_final = gerar_frontmatter_gustavo(destino) + content
+        log.info(f"    inbox-gustavo: frontmatter auto-gerado (destino={destino})")
+        # Reparse pra ter `fm` populado pra uso abaixo (notify telegram, etc.)
+        fm, body = parse_frontmatter(content_final)
+    else:
+        content_final = content
+        log.info(f"    inbox-gustavo: frontmatter já presente (mantido)")
+
+    github_path = f"dialogos/{inbox_destino}/{normalizar_nome_arquivo(file_name)}"
+    commit_msg = f"import: {file_name} via inbox-gustavo/{sub} → {inbox_destino}"
+
+    status, ok = github_put_file(repo, github_path, content_final, commit_msg, gh_token)
+    if not ok:
+        return "error"
+
+    log.info(f"    [{status}] {github_path}")
+
+    # Move no Drive pra processados/inbox-gustavo/<sub>/ — preserva estrutura
+    proc_gustavo_id = get_or_create_folder(drive, INBOX_GUSTAVO, processados_id)
+    proc_sub_id = get_or_create_folder(drive, sub, proc_gustavo_id)
+    try:
+        move_file(drive, file_id, proc_sub_id, find_parents(drive, file_id))
+        log.info(f"    Movido no Drive pra processados/{INBOX_GUSTAVO}/{sub}/")
+    except HttpError as e:
+        log.warning(f"    Move falhou (importou OK, pode reprocessar): {e}")
+
+    # Notifica Telegram se destino é tiogu (mesma lógica de processar_demanda_inbox)
+    if inbox_destino == "inbox-tiogu":
+        titulo = re.search(r"^#\s+(.+)$", body, re.MULTILINE)
+        titulo = titulo.group(1).strip() if titulo else file_name
+        msg = (
+            f"📥 Demanda nova em inbox-tiogu (via inbox-gustavo/tiogu)\n"
+            f"Origem: gustavo | Prioridade: {fm.get('prioridade', 'alta')}\n"
+            f"\"{titulo}\""
+        )
+        notify_telegram(msg)
+
+    return "imported"
+
+
 def processar_inbox_raw(drive, repo, gh_token, f, inbox, processados_id):
     """Modo inbox raw: arquivo em inbox_RAW/ (ex: inbox-chat-raw) — não tem
     frontmatter formal, mas precisa ser movido pra processados/ pra não
@@ -453,6 +556,12 @@ def main():
             and parts[0] in INBOXES_RAW
             and not file_name.startswith("_")
         )
+        is_inbox_gustavo = (
+            len(parts) == 2
+            and parts[0] == INBOX_GUSTAVO
+            and parts[1] in GUSTAVO_SUBFOLDER_TO_INBOX
+            and not file_name.startswith("_")
+        )
 
         log.info(f"  → {prefix}{file_name} (mime={mime})")
 
@@ -460,6 +569,8 @@ def main():
             result = processar_demanda_inbox(drive, repo, gh_token, f, parts[0], processados_id, processados_erro_id)
         elif is_inbox_raw:
             result = processar_inbox_raw(drive, repo, gh_token, f, parts[0], processados_id)
+        elif is_inbox_gustavo:
+            result = processar_inbox_gustavo(drive, repo, gh_token, f, parts[1], processados_id)
         else:
             result = processar_mirror_raw(drive, repo, gh_token, f, prefix)
 
