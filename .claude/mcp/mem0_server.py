@@ -319,7 +319,9 @@ async def call_tool(name: str, arguments: dict):
         if not memory_id:
             return [TextContent(type="text", text="memory_id vazio.")]
         try:
-            await asyncio.to_thread(deletar, memory_id)
+            # Motivo automático pra trilha de auditoria (item 1.3)
+            motivo = f"mcp:{VIA_TAG} user_id={user_id}"
+            await asyncio.to_thread(deletar, memory_id, motivo)
             return [TextContent(type="text", text=f"Deletado do Hub: `{memory_id}` (brain `{user_id}`)")]
         except Exception as e:
             return [TextContent(type="text", text=f"Erro ao deletar `{memory_id}`: {e}")]

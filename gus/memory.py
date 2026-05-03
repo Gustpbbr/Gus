@@ -254,7 +254,8 @@ async def deletar_memoria(memory_id: str, user_id: str = USER_ID_GUSTAVO) -> str
     # 1) Tenta Hub Qdrant
     try:
         from hub.store import deletar as hub_deletar
-        await asyncio.to_thread(hub_deletar, mid)
+        motivo = f"gus.memory.deletar_memoria user_id={user_id}"
+        await asyncio.to_thread(hub_deletar, mid, motivo)
         return f"Memória `{mid}` deletada do Hub (user_id=`{user_id}`)."
     except Exception as e_hub:
         logger.warning(f"Hub.deletar falhou em '{mid}': {e_hub}. Tentando Mem0 fallback…")

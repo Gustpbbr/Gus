@@ -265,18 +265,60 @@ def listar(user_id: str = "gustavo", limit: int = 50) -> list[dict]:
     ]
 
 
-def deletar(memory_id: str) -> bool:
+def deletar(memory_id: str, motivo: Optional[str] = None) -> bool:
     """Deleta um fragmento pelo ID. IRREVERSÍVEL.
 
     Usado pelo MCP `mem0-gus` em deletar_memoria. O caller é responsável
     por confirmar a intenção antes de chamar.
+
+    Antes de deletar, fetcha o payload e grava trilha em
+    `_log/deletar-hub/AAAA-MM-DD.jsonl` (item 1.3 do plano de saneamento).
+    Se o log falhar, o delete prossegue (fail-soft) — não bloquear delete
+    por problema de I/O.
     """
+    import json as _json
+    from pathlib import Path as _Path
+
     if not memory_id or not memory_id.strip():
         raise ValueError("memory_id vazio")
+    mid = memory_id.strip()
     client = _get_client()
+
+    # Fetch payload pré-delete pra trilha de auditoria
+    snapshot = None
+    try:
+        pontos = client.retrieve(
+            collection_name=COLLECTION,
+            ids=[mid],
+            with_payload=True,
+            with_vectors=False,
+        )
+        if pontos:
+            snapshot = dict(pontos[0].payload or {})
+    except Exception as e:
+        logger.warning(f"deletar: fetch pré-delete falhou (id={mid[:8]}): {e}")
+
+    # Trilha de auditoria — fail-soft
+    try:
+        log_dir = _Path("_log/deletar-hub")
+        log_dir.mkdir(parents=True, exist_ok=True)
+        hoje = datetime.now(BRT).strftime("%Y-%m-%d")
+        log_path = log_dir / f"{hoje}.jsonl"
+        registro = {
+            "timestamp": datetime.now(BRT).isoformat(),
+            "memory_id": mid,
+            "motivo": motivo or "(não informado)",
+            "snapshot": snapshot,
+        }
+        with log_path.open("a", encoding="utf-8") as f:
+            f.write(_json.dumps(registro, ensure_ascii=False, default=str) + "\n")
+    except Exception as e:
+        logger.warning(f"deletar: trilha de auditoria falhou (id={mid[:8]}): {e}")
+
+    # Delete propriamente dito
     client.delete(
         collection_name=COLLECTION,
-        points_selector=[memory_id.strip()],
+        points_selector=[mid],
     )
     return True
 
