@@ -13,6 +13,8 @@ from gus.llm import (
     _get_pricing, _mensagem_erro_amigavel, _mensagem_erro_amigavel_openai,
     _anthropic_to_openai_tools, _history_to_openai, _escolher_provider,
     _build_system_blocks, _build_tools_cached, _chamar_claude_com_retry,
+    _detectar_tipos_midia, _converter_anthropic_para_openai_vision,
+    _tentar_vision_fallback,
     MODEL_PRICING, FALLBACK_PRICING,
 )
 
@@ -387,3 +389,215 @@ class TestChamarClaudeComRetry:
                     max_tentativas=4,
                 )
         assert chamadas["n"] == 2
+
+
+# ===========================================================================
+# Vision fallback Anthropic → OpenAI (Fase 3)
+# ===========================================================================
+
+
+class TestDetectarTiposMidia:
+    def test_so_texto_retorna_vazio(self):
+        msgs = [{"role": "user", "content": "oi"}]
+        assert _detectar_tipos_midia(msgs) == set()
+
+    def test_lista_so_texto_retorna_vazio(self):
+        msgs = [{"role": "user", "content": [{"type": "text", "text": "oi"}]}]
+        assert _detectar_tipos_midia(msgs) == set()
+
+    def test_imagem_retorna_image(self):
+        msgs = [{"role": "user", "content": [
+            {"type": "image", "source": {"type": "base64", "data": "x"}},
+            {"type": "text", "text": "o que é?"},
+        ]}]
+        assert _detectar_tipos_midia(msgs) == {"image"}
+
+    def test_pdf_retorna_document(self):
+        msgs = [{"role": "user", "content": [
+            {"type": "document", "source": {"type": "base64", "data": "x"}},
+        ]}]
+        assert _detectar_tipos_midia(msgs) == {"document"}
+
+    def test_imagem_e_pdf_retorna_ambos(self):
+        msgs = [{"role": "user", "content": [
+            {"type": "image", "source": {"data": "x"}},
+            {"type": "document", "source": {"data": "y"}},
+        ]}]
+        assert _detectar_tipos_midia(msgs) == {"image", "document"}
+
+    def test_olha_apenas_ultimo_user_message(self):
+        # Imagem em msg antiga não conta — só último user
+        msgs = [
+            {"role": "user", "content": [{"type": "image", "source": {"data": "x"}}]},
+            {"role": "assistant", "content": "vi"},
+            {"role": "user", "content": "explica"},
+        ]
+        assert _detectar_tipos_midia(msgs) == set()
+
+    def test_history_vazio(self):
+        assert _detectar_tipos_midia([]) == set()
+
+
+class TestConverterAnthropicParaOpenAIVision:
+    def test_string_content_passa_intacto(self):
+        msgs = [{"role": "user", "content": "oi mundo"}]
+        out = _converter_anthropic_para_openai_vision(msgs)
+        assert out == [{"role": "user", "content": "oi mundo"}]
+
+    def test_imagem_base64_convertida(self):
+        msgs = [{"role": "user", "content": [
+            {"type": "image", "source": {
+                "type": "base64", "media_type": "image/jpeg", "data": "ABC123"
+            }},
+            {"type": "text", "text": "o que é?"},
+        ]}]
+        out = _converter_anthropic_para_openai_vision(msgs)
+        assert len(out) == 1
+        blocks = out[0]["content"]
+        # Ambos blocos: image_url + text
+        assert len(blocks) == 2
+        assert blocks[0]["type"] == "image_url"
+        assert blocks[0]["image_url"]["url"] == "data:image/jpeg;base64,ABC123"
+        assert blocks[1] == {"type": "text", "text": "o que é?"}
+
+    def test_imagem_sem_media_type_default_jpeg(self):
+        msgs = [{"role": "user", "content": [
+            {"type": "image", "source": {"data": "XYZ"}},  # sem media_type
+        ]}]
+        out = _converter_anthropic_para_openai_vision(msgs)
+        # Bloco único de imagem — vira lista
+        assert out[0]["content"][0]["image_url"]["url"] == "data:image/jpeg;base64,XYZ"
+
+    def test_pdf_vira_placeholder_texto(self):
+        msgs = [{"role": "user", "content": [
+            {"type": "document", "source": {"data": "PDFDATA"}},
+            {"type": "text", "text": "analisa"},
+        ]}]
+        out = _converter_anthropic_para_openai_vision(msgs)
+        # PDF placeholder + texto — 2 blocks (caller deve recusar antes via _detectar_tipos_midia)
+        blocks = out[0]["content"]
+        assert any("PDF" in b.get("text", "") for b in blocks if b.get("type") == "text")
+
+    def test_bloco_unico_texto_vira_string(self):
+        msgs = [{"role": "user", "content": [{"type": "text", "text": "só texto"}]}]
+        out = _converter_anthropic_para_openai_vision(msgs)
+        assert out[0]["content"] == "só texto"  # achatado
+
+    def test_assistant_string_preservado(self):
+        msgs = [{"role": "assistant", "content": "ok"}]
+        out = _converter_anthropic_para_openai_vision(msgs)
+        assert out[0] == {"role": "assistant", "content": "ok"}
+
+    def test_imagem_sem_data_ignorada(self):
+        msgs = [{"role": "user", "content": [
+            {"type": "image", "source": {}},  # data ausente
+            {"type": "text", "text": "fallback"},
+        ]}]
+        out = _converter_anthropic_para_openai_vision(msgs)
+        # imagem sem data não vira image_url; fica só o texto
+        blocks = out[0]["content"]
+        # texto único achatado pra string
+        assert blocks == "fallback" or (
+            isinstance(blocks, list) and all(b.get("type") != "image_url" for b in blocks)
+        )
+
+
+class TestTentarVisionFallback:
+    @pytest.mark.asyncio
+    async def test_retorna_none_se_multimodel_disabled(self, monkeypatch):
+        monkeypatch.setenv("MULTIMODEL_ENABLED", "false")
+        msgs = [{"role": "user", "content": [{"type": "image", "source": {"data": "x"}}]}]
+        exc = RuntimeError("anthropic down")
+        out = await _tentar_vision_fallback(msgs, "", exc)
+        assert out is None
+
+    @pytest.mark.asyncio
+    async def test_retorna_none_sem_openai_key(self, monkeypatch):
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        msgs = [{"role": "user", "content": [{"type": "image", "source": {"data": "x"}}]}]
+        exc = RuntimeError("anthropic down")
+        out = await _tentar_vision_fallback(msgs, "", exc)
+        assert out is None
+
+    @pytest.mark.asyncio
+    async def test_retorna_none_se_so_texto(self, monkeypatch):
+        monkeypatch.setenv("OPENAI_API_KEY", "fake")
+        monkeypatch.setenv("MULTIMODEL_ENABLED", "true")
+        msgs = [{"role": "user", "content": "só texto"}]
+        exc = RuntimeError("anthropic down")
+        out = await _tentar_vision_fallback(msgs, "", exc)
+        assert out is None
+
+    @pytest.mark.asyncio
+    async def test_pdf_retorna_msg_especifica(self, monkeypatch):
+        monkeypatch.setenv("OPENAI_API_KEY", "fake")
+        monkeypatch.setenv("MULTIMODEL_ENABLED", "true")
+        msgs = [{"role": "user", "content": [
+            {"type": "document", "source": {"data": "pdf"}}
+        ]}]
+        exc = RuntimeError("anthropic down")
+        out = await _tentar_vision_fallback(msgs, "", exc)
+        assert out is not None
+        text, metadata = out
+        assert "PDF" in text
+        assert "print" in text.lower() or "fallback" in text.lower()
+        assert metadata["error"] == "pdf_sem_fallback"
+
+    @pytest.mark.asyncio
+    async def test_imagem_aciona_openai_vision(self, monkeypatch):
+        monkeypatch.setenv("OPENAI_API_KEY", "fake")
+        monkeypatch.setenv("MULTIMODEL_ENABLED", "true")
+        msgs = [{"role": "user", "content": [
+            {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": "ABC"}},
+            {"type": "text", "text": "o que é?"},
+        ]}]
+        exc = RuntimeError("anthropic down")
+
+        # Mocka _gerar_resposta_openai_vision pra retornar valor controlado
+        async def fake_vision(messages, memory_context):
+            return "uma foto de teste", {
+                "model": "gpt-4o", "tokens_in": 10, "tokens_out": 5,
+                "cost_usd": 0.001, "provider": "openai-vision-fallback",
+            }
+
+        with patch("gus.llm._gerar_resposta_openai_vision", new=fake_vision):
+            out = await _tentar_vision_fallback(msgs, "", exc)
+
+        assert out is not None
+        text, metadata = out
+        assert "fallback" in text.lower()
+        assert "uma foto de teste" in text
+        assert metadata["provider"] == "openai-vision-fallback"
+
+    @pytest.mark.asyncio
+    async def test_vision_explode_retorna_none(self, monkeypatch):
+        """Se gpt-4o também falhar, fallback deixa caller usar erro original."""
+        monkeypatch.setenv("OPENAI_API_KEY", "fake")
+        monkeypatch.setenv("MULTIMODEL_ENABLED", "true")
+        msgs = [{"role": "user", "content": [
+            {"type": "image", "source": {"data": "x"}},
+        ]}]
+        exc = RuntimeError("anthropic down")
+
+        async def fake_vision_fail(messages, memory_context):
+            raise RuntimeError("openai também caiu")
+
+        with patch("gus.llm._gerar_resposta_openai_vision", new=fake_vision_fail):
+            out = await _tentar_vision_fallback(msgs, "", exc)
+        assert out is None
+
+    @pytest.mark.asyncio
+    async def test_imagem_e_pdf_juntos_recusa_pdf(self, monkeypatch):
+        """Se vier ambos, prevalece o caminho PDF (sem fallback completo)."""
+        monkeypatch.setenv("OPENAI_API_KEY", "fake")
+        monkeypatch.setenv("MULTIMODEL_ENABLED", "true")
+        msgs = [{"role": "user", "content": [
+            {"type": "image", "source": {"data": "x"}},
+            {"type": "document", "source": {"data": "y"}},
+        ]}]
+        exc = RuntimeError("anthropic down")
+        out = await _tentar_vision_fallback(msgs, "", exc)
+        assert out is not None
+        text, metadata = out
+        assert "PDF" in text
+        assert metadata["error"] == "pdf_sem_fallback"
