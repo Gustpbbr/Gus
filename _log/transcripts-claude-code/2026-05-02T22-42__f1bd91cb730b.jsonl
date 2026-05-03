@@ -1,0 +1,447 @@
+user: oi Gus, blz?
+assistant: oi, blz. tô aqui na branch `claude/initial-setup-iWTfL`, com 6 demandas pendentes em `dialogos/inbox-claude-code/` (algumas com nome quebrado — "Documento sem título.md" provavelmente é lixo de sync).
+
+quer que eu processe as demandas, ou tem algo específico em mente?
+user: enha um panorama geral do projeto. segue um guia para vc ver. depois vamos focar em um assunto específico, mas te falo apos vc ler tudo necessário do projeto. segue uma dica de outra aba do code. analise tudo, e busque tbm as últimas atualizações do projeto q nao estao no texto abaixo citado
+Aqui vai a receita ordenada por valor por contexto. Foco: mínimo necessário pra não inflar contexto à toa.
+Core obrigatório (sempre, em toda aba nova)
+Arquivo
+Pra quê
+dialogos/_bootstrap/[gus-bootstrap.md](http://gus-bootstrap.md)
+manual operacional do Gus, regras de comportamento, como cada porta usa o Hub
+dialogos/_bootstrap/[gus-identity.md](http://gus-identity.md)
+quem é o Gustavo + quem é o Gus enquanto entidade
+dialogos/_bootstrap/[gus-estado-atual.md](http://gus-estado-atual.md)
+handoff auto-gerado pelo cron 03h, snapshot do Hub
+projetos/gus/_[estado-atual.md](http://estado-atual.md)
+onde paramos na sessão anterior (mais "operacional" que o bootstrap)
+Esses 4 dão 80% do contexto pra qualquer aba nova.
+Live — preferir sobre arquivo
+Se a aba tem MCP gus-hub conectado:
+ego_cache_atual() — identidade + últimas 3 decisões + 5 meta-reflexões
+fragmentos_recentes(horas=24) — o que rolou desde ontem
+contar_fragmentos() — sanity check
+Hub é mais fresco que [gus-estado-atual.md](http://gus-estado-atual.md) (que é snapshot das 03h). Sempre que possível, prefira tools MCP a arquivo .md.
+Específicos do contexto da pergunta
+Só ler se a conversa for sobre:
+Tema
+Arquivo
+Próximos passos / NeuroGus
+projetos/gus/[gus-08-plano-proximos-passos.md](http://gus-08-plano-proximos-passos.md), projetos/gus/[gus-30-neurogus-roadmap.md](http://gus-30-neurogus-roadmap.md)
+Caminho Alexa
+projetos/gus/[gus-10-caminho-alexa.md](http://gus-10-caminho-alexa.md)
+MCP / [claude.ai](http://claude.ai) connector
+projetos/gus/[gus-28-passo2-mcp-server.md](http://gus-28-passo2-mcp-server.md)
+Roteamento multi-modelo
+projetos/gus/[gus-29-roteamento-multimodelo-tiogu.md](http://gus-29-roteamento-multimodelo-tiogu.md)
+Hub Qdrant arquitetura
+projetos/gus/[gus-18-schema-indexacao.md](http://gus-18-schema-indexacao.md), [gus-20-etapa2-hub-qdrant.md](http://gus-20-etapa2-hub-qdrant.md), [gus-21-etapa3-curador.md](http://gus-21-etapa3-curador.md)
+Decisão migração ADR-001
+projetos/gus/[gus-15-decisao-migracao.md](http://gus-15-decisao-migracao.md)
+Demanda da semana
+dialogos/streams/[semana-2026-04-21.md](http://semana-2026-04-21.md) (último arquivo da pasta)
+Demandas pendentes pra essa porta
+dialogos/inbox-/
+O que NÃO precisa ler
+gus-01 a gus-09 (a não ser por curiosidade arqueológica — bootstrap já resume)
+pessoal/, dimagem/, receitas/ etc. — só sob demanda explícita
+historico/ — pasta morta de conteúdo legado
+Logs antigos (>3 dias)
+_log/sessoes-claude-code/ — arquivos longos de transcript
+Truque pra Claude Chat web
+Como ele lê via Drive Project knowledge, o boot dele já tem [gus-bootstrap.md](http://gus-bootstrap.md) como project instruction. Aí ele só precisa fazer:
+Ler [gus-estado-atual.md](http://gus-estado-atual.md) (snapshot 03h)
+Chamar ego_cache_atual() via MCP gus-hub (estado vivo)
+Pra Claude Code, o [CLAUDE.md](http://CLAUDE.md) na raiz é auto-injetado em toda sessão — então já cobre o "core obrigatório".
+Quer que eu padronize isso num arquivo dialogos/_bootstrap/[checklist-boot-aba-nova.md](http://checklist-boot-aba-nova.md) pra deixar canonizado?
+Ah, entendi mal. PRs são histórico, não documentação — uma aba nova não precisa ler nenhum.
+Por que não
+O estado final dos PRs já tá no código + nos docs gus-XX atualizados
+PRs descrevem o caminho, não onde a gente tá. Nova aba quer onde tamo.
+60 PRs = ruído gigante no contexto pra ganho zero
+Quando vale olhar PR
+Situação
+Qual PR
+"Por que esse arquivo tá assim?"
+git log --oneline  → abre o PR específico
+"O que mudou hoje?"
+Lista PRs mergeados nas últimas 24h: gh pr list --state merged --limit 10
+Bug recente
+PR mais recente que tocou o código quebrado
+Decisão arquitetural não-óbvia
+PR description costuma ter o "porquê"
+Boa prática
+O que tem que ficar nos docs (não nos PRs):
+Decisões arquiteturais → ADR (gus-15 é exemplo)
+Como configurar algo → gus-XX-setup
+Estado atual do projeto → gus-26-status-consolidado, _estado-atual
+Se um PR precisa ser lido pra entender o presente, é sinal de doc desatualizado — não de PR importante.
+Receita
+Aba nova só precisa olhar PRs se:
+Você falar "tá quebrando X depois do PR #YY" → aí sim, lê o PR
+Investigar bug específico no código mexido recentemente
+Senão, esquece os 60. Os 7 docs do checklist anterior te dão o estado atual.
+assistant: Li tudo. Panorama:
+
+## O que é o Gus
+Sistema de agente pessoal multi-porta (Telegram/TioGu, Claude Code, Claude Chat, futuras: Custom GPT mobile, Alexa). Memória central no **Hub Qdrant** (`gus_hub`), arquivos .md no GitHub (`Gustpbbr/Gus`), espelhados no Drive. Gustavo é anestesiologista, não programa — toda implementação passa por mim/Tiogu.
+
+## Estado de migração
+**ADR-001** em curso: aposentar Mem0 SaaS, Hub Qdrant é fonte da verdade. Coleta dual de modelos no curador (Haiku × GPT-4o-mini, mudou de Sonnet em 29/04 por custo/resiliência) termina **12/05/2026** — depois Gustavo escolhe modelo definitivo, fase 5 remove fallback Mem0.
+
+## Fronts ativos (do `_estado-atual.md` + PRs recentes)
+
+**TioGu (Fase 1 saneamento — concluída, PR #73):** 163 testes verdes, PII no output redatado, byte budget no cache, hygiene em `bot.py/llm.py/memory.py`. Próximo: Fase 2A docs, Fase 2B reescrita do `system_prompt.md`, Fase 4 split de `bot.py/tools.py`.
+
+**Claude Chat (auditoria — PR #72 mergeado):** 12 fixes de 31 achados. Bug crítico do curador (`format()` falhando 100% desde 30/04 com KeyError no JSON literal) corrigido. MCP fail-closed default. Whitelist user_id. Validação enum gus-18.
+
+**Pendências Gustavo (operacional):**
+- Setar `MCP_URL_SECRET` no Railway + recadastrar Connector claude.ai (privacidade)
+- Decidir Drive sync (OAuth quebrado desde 01/05 14:38Z)
+- 4+ memórias poluídas pra deletar manualmente
+
+**NeuroGus (gus-30) bloqueado:** decisões UX 11.1-11.5 + mock HTML do 28/04. Backend SSE pronto pra começar.
+
+## Atualizações desde o `_estado-atual.md` (que é de 02/05 01:36)
+
+PRs mergeados depois disso, não documentados ainda:
+
+| PR | O que entrou |
+|---|---|
+| #74 | testes de regressão do curador (bug `format()` + validadores enum) |
+| #76 | feat(drive): WIF + inbox-mem0-from-chat raw |
+| #77 | chore(cleanup): renomeia legacy `mem0` → `curador`/`hub` |
+| #79 | feat(drive): `inbox-gustavo/<porta>/` — captura por origem com auto-frontmatter |
+| #80 | fix(mcp,security): não logar `MCP_URL_SECRET` + pattern de redação |
+
+Importações recentes pelo Drive: 3 arquivos novos em `inbox-tiogu/` (origem claude-chat) sobre ingestão de exames no Hub e protocolo truncado.
+
+## Demandas no inbox-claude-code (6 listadas, mas...)
+- 3 demandas reais: captura multiporta, curador bidirecional cron, drive-sync OAuth
+- 1 guarda-chuva: pendências Chat consolidadas (6 fronts)
+- "Documento sem título.md" = só agradecimento do Gustavo, não é demanda
+- "_frontmatter-referencia.md" = template, não demanda
+
+Pode mandar o foco específico.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado e pushado pra `claude/greeting-checkin-EHt9Z`. Era só o log do retro-engine auto-gerado (no-op por falta de `ANTHROPIC_API_KEY` no ambiente, comportamento conhecido).
+user: Continue from where you left off.
+assistant: No response requested.
+user: vc vai focar nas memorias e Hub. atue como um auditor profissional e imparcial, e detalhe os principais pontos desse assunto
+assistant: Vou auditar a stack de memória end-to-end. Lendo código + docs em paralelo.
+assistant: # Auditoria — Memórias e Hub Qdrant
+
+**Escopo:** stack de memória end-to-end (`hub/`, `gus/memory.py`, `.github/scripts/curador_*`, `ingest_chat_raw.py`, `auditoria_hub.py`, `migrar_gus_para_hub.py`, MCP `mem0_server.py`, schemas Pydantic, cron workflows).
+**Método:** leitura crítica de código + comparação contra contrato gus-18 + cross-check com auditoria existente (`projetos/gus/auditorias/2026-05-02-chat.md`) pra não redobrar.
+**Posição:** auditor independente. Não estou propondo fixes ainda — só listando o que vi.
+
+---
+
+## Resumo executivo
+
+A stack está em **estado intermediário arriscado**: Hub Qdrant (`gus_hub`) é a fonte nova, mas a coleção legada `gus` (Mem0 self-hosted) tem ~204 fragmentos não-migrados e o código de leitura em `gus/memory.py` ainda faz fallback pra ela. Há **3 produções simultâneas** de fragmentos (Telegram, Chat, Code) com **4× multiplicação de chamadas LLM** por unidade de input (Haiku × GPT × {gustavo, gus}) e **sem mecanismo de dedup**. O contrato schema gus-18 está parcialmente implementado: lifecycle (`peso`, `acessos`, promoção `ativo→estavel`, `tipo_esquecimento`) é **declarado mas não executado**. A auditoria diária (`auditoria_hub.py`) é **cega para o brain `gus`** e classifica por keywords ignorando o `area` que o curador já preencheu. Há ainda inconsistências de vocabulário `via` entre doc, Pydantic schema, MCP e curador.
+
+**Severidade global:** 🟠 **alto.** Sistema funcional pra captura, mas com débitos que vão estourar quando volume crescer (NeuroGus, Alexa) e com risco moderado de perda silenciosa / poluição cross-brain hoje.
+
+---
+
+## Mapa do sistema (estado em 02/05/2026)
+
+```
+                                     ENTRADAS
+                                        │
+   ┌────────────┬──────────────┬───────┴──────────┬─────────────────┐
+   │  Telegram  │ Claude Chat  │  Claude Code     │  MCP claude.ai  │
+   │  (TioGu)   │  (.md upload)│  (transcript     │  (gus-hub       │
+   │            │              │   .jsonl cron)   │   Connector)    │
+   └─────┬──────┴──────┬───────┴────────┬─────────┴────────┬────────┘
+         │             │                │                  │
+   gus.memory.    ingest_chat_raw   curador_claude_  hub MCP server
+   salvar_mems    + curar_arquivo   code + curar_arq Railway
+         │             │                │                  │
+         │      ┌──────┴────────────────┴──────┐           │
+         │      │ HUB CURADOR HÍBRIDO          │           │
+         │      │ Haiku + GPT-4o-mini paralelo │           │
+         │      │ × 2 brains (gustavo+gus)     │           │
+         │      │ = 4 chamadas LLM por input   │           │
+         │      └──────────────┬───────────────┘           │
+         │                     │                           │
+         └─────────────────────▼───────────────────────────┘
+                          hub.store.ingestar
+                                │
+                       ┌────────▼─────────┐
+                       │ Qdrant Cloud     │
+                       │ ─ gus_hub (novo) │  ← lê: lembrar/scroll
+                       │ ─ gus (legado    │  ← fallback Mem0 SaaS
+                       │   ~204 mems)     │
+                       └──────────────────┘
+                                │
+                                ▼
+                        SAÍDAS / LEITURA
+   buscar_memorias (MCP) │ ego_cache │ auditoria diária │ briefing
+   bot Telegram tools    │ NeuroGus  │ retrospectiva    │ etc
+```
+
+3 caminhos de escrita coexistem com regras parcialmente compatíveis.
+
+---
+
+## Achados por severidade
+
+### 🔴 Crítico — bloqueia ou corrompe silenciosamente
+
+#### M-CRIT-1 · Bidirecional cria 4× custo + risco alto de cross-brain pollution
+`ingest_chat_raw.py:250` e `curador_claude_code.py:72` rodam o curador **2 vezes** sobre o mesmo body, mudando só o `user_id`. Internamente cada chamada já é Haiku + GPT em paralelo (`_curar_input_hibrido`). Resultado: **4 chamadas de LLM** com o **MESMO prompt** (`PROMPT_CURADOR_ARQUIVO`) por arquivo.
+
+O prompt **não diferencia** `gustavo` vs `gus` — é literalmente o mesmo texto. A separação só acontece no `user_id` passado pra `ingestar()`. Logo, o brain `gus` (autobiografia do agente) recebe os mesmos fragmentos sobre o Gustavo, classificados igual.
+
+**Evidência:** `hub/curador.py:232-282` — único template `PROMPT_CURADOR_ARQUIVO`. Não há prompt distinto que diga "extraia só meta-observações sobre o agente" pro brain gus.
+
+**Impacto:** ARCH-2 da auditoria de 02/05 já marcou pendente. Em volume crescente, brain `gus` vira cópia ruidosa do brain `gustavo`. Buscar identidade do Gus retorna fato sobre Gustavo.
+
+---
+
+#### M-CRIT-2 · Lifecycle do schema gus-18 declarado mas não implementado
+gus-18 promete:
+- `peso` sobe com acessos, desce com tempo
+- `confirmacoes` incrementa quando fragmento é validado
+- `acessos` incrementa em busca
+- `ultimo_acesso` atualiza em busca
+- Promoção automática `ativo → estavel` após 30d + ≥2 acessos
+- `tipo_esquecimento=protegido` nunca é sobrescrito
+
+Realidade do código:
+- `hub/store.py:140-152` — `ingestar` define `peso=0.5, confirmacoes=0, acessos=0` e nunca atualiza
+- `hub/store.py:179-200` — `lembrar` faz `query_points` e retorna sem nenhum `client.set_payload` ou update de `ultimo_acesso`/`acessos`
+- Não existe job/cron de promoção `ativo → estavel`
+- `tipo_esquecimento` é aceito no Pydantic schema mas `lembrar()` filtra só por `estado`, ignorando esquecimento
+
+**Consequência prática:** todo fragmento fica `estado="ativo"` pra sempre. **`ego_cache()` em `hub/store.py:222-227` busca `estado="estavel"` em `identidade_operacional` e `procedural` — retorna sempre vazio em produção.** Componente da Etapa 4 (gus-22) está estruturalmente quebrado.
+
+---
+
+#### M-CRIT-3 · Coleção legada `gus` ainda viva, fallback Mem0 ativo em leitura/delete
+`gus/memory.py:114-128` e `:262-268` ainda fazem fallback pro Mem0 SaaS (coleção `gus`). Comentário em `_estado-atual.md` confirma que `migrar_gus_para_hub.py` é **dispatch manual e não foi rodado ainda** ("Disparar workflow `Migrar gus → gus_hub` se ainda não rodou — preenche Hub com 204 mems históricas").
+
+**Riscos:**
+1. **Buscas inconsistentes** — Hub `lembrar` retorna primeiro; se vazio, cai no Mem0. Conjuntos de resposta variam entre chamadas se Hub for ocioso.
+2. **Deletar_memoria com fallback** — se ID for híbrido (UUID Hub vs ID Mem0), o sistema tenta os dois. Operador acha que deletou só do Hub mas pode ter falhado nos dois ou só num.
+3. **Poluição persistente** — qualquer fragmento criado **antes** da migração e **depois** da Fase 3 vai existir só na coleção antiga, fora do Hub novo.
+
+---
+
+### 🟠 Alto — comprometem confiabilidade ou auditabilidade
+
+#### M-ALTO-1 · Dedup ausente, cron `ingest_chat_raw` documenta risco aceito
+`ingest_chat_raw.py:21` literalmente: *"Se Hub falhar antes do move, próxima rodada tenta de novo (pode duplicar — risco baixo dado o volume)"*. **Não há checagem de `hash_janela` antes de ingestar
+
+[…transcript truncado…]
+
+das em dialogos/inbox-claude-code/
+12. **[19c7f73a-00c3-4472-9e14-0338d2c01e28]** - **Fato**: Há 3 demandas paradas em dialogos/inbox-claude-code/
+13. **[eeab7828-5e15-4c24-aea5-4abf331795e2]** - **Fato**: Há 3 demandas paradas em dialogos/inbox-claude-code/
+14. **[c8d68c55-5f7b-4cbb-8ea5-b1183750b5a7]** - **Episódico**: Nasci em Vitória.
+15. **[afc059b7-c9fa-462a-bf9f-7d50b421e0b9]** - **Episódico**: Nasci em Vitória.
+16. **[2828e1ff-10b4-43df-bf97-9a592967692d]** - **Fato**: A demanda capturada em `dialogos/inbox-claude-code/` é para consolidar pendências do Claude Chat.
+17. **[d2b702e8-55e7-4450-8dc0-cd2efe94ccd7]** - **Fato**: O retro-engine registra 'no-op: anthropic_missing' e segue.
+18. **[8106e04c-6bc2-4436-8d4c-323a393130bc]** - **Fato**: O log do retro-engine está em `claude/greeting-checkin-94weM`.
+19. **[79d52ee0-622b-4b8e-a7ee-e686ec6e1f85]** - **Fato**: Há 3 demandas paradas na pasta `dialogos/inbox-claude-code/`: `2026-05-01-captura-multiporta-curador.md`, `2026-05-01-drive-sync-oauth-fix.md`, e `_frontmatter-referencia.md` (esse é template, não é demanda).
+20. **[0bd895f1-23e0-4ed4-91b8-8d8927804046]** - **Fato**: A auditoria do Chat envolve todos os aspectos relacionados ao projeto Claude Chat.
+
+Se precisar de mais detalhes sobre alguma memória específica ou tiver outras questões, é só avisar!
+
+Aqui está o total de memórias encontradas e a data mais recente de cada uma no brain do Gustavo:
+
+### Total de Memórias
+- **Total de Memórias no brain Gustavo**: 20
+
+### Data Mais Recente
+- **Total de Memórias Registradas**: 20
+- **Data mais recente de cada memória**: Não foram fornecidas datas específicas nos dados apresentados. Para identificar datas, seria necessário buscar informações adicionais com o histórico de registros.
+
+Se precisar que eu busque as datas mais recentes ou detalhe mais sobre alguma memória específica, é só avisar!
+
+Aqui está a contagem total de memórias encontradas no brain Gus e a data mais recente de cada uma:
+
+### Total de Memórias
+- **Total de Memórias no brain Gus**: 20
+
+### Datas Mais Recentes de Cada Memória
+Para determinar a data mais recente de cada memória, seria necessário acessar informações adicionais que normalmente incluem timestamps ou logs, que não estão presentes na lista que você me forneceu. Portanto, não consigo determinar as datas mais recentes apenas com os IDs e descrições das memórias.
+
+### Resumo
+- **Total**: 20 memórias registradas no brain Gus.
+- **Datas**: Não disponíveis na informação atual.
+
+Se houver a necessidade de buscar mais detalhes ou obter informações adicionais sobre essas memórias, por favor, me avise!
+user: Continue from where you left off.
+assistant: No response requested.
+user: segue 
+
+TioGu:
+Aqui estão as memórias encontradas no brain gustavo:
+
+1. **[ede0b581-84df-4e2f-a4ea-585b5f515b9b]** - Quatro demandas pendentes foram identificadas no `dialogos/inbox-claude-code/`: captura-multiporta-curador, drive-sync-oauth-fix, pendencias-claude-chat-consolidacao.
+2. **[63b7efb0-0cc2-4032-a4a8-941cd9be3e40]** - Gus viu 4 demandas pendentes no `dialogos/inbox-claude-code/`.
+3. **[dccdb3c2-eb99-47ce-93f7-8bbdbb8e5408]** - Há 3 demandas paradas em `dialogos/inbox-claude-code/`.
+4. **[f9addcd5-df9d-4827-b6f8-93911d6b36a6]** - O bot do Telegram, TioGu, possui 21 ferramentas distintas integradas.
+5. **[a2d802c7-ae1d-4925-8849-d303169f49d9]** - A demanda `2026-05-01-captura-multiporta-curador.md` precisa de um gatilho proativo no Chat.
+6. **[58532c5f-ef04-45da-9c64-a795b39aa226]** - O bot opera com dependências como python-telegram-bot, anthropic SDK, openai, FastAPI e Qdrant.
+7. **[dcfc8d5f-db8b-4af8-b33f-d744bf580fdf]** - O bot Telegram possui ~21 tools, multimídia, prompt caching em produção.
+8. **[d4088d24-3b71-4b4d-acd6-90aa0fbb8708]** - O bot Telegram, TioGu, possui cerca de 21 ferramentas.
+9. **[4d107112-c42f-48bd-858a-f4414ff09a3a]** - Há 3 demandas paradas em `dialogos/inbox-claude-code/`.
+10. **[6d3de35f-a218-4912-af59-82c7313f2490]** - As ferramentas do bot Telegram totalizam 21, com multimídia e caching de prompts.
+11. **[fa09b00a-c2c3-453d-9a6c-69af865fc5a5]** - O bot Telegram (TioGu) tem ~21 tools, multimídia, prompt caching, e opera em Railway.
+12. **[84dca0e2-47a0-4592-b8fe-9e54cf881d9b]** - A auditoria identificou a necessidade de integrar uma lógica clara para hierarquizar os canais de escrita do Chat.
+13. **[e3f575f5-cd90-4805-838b-d278bde13256]** - O bot é baseado em python-telegram-bot e possui backend integrado com FastAPI.
+14. **[6430c832-35ad-4810-b2d2-25bdb88d887e]** - Existem 4 demandas pendentes no `dialogos/inbox-claude-code/`.
+15. **[3ae83f5d-3ba3-496d-a550-60473db77ab9]** - O bot Telegram (TioGu) possui ~21 tools, multimídia, prompt caching, em produção Railway.
+16. **[74fab2c8-f6d9-4e9a-9556-338a54af4112]** - Existem 3 demandas paradas em `dialogos/inbox-claude-code/`.
+17. **[43f8754a-5606-493b-89fd-00250d3e8bb5]** - Existem 3 demandas paradas na pasta `dialogos/inbox-claude-code/`.
+18. **[c25ac8bc-e992-4d25-8764-217cc94652ed]** - Os arquivos com as demandas pendentes são: captura-multiporta-curador, drive-sync-oauth-fix, pendencias-claude-chat-consolidacao, e um template `_frontmatter-referencia.md`.
+19. **[9e98fa71-9751-41b6-bdc7-06769b41baea]** - As demandas pendentes no inbox são: Ativar `MCP_URL_SECRET` no Railway, recadastrar Connector claude.ai e localizar mock HTML do NeuroGus.
+20. **[ec7013c7-846d-40cc-922d-6b8d23a34b16]** - Os JSONs estruturados na pasta designada devem ser registrados.
+
+Se precisar de mais detalhes sobre alguma memória específica ou outra informação, é só avisar!
+
+Aqui estão as memórias encontradas no brain Gus:
+
+1. **[ab0c7c2d-9b58-4f52-ad15-3f436a23d226]** - **Fato**: A demanda `dialogos/inbox-claude-code` tem 3 pendências.
+2. **[72d815a7-9c85-47fd-ac91-925176a1d2a0]** - **Fato**: A segunda demanda é '2026-05-01-drive-sync-oauth-fix.md'.
+3. **[f5371f09-60f4-46b6-b903-c3d691d47147]** - **Decisão**: A demanda '2026-05-01-captura-multiporta-curador.md' precisa de uma mudança de gatilho proativo no Chat.
+4. **[72525822-200c-45a6-998c-952ae16f786e]** - **Fato**: As demandas pendentes no inbox-claude-code incluem captura-multiporta-curador, drive-sync-oauth-fix, e pendencias-claude-chat-consolidacao.
+5. **[93d102f2-47b1-4fb2-be5d-893c444e1879]** - **Fato**: A auditoria do Chat foi concluída com correções.
+6. **[d7895fa8-3f8f-4351-8403-ccb1c6ecd072]** - **Fato**: Na pasta `dialogos/inbox-claude-code/` estão 4 demandas pendentes: captura-multiporta-curador, drive-sync-oauth-fix, pendencias-claude-chat-consolidacao, e o `_frontmatter-referencia.md` que é só template.
+7. **[506a64e4-381a-474b-973e-e723d8ea7ae6]** - **Fato**: Bot Telegram (TioGu) possui ~21 tools, multimídia, prompt caching, em produção Railway.
+8. **[953ff2ae-01e0-4be6-b240-cd3bd5ef313f]** - **Fato**: A demanda `2026-05-01-captura-multiporta-curador.md` é sobre a captura multiporta do Claude Chat.
+9. **[830721c1-051a-4331-8da5-b1b37ee2c821]** - **Fato**: A primeira demanda é '2026-05-01-captura-multiporta-curador.md'.
+10. **[ee6b1624-4e24-43b1-97f4-60b0f815b0dc]** - **Fato**: O bot Telegram possui ~21 ferramentas distintas implementadas.
+11. **[3e85be50-a929-447a-965b-c3717172b3c1]** - **Fato**: Há 3 demandas paradas em dialogos/inbox-claude-code/
+12. **[19c7f73a-00c3-4472-9e14-0338d2c01e28]** - **Fato**: Há 3 demandas paradas em dialogos/inbox-claude-code/
+13. **[eeab7828-5e15-4c24-aea5-4abf331795e2]** - **Fato**: Há 3 demandas paradas em dialogos/inbox-claude-code/
+14. **[c8d68c55-5f7b-4cbb-8ea5-b1183750b5a7]** - **Episódico**: Nasci em Vitória.
+15. **[afc059b7-c9fa-462a-bf9f-7d50b421e0b9]** - **Episódico**: Nasci em Vitória.
+16. **[2828e1ff-10b4-43df-bf97-9a592967692d]** - **Fato**: A demanda capturada em `dialogos/inbox-claude-code/` é para consolidar pendências do Claude Chat.
+17. **[d2b702e8-55e7-4450-8dc0-cd2efe94ccd7]** - **Fato**: O retro-engine registra 'no-op: anthropic_missing' e segue.
+18. **[8106e04c-6bc2-4436-8d4c-323a393130bc]** - **Fato**: O log do retro-engine está em `claude/greeting-checkin-94weM`.
+19. **[79d52ee0-622b-4b8e-a7ee-e686ec6e1f85]** - **Fato**: Há 3 demandas paradas na pasta `dialogos/inbox-claude-code/`: `2026-05-01-captura-multiporta-curador.md`, `2026-05-01-drive-sync-oauth-fix.md`, e `_frontmatter-referencia.md` (esse é template, não é demanda).
+20. **[0bd895f1-23e0-4ed4-91b8-8d8927804046]** - **Fato**: A auditoria do Chat envolve todos os aspectos relacionados ao projeto Claude Chat.
+
+Se precisar de mais detalhes sobre alguma memória específica ou tiver outras questões, é só avisar!
+
+Aqui está o total de memórias encontradas e a data mais recente de cada uma no brain do Gustavo:
+
+### Total de Memórias
+- **Total de Memórias no brain Gustavo**: 20
+
+### Data Mais Recente
+- **Total de Memórias Registradas**: 20
+- **Data mais recente de cada memória**: Não foram fornecidas datas específicas nos dados apresentados. Para identificar datas, seria necessário buscar informações adicionais com o histórico de registros.
+
+Se precisar que eu busque as datas mais recentes ou detalhe mais sobre alguma memória específica, é só avisar!
+
+Aqui está a contagem total de memórias encontradas no brain Gus e a data mais recente de cada uma:
+
+### Total de Memórias
+- **Total de Memórias no brain Gus**: 20
+
+### Datas Mais Recentes de Cada Memória
+Para determinar a data mais recente de cada memória, seria necessário acessar informações adicionais que normalmente incluem timestamps ou logs, que não estão presentes na lista que você me forneceu. Portanto, não consigo determinar as datas mais recentes apenas com os IDs e descrições das memórias.
+
+### Resumo
+- **Total**: 20 memórias registradas no brain Gus.
+- **Datas**: Não disponíveis na informação atual.
+
+Se houver a necessidade de buscar mais detalhes ou obter informações adicionais sobre essas memórias, por favor, me avise!
+assistant: # Passo 0.1 fechado. Diagnóstico **muito pior** que projetado.
+
+## Confirmações brutais
+
+**Volume:** 20 fragmentos no `gustavo`, 20 no `gus`. Total Hub: 40. Confirma A1 — Hub efetivamente seco entre 28/04 e 02/05.
+
+**Mas o problema real é a QUALIDADE.** Analisei conteúdo dos 40 fragmentos:
+
+### Brain `gustavo` (20 mems)
+
+| Categoria | Quantos | Exemplo |
+|---|---|---|
+| **Demandas pendentes inbox-claude-code** | **10/20 (50%)** | "Há 3 demandas paradas em..." (dito 6 vezes em variações) |
+| **Bot Telegram tem ~21 tools** | **8/20 (40%)** | "TioGu possui ~21 ferramentas..." (dito 6 vezes) |
+| Outros (auditoria chat, JSONs) | 2/20 | residual |
+| **Fatos pessoais reais sobre Gustavo** | **0/20** | nada de saúde, projetos, Dimagem, família, preferências |
+
+**Brain `gustavo` está poluído com meta-conversa de bot.** Você lista demandas → curador resume "tem 3 demandas". Próximo turno você pergunta de novo → "tem 3 demandas". Mesmo fato sai com IDs diferentes porque palavras mudam de ordem. **Nem uma memória sobre o Gustavo de verdade.**
+
+### Brain `gus` (20 mems)
+
+| Categoria | Quantos | Exemplo |
+|---|---|---|
+| **Demandas inbox-claude-code** (mesmo conteúdo do brain gustavo) | **11/20** | duplicata cross-brain |
+| Auditoria Chat / retro-engine | 6/20 | "auditoria envolve todos os aspectos..." |
+| Bot Telegram (deveria ser brain gustavo) | 2/20 | M-CRIT-1 ao vivo |
+| **"Nasci em Vitória"** | **2/20 (DUPLICATA)** | **fato do Gustavo no brain do agente** — cross-brain pollution |
+
+### Achados que **superam** a auditoria original
+
+#### A5 · Cross-brain pollution **confirmada visualmente**
+"Nasci em Vitória" é fato biográfico do Gustavo, não auto-observação do Gus. Está no brain `gus` — DUPLICADO. Item M-CRIT-1 deixa de ser hipótese: é realidade documentada.
+
+#### A6 · Duplicatas semânticas em escala dramática
+6 fragmentos diferentes do tipo "há N demandas em inbox-claude-code" no `gustavo`. O Curador re-extrai fato igual em janelas diferentes, e como não há dedup por conteúdo (só hash_janela do input), tudo entra. **Auditoria diária `auditoria_hub.py` deveria pegar isso via Jaccard, mas é cega ao brain `gus` (M-ALTO-3).**
+
+#### A7 · Feed de produção é "ruído de bot", não memória do Gustavo
+Brain `gustavo` foi alimentado quase exclusivamente por **conversas operacionais sobre o próprio sistema** (você listando demandas, perguntando sobre tools). Não há captura útil de fatos sobre você. Isso é falha de **prompt do curador** — ele extrai qualquer afirmação como fragmento, sem filtro de relevância biográfica.
+
+## Implicações pro plano (refinamento)
+
+| Mudança | Por quê |
+|---|---|
+| **NOVO Fase 1.7** — limpeza ativa de duplicatas no Hub via script (rodar ANTES de Fase 5) | Hub atual é ~70% lixo. Treinar análise/comparativo em cima vira viés. |
+| **Reescrever Fase 5.1** — prompt do curador `gustavo` precisa de **filtro de relevância biográfica** explícito (não só "extraia fragmentos") | A7 mostrou que prompt atual pega tudo |
+| **Subir Fase 5.1** pra **antes** da decisão modelo (12/05) | Comparar Haiku vs GPT em prompt ruim é trocar 6 por meia dúzia |
+| **Adicionar Fase 1.8** — script `meta_relatorio_hub.py` que mostra distribuição de assunto + duplicatas (sem LLM) | Diagnóstico recorrente automático |
+
+Vou atualizar o documento.
+assistant: ## Estado da Fase 0
+
+✅ **0.1 concluído** (com achados muito piores que projetado)
+✅ **0.3 concluído** (logs do curador analisados)
+⏳ **0.2 pendente** — preciso de você
+
+### Pendência única pra fechar Fase 0
+
+Abre https://github.com/Gustpbbr/Gus/actions/workflows/migrar-gus-para-hub.yml
+
+Me reporta:
+1. **Quantos runs aparecem?** (0, 1, 2, ...)
+2. Se rodou: **data + status do último** (success/failure)
+3. **Modo do último run** — quando você clica no run, no input do workflow tem campo "MODE" — era `dry-run` ou `migrar`?
+
+Se aparecer "This workflow has no runs yet" → resposta é "0".
+
+---
+
+## Reflexão honesta antes de Fase 1
+
+Os achados do 0.1 mudam a postura do plano. Antes era "consertar arquitetura". Agora é também: **"o conteúdo do Hub atual quase não serve — não vale a pena migrar mais lixo da coleção `gus` antiga sem antes consertar o curador e limpar o Hub novo"**.
+
+Reordenação proposta da Fase 1 quando você fechar 0.2:
+
+| Ordem nova | Item | Esforço |
+|---|---|---|
+| 1.1 | Vocabulário `via` consolidado | 45min |
+| 1.2 | Tag `prompt_version` no payload | 15min |
+| 1.3 | Trilha auditoria em `deletar()` | 30min |
+| **1.7 (novo)** | Limpeza ativa do Hub atual (script de dedup + delete cross-brain) | **2h** |
+| **1.8 (novo)** | `meta_relatorio_hub.py` — relatório de qualidade recorrente | **1.5h** |
+| 1.4 | MCP tools aceitam `tipo`/`camada` | 30min |
+| 1.5 | Auditoria multi-brain | 1h |
+| **1.6 (novo)** | Investigar `_resumir_e_salvar` em bot.py + matar caminho `fallback-mem0` | 1.5h |
+
+Total Fase 1 vai pra ~7h. Mas entrega Hub limpo + visibilidade contínua antes de tocar no curador (Fase 5).
+
+Aguardando 0.2 pra fechar diagnóstico e ir pra implementação.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
