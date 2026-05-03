@@ -1,0 +1,583 @@
+user: oi Gus, blz?
+assistant: oi, blz. tô aqui na branch `claude/initial-setup-iWTfL`, com 6 demandas pendentes em `dialogos/inbox-claude-code/` (algumas com nome quebrado — "Documento sem título.md" provavelmente é lixo de sync).
+
+quer que eu processe as demandas, ou tem algo específico em mente?
+user: enha um panorama geral do projeto. segue um guia para vc ver. depois vamos focar em um assunto específico, mas te falo apos vc ler tudo necessário do projeto. segue uma dica de outra aba do code. analise tudo, e busque tbm as últimas atualizações do projeto q nao estao no texto abaixo citado
+Aqui vai a receita ordenada por valor por contexto. Foco: mínimo necessário pra não inflar contexto à toa.
+Core obrigatório (sempre, em toda aba nova)
+Arquivo
+Pra quê
+dialogos/_bootstrap/[gus-bootstrap.md](http://gus-bootstrap.md)
+manual operacional do Gus, regras de comportamento, como cada porta usa o Hub
+dialogos/_bootstrap/[gus-identity.md](http://gus-identity.md)
+quem é o Gustavo + quem é o Gus enquanto entidade
+dialogos/_bootstrap/[gus-estado-atual.md](http://gus-estado-atual.md)
+handoff auto-gerado pelo cron 03h, snapshot do Hub
+projetos/gus/_[estado-atual.md](http://estado-atual.md)
+onde paramos na sessão anterior (mais "operacional" que o bootstrap)
+Esses 4 dão 80% do contexto pra qualquer aba nova.
+Live — preferir sobre arquivo
+Se a aba tem MCP gus-hub conectado:
+ego_cache_atual() — identidade + últimas 3 decisões + 5 meta-reflexões
+fragmentos_recentes(horas=24) — o que rolou desde ontem
+contar_fragmentos() — sanity check
+Hub é mais fresco que [gus-estado-atual.md](http://gus-estado-atual.md) (que é snapshot das 03h). Sempre que possível, prefira tools MCP a arquivo .md.
+Específicos do contexto da pergunta
+Só ler se a conversa for sobre:
+Tema
+Arquivo
+Próximos passos / NeuroGus
+projetos/gus/[gus-08-plano-proximos-passos.md](http://gus-08-plano-proximos-passos.md), projetos/gus/[gus-30-neurogus-roadmap.md](http://gus-30-neurogus-roadmap.md)
+Caminho Alexa
+projetos/gus/[gus-10-caminho-alexa.md](http://gus-10-caminho-alexa.md)
+MCP / [claude.ai](http://claude.ai) connector
+projetos/gus/[gus-28-passo2-mcp-server.md](http://gus-28-passo2-mcp-server.md)
+Roteamento multi-modelo
+projetos/gus/[gus-29-roteamento-multimodelo-tiogu.md](http://gus-29-roteamento-multimodelo-tiogu.md)
+Hub Qdrant arquitetura
+projetos/gus/[gus-18-schema-indexacao.md](http://gus-18-schema-indexacao.md), [gus-20-etapa2-hub-qdrant.md](http://gus-20-etapa2-hub-qdrant.md), [gus-21-etapa3-curador.md](http://gus-21-etapa3-curador.md)
+Decisão migração ADR-001
+projetos/gus/[gus-15-decisao-migracao.md](http://gus-15-decisao-migracao.md)
+Demanda da semana
+dialogos/streams/[semana-2026-04-21.md](http://semana-2026-04-21.md) (último arquivo da pasta)
+Demandas pendentes pra essa porta
+dialogos/inbox-/
+O que NÃO precisa ler
+gus-01 a gus-09 (a não ser por curiosidade arqueológica — bootstrap já resume)
+pessoal/, dimagem/, receitas/ etc. — só sob demanda explícita
+historico/ — pasta morta de conteúdo legado
+Logs antigos (>3 dias)
+_log/sessoes-claude-code/ — arquivos longos de transcript
+Truque pra Claude Chat web
+Como ele lê via Drive Project knowledge, o boot dele já tem [gus-bootstrap.md](http://gus-bootstrap.md) como project instruction. Aí ele só precisa fazer:
+Ler [gus-estado-atual.md](http://gus-estado-atual.md) (snapshot 03h)
+Chamar ego_cache_atual() via MCP gus-hub (estado vivo)
+Pra Claude Code, o [CLAUDE.md](http://CLAUDE.md) na raiz é auto-injetado em toda sessão — então já cobre o "core obrigatório".
+Quer que eu padronize isso num arquivo dialogos/_bootstrap/[checklist-boot-aba-nova.md](http://checklist-boot-aba-nova.md) pra deixar canonizado?
+Ah, entendi mal. PRs são histórico, não documentação — uma aba nova não precisa ler nenhum.
+Por que não
+O estado final dos PRs já tá no código + nos docs gus-XX atualizados
+PRs descrevem o caminho, não onde a gente tá. Nova aba quer onde tamo.
+60 PRs = ruído gigante no contexto pra ganho zero
+Quando vale olhar PR
+Situação
+Qual PR
+"Por que esse arquivo tá assim?"
+git log --oneline  → abre o PR específico
+"O que mudou hoje?"
+Lista PRs mergeados nas últimas 24h: gh pr list --state merged --limit 10
+Bug recente
+PR mais recente que tocou o código quebrado
+Decisão arquitetural não-óbvia
+PR description costuma ter o "porquê"
+Boa prática
+O que tem que ficar nos docs (não nos PRs):
+Decisões arquiteturais → ADR (gus-15 é exemplo)
+Como configurar algo → gus-XX-setup
+Estado atual do projeto → gus-26-status-consolidado, _estado-atual
+Se um PR precisa ser lido pra entender o presente, é sinal de doc desatualizado — não de PR importante.
+Receita
+Aba nova só precisa olhar PRs se:
+Você falar "tá quebrando X depois do PR #YY" → aí sim, lê o PR
+Investigar bug específico no código mexido recentemente
+Senão, esquece os 60. Os 7 docs do checklist anterior te dão o estado atual.
+assistant: Li tudo. Panorama:
+
+## O que é o Gus
+Sistema de agente pessoal multi-porta (Telegram/TioGu, Claude Code, Claude Chat, futuras: Custom GPT mobile, Alexa). Memória central no **Hub Qdrant** (`gus_hub`), arquivos .md no GitHub (`Gustpbbr/Gus`), espelhados no Drive. Gustavo é anestesiologista, não programa — toda implementação passa por mim/Tiogu.
+
+## Estado de migração
+**ADR-001** em curso: aposentar Mem0 SaaS, Hub Qdrant é fonte da verdade. Coleta dual de modelos no curador (Haiku × GPT-4o-mini, mudou de Sonnet em 29/04 por custo/resiliência) termina **12/05/2026** — depois Gustavo escolhe modelo definitivo, fase 5 remove fallback Mem0.
+
+## Fronts ativos (do `_estado-atual.md` + PRs recentes)
+
+**TioGu (Fase 1 saneamento — concluída, PR #73):** 163 testes verdes, PII no output redatado, byte budget no cache, hygiene em `bot.py/llm.py/memory.py`. Próximo: Fase 2A docs, Fase 2B reescrita do `system_prompt.md`, Fase 4 split de `bot.py/tools.py`.
+
+**Claude Chat (auditoria — PR #72 mergeado):** 12 fixes de 31 achados. Bug crítico do curador (`format()` falhando 100% desde 30/04 com KeyError no JSON literal) corrigido. MCP fail-closed default. Whitelist user_id. Validação enum gus-18.
+
+**Pendências Gustavo (operacional):**
+- Setar `MCP_URL_SECRET` no Railway + recadastrar Connector claude.ai (privacidade)
+- Decidir Drive sync (OAuth quebrado desde 01/05 14:38Z)
+- 4+ memórias poluídas pra deletar manualmente
+
+**NeuroGus (gus-30) bloqueado:** decisões UX 11.1-11.5 + mock HTML do 28/04. Backend SSE pronto pra começar.
+
+## Atualizações desde o `_estado-atual.md` (que é de 02/05 01:36)
+
+PRs mergeados depois disso, não documentados ainda:
+
+| PR | O que entrou |
+|---|---|
+| #74 | testes de regressão do curador (bug `format()` + validadores enum) |
+| #76 | feat(drive): WIF + inbox-mem0-from-chat raw |
+| #77 | chore(cleanup): renomeia legacy `mem0` → `curador`/`hub` |
+| #79 | feat(drive): `inbox-gustavo/<porta>/` — captura por origem com auto-frontmatter |
+| #80 | fix(mcp,security): não logar `MCP_URL_SECRET` + pattern de redação |
+
+Importações recentes pelo Drive: 3 arquivos novos em `inbox-tiogu/` (origem claude-chat) sobre ingestão de exames no Hub e protocolo truncado.
+
+## Demandas no inbox-claude-code (6 listadas, mas...)
+- 3 demandas reais: captura multiporta, curador bidirecional cron, drive-sync OAuth
+- 1 guarda-chuva: pendências Chat consolidadas (6 fronts)
+- "Documento sem título.md" = só agradecimento do Gustavo, não é demanda
+- "_frontmatter-referencia.md" = template, não demanda
+
+Pode mandar o foco específico.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado e pushado pra `claude/greeting-checkin-EHt9Z`. Era só o log do retro-engine auto-gerado (no-op por falta de `ANTHROPIC_API_KEY` no ambiente, comportamento conhecido).
+user: Continue from where you left off.
+assistant: No response requested.
+user: vc vai focar nas memorias e Hub. atue como um auditor profissional e imparcial, e detalhe os principais pontos desse assunto
+assistant: Vou auditar a stack de memória end-to-end. Lendo código + docs em paralelo.
+assistant: # Auditoria — Memórias e Hub Qdrant
+
+**Escopo:** stack de memória end-to-end (`hub/`, `gus/memory.py`, `.github/scripts/curador_*`, `ingest_chat_raw.py`, `auditoria_hub.py`, `migrar_gus_para_hub.py`, MCP `mem0_server.py`, schemas Pydantic, cron workflows).
+**Método:** leitura crítica de código + comparação contra contrato gus-18 + cross-check com auditoria existente (`projetos/gus/auditorias/2026-05-02-chat.md`) pra não redobrar.
+**Posição:** auditor independente. Não estou propondo fixes ainda — só listando o que vi.
+
+---
+
+## Resumo executivo
+
+A stack está em **estado intermediário arriscado**: Hub Qdrant (`gus_hub`) é a fonte nova, mas a coleção legada `gus` (Mem0 self-hosted) tem ~204 fragmentos não-migrados e o código de leitura em `gus/memory.py` ainda faz fallback pra ela. Há **3 produções simultâneas** de fragmentos (Telegram, Chat, Code) com **4× multiplicação de chamadas LLM** por unidade de input (Haiku × GPT × {gustavo, gus}) e **sem mecanismo de dedup**. O contrato schema gus-18 está parcialmente implementado: lifecycle (`peso`, `acessos`, promoção `ativo→estavel`, `tipo_esquecimento`) é **declarado mas não executado**. A auditoria diária (`auditoria_hub.py`) é **cega para o brain `gus`** e classifica por keywords ignorando o `area` que o curador já preencheu. Há ainda inconsistências de vocabulário `via` entre doc, Pydantic schema, MCP e curador.
+
+**Severidade global:** 🟠 **alto.** Sistema funcional pra captura, mas com débitos que vão estourar quando volume crescer (NeuroGus, Alexa) e com risco moderado de perda silenciosa / poluição cross-brain hoje.
+
+---
+
+## Mapa do sistema (estado em 02/05/2026)
+
+```
+                                     ENTRADAS
+                                        │
+   ┌────────────┬──────────────┬───────┴──────────┬─────────────────┐
+   │  Telegram  │ Claude Chat  │  Claude Code     │  MCP claude.ai  │
+   │  (TioGu)   │  (.md upload)│  (transcript     │  (gus-hub       │
+   │            │              │   .jsonl cron)   │   Connector)    │
+   └─────┬──────┴──────┬───────┴────────┬─────────┴────────┬────────┘
+         │             │                │                  │
+   gus.memory.    ingest_chat_raw   curador_claude_  hub MCP server
+   salvar_mems    + curar_arquivo   code + curar_arq Railway
+         │             │                │                  │
+         │      ┌──────┴────────────────┴──────┐           │
+         │      │ HUB CURADOR HÍBRIDO          │           │
+         │      │ Haiku + GPT-4o-mini paralelo │           │
+         │      │ × 2 brains (gustavo+gus)     │           │
+         │      │ = 4 chamadas LLM por input   │           │
+         │      └──────────────┬───────────────┘           │
+         │                     │                           │
+         └─────────────────────▼───────────────────────────┘
+                          hub.store.ingestar
+                                │
+                       ┌────────▼─────────┐
+                       │ Qdrant Cloud     │
+                       │ ─ gus_hub (novo) │  ← lê: lembrar/scroll
+                       │ ─ gus (legado    │  ← fallback Mem0 SaaS
+                       │   ~204 mems)     │
+                       └──────────────────┘
+                                │
+                                ▼
+                        SAÍDAS / LEITURA
+   buscar_memorias (MCP) │ ego_cache │ auditoria diária │ briefing
+   bot Telegram tools    │ NeuroGus  │ retrospectiva    │ etc
+```
+
+3 caminhos de escrita coexistem com regras parcialmente compatíveis.
+
+---
+
+## Achados por severidade
+
+### 🔴 Crítico — bloqueia ou corrompe silenciosamente
+
+#### M-CRIT-1 · Bidirecional cria 4× custo + risco alto de cross-brain pollution
+`ingest_chat_raw.py:250` e `curador_claude_code.py:72` rodam o curador **2 vezes** sobre o mesmo body, mudando só o `user_id`. Internamente cada chamada já é Haiku + GPT em paralelo (`_curar_input_hibrido`). Resultado: **4 chamadas de LLM** com o **MESMO prompt** (`PROMPT_CURADOR_ARQUIVO`) por arquivo.
+
+O prompt **não diferencia** `gustavo` vs `gus` — é literalmente o mesmo texto. A separação só acontece no `user_id` passado pra `ingestar()`. Logo, o brain `gus` (autobiografia do agente) recebe os mesmos fragmentos sobre o Gustavo, classificados igual.
+
+**Evidência:** `hub/curador.py:232-282` — único template `PROMPT_CURADOR_ARQUIVO`. Não há prompt distinto que diga "extraia só meta-observações sobre o agente" pro brain gus.
+
+**Impacto:** ARCH-2 da auditoria de 02/05 já marcou pendente. Em volume crescente, brain `gus` vira cópia ruidosa do brain `gustavo`. Buscar identidade do Gus retorna fato sobre Gustavo.
+
+---
+
+#### M-CRIT-2 · Lifecycle do schema gus-18 declarado mas não implementado
+gus-18 promete:
+- `peso` sobe com acessos, desce com tempo
+- `confirmacoes` incrementa quando fragmento é validado
+- `acessos` incrementa em busca
+- `ultimo_acesso` atualiza em busca
+- Promoção automática `ativo → estavel` após 30d + ≥2 acessos
+- `tipo_esquecimento=protegido` nunca é sobrescrito
+
+Realidade do código:
+- `hub/store.py:140-152` — `ingestar` define `peso=0.5, confirmacoes=0, acessos=0` e nunca atualiza
+- `hub/store.py:179-200` — `lembrar` faz `query_points` e retorna sem nenhum `client.set_payload` ou update de `ultimo_acesso`/`acessos`
+- Não existe job/cron de promoção `ativo → estavel`
+- `tipo_esquecimento` é aceito no Pydantic schema mas `lembrar()` filtra só por `estado`, ignorando esquecimento
+
+**Consequência prática:** todo fragmento fica `estado="ativo"` pra sempre. **`ego_cache()` em `hub/store.py:222-227` busca `estado="estavel"` em `identidade_operacional` e `procedural` — retorna sempre vazio em produção.** Componente da Etapa 4 (gus-22) está estruturalmente quebrado.
+
+---
+
+#### M-CRIT-3 · Coleção legada `gus` ainda viva, fallback Mem0 ativo em leitura/delete
+`gus/memory.py:114-128` e `:262-268` ainda fazem fallback pro Mem0 SaaS (coleção `gus`). Comentário em `_estado-atual.md` confirma que `migrar_gus_para_hub.py` é **dispatch manual e não foi rodado ainda** ("Disparar workflow `Migrar gus → gus_hub` se ainda não rodou — preenche Hub com 204 mems históricas").
+
+**Riscos:**
+1. **Buscas inconsistentes** — Hub `lembrar` retorna primeiro; se vazio, cai no Mem0. Conjuntos de resposta variam entre chamadas se Hub for ocioso.
+2. **Deletar_memoria com fallback** — se ID for híbrido (UUID Hub vs ID Mem0), o sistema tenta os dois. Operador acha que deletou só do Hub mas pode ter falhado nos dois ou só num.
+3. **Poluição persistente** — qualquer fragmento criado **antes** da migração e **depois** da Fase 3 vai existir só na coleção antiga, fora do Hub novo.
+
+---
+
+### 🟠 Alto — comprometem confiabilidade ou auditabilidade
+
+#### M-ALTO-1 · Dedup ausente, cron `ingest_chat_raw` documenta risco aceito
+`ingest_chat_raw.py:21` literalmente: *"Se Hub falhar antes do move, próxima rodada tenta de novo (pode duplicar — risco baixo dado o volume)"*. **Não há checagem de `hash_janela` antes de ingestar
+
+[…transcript truncado…]
+
+ia. Já temos a confirmação. |
+| **Fase 3.2** — remover fallback Mem0 do código | **Mantida + simplificada.** Sem necessidade de aguardar migração. Pode ir junto com Fase 1. |
+| **Fase 1.6** (NOVO) — investigar `_resumir_e_salvar` | **Subir prioridade.** Se ainda escreve no Mem0 SaaS, é vetor de perda contínua. |
+| **NOVO Fase 1.9** | Verificar se Mem0 SaaS (`MEM0_API_KEY`) ainda tem conteúdo histórico das 18 entradas + decidir se vale recuperar ou descartar | Tarefa Gustavo (1 chamada API) |
+
+| Item | Mantido como estava |
+|---|---|
+| Fases 4, 5, 6 | sim |
+| Fase 1.7 (limpeza Hub) | sim, **agora ainda mais crítica** dado que o Hub é o único conteúdo |
+| Fase 2 (comparar curadores) | sim, prazo 12/05 mantido |
+assistant: # Fase 0 fechada ✅
+
+**Resumo factual:**
+
+| Item | Estado |
+|---|---|
+| Hub `gustavo` | 20 fragmentos, ~70% lixo (50% sobre demandas, 40% sobre tools, 0% biográfico) |
+| Hub `gus` | 20 fragmentos, cross-brain pollution confirmada ("Nasci em Vitória" duplicado) |
+| Coleção legada `gus` | **vazia** — 204 fragmentos prometidos não existem |
+| Bug curador | 29/04 a 02/05 (não 30/04 como auditoria disse) |
+| Pós-fix Haiku × GPT | divergência 4-0 (Haiku zera, GPT extrai) |
+| Caminho `fallback-mem0` | escreve em Mem0 SaaS, não documentado, vetor de perda |
+
+## Decisão Gustavo (1 ação rápida) antes de Fase 1
+
+**Pergunta:** o secret `MEM0_API_KEY` ainda existe no GitHub Secrets / Railway?
+
+- **Se sim:** vale rodar 1 script pra checar quanto conteúdo tem no Mem0 SaaS antigo. Se houver coisa útil (ex: as 18 órfãs de 28/04), exporta antes de aposentar SaaS.
+- **Se não:** caminho está fechado, sem pendência. Mem0 SaaS já está esquecido.
+
+Posso te dar um script de 20 linhas pra rodar em workflow se quiser checar. Ou se você prefere descartar legacy completamente, a gente passa direto pra Fase 1.
+
+## Próximo passo: começar Fase 1?
+
+A Fase 1 refinada tem 9 itens, ~7-8h de Code, baixo risco. Posso começar pelos mais seguros (1.1 vocabulário, 1.2 prompt_version, 1.3 trilha delete) **agora**. Os críticos (1.6 fallback-mem0, 1.7 limpeza Hub) precisam de checagem extra.
+
+Aprova começar Fase 1, ou prefere primeiro decidir sobre o Mem0 SaaS legacy?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado.
+se tiver, posso apagar ser nao quiser levar as memorias?
+
+Decisão Gustavo (1 ação rápida) antes de Fase 1
+Pergunta: o secret MEM0_API_KEY ainda existe no GitHub Secrets / Railway?
+
+Se sim: vale rodar 1 script pra checar quanto conteúdo tem no Mem0 SaaS antigo. Se houver coisa útil (ex: as 18 órfãs de 28/04), exporta antes de aposentar SaaS.
+Se não: caminho está fechado, sem pendência. Mem0 SaaS já está esquecido.
+Posso te dar um script de 20 linhas pra rodar em workflow se quiser checar. Ou se você prefere descartar legacy completamente, a gente passa direto pra Fase 1.
+user: se tiver, posso apagar ser nao quiser levar as memorias?
+
+Decisão Gustavo (1 ação rápida) antes de Fase 1
+Pergunta: o secret MEM0_API_KEY ainda existe no GitHub Secrets / Railway?
+
+Se sim: vale rodar 1 script pra checar quanto conteúdo tem no Mem0 SaaS antigo. Se houver coisa útil (ex: as 18 órfãs de 28/04), exporta antes de aposentar SaaS.
+Se não: caminho está fechado, sem pendência. Mem0 SaaS já está esquecido.
+Posso te dar um script de 20 linhas pra rodar em workflow se quiser checar. Ou se você prefere descartar legacy completamente, a gente passa direto pra Fase 1.
+assistant: Pode sim, e é decisão razoável dado o que vimos. Mas tem um meio-termo de baixo custo que te dá fechamento limpo.
+
+## 3 opções
+
+### A — Export defensivo + apaga (5min, recomendo)
+1. Roda script (já existe — `.github/scripts/export_mem0.py`) que pega tudo do Mem0 SaaS, grava JSON em `historico/mem0-export-final-2026-05-02.json`
+2. Commita
+3. Apaga `MEM0_API_KEY` do Railway + GitHub Secrets
+
+**Por quê:** custo zero, e se daqui 6 meses descobrir que tinha algo útil, está lá num arquivo dormido. Não precisa decidir nada hoje sobre o conteúdo.
+
+### B — Apaga direto (1min)
+Apaga `MEM0_API_KEY` do Railway + GitHub Secrets. Aceita perda do que tiver lá.
+
+**Por quê:** baseado no que vi nos logs `_log/curador/2026-04-28.md`, o conteúdo do Mem0 SaaS é provavelmente o mesmo padrão ruim do Hub atual — meta-sistema repetitivo (workflows, bugs, schema). Risco baixo de perder algo crucial.
+
+### C — Verifica antes de decidir (10min)
+Rodo script de 20 linhas que só **conta + amostra 5 fragmentos** sem exportar nada. Você lê e decide A ou B.
+
+## Minha recomendação
+
+**Opção A.** O export é barato e cumpre seu propósito de "fechamento limpo". A análise dos logs de 28/04 mostra que provavelmente não tem nada de muito valor (meta-sistema), mas o custo de exportar é literalmente 1 script já pronto + 1 commit.
+
+Quer que eu prepare o passo-a-passo da Opção A pra você executar? Tarefa Gustavo é:
+
+1. Disparar workflow `export-mem0.yml` manualmente (via Actions)
+2. Aguardar 1-2min
+3. Confirmar pra mim que rodou ok
+4. Eu commito o JSON em `historico/`
+5. Você apaga `MEM0_API_KEY` do Railway + GitHub Secrets
+
+Ou se prefere ir direto na B, só me confirma e a gente parte pra Fase 1.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado.
+vams de A
+user: vams de A
+assistant: `mem0ai` não está mais nas deps dos scripts (foi removido na migração R2). Vou criar script + workflow standalone que instalam inline.
+assistant: Pushed pra `claude/greeting-checkin-EHt9Z`. **Mas tem um detalhe operacional:**
+
+Workflows com `workflow_dispatch` só aparecem no botão "Run workflow" da UI quando estão na **branch default (main)**. Numa feature branch eles não aparecem.
+
+## Pra ativar o workflow, opções:
+
+### Opção A1 — Abro PR pra main, você merge (recomendo)
+- Eu abro PR `claude/greeting-checkin-EHt9Z → main` agora
+- Você aprova e merge no GitHub web
+- Workflow `Export Mem0 SaaS legacy (uso único)` aparece em https://github.com/Gustpbbr/Gus/actions
+- Você dispara manualmente
+- Reporta: rodou? quantos fragmentos exportou?
+
+### Opção A2 — Você merge direto pelo gh CLI / web sem PR
+Se você confia no diff (138 linhas, 2 arquivos novos isolados), pode mergear direto via web. Mas o protocolo do projeto usa PR pra tudo.
+
+### Opção A3 — Pular export, ir direto pra B
+Se você prefere não passar por essa cerimônia toda, descartamos: você só apaga `MEM0_API_KEY` no Railway + GitHub Secrets, deleto os 2 arquivos novos no commit seguinte, parte pra Fase 1.
+
+## Recomendação
+
+**A1.** O custo é um PR + merge (<2min). E o resultado vai pra `historico/` que é pasta dormida — não atrapalha nada se for vazio.
+
+Aprova abrir o PR?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado.
+faca da melhor forma
+user: faca da melhor forma
+assistant: PR aberto: **https://github.com/Gustpbbr/Gus/pull/81**
+
+## Próximos passos pra você
+
+1. **Abrir o PR #81** e revisar (3 arquivos: 1 doc + 1 script + 1 workflow). Diff isolado, não toca produção.
+2. **Aprovar e mergear** (botão "Merge pull request" — squash ou merge normal, tanto faz).
+3. **Disparar workflow:** após merge, ir em https://github.com/Gustpbbr/Gus/actions/workflows/export-mem0-saas-legacy.yml → "Run workflow" → branch main → confirmar.
+4. **Reportar resultado:**
+   - Se logou "Mem0 SaaS está VAZIO" → sem ação adicional, parte pra Fase 1
+   - Se logou "MEM0_API_KEY ausente" → caminho já estava fechado, mesmo resultado
+   - Se exportou N>0 fragmentos → arquivo está em `historico/mem0-saas-export-final-2026-05-02.json`, eu inspeciono e a gente decide se vale recuperar algo
+
+5. **Após confirmar resultado:**
+   - Você apaga `MEM0_API_KEY` em Railway (Variables) + GitHub Secrets (Settings → Secrets → Actions)
+   - Eu apago script + workflow num commit de cleanup
+   - Fim do legado Mem0 SaaS
+
+## Subscribe a atividade do PR?
+
+Posso ficar monitorando o PR (CI, comentários, status de merge) e responder se precisar. Quer que eu subscribe?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado.
+Skip to content
+Gustpbbr
+Gus
+Repository navigation
+Code
+Issues
+7
+ (7)
+Pull requests
+1
+ (1)
+Agents
+Actions
+Projects
+Security and quality
+Insights
+Settings
+Export Mem0 SaaS legacy (uso único)
+Export Mem0 SaaS legacy (uso único) #1
+All jobs
+Run details
+export
+succeeded now in 27s
+Search logs
+1s
+2s
+Run actions/checkout@v4
+Syncing repository: Gustpbbr/Gus
+Getting Git version info
+  Working directory is '/home/runner/work/Gus/Gus'
+  /usr/bin/git version
+  git version 2.53.0
+Temporarily overriding HOME='/home/runner/work/_temp/4201a9fa-c30d-4dec-8039-6bc0a3d017f5' before making global git config changes
+Adding repository directory to the temporary git global config as a safe directory
+/usr/bin/git config --global --add [safe.directory](http://safe.directory) /home/runner/work/Gus/Gus
+Deleting the contents of '/home/runner/work/Gus/Gus'
+Initializing the repository
+Disabling automatic garbage collection
+Setting up auth
+Fetching the repository
+Determining the checkout info
+/usr/bin/git sparse-checkout disable
+/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Checking out the ref
+/usr/bin/git log -1 --format=%H
+675755fcfe0a03114059a7cfeae51821a136cae4
+0s
+Run actions/setup-python@v5
+Installed versions
+15s
+4s
+1s
+0s
+0s
+0s
+user: Skip to content
+Gustpbbr
+Gus
+Repository navigation
+Code
+Issues
+7
+ (7)
+Pull requests
+1
+ (1)
+Agents
+Actions
+Projects
+Security and quality
+Insights
+Settings
+Export Mem0 SaaS legacy (uso único)
+Export Mem0 SaaS legacy (uso único) #1
+All jobs
+Run details
+export
+succeeded now in 27s
+Search logs
+1s
+2s
+Run actions/checkout@v4
+Syncing repository: Gustpbbr/Gus
+Getting Git version info
+  Working directory is '/home/runner/work/Gus/Gus'
+  /usr/bin/git version
+  git version 2.53.0
+Temporarily overriding HOME='/home/runner/work/_temp/4201a9fa-c30d-4dec-8039-6bc0a3d017f5' before making global git config changes
+Adding repository directory to the temporary git global config as a safe directory
+/usr/bin/git config --global --add [safe.directory](http://safe.directory) /home/runner/work/Gus/Gus
+Deleting the contents of '/home/runner/work/Gus/Gus'
+Initializing the repository
+Disabling automatic garbage collection
+Setting up auth
+Fetching the repository
+Determining the checkout info
+/usr/bin/git sparse-checkout disable
+/usr/bin/git config --local --unset-all extensions.worktreeConfig
+Checking out the ref
+/usr/bin/git log -1 --format=%H
+675755fcfe0a03114059a7cfeae51821a136cae4
+0s
+Run actions/setup-python@v5
+Installed versions
+15s
+4s
+1s
+0s
+0s
+0s
+assistant: # ACHADO ENORME — os 204 fragmentos existem
+
+**Mem0 SaaS tem 204 fragmentos no brain `gustavo`.** Os docs estavam certos, só estavam no api.mem0.ai (não no Qdrant Cloud como achávamos). Fase 0 valeu cada minuto.
+
+Vou amostrar o conteúdo pra ver qualidade.
+assistant: Limpo localmente — arquivo está em `origin/main`, não precisa duplicar na branch.
+
+---
+
+# Análise do export — situação muda significativamente
+
+## Números
+
+| Brain | Fragmentos | Período | Idioma |
+|---|---|---|---|
+| `gustavo` | **204** | 11/04 → 26/04 | 188 EN / 16 PT |
+| `gus` | 4 | 24/04 | EN |
+
+Os "204 fragmentos históricos" estavam mesmo lá. Hipótese A8.1 confirmada: estavam no **Mem0 SaaS** (api.mem0.ai), não no Qdrant Cloud self-hosted. O nome "coleção `gus`" no Qdrant nunca foi populado, era infraestrutura nova vazia esperando dados que nunca chegaram.
+
+## Qualidade do conteúdo (bem superior ao Hub atual)
+
+Amostragem mostrou conteúdo **biográfico real**, ao contrário do Hub atual que é meta-conversa:
+
+- **Dimagem clínico:** "Roberto Pereira dos Santos Neto, 69 anos, obeso BMI ~34, RM pélvica + abdominal com sedação"
+- **Preferências de trabalho:** "extrair só nome_paciente, data_exame, exames, convenio, numero_os de OS, retornar JSON sem comentários clínicos"
+- **Decisões arquiteturais:** "migração Mem0 Cloud → Qdrant self-hosted, autonomy + permanence rather than renting"
+- **Contexto pessoal:** "plantas no quintal: cítricos com pulgões, orquídeas (Cattleya) com cochonilhas e antracnose"
+- **Setup técnico:** "logs em `_log/resumos-mem0/AAAA-MM-DD.md` integrados ao Obsidian"
+
+**Brain `gus` (4 frags):** todos são instruções/preferências do Gustavo (não auto-observações do agente). Mostra que cross-brain pollution **sempre existiu** — não é problema novo.
+
+## Distribuição temporal
+
+```
+2026-04-11:  1
+2026-04-12:  7
+2026-04-23: 22
+2026-04-24: 83  ← maior dia
+2026-04-25: 67
+2026-04-26: 24
+[após 26/04: zero — Mem0 SaaS deixou de receber]
+```
+
+26/04 foi o último dia de captura no SaaS. Bate com a transição pro Hub Qdrant (ADR-001 Fase 3, 27/04 em diante).
+
+## Decisão necessária — o que fazer com 204 fragmentos
+
+| Opção | Esforço | Pro | Contra |
+|---|---|---|---|
+| **A. Manter só em `historico/`** | 0 | Já feito, fonte fria consultável quando precisar | Não aproveita semanticamente — busca no bot/Code não vê |
+| **B. Importar tudo cego no Hub** | 30min (script) | Hub ganha 204 frags úteis | Polui com inglês + duplica com 40 atuais + frags ruins entram junto |
+| **C. Filtrar + traduzir + importar** | 3-5h | Hub limpo, em PT, qualidade alta | Custo Haiku/GPT pra reclassificar 204 itens (~$0.50) |
+| **D. Filtrar (sem traduzir) + importar** | 2-3h | Caminho médio | Hub bilíngue (inglês + português) — busca semântica fica menos consistente |
+
+## Minha recomendação
+
+**A pra agora + planejar C dentro da Fase 1.7 (limpeza Hub).**
+
+Por quê:
+1. O conteúdo está seguro em `historico/` — não há pressa
+2. Importar antes de consertar curador (Fase 5) significa misturar gerações de prompt diferentes — vira fonte de inconsistência futura
+3. Após Fase 5 (prompt do curador melhorado), reuso o **mesmo prompt** pra reclassificar/traduzir os 204 = consistência total
+4. A Fase 1.7 (limpeza Hub atual) faz sentido fazer **antes** — limpa o lixo de 40 frags, deixa Hub vazio mas limpo, depois Fase 5 importa os 204 bem
+
+**Caminho proposto:**
+```
+Fase 1 quick wins → Fase 1.7 limpeza Hub (sobra ~10 frags úteis dos 40)
+                  → Fase 1.8 meta_relatorio recorrente
+                  → Fase 2 comparar curadores (12/05)
+                  → Decisão modelo final
+                  → Fase 5 prompt novo + importação inteligente dos 204
+                  → Hub clean com ~150-200 frags úteis
+```
+
+Aceita esse caminho? Ou prefere atalho (B ou D — importar agora cru)?
+
+Importante: **mesmo aceitando A, você já pode apagar `MEM0_API_KEY`.** O conteúdo já está em `historico/`. Mem0 SaaS pode ser fechado.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado.
