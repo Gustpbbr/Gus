@@ -198,17 +198,67 @@ coleção velha. Investigar `gus/bot.py:_resumir_e_salvar` antes da Fase 3.
 Fases 4, 5, 6 ainda válidas como estão. Diagnóstico não invalidou
 arquitetura proposta — só ajustou prioridades + revelou débito extra.
 
+## Achado A11 · Mem0 SaaS preservado: 204 fragmentos no `gustavo` + 4 no `gus`
+
+Workflow `export-mem0-saas-legacy.yml` rodou 02/05 23:04 BRT:
+
+| Brain | Fragmentos | Período | Idioma |
+|---|---|---|---|
+| `gustavo` | **204** | 11/04 → 26/04 | 188 EN / 16 PT |
+| `gus` | 4 | 24/04 | 4 EN |
+
+Distribuição temporal:
+```
+2026-04-11:  1   2026-04-23: 22
+2026-04-12:  7   2026-04-24: 83  ← pico
+                 2026-04-25: 67
+                 2026-04-26: 24  ← último dia (transição pro Hub)
+```
+
+Qualidade: muito superior ao Hub atual. Conteúdo biográfico real:
+- Dimagem clínico (pacientes nominais, schemas de extração de OS)
+- Preferências de trabalho (formato JSON, sem comentários clínicos)
+- Decisões arquiteturais (migração Mem0 → Qdrant)
+- Contexto pessoal (plantas no quintal, pragas, produtos)
+- Setup técnico (Obsidian, wikilinks, logs)
+
+Arquivo preservado em `historico/mem0-saas-export-final-2026-05-02.json`.
+
+Brain `gus` no Mem0 SaaS já tinha cross-brain pollution (4 frags são
+instruções do Gustavo, não auto-observações). Problema preexiste à
+migração.
+
+## Decisão Gustavo (02/05 23:08 BRT) — Caminho A → C
+
+**Fase imediata (A):** preservar 204 frags em `historico/`. Não importar
+agora. Mem0 SaaS pode ser apagado (`MEM0_API_KEY`).
+
+**Fase 5 (C):** após decisão modelo curador (12/05) e prompt
+re-trabalhado, **rodar importação inteligente dos 204 frags**:
+- Filtrar lixo (saudações, "user wants X" repetitivo, frags <10 chars)
+- Traduzir EN → PT (manter consistência de língua no Hub)
+- Re-classificar via curador novo (schema gus-18 estrito)
+- Tag `metadata.curador="recuperacao-mem0-saas-2026-05"` + `via="legacy-mem0-saas"`
+- Tag `metadata.data_original=criado_em_saas` (preservar timeline)
+
+Estimativa: 3-5h + ~$0.50 LLM. Adicionado como **Fase 5.6** do plano.
+
 ## Próximo passo
 
 Fase 0 concluída. Próximo: **Fase 1 (quick wins) com refinamentos** dos
-achados A1-A10. Plano original ganha:
+achados A1-A11. Plano original ganha:
 
 - **NOVO 1.7** Limpeza ativa do Hub (deletar duplicatas + cross-brain)
 - **NOVO 1.8** `meta_relatorio_hub.py` recorrente
 - **NOVO 1.6** Investigar e matar caminho `fallback-mem0` em bot.py
-- **NOVO 1.9** Verificar se Mem0 SaaS ainda tem conteúdo histórico
-  (decisão Gustavo: recuperar ou descartar)
-- **CANCELADA Fase 3.1** (migração) — coleção vazia confirmada
+- **NOVO 5.6** Importação inteligente dos 204 frags Mem0 SaaS legacy
+- **CANCELADA Fase 3.1** (migração) — coleção `gus` Qdrant vazia confirmada
 - **MOVIDA Fase 3.2** (remover fallback Mem0 do código) pra dentro de Fase 1
 
 Total Fase 1 estimado: ~7-8h Code + 1 chamada API Gustavo.
+
+## Cleanup pendente após Gustavo apagar MEM0_API_KEY
+
+- Apagar `.github/scripts/export_mem0_saas_legacy.py`
+- Apagar `.github/workflows/export-mem0-saas-legacy.yml`
+- Manter `historico/mem0-saas-export-final-2026-05-02.json` (fonte fria)
