@@ -6,7 +6,7 @@ data: 2026-05-02
 autor: Claude Code (sessão claude/greeting-checkin-EHt9Z)
 gerado_em: 2026-05-02T22:30-03:00
 fase: 0 do plano de saneamento da memória
-status: parcial — 0.3 concluído, 0.1 e 0.2 pendentes Gustavo
+status: parcial — 0.1 e 0.3 concluídos, 0.2 pendente Gustavo
 ---
 
 # Diagnóstico da stack de memória — Fase 0
@@ -80,20 +80,57 @@ são obrigatórias`. Confirma diagnóstico do CLAUDE.md sobre o ambiente
 Code on the web. Volume real do Hub precisa ser checado **via TioGu** ou
 Custom GPT (que têm credenciais em produção).
 
+## Achado A5 · Volume confirmado, qualidade catastrófica (passo 0.1)
+
+Gustavo executou via TioGu em 02/05 22:40 BRT. Total **40 fragmentos no Hub**:
+20 em `gustavo`, 20 em `gus`.
+
+### Distribuição de conteúdo — brain `gustavo`
+
+| Categoria | Quantidade | % |
+|---|---|---|
+| Variações de "X demandas pendentes em inbox-claude-code" | 10 | 50% |
+| Variações de "Bot Telegram tem ~21 tools" | 8 | 40% |
+| Outros (auditoria, JSONs) | 2 | 10% |
+| **Fatos biográficos reais sobre o Gustavo** | **0** | **0%** |
+
+### Distribuição — brain `gus`
+
+| Categoria | Quantidade | % |
+|---|---|---|
+| Demandas inbox (duplicado do `gustavo`) | 11 | 55% |
+| Auditoria Chat / retro-engine | 6 | 30% |
+| Bot Telegram (deveria ser brain gustavo) | 2 | 10% |
+| **"Nasci em Vitória" (fato do Gustavo)** | **2** | **10%** — cross-brain pollution + duplicata |
+
+### Implicações
+
+1. **M-CRIT-1 confirmado em produção.** "Nasci em Vitória" no brain `gus`
+   é exemplo concreto de pollution. O brain do agente está absorvendo
+   fatos biográficos do humano.
+
+2. **Duplicatas semânticas em escala dramática.** Mesmo fato em 6+ fragmentos
+   com palavras ligeiramente diferentes. `hash_janela` não detecta porque
+   são janelas distintas; falta dedup por similaridade de conteúdo.
+
+3. **Prompt do curador é o gargalo principal.** Ele extrai qualquer afirmação
+   como fragmento. Não tem filtro de relevância biográfica. Resultado:
+   conversa operacional sobre o próprio sistema vira "memória sobre o Gustavo".
+
+4. **Brain `gustavo` é inútil hoje.** 100% lixo meta-sistema. Buscar
+   "preferências do Gustavo" ou "saúde" retorna `[]` — não há nada.
+
 ## Pendências da Fase 0
 
-### 0.1 — Volume real do Hub (pendente Gustavo)
+### 0.1 — Volume real do Hub ✅ Concluído (Gustavo via TioGu, 02/05 22:40)
 
 **Tarefa:** mandar pro TioGu (Telegram):
 
 > "Lista as memórias do brain gustavo, limit 100. Depois lista do brain gus,
 > limit 100. Me dá o total e a data da mais recente de cada."
 
-**O que esperar:**
-- Se total `gustavo` < 30: confirma A1 (Hub seco entre 28/04 e 02/05)
-- Se total > 100: hipótese cai, prioridade da Fase 3 baixa
-- Mais recente de `gus`: deve ser timestamp 02/05 pós-fix se PR #72 produzir
-  fragmentos. Se for de 27/04, brain `gus` está zerado em produção.
+**Resultado:** 20 + 20 = 40 fragmentos. Confirma A1 (Hub seco) E
+descobre A5 (qualidade catastrófica) — ver seção acima.
 
 ### 0.2 — Status migração `gus → gus_hub` (pendente Gustavo)
 
@@ -132,6 +169,9 @@ coleção velha. Investigar `gus/bot.py:_resumir_e_salvar` antes da Fase 3.
 | Fase 2.1 (comparar curadores) | **Adicionar registro de divergência ZERADA** (quando 1 dos 2 retorna `[]`) | A2 mostrou que essa é a divergência mais comum hoje, e log atual esconde |
 | **NOVO Fase 1.6** | Investigar `_resumir_e_salvar` no bot.py + remover caminho `fallback-mem0` que grava no Mem0 antigo | A4 — débito não-mapeado |
 | Fase 3.1 (migração) | **Adicionar passo de re-ingestar fragmentos `fallback-mem0` de 28/04** com `metadata.via="telegram-claude"` + `metadata.curador="recuperacao-fallback"` | A1 — 18 entradas perdidas no Mem0 antigo |
+| **NOVO Fase 1.7** | Limpeza ativa do Hub: deletar duplicatas semânticas + cross-brain pollution antes de qualquer treinamento ou comparativo | A5 — Hub atual é ~70% lixo |
+| **NOVO Fase 1.8** | Script `meta_relatorio_hub.py` com distribuição por assunto + Jaccard local (sem LLM) — relatório recorrente | A5 — sem visibilidade contínua, lixo volta a acumular |
+| Fase 5.1 (prompt brain `gus`) | **Subir pra antes de 12/05** + adicionar **filtro de relevância biográfica** ao prompt do brain `gustavo` (não só ao do `gus`) | A7 — comparar Haiku × GPT em prompt ruim é trocar 6 por meia dúzia |
 
 ### Nada a refazer no plano original
 
