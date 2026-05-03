@@ -16,10 +16,10 @@ contexto: "Consolida pendências relacionadas à porta Claude Chat discutidas na
 
 ## TL;DR
 
-Esta demanda agrupa **6 pendências distintas** relacionadas à porta Claude
-Chat, todas discutidas em sessões Code recentes (30/04 a 02/05/2026).
-Próxima aba pode atacar em qualquer ordem — são **independentes**, mas
-algumas dependem de **decisão do Gustavo antes** de codar.
+Esta demanda agrupa **4 pendências distintas** relacionadas à porta Claude
+Chat (originalmente 6 — itens 5 e 6 resolvidos por outras frentes em
+03/05). Próxima aba pode atacar em qualquer ordem — são **independentes**,
+mas todas dependem de **decisão do Gustavo antes** de codar.
 
 | # | Pendência | Bloqueio | Quem decide / faz |
 |---|---|---|---|
@@ -27,8 +27,6 @@ algumas dependem de **decisão do Gustavo antes** de codar.
 | 2 | Recadastrar Connector claude.ai com URL nova `/<secret>/mcp` | Depende do #1 | **Gustavo** (UI claude.ai) |
 | 3 | Localizar mock HTML NeuroGus no Drive Claude Chat 28/04 | Bloqueia Fase 2 frontend | **Gustavo** (10min — abrir sessão Chat antiga) |
 | 4 | Decidir `?token=` URL, auto-orbit, reconnect SSE (§11.3-11.5) | Bloqueia Fase 2 frontend | **Gustavo** (decisões de design) |
-| 5 | Captura em tempo real Claude Chat (Opção A da multi-porta) | Captura depende de upload manual de .md hoje | **Code** implementa após Gustavo aprovar |
-| 6 | Drive sync OAuth → Service Account | Bootstrap stale no Chat | **Gustavo** + **Code** (ver demanda separada) |
 
 ---
 
@@ -39,13 +37,15 @@ algumas dependem de **decisão do Gustavo antes** de codar.
 | Connector MCP gus-hub conectado | ✅ funciona em modo público temporário (`MCP_AUTH_DISABLED=true`, sem URL secret) |
 | 9 tools MCP listadas + invocáveis | ✅ confirmado por Gustavo (teste `contar_fragmentos`) |
 | Captura via .md upload (curador chat ingest) | ✅ **bidirecional + top-tier** desde PR #67 (Sonnet 4.6 + GPT-4o, brain `gustavo` + `gus`) |
-| Captura em tempo real durante conversa | ❌ não existe — só após upload manual |
-| Ler do Drive (`gus-bootstrap.md`, `gus-estado-atual.md`) | ⚠️ **stale** — sync OAuth quebrado há semanas |
+| Captura via Drive (Chat → arquivo .md/.gdoc → cron 30min) | ✅ **resolvido em 03/05** (PRs #76 + #79 — WIF + inbox-gustavo/chat) |
+| Ler do Drive (`gus-bootstrap.md`, `gus-estado-atual.md`) | ✅ **resolvido em 03/05** (PR #76 — WIF substitui OAuth expirado) |
 
 Já resolvidos antes (não rediscutir):
 - PR #57 — lifespan do Starlette wrapper (impedia Connector cadastrar)
 - PR #60 — `MCP_URL_SECRET` no path (substitui Bearer que claude.ai web não suporta)
 - PR #67 — curador chat bidirecional + bug fix `resultado["sonnet"]`
+- PR #76 — Workload Identity Federation (resolve item 6 original) + inbox-chat-raw
+- PR #79 — `inbox-gustavo/<porta>/` com auto-frontmatter (resolve item 5 original)
 
 ---
 
@@ -164,72 +164,14 @@ nova `gus-30.2`.
 
 ---
 
-## Pendência 5 — Captura em tempo real Claude Chat (Opção A)
+## Pendências 5 e 6 — RESOLVIDAS em 03/05
 
-**Por quê:** PR #67 fez o curador chat bidirecional, **mas só processa
-.md uploadados manualmente**. Captura em tempo real durante a conversa
-(quando você fala algo importante e quer que o Hub veja na hora) **não
-existe**.
+**5 (Captura em tempo real):** resolvido via PR #79 (`inbox-gustavo/chat/`) +
+PR #76 (WIF + cron 15min). Tu salva Google Doc no Drive na pasta certa,
+em até 45min (15min import + 30min curador) vira fragmento no Hub.
 
-**Opção A** da demanda `2026-05-01-captura-multiporta-curador.md`: adicionar
-seção em `dialogos/_bootstrap/gus-bootstrap.md` instruindo Claude Chat a
-chamar `mcp__gus-hub__ingestar_fragmento` quando detectar decisão /
-preferência / fato relevante durante a conversa.
-
-**Trade-offs:**
-- ✅ Funciona já (MCP gus-hub conectado, tool disponível)
-- ✅ Captura em tempo real, sem upload manual
-- ⚠️ Qualidade depende do prompt — pode salvar lixo ou ignorar coisa importante
-- ⚠️ Sem comparação Haiku × GPT como o curador post-hoc tem
-
-**Quem decide:** Gustavo (vale o esforço dado que PR #67 já cobre 80% via
-upload manual?).
-
-**Quem implementa:** Code (~30 linhas no bootstrap).
-
-**Como resolver (se Gustavo aprovar):**
-
-1. Adicionar seção em `dialogos/_bootstrap/gus-bootstrap.md` com:
-   - Tabela de tipos (gus-18) e quando salvar cada
-   - Sintaxe da tool `mcp__gus-hub__ingestar_fragmento`
-   - Cadência sugerida + quando NÃO salvar
-2. Pedir confirmação: cobre 2 brains (`gustavo` + `gus`) — bidirecional
-3. Mirror automático pro Drive via workflow existente
-4. Validar em conversa nova: "salva no hub que..." → confere fragmento criado
-
-**Leituras:**
-- `dialogos/inbox-claude-code/2026-05-01-captura-multiporta-curador.md` (demanda original)
-- `CLAUDE.md` § "AVISO IMPORTANTE — Captura de memória da porta Code quebrada" (analogia: captura proativa via MCP **falha** no Code por env vars; no Chat funciona porque o MCP gus-hub roda em servidor separado com env vars)
-- `hub/mcp_server.py` — tool `ingestar_fragmento` (linha ~211)
-- `dialogos/_bootstrap/gus-bootstrap.md` — onde inserir a nova seção
-
-**Critério de sucesso:**
-- Bootstrap atualizado, mirror Drive sincroniza
-- Conversa nova Chat: pedir explicitamente "salva no hub..." → fragmento criado com `via=claude-chat` no Hub
-- 1 semana depois: revisar fragmentos `via=claude-chat` no Hub — qualidade aceitável?
-
----
-
-## Pendência 6 — Drive sync OAuth → Service Account
-
-**Por quê:** workflow `sync-to-drive.yml` parou de empurrar GitHub→Drive.
-Hipótese: refresh token Google OAuth expirado (apps "Testing" expiram em
-7 dias). Resultado: Claude Chat lê Drive **stale** — bootstrap, estado-atual
-todos desatualizados.
-
-**Demanda separada já criada:** `dialogos/inbox-claude-code/2026-05-01-drive-sync-oauth-fix.md`.
-
-**Resumo das opções:**
-- **Opção 1:** reset OAuth — paliativo, expira de novo em 7 dias
-- **Opção 2:** Service Account — definitivo, não expira (recomendado)
-- **Opção 3:** aposentar Drive sync, Chat lê tudo via MCP (`read_repo_file`)
-
-**Quem decide:** Gustavo. **Quem implementa:** Code (Opção 2 = ~30min código + Gustavo cria SA no Google Console).
-
-**Leituras:**
-- `dialogos/inbox-claude-code/2026-05-01-drive-sync-oauth-fix.md`
-- `.github/scripts/sync_to_drive.py`
-- `.github/workflows/sync-to-drive.yml`
+**6 (Drive sync OAuth → SA):** resolvido via PR #76 (Workload Identity
+Federation, mais seguro que SA JSON). Não expira nunca.
 
 ---
 
@@ -238,14 +180,12 @@ todos desatualizados.
 Sequência sugerida (mas independentes — pode pular):
 
 1. **Pendências 1+2 (URL secret + Connector)** → faça **agora**, é operacional simples e destrava privacidade. ~10min de Gustavo.
-2. **Pendência 6 (Drive sync)** → curto código, destrava bootstrap atualizado pro Chat. Code implementa após Gustavo decidir Opção 1/2/3.
-3. **Pendência 3 (mock HTML)** → 10min de Gustavo procurar; se não achar, parte pra Pendência 4.
-4. **Pendência 4 (decisões Fase 2)** → Gustavo responde 3 perguntas. Code atualiza gus-30.1.
-5. **Pendência 5 (Opção A captura tempo real)** → Gustavo decide se vale; Code implementa em ~30 linhas.
+2. **Pendência 3 (mock HTML)** → 10min de Gustavo procurar; se não achar, parte pra Pendência 4.
+3. **Pendência 4 (decisões Fase 2)** → Gustavo responde 3 perguntas. Code atualiza gus-30.1.
 
 Após cada uma:
 - Atualizar frontmatter desta demanda (ou marcar individual no checklist abaixo)
-- Mover pra `dialogos/archive/` quando todas as 6 estiverem resolvidas
+- Mover pra `dialogos/archive/` quando todas as 4 estiverem resolvidas
 - Se alguma virar PR, referenciar nesta demanda
 
 ---
@@ -256,17 +196,17 @@ Após cada uma:
 - [ ] **#2** — Connector recadastrado no claude.ai com URL nova (Gustavo)
 - [ ] **#3** — Mock HTML localizado OU decidido recriar (Gustavo)
 - [ ] **#4** — Decisões §11.3-11.5 respondidas, gus-30.1 atualizado (Gustavo + Code)
-- [ ] **#5** — Decidida Opção A; se sim, bootstrap atualizado (Gustavo + Code)
-- [ ] **#6** — Drive sync OAuth → Service Account migrado (Gustavo + Code)
+- [x] **#5** — Captura tempo real (resolvido via PR #79 — `inbox-gustavo/chat/`)
+- [x] **#6** — Drive sync (resolvido via PR #76 — WIF)
 
 ---
 
 ## Resultado esperado
 
-Quando todas as 6 estiverem ✅:
+Quando todas as 4 restantes estiverem ✅:
 - Hub privado (URL secret ativo)
-- Claude Chat lê Drive sempre atualizado
+- Claude Chat lê Drive sempre atualizado (já resolvido via WIF)
 - Frontend NeuroGus pronto pra Fase 2 (mock disponível, decisões fechadas)
-- Captura Claude Chat em tempo real funcionando (se Opção A aprovada)
+- Captura Claude Chat em tempo real funcionando (já resolvido via inbox-gustavo)
 
 Próxima fase: **Fase 2 NeuroGus frontend** (depende de #3 + #4 resolvidos).

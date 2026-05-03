@@ -3,14 +3,30 @@ tipo: demanda
 origem: gustavo
 destino: claude-code
 prioridade: media
-status: pendente
+status: concluido
 criado_em: 2026-05-01T00:12:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: 2026-05-03T02:00:00-03:00
+processado_por: claude-code
 acao_sugerida: investigar
 destino_path: hub/curador.py
 contexto: "Curador hoje só processa TioGu Telegram. Conversas Claude Chat e Claude Code não viram fragmento. Decidir entre A/B/C e implementar (precisa aprovação Gustavo antes de codar)."
 ---
+
+## Resultado (2026-05-03)
+
+Resolvida por outros caminhos durante sessões 01-03/05:
+
+- **Code:** PR #64 implementou Stop hook + cron processando transcripts —
+  equivalente operacional à Opção B
+- **Chat:** PR #67 ativou bidirecional via `curar_arquivo` no ingest;
+  posteriormente PR #76 (WIF + inbox-chat-raw) abriu fluxo Drive →
+  GitHub → Hub. Supera Opção A (não precisa prompt no bootstrap, fluxo
+  é por arquivo).
+
+Captura multiporta agora cobre Telegram + Code + Chat com bidirecional
+(brain `gustavo` + `gus`), todos via `hub.curador.curar_arquivo`. Não
+foi escolhida nenhuma das 3 opções originais — convergiu pra arquitetura
+mais limpa via inboxes raw + cron.
 
 # Demanda — captura multiporta de conversas pro Hub
 
