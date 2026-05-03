@@ -152,7 +152,7 @@ def ingestar(conteudo: str, metadata: dict) -> str:
     }
 
     # Campos extras do curador (preservados se vierem)
-    for k in ("curador", "hash_janela", "janela_turnos"):
+    for k in ("curador", "hash_janela", "janela_turnos", "prompt_version"):
         if k in metadata:
             payload[k] = metadata[k]
 

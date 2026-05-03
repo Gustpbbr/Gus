@@ -42,6 +42,13 @@ from hub.store import ingestar
 
 logger = logging.getLogger(__name__)
 
+# Versão dos prompts do curador. Sobe quando PROMPT_CURADOR ou
+# PROMPT_CURADOR_ARQUIVO mudar de forma que afete extração — permite
+# distinguir fragmentos de gerações diferentes no Hub via
+# `metadata.prompt_version`. Ex: comparar qualidade de extração antes/depois
+# de uma reformulação do prompt sem precisar reler logs.
+PROMPT_VERSION = "v1-2026-05-02"
+
 _openai_client: Optional[AsyncOpenAI] = None
 
 
@@ -416,6 +423,7 @@ async def _curar_input_hibrido(
                         "curador": curador,
                         "hash_janela": hash_j,
                         "janela_turnos": janela_turnos,
+                        "prompt_version": PROMPT_VERSION,
                     },
                 )
                 salvos += 1
