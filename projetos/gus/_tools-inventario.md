@@ -1,7 +1,7 @@
 ---
 tipo: inventario-auto
 area: gus
-atualizado: 2026-05-03 19:58 BRT
+atualizado: 2026-05-04 06:18 BRT
 fonte: gus/tools.py:TOOLS (geração automática — não editar)
 ---
 
@@ -186,4 +186,4 @@ _Sem parâmetros._
 
 ---
 
-_Auto-gerado em 2026-05-03 19:58 BRT por `.github/scripts/gerar_lista_tools.py`._
+_Auto-gerado em 2026-05-04 06:18 BRT por `.github/scripts/gerar_lista_tools.py`._
