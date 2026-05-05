@@ -1,0 +1,588 @@
+user: oi Gus, blz?
+assistant: oi, blz. tô aqui na branch `claude/initial-setup-iWTfL`, com 6 demandas pendentes em `dialogos/inbox-claude-code/` (algumas com nome quebrado — "Documento sem título.md" provavelmente é lixo de sync).
+
+quer que eu processe as demandas, ou tem algo específico em mente?
+user: enha um panorama geral do projeto. segue um guia para vc ver. depois vamos focar em um assunto específico, mas te falo apos vc ler tudo necessário do projeto. segue uma dica de outra aba do code. analise tudo, e busque tbm as últimas atualizações do projeto q nao estao no texto abaixo citado
+Aqui vai a receita ordenada por valor por contexto. Foco: mínimo necessário pra não inflar contexto à toa.
+Core obrigatório (sempre, em toda aba nova)
+Arquivo
+Pra quê
+dialogos/_bootstrap/[gus-bootstrap.md](http://gus-bootstrap.md)
+manual operacional do Gus, regras de comportamento, como cada porta usa o Hub
+dialogos/_bootstrap/[gus-identity.md](http://gus-identity.md)
+quem é o Gustavo + quem é o Gus enquanto entidade
+dialogos/_bootstrap/[gus-estado-atual.md](http://gus-estado-atual.md)
+handoff auto-gerado pelo cron 03h, snapshot do Hub
+projetos/gus/_[estado-atual.md](http://estado-atual.md)
+onde paramos na sessão anterior (mais "operacional" que o bootstrap)
+Esses 4 dão 80% do contexto pra qualquer aba nova.
+Live — preferir sobre arquivo
+Se a aba tem MCP gus-hub conectado:
+ego_cache_atual() — identidade + últimas 3 decisões + 5 meta-reflexões
+fragmentos_recentes(horas=24) — o que rolou desde ontem
+contar_fragmentos() — sanity check
+Hub é mais fresco que [gus-estado-atual.md](http://gus-estado-atual.md) (que é snapshot das 03h). Sempre que possível, prefira tools MCP a arquivo .md.
+Específicos do contexto da pergunta
+Só ler se a conversa for sobre:
+Tema
+Arquivo
+Próximos passos / NeuroGus
+projetos/gus/[gus-08-plano-proximos-passos.md](http://gus-08-plano-proximos-passos.md), projetos/gus/[gus-30-neurogus-roadmap.md](http://gus-30-neurogus-roadmap.md)
+Caminho Alexa
+projetos/gus/[gus-10-caminho-alexa.md](http://gus-10-caminho-alexa.md)
+MCP / [claude.ai](http://claude.ai) connector
+projetos/gus/[gus-28-passo2-mcp-server.md](http://gus-28-passo2-mcp-server.md)
+Roteamento multi-modelo
+projetos/gus/[gus-29-roteamento-multimodelo-tiogu.md](http://gus-29-roteamento-multimodelo-tiogu.md)
+Hub Qdrant arquitetura
+projetos/gus/[gus-18-schema-indexacao.md](http://gus-18-schema-indexacao.md), [gus-20-etapa2-hub-qdrant.md](http://gus-20-etapa2-hub-qdrant.md), [gus-21-etapa3-curador.md](http://gus-21-etapa3-curador.md)
+Decisão migração ADR-001
+projetos/gus/[gus-15-decisao-migracao.md](http://gus-15-decisao-migracao.md)
+Demanda da semana
+dialogos/streams/[semana-2026-04-21.md](http://semana-2026-04-21.md) (último arquivo da pasta)
+Demandas pendentes pra essa porta
+dialogos/inbox-/
+O que NÃO precisa ler
+gus-01 a gus-09 (a não ser por curiosidade arqueológica — bootstrap já resume)
+pessoal/, dimagem/, receitas/ etc. — só sob demanda explícita
+historico/ — pasta morta de conteúdo legado
+Logs antigos (>3 dias)
+_log/sessoes-claude-code/ — arquivos longos de transcript
+Truque pra Claude Chat web
+Como ele lê via Drive Project knowledge, o boot dele já tem [gus-bootstrap.md](http://gus-bootstrap.md) como project instruction. Aí ele só precisa fazer:
+Ler [gus-estado-atual.md](http://gus-estado-atual.md) (snapshot 03h)
+Chamar ego_cache_atual() via MCP gus-hub (estado vivo)
+Pra Claude Code, o [CLAUDE.md](http://CLAUDE.md) na raiz é auto-injetado em toda sessão — então já cobre o "core obrigatório".
+Quer que eu padronize isso num arquivo dialogos/_bootstrap/[checklist-boot-aba-nova.md](http://checklist-boot-aba-nova.md) pra deixar canonizado?
+Ah, entendi mal. PRs são histórico, não documentação — uma aba nova não precisa ler nenhum.
+Por que não
+O estado final dos PRs já tá no código + nos docs gus-XX atualizados
+PRs descrevem o caminho, não onde a gente tá. Nova aba quer onde tamo.
+60 PRs = ruído gigante no contexto pra ganho zero
+Quando vale olhar PR
+Situação
+Qual PR
+"Por que esse arquivo tá assim?"
+git log --oneline  → abre o PR específico
+"O que mudou hoje?"
+Lista PRs mergeados nas últimas 24h: gh pr list --state merged --limit 10
+Bug recente
+PR mais recente que tocou o código quebrado
+Decisão arquitetural não-óbvia
+PR description costuma ter o "porquê"
+Boa prática
+O que tem que ficar nos docs (não nos PRs):
+Decisões arquiteturais → ADR (gus-15 é exemplo)
+Como configurar algo → gus-XX-setup
+Estado atual do projeto → gus-26-status-consolidado, _estado-atual
+Se um PR precisa ser lido pra entender o presente, é sinal de doc desatualizado — não de PR importante.
+Receita
+Aba nova só precisa olhar PRs se:
+Você falar "tá quebrando X depois do PR #YY" → aí sim, lê o PR
+Investigar bug específico no código mexido recentemente
+Senão, esquece os 60. Os 7 docs do checklist anterior te dão o estado atual.
+assistant: Li tudo. Panorama:
+
+## O que é o Gus
+Sistema de agente pessoal multi-porta (Telegram/TioGu, Claude Code, Claude Chat, futuras: Custom GPT mobile, Alexa). Memória central no **Hub Qdrant** (`gus_hub`), arquivos .md no GitHub (`Gustpbbr/Gus`), espelhados no Drive. Gustavo é anestesiologista, não programa — toda implementação passa por mim/Tiogu.
+
+## Estado de migração
+**ADR-001** em curso: aposentar Mem0 SaaS, Hub Qdrant é fonte da verdade. Coleta dual de modelos no curador (Haiku × GPT-4o-mini, mudou de Sonnet em 29/04 por custo/resiliência) termina **12/05/2026** — depois Gustavo escolhe modelo definitivo, fase 5 remove fallback Mem0.
+
+## Fronts ativos (do `_estado-atual.md` + PRs recentes)
+
+**TioGu (Fase 1 saneamento — concluída, PR #73):** 163 testes verdes, PII no output redatado, byte budget no cache, hygiene em `bot.py/llm.py/memory.py`. Próximo: Fase 2A docs, Fase 2B reescrita do `system_prompt.md`, Fase 4 split de `bot.py/tools.py`.
+
+**Claude Chat (auditoria — PR #72 mergeado):** 12 fixes de 31 achados. Bug crítico do curador (`format()` falhando 100% desde 30/04 com KeyError no JSON literal) corrigido. MCP fail-closed default. Whitelist user_id. Validação enum gus-18.
+
+**Pendências Gustavo (operacional):**
+- Setar `MCP_URL_SECRET` no Railway + recadastrar Connector claude.ai (privacidade)
+- Decidir Drive sync (OAuth quebrado desde 01/05 14:38Z)
+- 4+ memórias poluídas pra deletar manualmente
+
+**NeuroGus (gus-30) bloqueado:** decisões UX 11.1-11.5 + mock HTML do 28/04. Backend SSE pronto pra começar.
+
+## Atualizações desde o `_estado-atual.md` (que é de 02/05 01:36)
+
+PRs mergeados depois disso, não documentados ainda:
+
+| PR | O que entrou |
+|---|---|
+| #74 | testes de regressão do curador (bug `format()` + validadores enum) |
+| #76 | feat(drive): WIF + inbox-mem0-from-chat raw |
+| #77 | chore(cleanup): renomeia legacy `mem0` → `curador`/`hub` |
+| #79 | feat(drive): `inbox-gustavo/<porta>/` — captura por origem com auto-frontmatter |
+| #80 | fix(mcp,security): não logar `MCP_URL_SECRET` + pattern de redação |
+
+Importações recentes pelo Drive: 3 arquivos novos em `inbox-tiogu/` (origem claude-chat) sobre ingestão de exames no Hub e protocolo truncado.
+
+## Demandas no inbox-claude-code (6 listadas, mas...)
+- 3 demandas reais: captura multiporta, curador bidirecional cron, drive-sync OAuth
+- 1 guarda-chuva: pendências Chat consolidadas (6 fronts)
+- "Documento sem título.md" = só agradecimento do Gustavo, não é demanda
+- "_frontmatter-referencia.md" = template, não demanda
+
+Pode mandar o foco específico.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado e pushado pra `claude/greeting-checkin-EHt9Z`. Era só o log do retro-engine auto-gerado (no-op por falta de `ANTHROPIC_API_KEY` no ambiente, comportamento conhecido).
+user: Continue from where you left off.
+assistant: No response requested.
+user: vc vai focar nas memorias e Hub. atue como um auditor profissional e imparcial, e detalhe os principais pontos desse assunto
+assistant: Vou auditar a stack de memória end-to-end. Lendo código + docs em paralelo.
+assistant: # Auditoria — Memórias e Hub Qdrant
+
+**Escopo:** stack de memória end-to-end (`hub/`, `gus/memory.py`, `.github/scripts/curador_*`, `ingest_chat_raw.py`, `auditoria_hub.py`, `migrar_gus_para_hub.py`, MCP `mem0_server.py`, schemas Pydantic, cron workflows).
+**Método:** leitura crítica de código + comparação contra contrato gus-18 + cross-check com auditoria existente (`projetos/gus/auditorias/2026-05-02-chat.md`) pra não redobrar.
+**Posição:** auditor independente. Não estou propondo fixes ainda — só listando o que vi.
+
+---
+
+## Resumo executivo
+
+A stack está em **estado intermediário arriscado**: Hub Qdrant (`gus_hub`) é a fonte nova, mas a coleção legada `gus` (Mem0 self-hosted) tem ~204 fragmentos não-migrados e o código de leitura em `gus/memory.py` ainda faz fallback pra ela. Há **3 produções simultâneas** de fragmentos (Telegram, Chat, Code) com **4× multiplicação de chamadas LLM** por unidade de input (Haiku × GPT × {gustavo, gus}) e **sem mecanismo de dedup**. O contrato schema gus-18 está parcialmente implementado: lifecycle (`peso`, `acessos`, promoção `ativo→estavel`, `tipo_esquecimento`) é **declarado mas não executado**. A auditoria diária (`auditoria_hub.py`) é **cega para o brain `gus`** e classifica por keywords ignorando o `area` que o curador já preencheu. Há ainda inconsistências de vocabulário `via` entre doc, Pydantic schema, MCP e curador.
+
+**Severidade global:** 🟠 **alto.** Sistema funcional pra captura, mas com débitos que vão estourar quando volume crescer (NeuroGus, Alexa) e com risco moderado de perda silenciosa / poluição cross-brain hoje.
+
+---
+
+## Mapa do sistema (estado em 02/05/2026)
+
+```
+                                     ENTRADAS
+                                        │
+   ┌────────────┬──────────────┬───────┴──────────┬─────────────────┐
+   │  Telegram  │ Claude Chat  │  Claude Code     │  MCP claude.ai  │
+   │  (TioGu)   │  (.md upload)│  (transcript     │  (gus-hub       │
+   │            │              │   .jsonl cron)   │   Connector)    │
+   └─────┬──────┴──────┬───────┴────────┬─────────┴────────┬────────┘
+         │             │                │                  │
+   gus.memory.    ingest_chat_raw   curador_claude_  hub MCP server
+   salvar_mems    + curar_arquivo   code + curar_arq Railway
+         │             │                │                  │
+         │      ┌──────┴────────────────┴──────┐           │
+         │      │ HUB CURADOR HÍBRIDO          │           │
+         │      │ Haiku + GPT-4o-mini paralelo │           │
+         │      │ × 2 brains (gustavo+gus)     │           │
+         │      │ = 4 chamadas LLM por input   │           │
+         │      └──────────────┬───────────────┘           │
+         │                     │                           │
+         └─────────────────────▼───────────────────────────┘
+                          hub.store.ingestar
+                                │
+                       ┌────────▼─────────┐
+                       │ Qdrant Cloud     │
+                       │ ─ gus_hub (novo) │  ← lê: lembrar/scroll
+                       │ ─ gus (legado    │  ← fallback Mem0 SaaS
+                       │   ~204 mems)     │
+                       └──────────────────┘
+                                │
+                                ▼
+                        SAÍDAS / LEITURA
+   buscar_memorias (MCP) │ ego_cache │ auditoria diária │ briefing
+   bot Telegram tools    │ NeuroGus  │ retrospectiva    │ etc
+```
+
+3 caminhos de escrita coexistem com regras parcialmente compatíveis.
+
+---
+
+## Achados por severidade
+
+### 🔴 Crítico — bloqueia ou corrompe silenciosamente
+
+#### M-CRIT-1 · Bidirecional cria 4× custo + risco alto de cross-brain pollution
+`ingest_chat_raw.py:250` e `curador_claude_code.py:72` rodam o curador **2 vezes** sobre o mesmo body, mudando só o `user_id`. Internamente cada chamada já é Haiku + GPT em paralelo (`_curar_input_hibrido`). Resultado: **4 chamadas de LLM** com o **MESMO prompt** (`PROMPT_CURADOR_ARQUIVO`) por arquivo.
+
+O prompt **não diferencia** `gustavo` vs `gus` — é literalmente o mesmo texto. A separação só acontece no `user_id` passado pra `ingestar()`. Logo, o brain `gus` (autobiografia do agente) recebe os mesmos fragmentos sobre o Gustavo, classificados igual.
+
+**Evidência:** `hub/curador.py:232-282` — único template `PROMPT_CURADOR_ARQUIVO`. Não há prompt distinto que diga "extraia só meta-observações sobre o agente" pro brain gus.
+
+**Impacto:** ARCH-2 da auditoria de 02/05 já marcou pendente. Em volume crescente, brain `gus` vira cópia ruidosa do brain `gustavo`. Buscar identidade do Gus retorna fato sobre Gustavo.
+
+---
+
+#### M-CRIT-2 · Lifecycle do schema gus-18 declarado mas não implementado
+gus-18 promete:
+- `peso` sobe com acessos, desce com tempo
+- `confirmacoes` incrementa quando fragmento é validado
+- `acessos` incrementa em busca
+- `ultimo_acesso` atualiza em busca
+- Promoção automática `ativo → estavel` após 30d + ≥2 acessos
+- `tipo_esquecimento=protegido` nunca é sobrescrito
+
+Realidade do código:
+- `hub/store.py:140-152` — `ingestar` define `peso=0.5, confirmacoes=0, acessos=0` e nunca atualiza
+- `hub/store.py:179-200` — `lembrar` faz `query_points` e retorna sem nenhum `client.set_payload` ou update de `ultimo_acesso`/`acessos`
+- Não existe job/cron de promoção `ativo → estavel`
+- `tipo_esquecimento` é aceito no Pydantic schema mas `lembrar()` filtra só por `estado`, ignorando esquecimento
+
+**Consequência prática:** todo fragmento fica `estado="ativo"` pra sempre. **`ego_cache()` em `hub/store.py:222-227` busca `estado="estavel"` em `identidade_operacional` e `procedural` — retorna sempre vazio em produção.** Componente da Etapa 4 (gus-22) está estruturalmente quebrado.
+
+---
+
+#### M-CRIT-3 · Coleção legada `gus` ainda viva, fallback Mem0 ativo em leitura/delete
+`gus/memory.py:114-128` e `:262-268` ainda fazem fallback pro Mem0 SaaS (coleção `gus`). Comentário em `_estado-atual.md` confirma que `migrar_gus_para_hub.py` é **dispatch manual e não foi rodado ainda** ("Disparar workflow `Migrar gus → gus_hub` se ainda não rodou — preenche Hub com 204 mems históricas").
+
+**Riscos:**
+1. **Buscas inconsistentes** — Hub `lembrar` retorna primeiro; se vazio, cai no Mem0. Conjuntos de resposta variam entre chamadas se Hub for ocioso.
+2. **Deletar_memoria com fallback** — se ID for híbrido (UUID Hub vs ID Mem0), o sistema tenta os dois. Operador acha que deletou só do Hub mas pode ter falhado nos dois ou só num.
+3. **Poluição persistente** — qualquer fragmento criado **antes** da migração e **depois** da Fase 3 vai existir só na coleção antiga, fora do Hub novo.
+
+---
+
+### 🟠 Alto — comprometem confiabilidade ou auditabilidade
+
+#### M-ALTO-1 · Dedup ausente, cron `ingest_chat_raw` documenta risco aceito
+`ingest_chat_raw.py:21` literalmente: *"Se Hub falhar antes do move, próxima rodada tenta de novo (pode duplicar — risco baixo dado o volume)"*. **Não há checagem de `hash_janela` antes de ingestar
+
+[…transcript truncado…]
+
+stão prática:** PR da Fase 1 agora com 8 itens (os "engine"). 1.7 (limpeza com dados) vira PR separado depois — porque depende de você revisar lista de candidatos, e o ciclo "gera candidatos → você revisa → aplica delete" merece isolamento.
+
+Qual prefere?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are 3 unpushed commit(s) on branch 'claude/greeting-checkin-EHt9Z'. Please push these changes to the remote repository.
+
+assistant: Pushed. Aguardando sua escolha pra prosseguir 1.7:
+
+**Opção 1:** Abrir PR da Fase 1 com 8 itens prontos agora, mergear, e 1.7 vira PR separado depois (recomendo)
+**Opção 2:** Fazer dryrun do 1.7 antes do PR, lista de candidatos vai junto no mesmo PR
+user: 1
+assistant: PR aberto: **https://github.com/Gustpbbr/Gus/pull/84**
+
+## Pra você
+
+1. **Abrir PR #84** e revisar os 8 commits (cada um isolado por item)
+2. **Mergear** quando aprovar
+3. **Pós-merge, 2 ações operacionais (3min):**
+   - Disparar `meta-relatorio-hub.yml` manual → vai gerar `_indices/_meta-relatorio-hub.md` com baseline atual de qualidade
+   - Disparar `auditoria-hub.yml` manual → atualiza `_indices/_auditoria-hub.md` com formato multi-brain
+
+   Esses 2 outputs vão ser cruciais pro item 1.7 (limpeza) — eu uso eles pra gerar a lista de candidatos a delete sem precisar adivinhar.
+
+4. **Confirmar pra mim quando mergear** → eu sincronizo branch e parto pra 1.7 (script dryrun de limpeza)
+
+## Stats consolidados da Fase 1
+
+| Métrica | Valor |
+|---|---|
+| Commits funcionais | 8 |
+| Linhas adicionadas | ~700 |
+| Linhas removidas | ~430 |
+| Arquivos novos | 3 (vocabularios.py, meta_relatorio_hub.py, meta-relatorio-hub.yml) |
+| Arquivos apagados | 2 (migrate_mem0.py, migrate-mem0-to-qdrant.yml) |
+| Deps removidas | 1 (mem0ai) |
+| Caminhos legacy mortos | 2 (_fallback_mem0, _resumir_turnos) |
+
+Aguardando mergear pra continuar.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado.
+user: mergeei
+assistant: Branch sincronizada com main. Agora **Item 1.7 — Limpeza ativa do Hub** (CHECKPOINT).
+
+## Estratégia
+
+Vou construir 2 scripts:
+
+1. **`limpeza_hub_dryrun.py`** — gera relatório `_indices/_limpeza-hub-candidatos.md` com lista nominal de IDs candidatos a delete + razão de cada um. **Não deleta nada.**
+2. **`limpeza_hub_aplicar.py`** — lê IDs aprovados manualmente (marcados em arquivo separado `_indices/_limpeza-hub-aprovados.txt`) e deleta com motivo.
+
+Você revisa entre as duas etapas. Vou começar pelo dryrun.
+assistant: Recebi seu "ok" — continuo. Smoke test no dryrun + criar o aplicar + workflow.
+assistant: Bug no regex de "Nasci em" — precisa de 2+ espaços, mas só tem 1. Corrigindo.
+assistant: Agora o `aplicar`:
+assistant: Smoke do aplicar (parser de IDs):
+assistant: Item 1.7 entregue + PR aberto. **Fase 1 fechada (9/9).**
+
+PR: **https://github.com/Gustpbbr/Gus/pull/86**
+
+## Pra você
+
+### 1. Mergear PR #86
+
+### 2. Pós-merge, fluxo de limpeza (sequência precisa):
+
+**a) Disparar `limpeza-hub-dryrun.yml` manualmente**
+- Actions → `Limpeza Hub — DRYRUN` → Run workflow → main → Run
+- Aguarda 1min
+- Vai aparecer commit `auto: dryrun limpeza Hub (...)` em main com `_indices/_limpeza-hub-candidatos.md`
+
+**b) Revisar o MD de candidatos**
+- Abre `_indices/_limpeza-hub-candidatos.md` no GitHub
+- Vai ter ~28-30 candidatos divididos por brain × severidade
+- Pra cada um vê: ID + razão + texto preview
+
+**c) Se aprovar todos:** pula direto pro passo (e)
+
+**c-alt) Se quer manter alguns:** cria `_indices/_limpeza-hub-rejeitados.txt` com 1 ID por linha. Commit no main (pode editar pelo web).
+
+**d) Verificação final (dryrun do aplicar):**
+- Actions → `Limpeza Hub — APLICAR` → Run workflow
+- Input `dryrun=true`
+- Vai gerar sumário em `_log/limpeza-hub/AAAA-MM-DD.md` mostrando o que **seria** deletado
+
+**e) Aplicar de verdade:**
+- Mesmo workflow, input `dryrun=false`
+- Deleta no Qdrant
+- Trilha em `_log/deletar-hub/AAAA-MM-DD.jsonl` com snapshot completo (recovery possível se quiser reverter algum)
+
+### 3. Reportar pra mim
+
+Quando terminar limpeza me confirma:
+- Quantos candidatos apareceram
+- Quantos rejeitou (manteve)
+- Quantos foram deletados
+- Erros se tiver
+
+Aí vamos pra **Fase 2** (comparar curadores, prazo 12/05) — ou paramos aqui se quiser pausa.
+user: mergeei. e agora?
+assistant: Branch sincronizada. Agora você executa, eu observo.
+
+# Sequência de execução (passo a passo)
+
+## Passo 1 — Gerar lista de candidatos (1min)
+
+Abra: https://github.com/Gustpbbr/Gus/actions/workflows/limpeza-hub-dryrun.yml
+
+Clique **"Run workflow"** → branch `main` → **"Run workflow"** (botão verde)
+
+Aguarda ~1min. Quando terminar, vai aparecer commit `auto: dryrun limpeza Hub (...)` em main.
+
+---
+
+## Passo 2 — Revisar a lista
+
+Abra: https://github.com/Gustpbbr/Gus/blob/main/_indices/_limpeza-hub-candidatos.md
+
+Vai ter algo tipo:
+- Brain `gustavo` — severidade forte (X candidatos)
+- Brain `gus` — severidade forte (Y candidatos)
+- Brain `gustavo` — severidade médio (Z candidatos)
+
+Cada candidato tem ID, razão, texto. **Lê.**
+
+### Decisão por candidato
+- **Aprovar (deletar)**: não faz nada
+- **Manter (rejeitar)**: copia o ID
+
+### Se quer manter algum:
+Cria arquivo `_indices/_limpeza-hub-rejeitados.txt` com 1 ID por linha (pode editar direto no web do GitHub: "Add file" → "Create new file"). Commit direto em main.
+
+### Se aprova todos:
+Pula direto pro passo 3.
+
+---
+
+## Passo 3 — Verificar com dryrun (segurança extra)
+
+Abra: https://github.com/Gustpbbr/Gus/actions/workflows/limpeza-hub-aplicar.yml
+
+Clique **"Run workflow"**:
+- Branch: `main`
+- **Dryrun:** `true`
+- "Run workflow"
+
+Aguarda ~1min. Confere `_log/limpeza-hub/AAAA-MM-DD.md` — vai dizer "**DRYRUN** — nada foi deletado" + lista do que **seria** deletado.
+
+Se a lista fizer sentido, vai pro 4. Se algo não bater, volta pro 2 e ajusta `_limpeza-hub-rejeitados.txt`.
+
+---
+
+## Passo 4 — Deletar de verdade ⚠️
+
+Mesmo workflow:
+- **Dryrun:** `false`
+- "Run workflow"
+
+**IRREVERSÍVEL** mas com trilha completa em `_log/deletar-hub/AAAA-MM-DD.jsonl` (snapshot de cada delete pra recovery se precisar).
+
+---
+
+## Passo 5 — Reportar
+
+Me manda o conteúdo de `_log/limpeza-hub/AAAA-MM-DD.md` (o sumário). Tipo:
+
+```
+candidatos_total: 28
+rejeitados_total: 3
+deletados_sucesso: 25
+deletados_erro: 0
+```
+
+E aí decidimos: **partir pra Fase 2** (script comparar_curadores, prazo 12/05) ou **pausa**.
+
+---
+
+## Recomendação prática
+
+**Faz o passo 1 agora** (1 clique). Quando o workflow terminar, me manda o link do MD de candidatos que eu olho com você antes de decidir o que rejeitar — economiza você ler tudo sozinho.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado.
+﻿2026-05-03T02:46:11.8254642Z ##[group]Run python -m pytest tests/ --tb=short -v
+python -m pytest tests/ --tb=short -v
+shell: /usr/bin/bash -e {0}
+env:
+  pythonLocation: /opt/hostedtoolcache/Python/3.11.15/x64
+  PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib/pkgconfig
+  Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+  Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+  Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+  LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib
+  ANTHROPIC_API_KEY: fake-test-key
+  OPENAI_API_KEY: fake-test-key
+  QDRANT_URL: http://fake.local
+  QDRANT_API_KEY: fake-test-key
+  TELEGRAM_BOT_TOKEN: fake-test-token
+  TELEGRAM_CHAT_ID: 12345
+  GITHUB_TOKEN: fake-test-token
+============================= test session starts ==============================
+platform linux -- Python 3.11.15, pytest-8.3.3, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.11.15/x64/bin/python
+cachedir: .pytest_cache
+rootdir: /home/runner/work/Gus/Gus
+configfile: pyproject.toml
+plugins: mock-3.14.0, asyncio-0.24.0, anyio-4.13.0
+asyncio: mode=Mode.AUTO, default_loop_scope=function
+collecting ... collected 166 items / 1 error
+
+==================================== ERRORS ====================================
+____________________ ERROR collecting tests/test_memory.py _____________________
+ImportError while importing test module '/home/runner/work/Gus/Gus/tests/test_memory.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/_pytest/python.py:493: in importtestmodule
+    mod = import_path(
+/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/_pytest/pathlib.py:582: in import_path
+    importlib.import_module(module_name)
+/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1204: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1176: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1147: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:690: in _load_unlocked
+    ???
+/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:184: in exec_module
+    exec(co, module.__dict__)
+tests/test_memory.py:6: in <module>
+    from gus.memory import (
+E   ImportError: cannot import name '_normalizar_results' from 'gus.memory' (/home/runner/work/Gus/Gus/gus/memory.py)
+=========================== short test summary info ============================
+ERROR tests/test_memory.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 1.80s ===============================
+Process completed with exit code 2.
+user: Continue from where you left off.
+assistant: No response requested.
+user: ﻿2026-05-03T02:46:11.8254642Z ##[group]Run python -m pytest tests/ --tb=short -v
+python -m pytest tests/ --tb=short -v
+shell: /usr/bin/bash -e {0}
+env:
+  pythonLocation: /opt/hostedtoolcache/Python/3.11.15/x64
+  PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib/pkgconfig
+  Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+  Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+  Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.15/x64
+  LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.15/x64/lib
+  ANTHROPIC_API_KEY: fake-test-key
+  OPENAI_API_KEY: fake-test-key
+  QDRANT_URL: http://fake.local
+  QDRANT_API_KEY: fake-test-key
+  TELEGRAM_BOT_TOKEN: fake-test-token
+  TELEGRAM_CHAT_ID: 12345
+  GITHUB_TOKEN: fake-test-token
+============================= test session starts ==============================
+platform linux -- Python 3.11.15, pytest-8.3.3, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.11.15/x64/bin/python
+cachedir: .pytest_cache
+rootdir: /home/runner/work/Gus/Gus
+configfile: pyproject.toml
+plugins: mock-3.14.0, asyncio-0.24.0, anyio-4.13.0
+asyncio: mode=Mode.AUTO, default_loop_scope=function
+collecting ... collected 166 items / 1 error
+
+==================================== ERRORS ====================================
+____________________ ERROR collecting tests/test_memory.py _____________________
+ImportError while importing test module '/home/runner/work/Gus/Gus/tests/test_memory.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/_pytest/python.py:493: in importtestmodule
+    mod = import_path(
+/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/_pytest/pathlib.py:582: in import_path
+    importlib.import_module(module_name)
+/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+<frozen importlib._bootstrap>:1204: in _gcd_import
+    ???
+<frozen importlib._bootstrap>:1176: in _find_and_load
+    ???
+<frozen importlib._bootstrap>:1147: in _find_and_load_unlocked
+    ???
+<frozen importlib._bootstrap>:690: in _load_unlocked
+    ???
+/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/site-packages/_pytest/assertion/rewrite.py:184: in exec_module
+    exec(co, module.__dict__)
+tests/test_memory.py:6: in <module>
+    from gus.memory import (
+E   ImportError: cannot import name '_normalizar_results' from 'gus.memory' (/home/runner/work/Gus/Gus/gus/memory.py)
+=========================== short test summary info ============================
+ERROR tests/test_memory.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 1.80s ===============================
+Process completed with exit code 2.
+assistant: Test quebrou. Tests/test_memory.py ainda importa função que removi no 1.9. Vou corrigir.
+assistant: Verifico se mais algum teste depende de coisa removida:
+assistant: Fix pushed mas precisa ir pra main via novo PR — CI atual quebra build de main.
+assistant: Hotfix PR aberto: **https://github.com/Gustpbbr/Gus/pull/88**
+
+## Causa raiz
+
+Item 1.9 removeu `_normalizar_results` de `gus/memory.py` (era helper do parsing Mem0). Mas `tests/test_memory.py` ainda importava + testava. Smoke tests que rodei localmente cobriam só `hub.vocabularios`, `hub.schemas`, `gus.memory.imports` — não rodei pytest da suite completa porque o ambiente Code on the web não tem pytest instalado.
+
+**Lição:** próximos PRs que mexem em `gus/memory.py` ou `hub/store.py` devo grep `tests/` antes de commitar pra detectar imports quebrados.
+
+## Pra você
+
+1. **Mergear PR #88** — fix isolado, 1 arquivo só
+2. CI volta verde, Fase 1 fica 100% ok em main
+3. Volta pro fluxo de **Limpeza Hub** (item 1.7) — disparar `limpeza-hub-dryrun.yml` quando puder
+
+Aguardando.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pushed.
+mergeei. rodou?
+user: mergeei. rodou?
+assistant: Sim, **rodou e passou.** ✅
+
+`pytest` = `success` no PR #88. CI do main agora está verde.
+
+## Estado consolidado
+
+✅ **Fase 0** — Diagnóstico completo
+✅ **Fase 1** — 9/9 itens entregues (PR #84 + #86 + hotfix #88)
+✅ **CI verde** em main
+
+## Próximos passos
+
+### Imediato (você, ~3min) — fluxo de **limpeza Hub**
+
+1. https://github.com/Gustpbbr/Gus/actions/workflows/limpeza-hub-dryrun.yml → "Run workflow" (main) → aguarda 1min
+2. Abrir `_indices/_limpeza-hub-candidatos.md` em main, me mandar link / colar conteúdo
+3. Eu reviso com você o que rejeitar
+4. Você dispara `limpeza-hub-aplicar.yml` com `dryrun=false`
+
+### Depois (Fase 2 — comparar curadores)
+
+Prazo duro **12/05/2026** (decisão modelo final do curador). Hoje é **03/05** — tempo confortável.
+
+Faz a limpeza primeiro pra ter um Hub baseline limpo antes de coletar dados comparativos? Ou prefere paralelizar (limpeza + Fase 2 em PRs separados)?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.

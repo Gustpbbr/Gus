@@ -195,10 +195,10 @@ async def r_meta_memoria():
     return TextResp(result=result)
 
 
-@router.get("/auditoria_mem0", operation_id="auditoria_mem0", response_model=TextResp)
-async def r_auditoria_mem0():
-    """Lê `_indices/_auditoria-mem0.md` (stats da última auditoria)."""
-    result = await _read_from_github("_indices/_auditoria-mem0.md")
+@router.get("/auditoria_hub", operation_id="auditoria_hub", response_model=TextResp)
+async def r_auditoria_hub():
+    """Lê `_indices/_auditoria-hub.md` (stats da última auditoria)."""
+    result = await _read_from_github("_indices/_auditoria-hub.md")
     return TextResp(result=result)
 
 

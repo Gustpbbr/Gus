@@ -37,10 +37,17 @@ from typing import Optional
 
 from openai import AsyncOpenAI
 
-from gus.llm import _chamar_claude_com_retry
+from gus.llm import chamar_claude_com_retry
 from hub.store import ingestar
 
 logger = logging.getLogger(__name__)
+
+# Versão dos prompts do curador. Sobe quando PROMPT_CURADOR ou
+# PROMPT_CURADOR_ARQUIVO mudar de forma que afete extração — permite
+# distinguir fragmentos de gerações diferentes no Hub via
+# `metadata.prompt_version`. Ex: comparar qualidade de extração antes/depois
+# de uma reformulação do prompt sem precisar reler logs.
+PROMPT_VERSION = "v1-2026-05-02"
 
 _openai_client: Optional[AsyncOpenAI] = None
 
@@ -171,19 +178,55 @@ def _extrair_json(texto: str) -> list[dict]:
     return []
 
 
+# Enums canônicos importados do módulo único `hub.vocabularios` (item 1.1
+# do plano de saneamento — antes havia listas duplicadas que dessincronizavam).
+from hub.vocabularios import (
+    TIPOS_CANONICOS as TIPOS_VALIDOS,
+    CAMADAS_TEMPORAIS as CAMADAS_VALIDAS,
+    AREAS_CANONICAS as AREAS_VALIDAS,
+)
+
+
 def _validar_fragmento(frag: dict) -> Optional[dict]:
-    """Sanitiza um fragmento. Retorna dict válido ou None se descartável."""
+    """Sanitiza um fragmento. Retorna dict válido ou None se descartável.
+
+    Valida tipo/camada/area contra enums gus-18 — valores inválidos viram
+    default em vez de poluir o vocabulário. Confiança é clamped pra [0,1]
+    pra não quebrar sort/threshold do NeuroGus depois.
+    """
     if not isinstance(frag, dict):
         return None
     conteudo = (frag.get("conteudo") or "").strip()
     if not conteudo or len(conteudo) < 10:
         return None
+
+    tipo = (frag.get("tipo") or "episodico").strip()
+    if tipo not in TIPOS_VALIDOS:
+        logger.warning(f"Curador devolveu tipo inválido {tipo!r}, usando 'episodico'")
+        tipo = "episodico"
+
+    camada = (frag.get("camada_temporal") or "sessao").strip()
+    if camada not in CAMADAS_VALIDAS:
+        logger.warning(f"Curador devolveu camada inválida {camada!r}, usando 'sessao'")
+        camada = "sessao"
+
+    area = (frag.get("area") or "").strip()
+    if area and area not in AREAS_VALIDAS:
+        logger.warning(f"Curador devolveu area inválida {area!r}, descartando area")
+        area = ""
+
+    try:
+        confianca = float(frag.get("confianca") or 0.7)
+    except (TypeError, ValueError):
+        confianca = 0.7
+    confianca = max(0.0, min(1.0, confianca))  # clamp [0,1]
+
     return {
         "conteudo": conteudo,
-        "tipo": (frag.get("tipo") or "episodico").strip(),
-        "camada_temporal": (frag.get("camada_temporal") or "sessao").strip(),
-        "area": (frag.get("area") or "").strip(),
-        "confianca": float(frag.get("confianca") or 0.7),
+        "tipo": tipo,
+        "camada_temporal": camada,
+        "area": area,
+        "confianca": confianca,
     }
 
 
@@ -240,6 +283,26 @@ Arquivo a analisar (porta de origem: {via}):
 """
 
 
+def _render_prompt(template: str, via: str, input_texto: str) -> str:
+    """Renderiza o prompt template substituindo placeholders sem usar str.format.
+
+    str.format() interpreta `{` e `}` como placeholders — e os templates do
+    curador contêm um exemplo JSON com `{` `}` literais ("conteudo": "..."}).
+    Format() pega o trecho entre o primeiro `{` e o próximo `}` e tenta usar
+    como chave (`\\n    "conteudo"`), explodindo com KeyError. Esse bug fez o
+    curador errar 100% das chamadas a partir de 30/04/2026 (todos logs em
+    `_log/curador/AAAA-MM-DD.md` mostram só `status: erro`).
+
+    Replace() é robusto contra braces JSON literais.
+    """
+    return (
+        template
+        .replace("{via}", via)
+        .replace("{conversa}", input_texto)
+        .replace("{conteudo}", input_texto)
+    )
+
+
 async def _extrair_via_modelo(
     input_texto: str, prompt_template: str, modelo: str, via: str, max_frags: int
 ) -> list[dict]:
@@ -251,9 +314,9 @@ async def _extrair_via_modelo(
     tools — o curador errava 100% do dia, Hub ficava vazio. Mover o prompt
     pro system (canônico) resolve sem mexer no SDK.
     """
-    prompt = prompt_template.format(via=via, conversa=input_texto, conteudo=input_texto)
+    prompt = _render_prompt(prompt_template, via, input_texto)
     try:
-        response = await _chamar_claude_com_retry(
+        response = await chamar_claude_com_retry(
             model=modelo,
             max_tokens=2048,
             system_prompt=prompt,
@@ -278,7 +341,7 @@ async def _extrair_via_openai(
     secundário do curador híbrido. Resiliente a crédito Anthropic — se
     Anthropic ficar offline, GPT-4o-mini continua salvando memórias.
     """
-    prompt = prompt_template.format(via=via, conversa=input_texto, conteudo=input_texto)
+    prompt = _render_prompt(prompt_template, via, input_texto)
     try:
         oai = _get_openai()
         response = await oai.chat.completions.create(
@@ -326,12 +389,17 @@ async def _curar_input_hibrido(
 
     hash_j = _hash_janela(input_texto)
 
-    modelo_haiku = os.getenv("MODEL_CURADOR_HAIKU", "claude-haiku-4-5")
-    modelo_gpt = os.getenv("MODEL_CURADOR_GPT", "gpt-4o-mini")
+    # Vars novas: MODEL_CURADOR_ANTHROPIC / MODEL_CURADOR_OPENAI (slot semântico,
+    # não amarra a modelo específico). Aceita os nomes antigos como fallback
+    # pra não quebrar deploys existentes — workflow Chat ainda passa
+    # MODEL_CURADOR_HAIKU=claude-sonnet-4-6, que confundia (nome sugere família,
+    # mas valor é outra). Após próximo deploy, vars antigas podem sair.
+    modelo_anthropic = os.getenv("MODEL_CURADOR_ANTHROPIC") or os.getenv("MODEL_CURADOR_HAIKU", "claude-haiku-4-5")
+    modelo_openai = os.getenv("MODEL_CURADOR_OPENAI") or os.getenv("MODEL_CURADOR_GPT", "gpt-4o-mini")
 
     haiku_frags, gpt_frags = await asyncio.gather(
-        _extrair_via_modelo(input_texto, prompt_template, modelo_haiku, via, max_frags_por_modelo),
-        _extrair_via_openai(input_texto, prompt_template, modelo_gpt, via, max_frags_por_modelo),
+        _extrair_via_modelo(input_texto, prompt_template, modelo_anthropic, via, max_frags_por_modelo),
+        _extrair_via_openai(input_texto, prompt_template, modelo_openai, via, max_frags_por_modelo),
         return_exceptions=False,
     )
 
@@ -355,6 +423,7 @@ async def _curar_input_hibrido(
                         "curador": curador,
                         "hash_janela": hash_j,
                         "janela_turnos": janela_turnos,
+                        "prompt_version": PROMPT_VERSION,
                     },
                 )
                 salvos += 1

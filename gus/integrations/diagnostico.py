@@ -292,8 +292,30 @@ async def _check_workflows() -> dict:
 # ORQUESTRAÇÃO
 # ---------------------------------------------------------------------------
 
-async def auto_diagnostico() -> str:
-    """Roda todos os checks em paralelo e retorna tabela markdown."""
+# Cache do último resultado — evita queimar 6 chamadas externas + 1 Anthropic
+# (~$0.000004) toda vez que Gustavo pede /check em sequência. TTL conservador
+# de 5min: tempo curto suficiente pra detectar incidente novo, longo o
+# bastante pra economizar em rajadas. Bypass com auto_diagnostico(force=True).
+_DIAG_CACHE_TTL_SEC = 300  # 5 minutos
+_diag_cache: dict | None = None  # {"timestamp": float, "result": str}
+
+
+async def auto_diagnostico(force: bool = False) -> str:
+    """Roda todos os checks em paralelo e retorna tabela markdown.
+
+    Cache TTL 5min — chamadas repetidas em rajada retornam o último resultado
+    com nota explícita. Use `force=True` pra ignorar cache.
+    """
+    global _diag_cache
+
+    if not force and _diag_cache is not None:
+        idade = time.time() - _diag_cache["timestamp"]
+        if idade < _DIAG_CACHE_TTL_SEC:
+            return (
+                f"_(cache de {idade:.0f}s atrás — use auto_diagnostico(force=True) "
+                f"pra rodar fresh)_\n\n" + _diag_cache["result"]
+            )
+
     inicio = time.time()
     resultados = await asyncio.gather(
         _check_github_pat(),
@@ -330,4 +352,6 @@ async def auto_diagnostico() -> str:
     else:
         cabecalho = f"✅ Diagnóstico — tudo ok em {elapsed}s"
 
-    return f"{cabecalho}\n\n" + "\n".join(linhas)
+    resultado = f"{cabecalho}\n\n" + "\n".join(linhas)
+    _diag_cache = {"timestamp": time.time(), "result": resultado}
+    return resultado

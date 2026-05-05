@@ -35,9 +35,11 @@ sys.path.insert(0, str(_REPO_ROOT))
 from hub.store import ego_cache, listar, contar  # noqa: E402
 
 USER_ID = "gustavo"
+USER_ID_GUS = "gus"  # autobiografia do agente — bloco curto separado
 BRT = timezone(timedelta(hours=-3))
 JANELA_HORAS = 6
 MAX_FRAGMENTOS_RECENTES = 20
+MAX_FRAGMENTOS_GUS = 8  # brain gus é menor; só carrega o essencial
 OUTPUT_PATH = _REPO_ROOT / "dialogos" / "_bootstrap" / "gus-estado-atual.md"
 
 # Tipos prioritários — ordenados por valor pro Claude Chat saber estado
@@ -245,6 +247,27 @@ def gerar_conteudo() -> str:
     blocos.extend(_bloco_ego_cache(ego))
     blocos.extend(_bloco_recentes(frags))
     blocos.extend(_bloco_resumo_numerico(total if total >= 0 else len(frags), frags))
+
+    # Brain `gus` (autobiografia do agente) — bloco compacto. Sem ele, Claude Chat
+    # não vê o que o próprio sistema aprendeu sobre si. Carrega só os mais recentes
+    # pra não inflar.
+    try:
+        frags_gus = listar(USER_ID_GUS, limit=MAX_FRAGMENTOS_GUS)
+        total_gus = contar(USER_ID_GUS)
+    except Exception as e:
+        frags_gus = []
+        total_gus = -1
+        blocos.append(f"## ⚠️ Brain `gus`: erro ao consultar — {str(e)[:120]}")
+        blocos.append("")
+    else:
+        blocos.append(f"## Auto-observações do Gus (brain `gus` — {total_gus} fragmentos)")
+        blocos.append("")
+        if frags_gus:
+            for frag in frags_gus:
+                blocos.append(_formatar_fragmento_curto(frag))
+        else:
+            blocos.append("_(brain `gus` vazio — Retro Engine ainda não populou)_")
+        blocos.append("")
 
     blocos.append("---")
     blocos.append("")

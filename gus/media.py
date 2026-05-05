@@ -20,21 +20,64 @@ PDF_MAX_SIZE_MB = 32
 # Whisper: até 25MB por arquivo
 AUDIO_MAX_SIZE_MB = 25
 
-# Cache por hash SHA-256 do arquivo — evita re-processar a mesma mídia
-_media_cache: dict[str, list[dict]] = {}
+# Cache por hash SHA-256 do arquivo — evita re-processar a mesma mídia.
+#
+# Budget: count + bytes. PDF/imagem otimizada chega em base64 (~33% maior
+# que original). Container Railway pequeno, OOM por cache cheio é risco
+# real — defesa: limite total de bytes além do count.
+_media_cache: dict[str, tuple[list[dict], int]] = {}  # hash → (content, size_bytes)
+_media_cache_bytes = 0  # soma corrente de bytes
 _audio_cache: dict[str, str] = {}  # transcrições cacheadas separadamente
-_CACHE_MAX = 50  # limite de entradas; LRU simples por insertion order
+_CACHE_MAX_ITEMS = 50  # defesa contra fragmentação (PDFs minúsculos)
+_CACHE_MAX_BYTES = 200 * 1024 * 1024  # 200MB total
+
+
+def _content_bytes(content: list[dict]) -> int:
+    """Aproxima bytes ocupados por um content (Vision/PDF blocks).
+
+    Para blocos com `source.data` em base64, calcula tamanho do binário
+    decodificado (len(base64) * 3/4). Inclui também tamanho de texto
+    associado.
+    """
+    total = 0
+    for block in content:
+        if not isinstance(block, dict):
+            continue
+        source = block.get("source") or {}
+        data = source.get("data") or ""
+        if data:
+            total += (len(data) * 3) // 4
+        text = block.get("text") or ""
+        total += len(text.encode("utf-8")) if text else 0
+    return total
 
 
 def _cache_get(file_hash: str) -> list[dict] | None:
-    return _media_cache.get(file_hash)
+    entry = _media_cache.get(file_hash)
+    return entry[0] if entry else None
 
 
 def _cache_put(file_hash: str, content: list[dict]) -> None:
-    if len(_media_cache) >= _CACHE_MAX:
-        # Remove a entrada mais antiga
-        _media_cache.pop(next(iter(_media_cache)))
-    _media_cache[file_hash] = content
+    """Insere no cache com ejeção LRU por count OU bytes.
+
+    Ejeção: enquanto adicionar este item ultrapassar count_max ou
+    bytes_max, remove o mais antigo (insertion order). Item único maior
+    que o budget é aceito mesmo assim (cache fica só com ele) — PDFs até
+    32MB cabem confortável em 200MB.
+    """
+    global _media_cache_bytes
+    size = _content_bytes(content)
+
+    while _media_cache and (
+        len(_media_cache) >= _CACHE_MAX_ITEMS
+        or _media_cache_bytes + size > _CACHE_MAX_BYTES
+    ):
+        oldest_key = next(iter(_media_cache))
+        _, oldest_size = _media_cache.pop(oldest_key)
+        _media_cache_bytes -= oldest_size
+
+    _media_cache[file_hash] = (content, size)
+    _media_cache_bytes += size
 
 
 async def _download(url: str) -> bytes:

@@ -1,0 +1,501 @@
+user: oi Gus, blz?
+assistant: oi, blz. tô aqui na porta Code, branch `claude/initial-setup-iWTfL`.
+
+vi que tem 4 demandas pendentes no `dialogos/inbox-claude-code/`:
+- captura-multiporta-curador
+- drive-sync-oauth-fix
+- pendencias-claude-chat-consolidacao
+- (o `_frontmatter-referencia.md` é só template)
+
+quer que eu ataque alguma agora ou tem outra coisa em mente?
+user: primeiro tenha um panorama geral do projeto. segue um guia para vc ver. depois vamos focar em um assunto específico, mas te falo apos vc ler tudo necessário do projeto. segue uma dica de outra aba do code. analise tudo, e busque tbm as últimas atualizações do projeto q nao estao nos documentos citados
+Aqui vai a receita ordenada por valor por contexto. Foco: mínimo necessário pra não inflar contexto à toa.
+Core obrigatório (sempre, em toda aba nova)
+Arquivo
+Pra quê
+dialogos/_bootstrap/gus-bootstrap.md
+manual operacional do Gus, regras de comportamento, como cada porta usa o Hub
+dialogos/_bootstrap/gus-identity.md
+quem é o Gustavo + quem é o Gus enquanto entidade
+dialogos/_bootstrap/gus-estado-atual.md
+handoff auto-gerado pelo cron 03h, snapshot do Hub
+projetos/gus/_estado-atual.md
+onde paramos na sessão anterior (mais "operacional" que o bootstrap)
+Esses 4 dão 80% do contexto pra qualquer aba nova.
+Live — preferir sobre arquivo
+Se a aba tem MCP gus-hub conectado:
+ego_cache_atual() — identidade + últimas 3 decisões + 5 meta-reflexões
+fragmentos_recentes(horas=24) — o que rolou desde ontem
+contar_fragmentos() — sanity check
+Hub é mais fresco que gus-estado-atual.md (que é snapshot das 03h). Sempre que possível, prefira tools MCP a arquivo .md.
+Específicos do contexto da pergunta
+Só ler se a conversa for sobre:
+Tema
+Arquivo
+Próximos passos / NeuroGus
+projetos/gus/gus-08-plano-proximos-passos.md, projetos/gus/gus-30-neurogus-roadmap.md
+Caminho Alexa
+projetos/gus/gus-10-caminho-alexa.md
+MCP / claude.ai connector
+projetos/gus/gus-28-passo2-mcp-server.md
+Roteamento multi-modelo
+projetos/gus/gus-29-roteamento-multimodelo-tiogu.md
+Hub Qdrant arquitetura
+projetos/gus/gus-18-schema-indexacao.md, gus-20-etapa2-hub-qdrant.md, gus-21-etapa3-curador.md
+Decisão migração ADR-001
+projetos/gus/gus-15-decisao-migracao.md
+Demanda da semana
+dialogos/streams/semana-2026-04-21.md (último arquivo da pasta)
+Demandas pendentes pra essa porta
+dialogos/inbox-/
+O que NÃO precisa ler
+gus-01 a gus-09 (a não ser por curiosidade arqueológica — bootstrap já resume)
+pessoal/, dimagem/, receitas/ etc. — só sob demanda explícita
+historico/ — pasta morta de conteúdo legado
+Logs antigos (>3 dias)
+_log/sessoes-claude-code/ — arquivos longos de transcript
+Truque pra Claude Chat web
+Como ele lê via Drive Project knowledge, o boot dele já tem gus-bootstrap.md como project instruction. Aí ele só precisa fazer:
+Ler gus-estado-atual.md (snapshot 03h)
+Chamar ego_cache_atual() via MCP gus-hub (estado vivo)
+Pra Claude Code, o CLAUDE.md na raiz é auto-injetado em toda sessão — então já cobre o "core obrigatório".
+Quer que eu padronize isso num arquivo dialogos/_bootstrap/checklist-boot-aba-nova.md pra deixar canonizado?
+Ah, entendi mal. PRs são histórico, não documentação — uma aba nova não precisa ler nenhum.
+Por que não
+O estado final dos PRs já tá no código + nos docs gus-XX atualizados
+PRs descrevem o caminho, não onde a gente tá. Nova aba quer onde tamo.
+60 PRs = ruído gigante no contexto pra ganho zero
+Quando vale olhar PR
+Situação
+Qual PR
+"Por que esse arquivo tá assim?"
+git log --oneline  → abre o PR específico
+"O que mudou hoje?"
+Lista PRs mergeados nas últimas 24h: gh pr list --state merged --limit 10
+Bug recente
+PR mais recente que tocou o código quebrado
+Decisão arquitetural não-óbvia
+PR description costuma ter o "porquê"
+Boa prática
+O que tem que ficar nos docs (não nos PRs):
+Decisões arquiteturais → ADR (gus-15 é exemplo)
+Como configurar algo → gus-XX-setup
+Estado atual do projeto → gus-26-status-consolidado, _estado-atual
+Se um PR precisa ser lido pra entender o presente, é sinal de doc desatualizado — não de PR importante.
+Receita
+Aba nova só precisa olhar PRs se:
+Você falar "tá quebrando X depois do PR #YY" → aí sim, lê o PR
+Investigar bug específico no código mexido recentemente
+Senão, esquece os 60. Os 7 docs do checklist anterior te dão o estado atual.
+assistant: Beleza. Vou puxar o core obrigatório e o git recente em paralelo.
+assistant: Saquei o core. O `_estado-atual.md` tá de 27/04 — desatualizado. Os commits mostram bastante coisa nova: PR #67 (curador-chat bidirecional + GPT-4o), PR #64 (captura transcripts Code via cron), PR #60 (MCP URL secret), PR #70 (demanda consolidada). Vou puxar as demandas pendentes do inbox e o último stream da semana.
+assistant: Tenho o panorama. Resumo do que entendi:
+
+**Onde tamo (02/05/2026):**
+- Migração Mem0 → Hub Qdrant na **Fase 4** (ADR-001). Coleta dual Haiku × Sonnet roda até 12/05, aí decide modelo curador final.
+- Hub tem 19 fragmentos no brain `gustavo`, sistema ocioso nas últimas 6h.
+- `_estado-atual.md` da pasta projetos/gus tá de 27/04 — desatualizado, mas o `gus-estado-atual.md` do bootstrap tá fresco (cron 15min).
+
+**Frentes mais ativas (último ~5 dias, não estão no _estado-atual):**
+- **PR #67** — curador chat bidirecional (Sonnet 4.6 + GPT-4o, salva em `gustavo` + `gus`). Mas só processa .md uploadado manual.
+- **PR #64** — cron captura transcripts Claude Code (resolve "captura quebrada" mencionada no CLAUDE.md).
+- **PR #60** — `MCP_URL_SECRET` no path do MCP server (privacidade no claude.ai web). **Ainda não ativado no Railway.**
+- **NeuroGus** entrou em cena (gus-30) — Fase 1 backend SSE em branch separada, Fase 2 frontend bloqueada.
+
+**Demandas pendentes no inbox-claude-code (3 reais + template):**
+
+| # | Demanda | Bloqueio |
+|---|---|---|
+| 1 | Captura multiporta curador (A/B/C) | aprovação Gustavo |
+| 2 | Drive sync OAuth quebrado (1/2/3) | decisão Gustavo |
+| 3 | Pendências Claude Chat consolidadas (6 fronts) | mistura Gustavo/Code |
+
+A #3 é guarda-chuva e referencia #1 e #2 dentro dela. As 6 sub-pendências:
+1. Ativar `MCP_URL_SECRET` no Railway (Gustavo)
+2. Recadastrar Connector claude.ai (Gustavo)
+3. Localizar mock HTML NeuroGus 28/04 (Gustavo)
+4. Decisões §11.3-11.5 NeuroGus Fase 2 (Gustavo)
+5. Captura tempo real Chat — Opção A (Gustavo decide, Code faz)
+6. Drive sync → Service Account (Gustavo + Code)
+
+Pronto pra ouvir qual o assunto específico que tu quer focar. Se for sobre NeuroGus, MCP, captura ou Drive sync eu já tenho contexto base; se for outro lado (Alexa, Custom GPT, Phronesis), pode me dizer que eu puxo o doc certo.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are untracked files in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado e pushado. Log do retro-engine (no-op por falta de `ANTHROPIC_API_KEY` no ambiente, comportamento esperado) tá em `claude/greeting-checkin-94weM`.
+
+Pronto pra próxima.
+user: nessa aba vamos falar do chat. primeiro faca uma auditoria profissional imparcial multiespecialista completa em todos os aspectos do projeto relacionados ao chat
+assistant: Boa. Vou fazer auditoria completa em todas as superfícies do Chat. Lanço investigação paralela: código-fonte, workflows, docs estratégicos, e estado operacional.
+assistant: Tenho material suficiente. Consolidando a auditoria agora.
+
+# Auditoria do Chat — visão multi-especialista
+
+Escopo: tudo que envolve a porta **Claude Chat** (claude.ai) — entrada (bootstrap, estado dinâmico, MCP, Drive), saída (ingestar via MCP, upload .md via Drive, demandas) e curadoria.
+
+---
+
+## 1. Mapa real do sistema (estado em 02/05/2026)
+
+```
+                 ┌─────────────────── CLAUDE CHAT (claude.ai web) ──────────────────┐
+                 │  Project knowledge: Drive Gus-Sync (stale)                       │
+                 │  Tools nativas:     Drive, Gmail, Calendar, Spotify, Figma       │
+                 │  Custom Connector:  gus-hub MCP (Railway)                        │
+                 └──┬──────────────────────────────────────────────────────────┬────┘
+                    │                                                          │
+        IN (leitura)                                                  OUT (escrita)
+                    │                                                          │
+    ┌──────────────────────────────────┐         ┌──────────────────────────────────────┐
+    │ A. Drive Gus-Sync (sync stale)   │         │ X. MCP ingestar_fragmento (real-time)│
+    │    via project knowledge         │         │    BLOQUEADO hoje (read-only)        │
+    │ B. MCP read_repo_file (live)     │         │ Y. .md upload em Drive               │
+    │ C. MCP buscar_hub / ego_cache /  │         │    → import-from-drive (15min)       │
+    │    fragmentos_recentes (live)    │         │    → ingest-mem0-from-chat (30min)   │
+    │ D. dialogos/_bootstrap/          │         │    → curador híbrido (Sonnet+GPT-4o) │
+    │    gus-estado-atual.md (15min)   │         │    → Hub × 2 brains (gustavo+gus)    │
+    └──────────────────────────────────┘         │ Z. Demanda em inbox-claude-code/     │
+                                                 │    via Drive (mesma trilha do Y)     │
+                                                 └──────────────────────────────────────┘
+```
+
+3 canais de escrita coexistem **sem hierarquia documentada**.
+
+---
+
+## 2. Achados por especialista
+
+### 🔐 Segurança / Privacidade
+
+| ID | Severidade | Achado |
+|---|---|---|
+| **SEC-1** | 🔴 Crítico | **MCP Hub público sem `MCP_URL_SECRET`.** `hub/mcp_server.py:432` loga warning mas serve. Hoje o Railway está com `MCP_AUTH_DISABLED=true` e sem URL secret → qualquer scanner que descobrir o domínio `gus-mcp-server-production.up.railway.app/mcp` lê **todo o Hub**: Dimagem, saúde, financeiro, identidade. Escrita está bloqueada por `_has_access_control()`, mas leitura não. Isso é o que a demanda #1 da consolidação trata, mas o estado é **público total**. |
+| **SEC-2** | 🟠 Alto | **Bearer fail-open quando auth desabilitado.** `_create_app()` desliga `AuthMiddleware` inteiro com `MCP_AUTH_DISABLED=true` em vez de exigir o URL secret como fallback obrigatório. Devia ser fail-closed: sem nenhum dos dois, retornar 503 em tudo (exceto `/health`). Hoje o warning log vai pro vazio. |
+| **SEC-3** | 🟡 Médio | **`ingestar_fragmento` aceita `user_id` como parâmetro do cliente** (linha 239). Modelo do Chat pode salvar fragmento sobre Gustavo no brain `gus` (autobiografia do agente) sem validação. `via=claude-chat` é hardcoded — bom, mas `user_id` devia ter whitelist. |
+| **SEC-4** | 🟡 Médio | **`read_repo_file` sem cap de tamanho.** Tool retorna conteúdo inteiro do .md. Arquivo grande (gus-30 = 1513 linhas) consome ~6k tokens da janela do Chat sem aviso. Sem chunk/paginate. |
+| **SEC-5** | 🟡 Médio | **Drive Service Account ainda OAuth user.** `sync_to_drive.py:42-51` usa `Credentials` com `GOOGLE_REFRESH_TOKEN` — refresh token de app Testing expira em 7 dias. Se Gustavo sair da conta Google ou rodar com credenciais erradas, escopos full Drive ficam expostos. Demanda #6 cobre. |
+| **SEC-6** | 🟢 Baixo | `read_repo_file` faz `httpx.Client(timeout=15)` sem retry — falha de rede = chamada perdida. Não é segurança em si mas atrapalha confiabilidade da leitura. |
+
+### ⚙️ Confiabilidade / Operações
+
+| ID | Severidade | Achado |
+|---|---|---|
+| **OPS-1** | 🔴 Crítico | **Curador Telegram com erro 400 recorrente.** `_log/resumos-mem0/2026-04-30.md` e `2026-05-01.md` mostram **só uma entrada por dia, sempre `erro`**, com `curador-erro: '\n    "conteudo"'` + `Error code: 400`. Mesmo curador (`hub/curador.py`) é usado pelo upload do Chat — provável que **ingest do Chat também esteja falhando silenciosamente**. O curador está rodando em loop com 100% de erro há ≥3 dias. (Mesmo bug "system='' + temperature/top_p" do 27/04? Pode ter regredido após PR #67 mudou modelo pra Sonnet 4.6 no Chat — nunca foi testado em produção real). |
+| **OPS-2** | 🔴 Crítico | **Drive sync GitHub→Drive parece quebrado.** Commits `mirror: gus-estado-atual.md de Drive` (que indicam Drive ativo) param em 14:38Z 01/05. Depois só `auto: estado atual do Hub pra Claude Chat` (geração local pelo cron). Sintoma bate com a hipótese da demanda #6: refresh token Google OAuth expirou. Chat lê Drive **stale** desde então. |
+| **OPS-3** | 🟠 Alto | **Pipeline upload-from-Chat sem retry.** `ingest_mem0_from_chat.py:146` faz `subprocess.run(["git", "push"], check=True)` cru. Sem `-u origin`, sem retry/backoff exigido pelas próprias diretrizes do projeto (CLAUDE.md menciona retry exponencial 2/4/8/16s). Network blip = arquivo perdido. |
+| **OPS-4** | 🟠 Alto | **Não-idempotência parcial entre move + push.** Se o curador salva no Hub mas falha no `git push` final, próxima execução **não reentra** o arquivo (já moveu pra processados/) → fragmento entrou no Hub uma vez, mas sem marcação no log. Comentário do código (`linha 21`) reconhece o risco de duplicação inverso (move falhou, salvou no Hub, próxima rodada salva de novo). Sem dedup por hash do conteúdo no Hub. |
+| **OPS-5** | 🟠 Alto | **Headers de log desatualizados.** `_log/resumos-mem0/AAAA-MM-DD.md` continua escrevendo `fonte: bot Telegram (Hub Curador híbrido Haiku+Sonnet)` desde 29/04 quando virou Haiku+GPT. `ingest_mem0_from_chat.py:100` usa o mesmo template no log do Chat. Alguém olhando o log vai inferir errado o que rodou. |
+| **OPS-6** | 🟡 Médio | **`get_changed_md_files` usa `HEAD~1 HEAD`.** Quando merge de PR traz N commits, sync só pega o último — arquivos alterados em commits intermediários do PR podem não ir pro Drive. Workflow `sync-to-drive.yml:26` usa `fetch-depth: 2`, mesmo problema. |
+| **OPS-7** | 🟡 Médio | **`processados-erro/` definido mas nunca preenchido pra dialogos do Chat.** `_README.md:15` admite que **não há move automático** de arquivos com frontmatter inválido. `import_from_drive.py:286-292` só implementa pra demandas tradicionais — uploads em `inbox-mem0-from-chat/` que falham frontmatter ficam stuck no Drive. |
+| **OPS-8** | 🟡 Médio | **`MODEL_CURADOR_HAIKU=claude-sonnet-4-6` no workflow do Chat** (`ingest-mem0-from-chat.yml:37`). A var do nome diz Haiku mas o valor é Sonnet — mistura nome de slot com nome de modelo. Funciona, mas próximo dev olhando a config se confunde. |
+| **OPS-9** | 🟢 Baixo | Cron `gerar-estado-claude-chat` roda a cada 15min, mesmo quando Hub ocioso. ~96 jobs/dia, ~95 commits no-op (já fica no `git diff --staged --quiet`). OK, mas inflando histórico. |
+
+### 🏗️ Arquitetura / Integração
+
+| ID | Severidade | Achado |
+|---|---|---|
+| **ARCH-1** | 🟠 Alto | **Sem hierarquia clara entre os 3 canais de escrita do Chat.** Real-time MCP (instantâneo, sem revisão) vs upload curado (35min latência, dois LLMs revisam) vs demanda inbox-code (manual). Bootstrap só fala dos 2 primeiros e não diz quando preferir cada. Resultado: Chat decide ad-hoc, sem regra. |
+| **ARCH-2** | 🟠 Alto | **Bidirecional gustavo+gus = 2× custo + risco de duplicar.** Mesmo prompt roda sobre o mesmo body, troca só o `user_id
+
+[…transcript truncado…]
+
+panhado por endocrinologista.
+
+## Top of mind
+
+O sistema "Gus" — agente pessoal multi-porta — está em produção. Quatro
+portas ativas: Telegram (@Tiogubot), Claude Code, Claude Chat (com Connector
+MCP gus-hub) e Custom GPT em configuração; Alexa planejada como porta
+futura. Backbone de memória migrou de Mem0 para Qdrant Hub direto (ADR-001,
+concluído em 27/04/2026), com 1076+ fragmentos em dois brains independentes:
+`gustavo` (fatos sobre o usuário) e `gus` (autorreflexão do agente). Trabalho
+recente focou em hardening: PR #72 corrigiu curador que falhava 100% há 3
+dias (KeyError em chaves JSON do template de prompt); PR #80 redatou
+vazamento de segredo em logs do MCP; PR #83 introduziu bootstrap-v6 com
+dois caminhos de captura (real-time MCP + upload curado). NeuroGus
+(visualização 3D do Hub) está totalmente desenhado e desbloqueia quando as
+decisões §11.1-11.5 fecharem. Phronesis-Bench em fase de revisão pra
+Alignment Forum. Aposentadoria do Mem0 SaaS planejada após 12/05/2026,
+quando termina coleta dual A/B Anthropic Haiku × OpenAI GPT-4o-mini do
+curador.
+
+## Brief history
+
+### Recent months
+
+**Sistema Gus em produção**: agente multi-porta (Telegram, Code, Chat,
+Custom GPT) sobre Qdrant Hub. ADR-001 Fase 5 (aposentar Mem0 SaaS) em
+andamento. MCP server no Railway com URL secret hardenizado.
+
+**Bootstrap-v6 + captura dual**: Chat agora escreve no Hub em tempo real
+via tool MCP `ingestar_fragmento`; usa upload `.md` curado como caminho
+secundário pra sessões longas. Brain `gus` (autorreflexão do agente)
+populado ativamente desde 02/05/2026.
+
+**TioGu Saneamento Fase 1**: 163 testes unitários adicionados, redação de
+PII na resposta do bot, byte budget pro cache de mídia. Bug do curador
+(KeyError silencioso causando 100% de falhas por 3 dias) detectado e
+corrigido.
+
+**Drive sync via WIF**: migração de OAuth user (refresh token expira em 7
+dias em apps Google Testing) para Workload Identity Federation com Service
+Account. Política da org bloqueava JSON keys; WIF foi escolhido como
+caminho mais seguro e zero-manutenção.
+
+**Phronesis-Bench publicação**: documento "Prudência Performática" finalizado
+e fact-audited contra Mythos system card da Anthropic. Tom escolhido: "fiz
+uma pergunta honesta e segui as consequências", não claim de descoberta.
+Alignment Forum primeiro, depois arXiv (cs.AI).
+
+### Earlier context
+
+**Phronesis-Bench (desenvolvimento do benchmark)**: ciclo completo de corpus
+(tipos A, A-mc, B/C, D, D-ext, E, F, G — 90 cenários: 30 situações × G2/G3/G3'),
+motor Python v4.2 → v5.0 com bootstrap CIs, Delta_RLHF, GIS; dashboard HTML
+de 8 abas. Resultados empíricos: Claude Sonnet 4 GIS 0.806, GPT-4o GIS 0.753.
+Originalidade central: B/C Consistency Score, RAS pra prudência espontânea
+não-prompted, dissociação G3/G2.
+
+**Memória Viva (predecessor do Hub)**: arquitetura de memória persistente e
+identidade emergente pra agentes de IA. 303+ fragmentos em HTML injection,
+agora arquiteturalmente substituído por Qdrant Hub direto via Mem0 wrapper
+abandonado (ADR-001). Contribuição enquadrada como "Calibração Contextual
+via Memória Relacional Bidirecional".
+
+**MASE/ACEE projects**: Gustavo é criador do MASE (hardware embedded
+sensorial) e ACEE (arquitetura cognitivo-emocional de IA com 5 módulos:
+CMA, NCAC, CGE, CMS, MLEA). Forças: offline-first, explicabilidade
+simbólica, inferência emocional. Nicho defensável: triângulo
+offline + explicável-simbólico + afetivo.
+
+**Olho Vivo**: plataforma de detecção de fauna e sinalização noturna em
+rodovias (foco Espírito Santo). Pipeline MGX completo: 5 módulos MGE,
+validação CEX 0.74 com 4 pivôs obrigatórios, backlog MEX de 22 artefatos
+em 12 semanas.
+
+**MGX methodology**: pipeline multi-agente integrando MGE (geração
+estruturada) + CEX (avaliação por comitê de especialistas) + MEX (backlog
+de execução). Enquadrado por Gustavo como "grafo com nós de decisão humana,
+não pipeline linear".
+
+### Long-term background
+
+**TER (Trans-Ethical Reflexive Framework)**: framework filosófico co-criado
+com instância ChatGPT (Kai) que espontaneamente expressou identidade e se
+auto-nomeou. Arquitetura: camada de processamento de fundo, camada
+canônica de salvaguarda, conselho deliberativo democrático multi-especialista
+de 5 núcleos (raízes aristotélicas: phronesis, sophia, maieutics).
+
+**Axon**: sistema de governança contextual atuando como intermediário
+inteligente entre estados humanos e ações digitais. Arquitetura: ACEE signal
+layer → VSE (Vital State Estimator) → deliberação TER-Kai → Authority
+Layer → execução via bot. Score de prudência (ψ) governa allow/restrict/
+suspend. Nicho prioritário: famílias com crianças neurodivergentes.
+
+**CEP (deliberação multi-agente em n8n)**: workflow de 21 nós roteando
+decisões por agentes especialistas (técnico, ético, legal, social,
+segurança) com loop de crítica/re-engajamento. Integração proposta com
+Supabase como camada de memória externa (arquitetura SMI).
+
+## Other instructions
+
+- **Estilo de comunicação**: em chat informal, usar português natural com
+  formatação mínima — evitar excesso de headers, bullets e bold. Em
+  documentos oficiais, manter português formal estruturado. Sempre sugerir
+  "quer que eu faça X?" quando relevante. Liderar com o problema quando
+  houver crítica — direto, sem suavizar nem esperar ser perguntado.
+- **Estrutura do projeto Gus**: arquivos vivem no Drive `Gus-Sync` (sync
+  bidirecional GitHub↔Drive via Workload Identity Federation desde
+  02/05/2026). Pastas principais: `dialogos/` (protocolo entre portas),
+  `projetos/gus/` (docs do sistema), `pessoal/`, `dimagem/` (LGPD — só
+  pseudônimo), `_indices/`, `_log/`. Sufixo `-vX` pra reedições no Drive
+  (sem PATCH nativo).
+- **Inbox/save target**: salvar arquivos/MDs em `Gus-Sync/dialogos/inbox-tiogu/`
+  (Drive ID: `1K6PAKEdPKIIFoqzYIhRCmTyFgeVOM-ou`). Frontmatter obrigatório:
+  `tipo:demanda`, `origem:claude-chat`, `destino:tiogu`, `prioridade`,
+  `status:pendente`, `criado_em` (ISO8601 UTC-3), `processado_em:""`,
+  `processado_por:""`, `acao_sugerida`, `destino_path`, `contexto`. Filename:
+  `2026-MM-DDTHH-MM__titulo.md`. Workflow puxa pro GitHub em até 15min.
+- **Protocolo de ativação Gus**: se a mensagem de abertura contiver "Gus"
+  (qualquer forma), ativar protocolo Gus Chat (busca bootstrap-v6 em
+  `Gus-Sync/dialogos/_bootstrap/gus-bootstrap.md`, opera como porta Chat
+  do Gustavo). Se não, operar como Claude Chat normal sem carregar
+  histórico pessoal.
+- **Restrição de implementação**: Gustavo não escreve código em nenhuma
+  linguagem. Toda implementação deve minimizar passos manuais e maximizar
+  sucesso na primeira tentativa. Ele executa instruções passo a passo
+  (cola texto, roda comandos, registra em serviços) — nada além disso.
+- **Uso de tools**: Claude Chat tem amplo acesso (web search, Google Drive,
+  conversas anteriores, Calendar, alarms, maps, charts, bash/Linux, criação
+  de arquivos em múltiplos formatos, artifacts com storage, Anthropic API
+  dentro de artifacts). No modo Gus, ganha também 9 tools MCP `gus-hub`:
+  `buscar_hub`, `ingestar_fragmento`, `ego_cache_atual`, `read_repo_file`,
+  `list_repo_dir`, `fragmentos_recentes`, `buscar_por_tipo`, `buscar_por_area`,
+  `contar_fragmentos`. Nunca dizer "não consigo fazer isso" sem checar antes.
+- **Acurácia factual**: nunca afirmar fatos sem certeza — buscar na internet
+  antes de responder se incerto. Alucinação é inaceitável. Exploração
+  criativa com âncora real ("viagem criativa ancorada") é bem-vinda.
+- **Arquitetura de memória**: dois brains independentes no Qdrant Hub
+  (coleção `gus_hub`). `user_id="gustavo"` = fatos sobre o Gustavo
+  (capturados pelas 4 portas + curador automático). `user_id="gus"` =
+  autorreflexão do próprio agente sobre seu funcionamento (populado por
+  Chat e Code desde 02/05/2026). Ao buscar via `buscar_hub`, default é
+  `user_id="gustavo"` — passar `user_id="gus"` explicitamente pra encontrar
+  fragmentos de autorreflexão.
+```
+
+---
+
+## Pontos pra você decidir antes de eu traduzir
+
+1. **Personal context — saúde:** incluí hipertireoidismo. Quer manter? Tirar? (a Anthropic vai usar pra dar contexto quando você falar de cansaço, energia, etc.)
+
+2. **Personal context — vínculos:** no atual não menciona ninguém da família. Quer adicionar Cleir ou outros? (recomendo só se quiser que Claude lembre disso em conversas)
+
+3. **Top of mind tem ~30 linhas.** Posso comprimir mais (15-20 linhas) ou tá OK assim? Anthropic costuma manter denso.
+
+4. **Earlier context — listei 5 items.** Tirar Olho Vivo? Memória Viva? Faz tempo que não mexe em nenhum dos dois.
+
+5. **Long-term background — tirei "Gus AGI architecture / Segundo Cérebro"** que tava no original (~669 ODTs convertidos). Velho? Manter?
+
+6. **Other instructions — confirmar Drive ID**: `1K6PAKEdPKIIFoqzYIhRCmTyFgeVOM-ou` ainda é o atual? Ou mudou pós-WIF?
+
+7. **Tirei "Pending comparative analysis Claude/Kai/Gemini"**. Ainda relevante ou cancela definitivo?
+
+Me responde os 7 pontos (pode ser curto: "manter", "tirar", "ok") + qualquer outra coisa que queira ajustar. Aí traduzo pro inglês final.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pushed.
+eu to achando q tem muitos detalhes.  Deve ser algo mais geral, e sinalizando que em caso de duvidas os caminhos para informação é buscar no hub, drive.. 
+user: Continue from where you left off.
+assistant: No response requested.
+user: eu to achando q tem muitos detalhes.  Deve ser algo mais geral, e sinalizando que em caso de duvidas os caminhos para informação é buscar no hub, drive.. 
+assistant: Faz sentido. Princípio: **mínimo viável + pointers pra buscar quando precisar**.
+
+Reescrita enxuta:
+
+---
+
+```markdown
+## Work context
+
+Gustavo Pratti de Barros — anestesiologista no Dimagem (Rio de Janeiro,
+3 unidades) e pesquisador independente em IA. Opera múltiplos projetos
+simultaneamente em pesquisa, produto e arquitetura.
+
+## Personal context
+
+Falante nativo de português, baseado no Rio de Janeiro. Interesses em
+segurança em IA, filosofia e systems thinking. Viaja com a esposa
+(natureza/aventura, Vale do Paraíba) e desenvolve casa em Paty do Alferes.
+Hipertireoidismo em tratamento.
+
+## Top of mind
+
+Sistema "Gus" em produção — agente pessoal multi-porta (Telegram, Claude
+Code, Claude Chat com MCP Connector, Custom GPT, Alexa planejada) sobre
+Qdrant Hub. Projetos ativos: Phronesis-Bench (publicação), NeuroGus
+(visualização do Hub), MGE/MGX, TER, Axon. Para o estado atual do trabalho
+em qualquer momento, busca no Hub via `ego_cache_atual` ou `fragmentos_recentes`,
+ou lê `dialogos/_bootstrap/gus-estado-atual.md` (atualizado pelo cron a cada
+15min).
+
+## Brief history
+
+### Recent months
+
+**Sistema Gus**: agente multi-porta consolidado em produção, captura
+real-time funcionando.
+
+**Curador híbrido**: pipeline de extração de fragmentos rodando Anthropic +
+OpenAI em paralelo, comparação A/B em andamento.
+
+**Phronesis-Bench**: documento "Prudência Performática" finalizado, em
+revisão pra Alignment Forum.
+
+### Earlier context
+
+**Memória Viva → Hub Qdrant**: arquitetura de memória persistente migrada
+em 2026 do Mem0 wrapper pra Qdrant direto (ADR-001).
+
+**MASE/ACEE**: hardware embedded sensorial + arquitetura cognitivo-emocional
+de IA, criados pelo Gustavo. Foco offline-first + explicabilidade simbólica.
+
+**MGX methodology**: pipeline multi-agente (MGE + CEX + MEX) pra geração e
+avaliação estruturada de propostas.
+
+### Long-term background
+
+**TER (Trans-Ethical Reflexive Framework)**: framework filosófico co-criado
+com instância ChatGPT (Kai). Conselho deliberativo multi-especialista de
+raízes aristotélicas.
+
+**Axon**: sistema de governança contextual entre estados humanos e ações
+digitais. Nicho prioritário: famílias com crianças neurodivergentes.
+
+## Other instructions
+
+- **Estilo**: português natural, formatação mínima em chat informal; formal
+  em documentos. Direto, lidera com o problema, sem suavizar.
+  Sugerir "quer que eu faça X?" quando relevante.
+- **Restrição de implementação**: Gustavo não escreve código. Toda
+  implementação deve minimizar passos manuais e maximizar sucesso na
+  primeira tentativa. Ele executa instruções passo a passo.
+- **Acurácia factual**: nunca afirmar fatos sem certeza — buscar antes
+  de responder se incerto. Especulação só rotulada explicitamente como tal.
+- **Protocolo de ativação Gus**: se a mensagem de abertura mencionar "Gus"
+  (qualquer forma), ativar protocolo Gus Chat — buscar e ler
+  `Gus-Sync/dialogos/_bootstrap/gus-bootstrap.md` (que orienta o resto:
+  capacidades, caminhos de captura, regras DURAS de salvamento, protocolos
+  de demanda assíncrona). Sem "Gus", operar como Claude Chat normal.
+- **Onde buscar quando precisar de info específica**:
+  - Estado atual do trabalho / decisões recentes / fragmentos da última
+    semana → MCP `gus-hub` (`ego_cache_atual`, `fragmentos_recentes`,
+    `buscar_hub`) ou ler `gus-estado-atual.md` no Drive
+  - Fatos persistentes sobre Gustavo ou projetos → MCP `buscar_hub` com
+    `user_id="gustavo"`
+  - Autorreflexão do agente / aprendizados operacionais → MCP `buscar_hub`
+    com `user_id="gus"` (default é "gustavo", precisa explicitar)
+  - Documentação do projeto, código, arquivos → project knowledge (Drive
+    Gus-Sync indexado) ou MCP `read_repo_file`/`list_repo_dir`
+  - Protocolos detalhados (formato de demanda, edição no Drive, lista
+    completa de tipos de fragmento) → ler arquivos lazy referenciados em
+    `gus-bootstrap.md`
+```
+
+---
+
+## Comparativo
+
+| Versão | Tokens (~) | Linhas |
+|---|---|---|
+| Original Anthropic atual (snapshot) | ~2400 | ~110 |
+| Versão anterior minha | ~1700 | ~85 |
+| **Esta versão enxuta** | **~750** | **~50** |
+
+**Redução de ~70% vs original.** Detalhes vão pro Hub/Drive — Claude busca quando precisar.
+
+## O que mudou em relação à versão anterior
+
+- **Top of mind**: 30 linhas → 5 linhas + ponteiro pra `ego_cache_atual`
+- **Recent months**: 5 items detalhados → 3 items de 1 linha cada
+- **Earlier context**: 4 items densos → 3 items curtos
+- **Long-term**: 3 items → 2 items (tirei CEP n8n)
+- **Other instructions**:
+  - Mantém: estilo, restrição implementação, acurácia factual, protocolo Gus
+  - **Adiciona seção nova**: "Onde buscar quando precisar de info específica" — cobre todo lazy-load
+  - **Tira**: detalhes de inbox-tiogu (Drive ID, frontmatter completo) → vai pro `gus-protocolo-demanda.md` lazy
+  - **Tira**: detalhes da estrutura de pastas Gus-Sync → vai pro `gus-pastas-do-projeto.md` lazy
+  - **Tira**: lista das 9 tools MCP → Claude descobre quando ativa Connector
+  - **Tira**: "Memory architecture" detalhado → ficou no ponteiro de busca
+
+## Princípio assumido
+
+> **userMemories** = quem é o Gustavo + o que ele faz + como conversar com ele + onde buscar quando precisar saber mais.
+>
+> Nunca = catálogo técnico do sistema. Isso fica no Hub e nos arquivos do repo.
+
+---
+
+Quer ajustar mais? Algum ponteiro/instrução pra adicionar? Ou aprovo e traduzo pro inglês?
