@@ -312,6 +312,15 @@ def listar(user_id: str = "gustavo", limit: int = 50) -> list[dict]:
 
     Usado pelo MCP `mem0-gus` em listar_memorias / listar_memorias_gus
     quando o usuário quer ver tudo (não fazer query específica).
+
+    Retorna o **payload completo** mais um campo `id` derivado do point ID.
+    Antes do fix de 2026-05-04, esta função filtrava só 7 campos
+    (conteudo, tipo, estado, via, area, criado_em, curador) — o que
+    deixava `meta_relatorio_hub` e `auditoria_hub` cegos pra
+    `camada_temporal`, `prompt_version`, `confianca`,
+    `tipo_esquecimento`, `hash_janela` e outros campos que o curador
+    grava normalmente. Resultado: 100% dos relatórios mostravam esses
+    campos como `(sem)` mesmo quando o Hub estava populando direito.
     """
     client = _get_client()
     pontos, _ = client.scroll(
@@ -321,19 +330,12 @@ def listar(user_id: str = "gustavo", limit: int = 50) -> list[dict]:
         with_payload=True,
         with_vectors=False,
     )
-    return [
-        {
-            "id": str(p.id),
-            "conteudo": (p.payload or {}).get("conteudo", ""),
-            "tipo": (p.payload or {}).get("tipo"),
-            "estado": (p.payload or {}).get("estado"),
-            "via": (p.payload or {}).get("via"),
-            "area": (p.payload or {}).get("area"),
-            "criado_em": (p.payload or {}).get("criado_em"),
-            "curador": (p.payload or {}).get("curador"),
-        }
-        for p in pontos
-    ]
+    out: list[dict] = []
+    for p in pontos:
+        payload = dict(p.payload or {})
+        payload["id"] = str(p.id)
+        out.append(payload)
+    return out
 
 
 def deletar(memory_id: str, motivo: Optional[str] = None) -> bool:
