@@ -1,9 +1,9 @@
 ---
 tipo: meta-memoria
-atualizado: 2026-05-04T08:10:22.131234-03:00
-hub_total_geral: 8709
-hub_total_gustavo: 4396
-hub_total_gus: 4313
+atualizado: 2026-05-05T07:51:34.444348-03:00
+hub_total_geral: 10462
+hub_total_gustavo: 5272
+hub_total_gus: 5190
 ---
 
 # Auditoria do Hub Qdrant
@@ -13,33 +13,33 @@ Análise automática e determinística do armazém de memórias do Gus (coleçã
 **Não confundir com meta-memória do Gus** (`gus/meta-memoria.md`), que é o auto-conhecimento do próprio Gus.
 
 ## Resumo multi-brain (item 1.5)
-- **Brain `gustavo`** (memórias sobre o usuário): 4396 fragmentos
-- **Brain `gus`** (auto-observações do agente): 4313 fragmentos
-- **Total geral:** 8709
+- **Brain `gustavo`** (memórias sobre o usuário): 5272 fragmentos
+- **Brain `gus`** (auto-observações do agente): 5190 fragmentos
+- **Total geral:** 10462
 
 ## Detalhe — brain `gustavo`
 
-- **Total:** 4396 memórias
+- **Total:** 5272 memórias
 - **Mais antiga:** 2026-04-27 — *"1. Após merge e deploys recentes, o auto_diagnostico agora tem acesso ao Hub Qdr..."*
-- **Mais recente:** 2026-05-04 — *"A manutenção do bot inclui a atualização periódica das dependências e a facilita..."*
+- **Mais recente:** 2026-05-05 — *"Um sistema de deduplicação deve ser introduzido para evitar multiplicidade de da..."*
 
 ## Frescor
-- **Últimas 24h:** 2408 (54.8%)
-- **Últimos 7 dias:** 1988 (45.2%)
-- **Últimos 30 dias:** 0 (0.0%)
+- **Últimas 24h:** 876 (16.6%)
+- **Últimos 7 dias:** 4392 (83.3%)
+- **Últimos 30 dias:** 4 (0.1%)
 - **Mais de 30 dias:** 0 (0.0%)
 
 ## Densidade por área
 Estimativa via keywords (uma memória pode contar em múltiplas áreas):
 
-- **gus:** 2146 (48.8%)
-- **projetos:** 2062 (46.9%)
-- **pessoal:** 76 (1.7%)
-- **saude:** 65 (1.5%)
-- **capturado:** 23 (0.5%)
+- **projetos:** 2875 (54.5%)
+- **gus:** 2202 (41.8%)
+- **pessoal:** 77 (1.5%)
+- **saude:** 66 (1.3%)
+- **capturado:** 27 (0.5%)
 - **pesquisa:** 14 (0.3%)
-- **dimagem:** 13 (0.3%)
-- **financeiro:** 4 (0.1%)
+- **dimagem:** 13 (0.2%)
+- **financeiro:** 5 (0.1%)
 - **receitas:** 2 (0.0%)
 
 ## Duplicatas suspeitas
@@ -111,19 +111,19 @@ Pares com similaridade Jaccard ≥ 0.5. Revisar manualmente — não são duplic
 
 ## Detalhe — brain `gus` (auto-observações)
 
-- **Total:** 4313
-- **Últimas 24h:** 2383 (55.3%)
-- **Últimos 7 dias:** 1930 (44.7%)
+- **Total:** 5190
+- **Últimas 24h:** 877 (16.9%)
+- **Últimos 7 dias:** 4313 (83.1%)
 - **Últimos 30 dias:** 0 (0.0%)
 - **Mais de 30 dias:** 0 (0.0%)
 
 **Áreas (brain `gus`):**
-- **projetos:** 2141 (49.6%)
-- **gus:** 1966 (45.6%)
-- **pessoal:** 82 (1.9%)
-- **saude:** 71 (1.6%)
-- **capturado:** 32 (0.7%)
-- **dimagem:** 15 (0.3%)
+- **projetos:** 2951 (56.9%)
+- **gus:** 2028 (39.1%)
+- **pessoal:** 82 (1.6%)
+- **saude:** 72 (1.4%)
+- **capturado:** 35 (0.7%)
+- **dimagem:** 16 (0.3%)
 - **financeiro:** 5 (0.1%)
 - **pesquisa:** 1 (0.0%)
 - **receitas:** 1 (0.0%)
