@@ -1,9 +1,9 @@
 ---
 tipo: bootstrap
 porta: gpt-chat
-versao: 1.2
+versao: 1.3
 descricao: Porta GPT Chat operando em Modo Gus com leitura determinística de inbox
-atualizado_em: 2026-05-05
+atualizado_em: 2026-05-06
 ---
 
 # Bootstrap — Porta GPT Chat (Modo Gus)
@@ -72,43 +72,28 @@ Porém a busca indexada retornou apenas parte dos arquivos. Portanto, a porta GP
 
 ---
 
-## Fontes aceitáveis para considerar um inbox realmente lido
+## Endpoint determinístico — Gus Gateway (ATIVO desde 2026-05-06)
 
-Para considerar uma pasta `dialogos/inbox-*` como lida, a porta GPT Chat precisa receber a lista de arquivos por uma destas fontes:
+O endpoint foi implantado na API do Gus no Railway:
 
-1. **Gus Gateway API**, endpoint dedicado de listagem determinística.
-2. **GitHub API contents/tree**, com retorno bruto da árvore ou diretório.
-3. **Índice versionado gerado por workflow**, por exemplo:
-
-```text
-_indices/dialogos-tree.txt
-_indices/dialogos-files.json
+```
+GET https://gus-production-58a7.up.railway.app/<GPT_INBOX_SECRET>/gpt/inbox/gpt-chat
 ```
 
-4. **Comando local executado por Claude Code/Gateway**, por exemplo:
+**Sobre o `<GPT_INBOX_SECRET>`:**
 
-```bash
-find dialogos/inbox-gpt-chat -type f | sort
-```
+- É um segredo configurado no Railway pelo Gustavo.
+- Se não estiver em memória, perguntar ao Gustavo: *"Qual o GPT_INBOX_SECRET para acessar o inbox?"*
+- Após receber, guardar em memória com a chave `gpt_inbox_secret` para usar nas próximas ativações.
+- Nunca expor o segredo na resposta ao usuário.
 
-Sem uma dessas fontes, o resultado deve ser tratado como **modo degradado**.
-
----
-
-## Endpoint recomendado no Gus Gateway
-
-Endpoint mínimo para esta porta:
-
-```text
-GET /gpt/inbox/gpt-chat
-```
-
-Resposta esperada:
+**Resposta do endpoint:**
 
 ```json
 {
   "porta": "gpt-chat",
   "modo": "deterministico",
+  "total": 2,
   "arquivos": [
     {
       "path": "dialogos/inbox-gpt-chat/arquivo.md",
@@ -128,6 +113,10 @@ Resposta esperada:
 }
 ```
 
+O endpoint retorna apenas demandas com `status: pendente` ou `status: parcial`, ordenadas por prioridade (alta → media → baixa). Arquivos com nome começando em `_` são ignorados automaticamente.
+
+**Se o endpoint retornar erro 503 ou 404 inesperado:** declarar modo degradado e continuar sem inbox.
+
 ---
 
 ## Fluxo correto ao ativar o Modo Gus
@@ -135,19 +124,12 @@ Resposta esperada:
 Ao ativar o modo Gus, a porta deve:
 
 1. Carregar este bootstrap.
-2. Obter listagem determinística de `dialogos/inbox-gpt-chat/`.
-3. Abrir ou receber o conteúdo estruturado de todos os arquivos `.md` listados.
-4. Ignorar arquivos cujo nome começa com `_`.
-5. Parsear frontmatter YAML.
-6. Filtrar apenas arquivos com:
-   - `tipo: demanda`;
-   - `status: pendente`;
-   - `destino: gpt-chat`.
-7. Ordenar por prioridade:
-   - alta;
-   - media;
-   - baixa.
-8. Apresentar painel de demandas ao usuário.
+2. Verificar se `gpt_inbox_secret` está em memória. Se não, pedir ao Gustavo.
+3. Chamar `GET https://gus-production-58a7.up.railway.app/<secret>/gpt/inbox/gpt-chat`.
+4. Se a resposta for `{"modo": "deterministico", ...}`, usar os dados retornados diretamente — já estão filtrados e ordenados.
+5. Apresentar painel de demandas ao usuário.
+
+Não usar o conector GitHub para listar `dialogos/inbox-gpt-chat/` — esse caminho é modo degradado.
 
 ---
 
@@ -161,10 +143,10 @@ A porta GPT Chat **NÃO deve**:
 - pedir ao usuário nome exato/caminho/conteúdo como fluxo normal;
 - inferir ausência de demanda por ausência de resultado em busca.
 
-Se a listagem determinística não estiver disponível, declarar explicitamente:
+Se o endpoint estiver indisponível e não houver outra fonte determinística:
 
 ```text
-Modo Gus ativado em modo degradado: não há listagem determinística do inbox. A leitura pode estar incompleta.
+Modo Gus ativado em modo degradado: endpoint de inbox inacessível. A leitura pode estar incompleta.
 ```
 
 ---
@@ -177,7 +159,7 @@ Quando houver listagem determinística:
 Modo Gus ativado.
 
 Bootstrap carregado.
-Inbox analisado por listagem determinística.
+Inbox analisado via endpoint determinístico.
 
 Demandas pendentes:
 
@@ -192,7 +174,7 @@ Quando não houver demandas:
 Modo Gus ativado.
 
 Bootstrap carregado.
-Inbox analisado por listagem determinística.
+Inbox analisado via endpoint determinístico.
 
 Nenhuma demanda pendente.
 
@@ -205,9 +187,9 @@ Quando estiver em modo degradado:
 Modo Gus ativado em modo degradado.
 
 Bootstrap carregado.
-Não recebi listagem determinística do inbox; busca indexada não é suficiente para garantir leitura completa.
+Endpoint de inbox inacessível; não posso garantir leitura completa do inbox.
 
-Posso analisar arquivos encontrados, mas não devo afirmar que não há demandas.
+Posso continuar sem demandas ou você pode verificar o Railway.
 ```
 
 ---
