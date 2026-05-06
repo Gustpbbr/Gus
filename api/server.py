@@ -15,6 +15,7 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from api.routes import router
+from api.gpt_inbox import router as gpt_inbox_router
 from hub.routes import router as hub_router
 
 
@@ -84,5 +85,6 @@ def create_app() -> FastAPI:
 
     app.include_router(router)
     app.include_router(hub_router)  # Hub Qdrant direto — ADR-001 Fase 1
+    app.include_router(gpt_inbox_router)  # Inbox determinístico — GPT Chat
 
     return app
