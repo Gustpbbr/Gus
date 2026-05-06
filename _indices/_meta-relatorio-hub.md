@@ -1,7 +1,7 @@
 ---
 tipo: meta-relatorio
-atualizado: 2026-05-05T08:08:31.041273-03:00
-hub_total_geral: 10462
+atualizado: 2026-05-06T08:33:09.779694-03:00
+hub_total_geral: 10485
 jaccard_duplicata: 0.6
 ---
 
@@ -13,83 +13,83 @@ Gerado por `.github/scripts/meta_relatorio_hub.py` (item 1.8 do plano de saneame
 
 ## Resumo geral
 
-- **Total Hub:** 10462
-- **Classificação completa:** 8791 (84.0%)
+- **Total Hub:** 10485
+- **Classificação completa:** 8810 (84.0%)
 - **Duplicatas suspeitas:** 0 pares (Jaccard ≥ 0.6)
 
 ## Por brain
 
 ### Brain `gustavo`
 
-- **Total:** 5272
-- **Classificação completa** (tipo≠episodico + camada≠sessao + area≠vazio): 4485 (85.1%)
+- **Total:** 5295
+- **Classificação completa** (tipo≠episodico + camada≠sessao + area≠vazio): 4504 (85.1%)
 - **Duplicatas suspeitas** (Jaccard ≥ 0.6): 0 pares
 
 **Distribuições:**
 
 - **Por tipo:**
-  - `fato`: 3248 (61.6%)
-  - `decisao`: 771 (14.6%)
-  - `procedural`: 242 (4.6%)
+  - `fato`: 3267 (61.7%)
+  - `decisao`: 772 (14.6%)
+  - `procedural`: 243 (4.6%)
   - `identidade_operacional`: 224 (4.2%)
   - `biografico`: 218 (4.1%)
-  - `projeto`: 184 (3.5%)
+  - `projeto`: 185 (3.5%)
   - `cronologico`: 131 (2.5%)
   - `meta_reflexao`: 107 (2.0%)
-  - `episodico`: 79 (1.5%)
+  - `episodico`: 80 (1.5%)
   - `preferencia`: 26 (0.5%)
 - **Por camada_temporal:**
-  - `permanente`: 4244 (80.5%)
-  - `sessao`: 705 (13.4%)
-  - `momento`: 282 (5.3%)
+  - `permanente`: 4261 (80.5%)
+  - `sessao`: 709 (13.4%)
+  - `momento`: 284 (5.4%)
   - `rotina`: 25 (0.5%)
   - `semana`: 16 (0.3%)
 - **Por area:**
-  - `projetos`: 2848 (54.0%)
-  - `gus`: 2202 (41.8%)
+  - `projetos`: 2863 (54.1%)
+  - `gus`: 2205 (41.6%)
   - `pessoal`: 77 (1.5%)
-  - `saude`: 61 (1.2%)
+  - `saude`: 66 (1.2%)
   - `(sem)`: 55 (1.0%)
   - `pesquisa`: 14 (0.3%)
   - `dimagem`: 9 (0.2%)
   - `financeiro`: 5 (0.1%)
   - `receitas`: 1 (0.0%)
 - **Por via:**
-  - `claude-code`: 5191 (98.5%)
-  - `telegram-claude`: 77 (1.5%)
+  - `claude-code`: 5191 (98.0%)
+  - `telegram-claude`: 100 (1.9%)
   - `claude-chat`: 4 (0.1%)
 - **Por curador:**
-  - `gpt`: 5249 (99.6%)
+  - `gpt`: 5272 (99.6%)
   - `(sem)`: 23 (0.4%)
 - **Por estado:**
-  - `ativo`: 5272 (100.0%)
+  - `ativo`: 5295 (100.0%)
 - **Por prompt_version:**
-  - `v1-2026-05-02`: 4712 (89.4%)
+  - `v1-2026-05-02`: 4735 (89.4%)
   - `(sem)`: 560 (10.6%)
 
 **Top 30 tokens (sinal de assunto):**
 
   - `qdrant`: 777
   - `neurogus`: 718
-  - `claude`: 685
+  - `claude`: 687
   - `sistema`: 637
-  - `gustavo`: 587
-  - `chat`: 586
+  - `chat`: 591
+  - `gustavo`: 588
   - `curador`: 572
   - `estado`: 554
   - `fragmentos`: 511
   - `code`: 510
   - `memoria`: 493
   - `mem0`: 460
-  - `atual`: 415
-  - `projeto`: 414
-  - `demandas`: 377
-  - `inbox`: 368
+  - `atual`: 416
+  - `projeto`: 415
+  - `demandas`: 378
+  - `inbox`: 370
   - `drive`: 341
   - `captura`: 334
+  - `dialogos`: 323
+  - `porta`: 323
   - `2026`: 322
-  - `porta`: 322
-  - `dialogos`: 320
   - `telegram`: 315
   - `tiogu`: 299
   - `arquivo`: 297
@@ -97,8 +97,8 @@ Gerado por `.github/scripts/meta_relatorio_hub.py` (item 1.8 do plano de saneame
   - `colecao`: 265
   - `saas`: 263
   - `agente`: 257
+  - `deve`: 256
   - `migracao`: 254
-  - `deve`: 254
 
 ### Brain `gus`
 
