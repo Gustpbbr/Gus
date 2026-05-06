@@ -1,8 +1,8 @@
 ---
 tipo: meta-memoria
-atualizado: 2026-05-05T07:51:34.444348-03:00
-hub_total_geral: 10462
-hub_total_gustavo: 5272
+atualizado: 2026-05-06T08:12:07.009325-03:00
+hub_total_geral: 10485
+hub_total_gustavo: 5295
 hub_total_gus: 5190
 ---
 
@@ -13,29 +13,29 @@ Análise automática e determinística do armazém de memórias do Gus (coleçã
 **Não confundir com meta-memória do Gus** (`gus/meta-memoria.md`), que é o auto-conhecimento do próprio Gus.
 
 ## Resumo multi-brain (item 1.5)
-- **Brain `gustavo`** (memórias sobre o usuário): 5272 fragmentos
+- **Brain `gustavo`** (memórias sobre o usuário): 5295 fragmentos
 - **Brain `gus`** (auto-observações do agente): 5190 fragmentos
-- **Total geral:** 10462
+- **Total geral:** 10485
 
 ## Detalhe — brain `gustavo`
 
-- **Total:** 5272 memórias
+- **Total:** 5295 memórias
 - **Mais antiga:** 2026-04-27 — *"1. Após merge e deploys recentes, o auto_diagnostico agora tem acesso ao Hub Qdr..."*
-- **Mais recente:** 2026-05-05 — *"Um sistema de deduplicação deve ser introduzido para evitar multiplicidade de da..."*
+- **Mais recente:** 2026-05-05 — *"A vantagem competitiva na anestesia ambulatorial estará na organização de uma op..."*
 
 ## Frescor
-- **Últimas 24h:** 876 (16.6%)
-- **Últimos 7 dias:** 4392 (83.3%)
-- **Últimos 30 dias:** 4 (0.1%)
+- **Últimas 24h:** 23 (0.4%)
+- **Últimos 7 dias:** 5253 (99.2%)
+- **Últimos 30 dias:** 19 (0.4%)
 - **Mais de 30 dias:** 0 (0.0%)
 
 ## Densidade por área
 Estimativa via keywords (uma memória pode contar em múltiplas áreas):
 
-- **projetos:** 2875 (54.5%)
-- **gus:** 2202 (41.8%)
+- **projetos:** 2890 (54.6%)
+- **gus:** 2205 (41.6%)
 - **pessoal:** 77 (1.5%)
-- **saude:** 66 (1.3%)
+- **saude:** 71 (1.3%)
 - **capturado:** 27 (0.5%)
 - **pesquisa:** 14 (0.3%)
 - **dimagem:** 13 (0.2%)
@@ -112,9 +112,9 @@ Pares com similaridade Jaccard ≥ 0.5. Revisar manualmente — não são duplic
 ## Detalhe — brain `gus` (auto-observações)
 
 - **Total:** 5190
-- **Últimas 24h:** 877 (16.9%)
-- **Últimos 7 dias:** 4313 (83.1%)
-- **Últimos 30 dias:** 0 (0.0%)
+- **Últimas 24h:** 0 (0.0%)
+- **Últimos 7 dias:** 5189 (100.0%)
+- **Últimos 30 dias:** 1 (0.0%)
 - **Mais de 30 dias:** 0 (0.0%)
 
 **Áreas (brain `gus`):**
