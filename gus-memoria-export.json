@@ -1038,6 +1038,30 @@
     }
   },
   {
+    "id": "022331fe-78ce-4b2a-9442-5866ddc8f93c",
+    "memory": "PostgreSQL é uma opção poderosa de banco de dados relacional com suporte a dados complexos.",
+    "created_at": "2026-05-05T12:27:51.920744-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "projetos",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T12:27:51.920744-03:00",
+      "curador": "gpt",
+      "hash_janela": "43da79d4",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02"
+    }
+  },
+  {
     "id": "02332804-e169-46fe-9cf7-07b483ee6d74",
     "memory": "A proposta padrão para o sistema de afinidade no NeuroGus é K=3 e threshold=0.6 (cosine).",
     "created_at": "2026-05-04T22:57:01.114945-03:00",
@@ -17754,6 +17778,35 @@
     }
   },
   {
+    "id": "232b5ee4-58b0-4a5f-9442-9973c80134f6",
+    "memory": "A pasta `dialogos` contém pastas como Demandas Gustavo, archive e inbox-claude-chat.",
+    "created_at": "2026-05-05T15:02:34.128156-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "gus",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T15:02:34.128156-03:00",
+      "curador": "gpt",
+      "hash_janela": "f4b499dc",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "5eeb0cc1-61ec-4efe-863a-e99ea5cadefe",
+        "a1508f45-84f2-4ed2-9585-6fad6a4b300f",
+        "e1b86352-feaf-4803-a519-b1053621480c"
+      ]
+    }
+  },
+  {
     "id": "233877e8-bcbd-449e-b5f4-acf979ded91a",
     "memory": "O workflow de migração de `gus` para `gus_hub` revelou que não foram encontrados fragmentos durante a migração.",
     "created_at": "2026-05-03T01:23:51.741376-03:00",
@@ -21697,6 +21750,35 @@
     }
   },
   {
+    "id": "2a3dd767-6bc9-4fd6-a3ba-49cd49419f62",
+    "memory": "Não houve criação de novas pastas dentro de 'dialogos'.",
+    "created_at": "2026-05-05T14:45:09.165964-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "sessao",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "projetos",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T14:45:09.165964-03:00",
+      "curador": "gpt",
+      "hash_janela": "c1fea6be",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "951c9b8f-8ffc-44ab-9664-df394f9aaa86",
+        "2a27749c-6ce4-4f26-bcc9-d36e53bae084",
+        "e1b86352-feaf-4803-a519-b1053621480c"
+      ]
+    }
+  },
+  {
     "id": "2a62fa11-e681-4f41-a920-732f24f7e19b",
     "memory": "Tem 3 demandas paradas em `dialogos/inbox-claude-code/`.",
     "created_at": "2026-05-04T01:18:48.832054-03:00",
@@ -24501,6 +24583,30 @@
       "curador": "gpt",
       "hash_janela": "7f809e4a",
       "janela_turnos": 1,
+      "prompt_version": "v1-2026-05-02"
+    }
+  },
+  {
+    "id": "2e98102f-c901-4c5c-92c7-e5ad8351ad0d",
+    "memory": "Técnicas endoscópicas, guiadas por imagem e minimamente invasivas favorecem alta rápida.",
+    "created_at": "2026-05-05T15:03:34.792471-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "saude",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T15:03:34.792471-03:00",
+      "curador": "gpt",
+      "hash_janela": "15599c3e",
+      "janela_turnos": 6,
       "prompt_version": "v1-2026-05-02"
     }
   },
@@ -32919,6 +33025,33 @@
     }
   },
   {
+    "id": "3f5dac38-eadd-4380-8458-1888f2dc4d1e",
+    "memory": "A análise deve incluir disponibilidade de serviços, comparação de preços, tendências e regulamentações relevantes.",
+    "created_at": "2026-05-05T14:45:09.119367-03:00",
+    "metadata": {
+      "tipo": "procedural",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "projetos",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T14:45:09.119367-03:00",
+      "curador": "gpt",
+      "hash_janela": "c1fea6be",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "2fc2d9e2-6c1e-4b95-ad7e-c6fb66fb404f"
+      ]
+    }
+  },
+  {
     "id": "3f6d39ca-8fd2-40d6-856b-1e80e99c9882",
     "memory": "A auditoria do Chat teve a conclusão de que o boot atual carrega muita informação que não é utilizada na maioria das conversas.",
     "created_at": "2026-05-03T21:03:38.539335-03:00",
@@ -33432,6 +33565,30 @@
       "curador": "gpt",
       "hash_janela": "d0cdcbfa",
       "janela_turnos": 1,
+      "prompt_version": "v1-2026-05-02"
+    }
+  },
+  {
+    "id": "40b98b98-79c9-4038-9508-e436abad1151",
+    "memory": "Node.js é uma opção para criar APIs rápidas e escaláveis usando JavaScript.",
+    "created_at": "2026-05-05T12:27:51.869605-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "projetos",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T12:27:51.869605-03:00",
+      "curador": "gpt",
+      "hash_janela": "43da79d4",
+      "janela_turnos": 6,
       "prompt_version": "v1-2026-05-02"
     }
   },
@@ -34257,6 +34414,35 @@
       "hash_janela": "2eb3918e",
       "janela_turnos": 1,
       "prompt_version": "v1-2026-05-02"
+    }
+  },
+  {
+    "id": "41eccb09-1c43-4df9-9246-2b3ebe9fff4b",
+    "memory": "O GPT Chat deve realizar um estudo sobre o mercado pet felino nas cidades de Vitória e Rio de Janeiro, comparando a disponibilidade de produtos para gatos no Brasil em relação ao mercado internacional.",
+    "created_at": "2026-05-05T12:50:24.632350-03:00",
+    "metadata": {
+      "tipo": "episodico",
+      "estado": "ativo",
+      "camada_temporal": "sessao",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "projetos",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T12:50:24.632350-03:00",
+      "curador": "gpt",
+      "hash_janela": "345123fd",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "472fbfe4-5aa6-45b0-9cd1-754d7df9ab8f",
+        "db342212-dd18-4738-851e-1b572fbdc512",
+        "60d94e4c-8d8e-4602-adc9-2ff61658307b"
+      ]
     }
   },
   {
@@ -37312,6 +37498,35 @@
       "hash_janela": "0f8a74bf",
       "janela_turnos": 1,
       "prompt_version": "v1-2026-05-02"
+    }
+  },
+  {
+    "id": "471c6b32-3a0f-4553-8ef7-a4f873d7d185",
+    "memory": "Foi criada uma demanda para o GPT Chat realizar uma análise do mercado de anestesia ambulatorial no Rio de Janeiro.",
+    "created_at": "2026-05-05T14:45:08.998674-03:00",
+    "metadata": {
+      "tipo": "decisao",
+      "estado": "ativo",
+      "camada_temporal": "momento",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "projetos",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T14:45:08.998674-03:00",
+      "curador": "gpt",
+      "hash_janela": "c1fea6be",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "b2c8d0ce-f536-4818-a070-39d5cf0e9812",
+        "41eccb09-1c43-4df9-9246-2b3ebe9fff4b",
+        "25a49a65-d618-4fd4-9175-3522f6c65dbf"
+      ]
     }
   },
   {
@@ -43464,6 +43679,30 @@
       "curador": "gpt",
       "hash_janela": "ae3a0466",
       "janela_turnos": 1,
+      "prompt_version": "v1-2026-05-02"
+    }
+  },
+  {
+    "id": "5402c046-06fd-4ab9-9a24-fa0025fbe484",
+    "memory": "O projeto chamado 'Fluux' é um aplicativo/site de controle pessoal de gastos e investimentos personalizados.",
+    "created_at": "2026-05-05T12:27:51.724673-03:00",
+    "metadata": {
+      "tipo": "projeto",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "projetos",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T12:27:51.724673-03:00",
+      "curador": "gpt",
+      "hash_janela": "43da79d4",
+      "janela_turnos": 6,
       "prompt_version": "v1-2026-05-02"
     }
   },
@@ -57131,6 +57370,35 @@
     }
   },
   {
+    "id": "6f3b8249-cb1c-421e-b979-0fc2b23d8389",
+    "memory": "A demanda foi salva na pasta 'inbox-gpt-chat'.",
+    "created_at": "2026-05-05T14:45:09.069463-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "momento",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "projetos",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T14:45:09.069463-03:00",
+      "curador": "gpt",
+      "hash_janela": "c1fea6be",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "da877da2-247a-4519-98b2-2f326a72a175",
+        "06e667db-c8f4-4d46-87d2-416313220dab",
+        "aeba60bb-56f7-4f85-afe7-30e879737cd9"
+      ]
+    }
+  },
+  {
     "id": "6f495f22-423d-4e08-abb4-15e816b3b75b",
     "memory": "A coleta dual de modelos no curador (Haiku × GPT-4o-mini, mudou de Sonnet em 29/04 por custo/resiliência) termina em 12/05/2026.",
     "created_at": "2026-05-03T04:34:26.879840-03:00",
@@ -66286,6 +66554,30 @@
     }
   },
   {
+    "id": "8368f9e5-5bf7-42bb-aba6-ff74cd599a85",
+    "memory": "Operadoras e prestadores buscam modelos com menor custo total e menos uso de estrutura hospitalar.",
+    "created_at": "2026-05-05T15:03:34.938640-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "saude",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T15:03:34.938640-03:00",
+      "curador": "gpt",
+      "hash_janela": "15599c3e",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02"
+    }
+  },
+  {
     "id": "8389aad3-2a52-4144-959b-7542f9736dbc",
     "memory": "Gustavo está desenvolvendo um projeto de casa de fim de semana em Paty do Alferes, focando em sistemas sustentáveis de água e design arquitetônico.",
     "created_at": "2026-05-03T19:01:36.352777-03:00",
@@ -72821,6 +73113,30 @@
     }
   },
   {
+    "id": "908692e0-2bad-48dd-b09b-4b72006b7b7e",
+    "memory": "A branch `claude/get-anesthesia-market-analysis` não foi encontrada.",
+    "created_at": "2026-05-05T15:02:34.208245-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "gus",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T15:02:34.208245-03:00",
+      "curador": "gpt",
+      "hash_janela": "f4b499dc",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02"
+    }
+  },
+  {
     "id": "908fde67-8d06-4cc8-af78-5db7c2f1281b",
     "memory": "O neurogus precisa primeiro da confirmação dos defaults: Top-K, threshold de afinidade e método de exclusão de fragmentos antes de seguir para a implementação.",
     "created_at": "2026-05-05T02:05:15.209306-03:00",
@@ -74979,6 +75295,35 @@
     }
   },
   {
+    "id": "94d1c82a-a0f8-4cd1-9907-c602314d410d",
+    "memory": "Figma é recomendado para design e prototipação da interface do usuário.",
+    "created_at": "2026-05-05T12:27:51.964554-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "projetos",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T12:27:51.964554-03:00",
+      "curador": "gpt",
+      "hash_janela": "43da79d4",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "c7aaa852-34d1-405a-8f52-7c5062dd8ab6",
+        "c3f5161b-52e0-4509-badf-f40a34ad2c9b",
+        "c07c84f6-f934-4656-8e24-f5dfa9febda7"
+      ]
+    }
+  },
+  {
     "id": "94de3a6d-213e-4602-8756-f97dc5dddcb7",
     "memory": "A auditoria diária tem uma ineficiência, pois é cega para o brain `gus` e classifica por keywords, ignorando as áreas que o curador já preencheu.",
     "created_at": "2026-05-03T12:17:57.348297-03:00",
@@ -76374,6 +76719,35 @@
       "hash_janela": "6d3d3141",
       "janela_turnos": 1,
       "prompt_version": "v1-2026-05-02"
+    }
+  },
+  {
+    "id": "975f9f66-efe1-4954-8a4d-678885afde45",
+    "memory": "O mercado de anestesia ambulatorial responde a uma mudança estrutural nas operações de saúde.",
+    "created_at": "2026-05-05T15:02:34.371656-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "projetos",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T15:02:34.371656-03:00",
+      "curador": "gpt",
+      "hash_janela": "f4b499dc",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "9b85cd7d-13c8-415c-9bc3-0df9932743e9",
+        "ba8960c6-4f5c-46e9-b198-d4d01e171cc5",
+        "c88159c0-9867-4348-ad4b-507ab134eebe"
+      ]
     }
   },
   {
@@ -78695,6 +79069,35 @@
       "hash_janela": "a34c9fb7",
       "janela_turnos": 1,
       "prompt_version": "v1-2026-05-02"
+    }
+  },
+  {
+    "id": "9b85cd7d-13c8-415c-9bc3-0df9932743e9",
+    "memory": "O HTML enviado descreve uma página sobre o mercado de anestesia ambulatorial no Rio de Janeiro.",
+    "created_at": "2026-05-05T15:02:34.253555-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "projetos",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T15:02:34.253555-03:00",
+      "curador": "gpt",
+      "hash_janela": "f4b499dc",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "471c6b32-3a0f-4553-8ef7-a4f873d7d185",
+        "186446c2-c362-478d-8e9d-bf26ebbcd9be",
+        "bcffddd7-c726-4d9e-94c3-b3d9beee55b7"
+      ]
     }
   },
   {
@@ -85159,6 +85562,35 @@
     }
   },
   {
+    "id": "a72439ff-8436-4dfc-add6-785b41b23acd",
+    "memory": "A tese central da página é que o Rio de Janeiro tem demanda sofisticada, mas oferta ainda fragmentada.",
+    "created_at": "2026-05-05T15:02:34.317316-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "projetos",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T15:02:34.317316-03:00",
+      "curador": "gpt",
+      "hash_janela": "f4b499dc",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "9b85cd7d-13c8-415c-9bc3-0df9932743e9",
+        "f86fd52e-18a3-46a7-b9be-ea0f2ab75a00",
+        "bb0e51ae-1ce7-4f30-a12b-0059613ce11c"
+      ]
+    }
+  },
+  {
     "id": "a726ea77-93d0-4f53-9567-6510f9a320a6",
     "memory": "O sistema é um agente pessoal multi-porta (Telegram/TioGu, Claude Code, Claude Chat), com memória central no Hub Qdrant.",
     "created_at": "2026-05-04T22:57:44.206374-03:00",
@@ -91107,6 +91539,35 @@
     }
   },
   {
+    "id": "b2c8d0ce-f536-4818-a070-39d5cf0e9812",
+    "memory": "A porta GPT Chat está ativa no ecossistema Gus, atuando como uma interface para análise, planejamento e suporte ao fluxo multiporta.",
+    "created_at": "2026-05-05T12:50:24.547407-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "gus",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T12:50:24.547407-03:00",
+      "curador": "gpt",
+      "hash_janela": "345123fd",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "a2970d1d-a19c-4975-b2b0-0fe6d4dd9f2c",
+        "a0c08d12-7abb-467e-a8c4-49679170ebd2",
+        "2a857c4f-a743-4eed-b7c5-28d75312d6a9"
+      ]
+    }
+  },
+  {
     "id": "b2d0af4b-aac6-4f6b-bf8a-ca8b694977ae",
     "memory": "O agente pessoal do Gustavo Pratti de Barros é chamado Gus.",
     "created_at": "2026-05-03T01:34:07.546323-03:00",
@@ -94905,6 +95366,35 @@
     }
   },
   {
+    "id": "ba2b17b8-f68c-401c-8182-0e12186d9abe",
+    "memory": "O conteúdo atual da pasta 'dialogos' permanece o mesmo.",
+    "created_at": "2026-05-05T14:45:09.265924-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "sessao",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "projetos",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T14:45:09.265924-03:00",
+      "curador": "gpt",
+      "hash_janela": "c1fea6be",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "2a3dd767-6bc9-4fd6-a3ba-49cd49419f62",
+        "2ec57559-e6ab-4fe7-a3e6-5bf538b4d7b6",
+        "e2cc6dc3-6355-4c70-820f-47b3c2db4c7a"
+      ]
+    }
+  },
+  {
     "id": "ba4477cf-b2ad-462f-b8db-b919dbacade4",
     "memory": "O sistema tem um mecanismo de fallback que tenta usar OpenAI se o Anthropic falhar.",
     "created_at": "2026-05-03T21:15:43.016178-03:00",
@@ -95926,6 +96416,35 @@
       "curador": "gpt",
       "hash_janela": "4f537822",
       "janela_turnos": 1
+    }
+  },
+  {
+    "id": "bc946eeb-9405-4b84-bbda-ca9ba8d6041b",
+    "memory": "A anestesia ambulatorial no Rio de Janeiro tende a deixar de ser serviço acessório e virar uma plataforma.",
+    "created_at": "2026-05-05T15:03:34.999863-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "saude",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T15:03:34.999863-03:00",
+      "curador": "gpt",
+      "hash_janela": "15599c3e",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "9b85cd7d-13c8-415c-9bc3-0df9932743e9",
+        "7fc11aed-47e7-4251-8308-c909e61a97aa",
+        "186446c2-c362-478d-8e9d-bf26ebbcd9be"
+      ]
     }
   },
   {
@@ -97723,6 +98242,33 @@
       "hash_janela": "6e544ba1",
       "janela_turnos": 1,
       "prompt_version": "v1-2026-05-02"
+    }
+  },
+  {
+    "id": "c00cbe3d-3c9a-4c63-82df-389b676ab00c",
+    "memory": "React é uma tecnologia recomendada para construir interfaces de usuário dinâmicas e responsivas.",
+    "created_at": "2026-05-05T12:27:51.794888-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "projetos",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T12:27:51.794888-03:00",
+      "curador": "gpt",
+      "hash_janela": "43da79d4",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "c3f5161b-52e0-4509-badf-f40a34ad2c9b"
+      ]
     }
   },
   {
@@ -110071,6 +110617,35 @@
     }
   },
   {
+    "id": "d99ea922-8eb0-46aa-967f-7304a35cb9d3",
+    "memory": "A vantagem competitiva na anestesia ambulatorial estará na organização de uma operação de cuidado perioperatório.",
+    "created_at": "2026-05-05T15:03:35.088973-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "saude",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T15:03:35.088973-03:00",
+      "curador": "gpt",
+      "hash_janela": "15599c3e",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "975f9f66-efe1-4954-8a4d-678885afde45",
+        "bc946eeb-9405-4b84-bbda-ca9ba8d6041b",
+        "7fc11aed-47e7-4251-8308-c909e61a97aa"
+      ]
+    }
+  },
+  {
     "id": "d9a34a24-3558-41fb-9b20-9297323a464b",
     "memory": "O workflow de migração confirmou que a coleção `gus` está vazia.",
     "created_at": "2026-05-03T06:17:56.710963-03:00",
@@ -110489,6 +111064,35 @@
       "curador": "gpt",
       "hash_janela": "3a815571",
       "janela_turnos": 6
+    }
+  },
+  {
+    "id": "da4fb4d9-0b92-4c60-a903-9ed330178eb0",
+    "memory": "Menos tempo em ambiente hospitalar, jornada mais curta e comunicação pré-anestésica clara melhoram a experiência do paciente.",
+    "created_at": "2026-05-05T15:03:34.861848-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "permanente",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "saude",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T15:03:34.861848-03:00",
+      "curador": "gpt",
+      "hash_janela": "15599c3e",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "c98116d9-6b28-4ae7-8613-4145bb3b0ab4",
+        "adcc3ef4-9665-45e5-b8bb-da09b7f46a1a",
+        "da5f4100-99d9-4215-9130-9592f489c568"
+      ]
     }
   },
   {
@@ -126686,6 +127290,33 @@
       "hash_janela": "7f695ea5",
       "janela_turnos": 1,
       "prompt_version": "v1-2026-05-02"
+    }
+  },
+  {
+    "id": "f92f9c59-dd13-4f34-882d-d4a15da2f8b2",
+    "memory": "A demanda para o estudo sobre mercado pet felino foi salva com prioridade alta e status pendente.",
+    "created_at": "2026-05-05T12:50:24.701306-03:00",
+    "metadata": {
+      "tipo": "fato",
+      "estado": "ativo",
+      "camada_temporal": "sessao",
+      "tipo_esquecimento": null,
+      "peso": 0.5,
+      "confirmacoes": 0,
+      "confianca": 1.0,
+      "acessos": 0,
+      "via": "telegram-claude",
+      "area": "projetos",
+      "projeto": "",
+      "user_id": "gustavo",
+      "ultimo_acesso": "2026-05-05T12:50:24.701306-03:00",
+      "curador": "gpt",
+      "hash_janela": "345123fd",
+      "janela_turnos": 6,
+      "prompt_version": "v1-2026-05-02",
+      "relacionados": [
+        "df82f59c-981f-4e9a-928f-7af395aedb7c"
+      ]
     }
   },
   {
