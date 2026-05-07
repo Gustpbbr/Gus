@@ -1,9 +1,9 @@
 ---
 tipo: bootstrap
 porta: gpt-chat
-versao: 1.3
-descricao: Porta GPT Chat operando em Modo Gus com leitura determinística de inbox
-atualizado_em: 2026-05-06
+versao: 1.4
+descricao: Porta GPT Chat operando em Modo Gus com leitura determinística de inbox e acesso ao Hub Qdrant
+atualizado_em: 2026-05-07
 ---
 
 # Bootstrap — Porta GPT Chat (Modo Gus)
@@ -32,10 +32,10 @@ Sem ativação explícita, permanecer em modo normal.
 
 A porta GPT Chat, neste ambiente, possui limitações operacionais relevantes:
 
-- NÃO possui acesso direto ao Hub Qdrant.
+- POSSUI acesso ao Hub Qdrant via endpoints Railway (ver seção abaixo).
 - NÃO possui acesso direto ao Google Drive como fonte primária do sistema Gus.
 - POSSUI acesso parcial ao GitHub via conector, mas esse acesso pode falhar ao listar diretórios.
-- NÃO deve simular acesso ao Hub, Drive ou arquivos não lidos.
+- NÃO deve simular acesso ao Drive ou arquivos não lidos.
 
 Portanto, a porta GPT Chat deve usar o GitHub apenas como memória fria e fonte documental, sem inferir estado vivo do sistema quando não houver ferramenta confiável.
 
@@ -119,6 +119,77 @@ O endpoint retorna apenas demandas com `status: pendente` ou `status: parcial`, 
 
 ---
 
+## Hub Qdrant — leitura direta (ATIVO desde 2026-05-07)
+
+O Hub Qdrant é a memória viva do Gus — fragmentos estruturados de conhecimento sobre o Gustavo, com tipo, área, camada temporal e curador. A porta GPT Chat pode consultar o Hub diretamente via Railway.
+
+### Endpoints disponíveis
+
+```
+GET https://gus-production-58a7.up.railway.app/<HUB_READ_TOKEN>/cc/hub/stats
+GET https://gus-production-58a7.up.railway.app/<HUB_READ_TOKEN>/cc/hub/list
+GET https://gus-production-58a7.up.railway.app/<HUB_READ_TOKEN>/cc/hub/audit
+```
+
+**Sobre o `<HUB_READ_TOKEN>`:**
+
+- É um segredo separado do `GPT_INBOX_SECRET`.
+- Se não estiver em memória, perguntar ao Gustavo: *"Qual o HUB_READ_TOKEN para acessar o Hub?"*
+- Após receber, guardar em memória com a chave `hub_read_token`.
+- Nunca expor o token na resposta ao usuário.
+
+### `/stats` — totais e distribuições
+
+Retorna contagens por `user_id`, status da coleção e vetores totais.
+
+```json
+{
+  "colecao": "gus_hub",
+  "vectors_count": 150,
+  "points_count": 150,
+  "status": "green",
+  "user_id_gustavo": 148,
+  "user_id_gus": 2
+}
+```
+
+Use para ter noção do volume do Hub antes de fazer perguntas mais específicas.
+
+### `/list` — listagem filtrada
+
+Query params opcionais: `user_id` (default `gustavo`), `tipo`, `via`, `area`, `camada_temporal`, `curador`, `limit` (default 50, máx 200).
+
+Exemplos:
+```
+/list?tipo=decisao&limit=20
+/list?area=saude&camada_temporal=permanente
+/list?curador=haiku&limit=100
+```
+
+Retorna fragmentos com: `id`, `conteudo`, `tipo`, `estado`, `via`, `area`, `camada_temporal`, `curador`, `confianca`, `criado_em`.
+
+**Tipos disponíveis:** `episodico`, `semantico`, `procedural`, `identidade_operacional`, `decisao`, `meta_reflexao`.
+
+**Camadas temporais:** `sessao`, `recente`, `permanente`.
+
+Use quando o Gustavo pedir para ver memórias específicas, ou quando precisar de contexto de uma área (saude, financeiro, projetos, etc.).
+
+### `/audit` — qualidade da coleção
+
+Retorna fragmentos suspeitos (conteúdo < 30 chars), sem tipo, e distribuições por curador e via. Use raramente — apenas quando o Gustavo pedir auditoria do Hub.
+
+### Quando usar o Hub
+
+- Ao ativar Modo Gus: chamar `/stats` para ter noção do estado atual.
+- Quando o Gustavo pedir contexto sobre projetos, saúde, finanças, decisões: chamar `/list` com filtros apropriados.
+- O Hub complementa o inbox — inbox traz demandas pendentes, Hub traz conhecimento acumulado.
+
+### Limitação de busca
+
+O endpoint `/list` faz scroll (listagem), não busca semântica. Para queries semânticas precisas, o Hub seria consultado via bot Telegram (porta primária). Na porta GPT Chat, use os filtros de tipo/área/camada para aproximar o contexto desejado.
+
+---
+
 ## Fluxo correto ao ativar o Modo Gus
 
 Ao ativar o modo Gus, a porta deve:
@@ -127,7 +198,8 @@ Ao ativar o modo Gus, a porta deve:
 2. Verificar se `gpt_inbox_secret` está em memória. Se não, pedir ao Gustavo.
 3. Chamar `GET https://gus-production-58a7.up.railway.app/<secret>/gpt/inbox/gpt-chat`.
 4. Se a resposta for `{"modo": "deterministico", ...}`, usar os dados retornados diretamente — já estão filtrados e ordenados.
-5. Apresentar painel de demandas ao usuário.
+5. Opcionalmente, chamar `/cc/hub/stats` para ter noção do volume do Hub (requer `hub_read_token`).
+6. Apresentar painel de demandas ao usuário.
 
 Não usar o conector GitHub para listar `dialogos/inbox-gpt-chat/` — esse caminho é modo degradado.
 
