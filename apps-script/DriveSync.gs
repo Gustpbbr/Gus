@@ -199,7 +199,7 @@ function driveWalkRecursive(folderId, prefix, sinceMs, callback) {
 // ============================================================================
 
 /**
- * Retorna nome do inbox se o arquivo é uma demanda (direto em inbox-*/, sem _).
+ * Retorna nome do inbox se o arquivo é uma demanda (direto em inbox-X/, sem _).
  * Retorna null pra mirror.
  */
 function isInboxTopLevel(prefix, fileName) {
