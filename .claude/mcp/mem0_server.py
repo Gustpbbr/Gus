@@ -58,6 +58,12 @@ USER_GUS = "gus"
 # Tag de origem — toda escrita por esta porta é tagueada como 'claude-code'
 VIA_TAG = os.environ.get("MEM0_VIA_TAG", "claude-code")
 
+# Endpoints internos Railway — leitura do Hub sem credentials Qdrant locais
+_RAILWAY_URL = os.environ.get(
+    "RAILWAY_API_URL", "https://gus-production-58a7.up.railway.app"
+).rstrip("/")
+_HUB_READ_TOKEN = os.environ.get("HUB_READ_TOKEN", "")
+
 server = Server("mem0-gus")
 
 
@@ -264,7 +270,72 @@ async def list_tools():
                 "required": ["memory_id"],
             },
         ),
+        # ============= HUB INTERNO (via Railway) =============
+        Tool(
+            name="hub_stats",
+            description=(
+                "Retorna estatísticas do Hub Qdrant: total de fragmentos por "
+                "user_id (gustavo/gus), total geral, status da coleção. "
+                "Chama o Railway — requer HUB_READ_TOKEN configurado."
+            ),
+            inputSchema={"type": "object", "properties": {}, "required": []},
+        ),
+        Tool(
+            name="hub_filtrar",
+            description=(
+                "Lista fragmentos do Hub com filtros avançados (sem busca semântica). "
+                "Útil para inspeção: 'liste todos os fragmentos do curador haiku', "
+                "'fragmentos via claude-code do tipo decisao_arquitetural', etc. "
+                "Requer HUB_READ_TOKEN."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "user_id": {
+                        "type": "string",
+                        "description": "'gustavo' (default) ou 'gus'.",
+                    },
+                    "tipo": {"type": "string", "description": "Filtro por tipo (ex: decisao_arquitetural, fato)."},
+                    "via": {"type": "string", "description": "Filtro por origem (ex: telegram, claude-code)."},
+                    "area": {"type": "string", "description": "Filtro por área (ex: saude, gus)."},
+                    "camada_temporal": {"type": "string", "description": "Filtro por camada (permanente, rotina, sessao)."},
+                    "curador": {"type": "string", "description": "Filtro por curador (haiku, sonnet, mgx)."},
+                    "limit": {"type": "integer", "description": "Máximo de resultados (1–200). Default 50."},
+                },
+            },
+        ),
+        Tool(
+            name="hub_auditar",
+            description=(
+                "Auditoria de qualidade do Hub: fragmentos com conteúdo curto (<30 chars), "
+                "fragmentos sem campo 'tipo', distribuição por curador e por via. "
+                "Use pra detectar lixo e entender de onde vêm os fragmentos. "
+                "Requer HUB_READ_TOKEN."
+            ),
+            inputSchema={"type": "object", "properties": {}, "required": []},
+        ),
     ]
+
+
+async def _railway_get(path: str) -> str:
+    """Chama um endpoint interno do Railway. Retorna texto ou mensagem de erro."""
+    import httpx
+
+    if not _HUB_READ_TOKEN:
+        return "HUB_READ_TOKEN não configurado em ~/.claude/gus.env."
+    url = f"{_RAILWAY_URL}/{_HUB_READ_TOKEN}/cc/hub/{path}"
+    try:
+        async with httpx.AsyncClient(timeout=20) as client:
+            r = await client.get(url)
+        if r.status_code == 403:
+            return "Token inválido (HUB_READ_TOKEN)."
+        if r.status_code == 503:
+            return "HUB_READ_TOKEN não configurado no Railway."
+        if r.status_code != 200:
+            return f"Erro {r.status_code}: {r.text[:200]}"
+        return r.text
+    except Exception as e:
+        return f"Erro ao chamar Railway: {e}"
 
 
 @server.call_tool()
@@ -366,6 +437,25 @@ async def call_tool(name: str, arguments: dict):
             return [TextContent(type="text", text=f"Deletado do Hub: `{memory_id}` (brain `{user_id}`)")]
         except Exception as e:
             return [TextContent(type="text", text=f"Erro ao deletar `{memory_id}`: {e}")]
+
+    # ============= HUB INTERNO (via Railway) =============
+    if name == "hub_stats":
+        resultado = await _railway_get("stats")
+        return [TextContent(type="text", text=resultado)]
+
+    if name == "hub_filtrar":
+        params = []
+        for k in ("user_id", "tipo", "via", "area", "camada_temporal", "curador", "limit"):
+            v = arguments.get(k)
+            if v is not None:
+                params.append(f"{k}={v}")
+        path = "list?" + "&".join(params) if params else "list"
+        resultado = await _railway_get(path)
+        return [TextContent(type="text", text=resultado)]
+
+    if name == "hub_auditar":
+        resultado = await _railway_get("audit")
+        return [TextContent(type="text", text=resultado)]
 
     return [TextContent(type="text", text=f"Tool desconhecida: {name}")]
 

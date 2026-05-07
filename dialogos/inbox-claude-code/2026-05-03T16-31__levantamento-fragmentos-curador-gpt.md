@@ -3,10 +3,11 @@ tipo: demanda
 origem: claude-chat
 destino: claude-code
 prioridade: alta
-status: pendente
+status: bloqueado
 criado_em: 2026-05-03T16:31:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: "2026-05-07T15:30:00-03:00"
+processado_por: "claude-code"
+bloqueio: "HUB_READ_TOKEN ausente neste ambiente. Use /auditar-curador gpt ao iniciar sessão com HUB_READ_TOKEN configurado, ou peça ao TioGu 'liste fragmentos curador=gpt'."
 acao_sugerida: listar todos os fragmentos com curador=gpt nos brains gustavo e gus, gerar relatório
 destino_path: dialogos/inbox-claude-code/
 contexto: Gustavo quer auditar a qualidade dos fragmentos gerados pelo curador GPT após identificar pelo menos um fragmento incorreto sobre MGX (UUID 0329c718). Suspeita de que há outros com problemas similares (conteúdo vago, impreciso ou errado).

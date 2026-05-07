@@ -1,7 +1,7 @@
 ---
 tipo: meta-relatorio
-atualizado: 2026-05-04T08:30:43.311349-03:00
-hub_total_geral: 8709
+atualizado: 2026-05-07T08:33:29.023619-03:00
+hub_total_geral: 10485
 jaccard_duplicata: 0.6
 ---
 
@@ -13,163 +13,173 @@ Gerado por `.github/scripts/meta_relatorio_hub.py` (item 1.8 do plano de saneame
 
 ## Resumo geral
 
-- **Total Hub:** 8709
-- **Classificação completa:** 0 (0.0%)
+- **Total Hub:** 10485
+- **Classificação completa:** 8810 (84.0%)
 - **Duplicatas suspeitas:** 0 pares (Jaccard ≥ 0.6)
 
 ## Por brain
 
 ### Brain `gustavo`
 
-- **Total:** 4396
-- **Classificação completa** (tipo≠episodico + camada≠sessao + area≠vazio): 0 (0.0%)
+- **Total:** 5295
+- **Classificação completa** (tipo≠episodico + camada≠sessao + area≠vazio): 4504 (85.1%)
 - **Duplicatas suspeitas** (Jaccard ≥ 0.6): 0 pares
 
 **Distribuições:**
 
 - **Por tipo:**
-  - `fato`: 2755 (62.7%)
-  - `decisao`: 559 (12.7%)
-  - `identidade_operacional`: 219 (5.0%)
-  - `biografico`: 218 (5.0%)
-  - `procedural`: 204 (4.6%)
-  - `cronologico`: 127 (2.9%)
-  - `projeto`: 102 (2.3%)
-  - `meta_reflexao`: 88 (2.0%)
-  - `episodico`: 64 (1.5%)
-  - `preferencia`: 23 (0.5%)
+  - `fato`: 3267 (61.7%)
+  - `decisao`: 772 (14.6%)
+  - `procedural`: 243 (4.6%)
+  - `identidade_operacional`: 224 (4.2%)
+  - `biografico`: 218 (4.1%)
+  - `projeto`: 185 (3.5%)
+  - `cronologico`: 131 (2.5%)
+  - `meta_reflexao`: 107 (2.0%)
+  - `episodico`: 80 (1.5%)
+  - `preferencia`: 26 (0.5%)
 - **Por camada_temporal:**
-  - `(sem)`: 4396 (100.0%)
+  - `permanente`: 4261 (80.5%)
+  - `sessao`: 709 (13.4%)
+  - `momento`: 284 (5.4%)
+  - `rotina`: 25 (0.5%)
+  - `semana`: 16 (0.3%)
 - **Por area:**
-  - `gus`: 2146 (48.8%)
-  - `projetos`: 2035 (46.3%)
-  - `pessoal`: 76 (1.7%)
-  - `saude`: 60 (1.4%)
-  - `(sem)`: 51 (1.2%)
+  - `projetos`: 2863 (54.1%)
+  - `gus`: 2205 (41.6%)
+  - `pessoal`: 77 (1.5%)
+  - `saude`: 66 (1.2%)
+  - `(sem)`: 55 (1.0%)
   - `pesquisa`: 14 (0.3%)
   - `dimagem`: 9 (0.2%)
-  - `financeiro`: 4 (0.1%)
+  - `financeiro`: 5 (0.1%)
   - `receitas`: 1 (0.0%)
 - **Por via:**
-  - `claude-code`: 4315 (98.2%)
-  - `telegram-claude`: 77 (1.8%)
+  - `claude-code`: 5191 (98.0%)
+  - `telegram-claude`: 100 (1.9%)
   - `claude-chat`: 4 (0.1%)
 - **Por curador:**
-  - `gpt`: 4373 (99.5%)
-  - `(sem)`: 23 (0.5%)
+  - `gpt`: 5272 (99.6%)
+  - `(sem)`: 23 (0.4%)
 - **Por estado:**
-  - `ativo`: 4396 (100.0%)
+  - `ativo`: 5295 (100.0%)
 - **Por prompt_version:**
-  - `(sem)`: 4396 (100.0%)
+  - `v1-2026-05-02`: 4735 (89.4%)
+  - `(sem)`: 560 (10.6%)
 
 **Top 30 tokens (sinal de assunto):**
 
-  - `qdrant`: 644
-  - `claude`: 640
-  - `sistema`: 623
-  - `chat`: 570
-  - `curador`: 532
-  - `gustavo`: 526
-  - `code`: 500
-  - `estado`: 495
-  - `mem0`: 448
-  - `fragmentos`: 444
-  - `memoria`: 370
-  - `demandas`: 366
-  - `atual`: 351
-  - `captura`: 331
-  - `drive`: 328
-  - `2026`: 318
-  - `inbox`: 313
-  - `dialogos`: 312
-  - `telegram`: 312
-  - `porta`: 309
-  - `saas`: 261
-  - `pendentes`: 257
-  - `bootstrap`: 253
-  - `agente`: 252
-  - `arquivo`: 252
-  - `projeto`: 250
-  - `sync`: 250
-  - `tiogu`: 249
-  - `multi`: 243
-  - `arquivos`: 240
+  - `qdrant`: 777
+  - `neurogus`: 718
+  - `claude`: 687
+  - `sistema`: 637
+  - `chat`: 591
+  - `gustavo`: 588
+  - `curador`: 572
+  - `estado`: 554
+  - `fragmentos`: 511
+  - `code`: 510
+  - `memoria`: 493
+  - `mem0`: 460
+  - `atual`: 416
+  - `projeto`: 415
+  - `demandas`: 378
+  - `inbox`: 370
+  - `drive`: 341
+  - `captura`: 334
+  - `dialogos`: 323
+  - `porta`: 323
+  - `2026`: 322
+  - `telegram`: 315
+  - `tiogu`: 299
+  - `arquivo`: 297
+  - `pendentes`: 271
+  - `colecao`: 265
+  - `saas`: 263
+  - `agente`: 257
+  - `deve`: 256
+  - `migracao`: 254
 
 ### Brain `gus`
 
-- **Total:** 4313
-- **Classificação completa** (tipo≠episodico + camada≠sessao + area≠vazio): 0 (0.0%)
+- **Total:** 5190
+- **Classificação completa** (tipo≠episodico + camada≠sessao + area≠vazio): 4306 (83.0%)
 - **Duplicatas suspeitas** (Jaccard ≥ 0.6): 0 pares
 
 **Distribuições:**
 
 - **Por tipo:**
-  - `fato`: 2676 (62.0%)
-  - `decisao`: 548 (12.7%)
-  - `identidade_operacional`: 236 (5.5%)
-  - `biografico`: 206 (4.8%)
-  - `procedural`: 206 (4.8%)
-  - `cronologico`: 112 (2.6%)
-  - `projeto`: 109 (2.5%)
-  - `meta_reflexao`: 102 (2.4%)
-  - `episodico`: 60 (1.4%)
-  - `preferencia`: 26 (0.6%)
+  - `fato`: 3205 (61.8%)
+  - `decisao`: 756 (14.6%)
+  - `identidade_operacional`: 239 (4.6%)
+  - `procedural`: 233 (4.5%)
+  - `biografico`: 207 (4.0%)
+  - `projeto`: 188 (3.6%)
+  - `meta_reflexao`: 119 (2.3%)
+  - `cronologico`: 115 (2.2%)
+  - `episodico`: 63 (1.2%)
+  - `preferencia`: 26 (0.5%)
 - **Por camada_temporal:**
-  - `(sem)`: 4313 (100.0%)
+  - `permanente`: 4135 (79.7%)
+  - `sessao`: 827 (15.9%)
+  - `momento`: 194 (3.7%)
+  - `rotina`: 23 (0.4%)
+  - `semana`: 11 (0.2%)
 - **Por area:**
-  - `projetos`: 2130 (49.4%)
-  - `gus`: 1966 (45.6%)
-  - `pessoal`: 82 (1.9%)
-  - `saude`: 70 (1.6%)
-  - `(sem)`: 44 (1.0%)
-  - `dimagem`: 14 (0.3%)
+  - `projetos`: 2940 (56.6%)
+  - `gus`: 2028 (39.1%)
+  - `pessoal`: 82 (1.6%)
+  - `saude`: 71 (1.4%)
+  - `(sem)`: 47 (0.9%)
+  - `dimagem`: 15 (0.3%)
   - `financeiro`: 5 (0.1%)
   - `pesquisa`: 1 (0.0%)
   - `receitas`: 1 (0.0%)
 - **Por via:**
-  - `claude-code`: 4297 (99.6%)
+  - `claude-code`: 5174 (99.7%)
   - `telegram-claude`: 14 (0.3%)
   - `claude-chat`: 2 (0.0%)
 - **Por curador:**
-  - `gpt`: 4297 (99.6%)
-  - `(sem)`: 16 (0.4%)
+  - `gpt`: 5174 (99.7%)
+  - `(sem)`: 16 (0.3%)
 - **Por estado:**
-  - `ativo`: 4313 (100.0%)
+  - `ativo`: 5190 (100.0%)
 - **Por prompt_version:**
-  - `(sem)`: 4313 (100.0%)
+  - `v1-2026-05-02`: 4663 (89.8%)
+  - `(sem)`: 527 (10.2%)
 
 **Top 30 tokens (sinal de assunto):**
 
-  - `qdrant`: 656
-  - `claude`: 627
-  - `sistema`: 615
-  - `curador`: 533
-  - `chat`: 532
-  - `code`: 522
-  - `estado`: 507
-  - `gustavo`: 496
-  - `mem0`: 433
-  - `fragmentos`: 430
-  - `atual`: 383
-  - `demandas`: 370
-  - `memoria`: 343
-  - `captura`: 337
-  - `2026`: 330
-  - `drive`: 321
-  - `porta`: 320
-  - `inbox`: 308
-  - `dialogos`: 304
-  - `telegram`: 300
-  - `projeto`: 267
+  - `qdrant`: 803
+  - `neurogus`: 688
+  - `claude`: 671
+  - `sistema`: 635
+  - `curador`: 572
+  - `estado`: 570
+  - `gustavo`: 557
+  - `chat`: 550
+  - `code`: 532
+  - `fragmentos`: 496
+  - `memoria`: 461
+  - `atual`: 458
+  - `mem0`: 448
+  - `projeto`: 438
+  - `demandas`: 378
+  - `inbox`: 360
+  - `captura`: 339
+  - `2026`: 335
+  - `porta`: 331
+  - `drive`: 329
+  - `dialogos`: 319
+  - `telegram`: 305
+  - `tiogu`: 290
+  - `arquivo`: 282
+  - `migracao`: 274
+  - `pendentes`: 269
+  - `agente`: 266
   - `multi`: 263
-  - `pendentes`: 262
-  - `saas`: 261
-  - `agente`: 261
-  - `migracao`: 256
-  - `bootstrap`: 254
-  - `arquivo`: 250
-  - `tiogu`: 241
-  - `arquivos`: 241
+  - `saas`: 262
+  - `projetos`: 260
 
 ## Como interpretar
 
