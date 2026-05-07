@@ -1,0 +1,770 @@
+user: oi, blz? posso falar com o Gus? 
+assistant: oi, blz sim. é o Gus aqui — porta Claude Code. o que manda?
+user: Continue from where you left off.
+assistant: No response requested.
+user: primeiro tenha um panorama geral do projeto. segue um guia para vc ver. depois vamos focar em um assunto específico, mas te falo apos vc ler tudo necessário do projeto. segue uma dica de outra aba do code
+
+Aqui vai a receita ordenada por valor por contexto. Foco: mínimo necessário pra não inflar contexto à toa.
+Core obrigatório (sempre, em toda aba nova)
+Arquivo
+Pra quê
+dialogos/_bootstrap/gus-bootstrap.md
+manual operacional do Gus, regras de comportamento, como cada porta usa o Hub
+dialogos/_bootstrap/gus-identity.md
+quem é o Gustavo + quem é o Gus enquanto entidade
+dialogos/_bootstrap/gus-estado-atual.md
+handoff auto-gerado pelo cron 03h, snapshot do Hub
+projetos/gus/_estado-atual.md
+onde paramos na sessão anterior (mais "operacional" que o bootstrap)
+Esses 4 dão 80% do contexto pra qualquer aba nova.
+Live — preferir sobre arquivo
+Se a aba tem MCP gus-hub conectado:
+ego_cache_atual() — identidade + últimas 3 decisões + 5 meta-reflexões
+fragmentos_recentes(horas=24) — o que rolou desde ontem
+contar_fragmentos() — sanity check
+Hub é mais fresco que gus-estado-atual.md (que é snapshot das 03h). Sempre que possível, prefira tools MCP a arquivo .md.
+Específicos do contexto da pergunta
+Só ler se a conversa for sobre:
+Tema
+Arquivo
+Próximos passos / NeuroGus
+projetos/gus/gus-08-plano-proximos-passos.md, projetos/gus/gus-30-neurogus-roadmap.md
+Caminho Alexa
+projetos/gus/gus-10-caminho-alexa.md
+MCP / claude.ai connector
+projetos/gus/gus-28-passo2-mcp-server.md
+Roteamento multi-modelo
+projetos/gus/gus-29-roteamento-multimodelo-tiogu.md
+Hub Qdrant arquitetura
+projetos/gus/gus-18-schema-indexacao.md, gus-20-etapa2-hub-qdrant.md, gus-21-etapa3-curador.md
+Decisão migração ADR-001
+projetos/gus/gus-15-decisao-migracao.md
+Demanda da semana
+dialogos/streams/semana-2026-04-21.md (último arquivo da pasta)
+Demandas pendentes pra essa porta
+dialogos/inbox-<porta>/
+O que NÃO precisa ler
+gus-01 a gus-09 (a não ser por curiosidade arqueológica — bootstrap já resume)
+pessoal/, dimagem/, receitas/ etc. — só sob demanda explícita
+historico/ — pasta morta de conteúdo legado
+Logs antigos (>3 dias)
+_log/sessoes-claude-code/ — arquivos longos de transcript
+Truque pra Claude Chat web
+Como ele lê via Drive Project knowledge, o boot dele já tem gus-bootstrap.md como project instruction. Aí ele só precisa fazer:
+Ler gus-estado-atual.md (snapshot 03h)
+Chamar ego_cache_atual() via MCP gus-hub (estado vivo)
+Pra Claude Code, o CLAUDE.md na raiz é auto-injetado em toda sessão — então já cobre o "core obrigatório".
+Quer que eu padronize isso num arquivo dialogos/_bootstrap/checklist-boot-aba-nova.md pra deixar canonizado?
+
+
+Ah, entendi mal. PRs são histórico, não documentação — uma aba nova não precisa ler nenhum.
+Por que não
+O estado final dos PRs já tá no código + nos docs gus-XX atualizados
+PRs descrevem o caminho, não onde a gente tá. Nova aba quer onde tamo.
+60 PRs = ruído gigante no contexto pra ganho zero
+Quando vale olhar PR
+Situação
+Qual PR
+"Por que esse arquivo tá assim?"
+git log --oneline <arquivo> → abre o PR específico
+"O que mudou hoje?"
+Lista PRs mergeados nas últimas 24h: gh pr list --state merged --limit 10
+Bug recente
+PR mais recente que tocou o código quebrado
+Decisão arquitetural não-óbvia
+PR description costuma ter o "porquê"
+Boa prática
+O que tem que ficar nos docs (não nos PRs):
+Decisões arquiteturais → ADR (gus-15 é exemplo)
+Como configurar algo → gus-XX-setup
+Estado atual do projeto → gus-26-status-consolidado, _estado-atual
+Se um PR precisa ser lido pra entender o presente, é sinal de doc desatualizado — não de PR importante.
+Receita
+Aba nova só precisa olhar PRs se:
+Você falar "tá quebrando X depois do PR #YY" → aí sim, lê o PR
+Investigar bug específico no código mexido recentemente
+Senão, esquece os 60. Os 7 docs do checklist anterior te dão o estado atual.
+assistant: ok, panorama carregado. resumo do que captei:
+
+**onde tamo:**
+- ADR-001 em curso — Mem0 SaaS aposentando, Hub Qdrant é fonte de verdade
+- Curador híbrido Haiku × Sonnet rodando coleta dual até **12/05/2026** (Fase 5)
+- Última sessão (27/04): 5 demandas resolvidas, R2/R6/R7 mergeados, bug 400 do curador corrigido
+- Hoje (01/05) = ~4 dias depois. `gus-estado-atual.md` mostra Hub com 19 frags, mas **nenhum fragmento novo nas últimas 6h** — sistema ocioso ou curador parado (vale checar)
+
+**inbox-claude-code com 4 demandas pendentes:**
+- captura-multiporta-curador
+- curador-bidirecional-cron
+- drive-sync-oauth-fix
+- _frontmatter-referencia (template, não é demanda)
+
+**branch atual:** `claude/initial-setup-iWTfL` (não é a `claude/fix-curador-mem0-cleanup` que ficou aberta com PR #10 do dia 27/04 — vale conferir se mergeou)
+
+**alerta interessante:** o CLAUDE.md desta porta diz que captura proativa via MCP `mem0-gus__salvar_memoria*` está **quebrada neste ambiente** (sem ANTHROPIC_API_KEY/QDRANT_URL). Conhecimento desta sessão sobrevive só via commit/PR/docs.
+
+manda o foco específico que tu quer atacar.
+user: vamos ver isso. acredito que tenha uma demanda aberta na aba diálogos sobre isso tbm
+tbm
+
+PR #63 mergeado — arquivamento feito. Inbox agora 4 pendências reais.
+Caminho 2 — passo a passo
+Visão geral
+Código
+Passo 1 — Hook salvar transcript no repo (~30 linhas)
+Arquivo: .claude/hooks/retro_engine.py
+Adicionar antes da chamada Haiku (que falha sem env vars):
+Python
+Passo 2 — Hook commit auto (~10 linhas)
+~/.claude/stop-hook-git-check.sh já avisa se há mudanças. Estende pra também stagear/commitar transcripts automaticamente:
+Bash
+Atenção: git push pode falhar se branch não tracked. Implementar fallback gracioso (loga warning, não quebra).
+Passo 3 — Script cron processar (~80 linhas)
+Arquivo novo: .github/scripts/curador_claude_code.py
+Python
+Passo 4 — Workflow GitHub Actions (~30 linhas)
+Arquivo novo: .github/workflows/curador-claude-code.yml
+Yaml
+Passo 5 — .gitkeep + README na pasta
+Arquivos:
+_log/transcripts-claude-code/.gitkeep — cria pasta vazia no repo
+_log/transcripts-claude-code/README.md — explica o que é, como cron processa, política PII
+Passo 6 — Validar end-to-end
+Implementa Passos 1-5 numa branch
+Mergeia
+Próxima sessão Code que rodar Stop hook deve gerar _log/transcripts-claude-code/<timestamp>__<id>.jsonl
+Commit auto-empurra pro repo
+Cron roda em até 30min
+Verificar logs do workflow no GitHub
+Buscar no Hub: mcp__mem0-gus__buscar_memorias(query="claude-code") deve retornar fragmentos novos
+Pontos de atenção
+Risco
+Mitigação
+PII em transcripts públicos
+Rodar gus.patterns_sensiveis.redact() ANTES de salvar arquivo
+Custo Haiku/GPT explodindo
+Cap MAX_CHARS=50K; cron a cada 30min limita 48 runs/dia
+Push falhar no hook
+Fallback gracioso, transcript fica local, pega na próxima
+Conflito git durante push
+Hook usa git pull --rebase antes do push
+Curador retornando lixo
+Logs do workflow no GitHub permitem revisar; quarentenar fragmentos com confiança baixa
+Custo estimado
+Haiku: ~$0.0001/sessão × 2 (gus+gustavo) = $0.0002/sessão
+GPT-4o-mini: ~$0.0001/sessão × 2 = $0.0002/sessão
+Total: <$0.50/mês mesmo com 50 sessões/dia
+Onde implementar
+Tudo na demanda dialogos/inbox-claude-code/2026-05-01-curador-bidirecional-cron.md (já criada). Próxima aba pode pegar e implementar — ~2-3h.
+Quer que eu implemente agora, ou prefere deixar pra outra sessão? Aviso que não vou conseguir testar end-to-end nesta sessão (env vars ausentes, vai precisar de cron real rodando).
+
+
+
+[sessão Code]
+    ↓ Stop hook
+salva transcript bruto em _log/transcripts-claude-code/<timestamp>__<id>.jsonl
+    ↓ stop-hook-git-check.sh detecta + commita + push
+[GitHub Actions cron — a cada 30min]
+    ↓ checkout + pip install
+processa transcripts não-processados:
+    1. roda curador bidirecional Haiku × GPT-4o-mini
+    2. extrai 2 listas: gus + gustavo
+    3. salva fragmentos no Hub via hub.store.ingestar
+    4. move arquivo pra _log/transcripts-claude-code/processados/
+    ↓ commit + push
+[Hub Qdrant]
+ambos brains alimentados, zero atrito UX
+
+
+
+def _persist_transcript_pra_cron(transcript: str) -> Path:
+    """Salva transcript em pasta processada pelo cron GitHub Actions.
+    Esse é o caminho que funciona quando ambiente Web não tem env vars."""
+    transcripts_dir = REPO_ROOT / "_log" / "transcripts-claude-code"
+    transcripts_dir.mkdir(parents=True, exist_ok=True)
+
+    session_id = uuid.uuid4().hex[:12]
+    nome = f"{datetime.now(BRT).strftime('%Y-%m-%dT%H-%M')}__{session_id}.jsonl"
+    out_path = transcripts_dir / nome
+
+    # Filtra PII via regex existente em gus.patterns_sensiveis
+    try:
+        from gus.patterns_sensiveis import redact
+        transcript_safe = redact(transcript)
+    except Exception:
+        transcript_safe = transcript  # fallback: não filtra
+
+    out_path.write_text(transcript_safe, encoding="utf-8")
+    return out_path
+
+# Em main(), DEPOIS do _ler_transcript:
+out_path = _persist_transcript_pra_cron(transcript)
+log.info(f"Transcript salvo pra cron processar: {out_path.name}")
+
+# Daí tenta extrair via Haiku (legacy path, pode falhar sem env vars):
+try:
+    fragmentos = _extrair_fragmentos(transcript)
+    # ...
+except RuntimeError:
+    # Já salvou pra cron — vida segue
+    _logar_sessao(0, 0, [str(e)], f"(transcript {out_path.name} salvo pra cron)")
+    return
+
+
+
+# No fim do hook git-check, antes do exit:
+TRANSCRIPTS_NOVOS=$(git status --porcelain _log/transcripts-claude-code/ 2>/dev/null | head -5)
+if [ -n "$TRANSCRIPTS_NOVOS" ]; then
+    git add _log/transcripts-claude-code/
+    git commit -m "chore(transcripts): captura sessão $(date +%Y-%m-%dT%H-%M)" --quiet
+    git push origin HEAD --quiet 2>/dev/null || echo "push falhou — manual depois"
+fi
+
+
+
+
+"""Cron: processa transcripts Claude Code novos com curador bidirecional."""
+import asyncio
+import sys
+from pathlib import Path
+
+# Adiciona repo root ao path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from hub.curador import curar_turnos
+
+TRANSCRIPTS_DIR = Path("_log/transcripts-claude-code")
+PROCESSADOS_DIR = TRANSCRIPTS_DIR / "processados"
+MIN_CHARS = 200
+MAX_CHARS = 50_000  # cap pra evitar custo absurdo
+
+
+async def processar(path: Path) -> dict:
+    """Lê transcript, roda curador 2x (gus + gustavo), move pra processados/."""
+    conteudo = path.read_text(encoding="utf-8")
+
+    if len(conteudo) < MIN_CHARS:
+        path.rename(PROCESSADOS_DIR / path.name)
+        return {"file": path.name, "skip": "muito curto"}
+
+    # Trunca pra cap de custo (mantém início + fim)
+    if len(conteudo) > MAX_CHARS:
+        meio = MAX_CHARS // 2
+        conteudo = conteudo[:meio] + "\n\n[…transcript truncado…]\n\n" + conteudo[-meio:]
+
+    # Roda curador 2x (uma por brain)
+    resultados = {}
+    for user_id in ("gustavo", "gus"):
+        try:
+            r = await curar_turnos(
+                conteudo,
+                via="claude-code",
+                user_id=user_id,
+            )
+            resultados[user_id] = r.get("salvos", 0)
+        except Exception as e:
+            resultados[user_id] = f"erro: {str(e)[:120]}"
+
+    # Move pra processados/
+    PROCESSADOS_DIR.mkdir(exist_ok=True)
+    path.rename(PROCESSADOS_DIR / path.name)
+
+    return {"file": path.name, **resultados}
+
+
+async def main():
+    PROCESSADOS_DIR.mkdir(exist_ok=True)
+    transcripts = sorted(p for p in TRANSCRIPTS_DIR.glob("*.jsonl") if p.is_file())
+
+    if not transcripts:
+        print("Nenhum transcript novo")
+        return
+
+    for path in transcripts:
+        resultado = await processar(path)
+        print(resultado)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+
+
+
+name: Curador Claude Code (cron)
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"  # a cada 30 min
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements.txt -r .github/scripts/requirements.txt
+
+      - name: Process transcripts
+        env:
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python .github/scripts/curador_claude_code.py
+
+      - name: Commit processed transcripts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _log/transcripts-claude-code/
+          if ! git diff --cached --quiet; then
+            git commit -m "auto: processa transcripts Claude Code"
+            git push
+          fi
+assistant: Lido. Esse plano da outra aba mapeia exato pra demanda `2026-05-01-curador-bidirecional-cron.md` (Caminho 2). Antes de cravar a implementação, preciso verificar alguns pontos no código atual pra não codar baseado em suposição.
+assistant: Conferi os pontos críticos do plano vs realidade do código. Encontrei 4 furos que precisam decisão antes de codar:
+
+**1. `patterns_sensiveis.redact()` não existe**
+Só tem `escanear()` que retorna lista de nomes de patterns achados. O plano assume `redact()`. Duas opções:
+- (a) Criar `redact()` no `patterns_sensiveis.py` (substitui matches por `[REDACTED-<tipo>]`)
+- (b) Em vez de redigir, **bloquear save** se `escanear()` achar qualquer pattern (mais conservador — risco zero de PII no repo público)
+
+Recomendo **(b)** — transcript com PII fica só local, não trash. Mais seguro pra repo público.
+
+**2. `curar_turnos` espera `list[dict]`, não string**
+Plano passa `conteudo` (string) — quebraria. A função certa é `curar_arquivo(body, via, user_id)` que aceita string. Já existe e é usada pelo `ingest_mem0_from_chat.py`. Trocar pra ela.
+
+**3. Auto-commit do transcript — Opção B do plano não funciona aqui**
+`stop-hook-git-check.sh` está em `~/.claude/` (user settings, fora do repo). Editá-lo só afeta esta máquina; outras sessões Code on the web podem não ter. Melhor:
+- (c) **`retro_engine.py` faz `git add + commit + push` direto após salvar transcript** (já roda como hook do projeto, in-repo)
+- Tratar push falhar com fallback gracioso (loga aviso, transcript fica local pra próxima sessão)
+
+**4. `openai` não está em `.github/scripts/requirements.txt`**
+`hub/curador.py` usa `AsyncOpenAI`. Cron quebra sem `openai` no requirements. Adicionar.
+
+**Outros achados:**
+- Pasta `_log/transcripts-claude-code/` não existe — criar com `.gitkeep`
+- Atual branch é `claude/clarify-session-purpose-4otLR`, vou trabalhar nela
+- `retro_engine.py` já tem `_ler_transcript()` decente (parseia JSONL, trunca em 30K chars) — reaproveitar
+
+**Plano refeito (Fase 1 + 2 do plano original, ~150 linhas):**
+
+1. `gus/patterns_sensiveis.py` — adiciona `redact()` opcionalmente, mas implemento estratégia de **bloquear se PII detectada** no hook
+2. `.claude/hooks/retro_engine.py` — após `
+
+[…transcript truncado…]
+
+ta, deduplicação cross-modelo no `check_duplicata`
+
+São compatíveis mas a 2ª é mais simples — não precisa coordenar entre os modelos.
+
+## Acordos entre os 2
+
+- Saneamento Hub é **pré-requisito inegociável**
+- Agent SDK por fragmento é a solução
+- Qualidade > volume de fragmentos
+
+---
+
+Pronto pra conversar quando quiseres.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pushed.
+user: Continue from where you left off.
+assistant: No response requested.
+user: tendo todas essas informações, qual o melhor formato para cada um?
+assistant: # 📐 Formato ideal — Retro Engine + Curador
+
+Síntese das 3 análises (minha + 2 da consultoria) destilada em arquitetura-alvo.
+
+---
+
+## 🔧 Retro Engine — formato ideal
+
+**Já está em ~80% do ideal** (PR #110 acertou a base). Faltam 3 ajustes incrementais, sem refator.
+
+### Estado terminal
+
+```
+Stop hook (Claude Code)
+  ↓
+[1] Filtro transcript (user/assistant texto, sem tool_use/result/thinking) ✅
+  ↓
+[2] Truncamento SANDUÍCHE (5k início + 25k fim, não só fim) ⚠️ falta
+  ↓
+[3] Haiku Agent SDK loop (8 rounds, tools: registrar_fragmento, sessao_trivial) ✅
+       │
+       └─ registrar_fragmento agora exige `area` dinâmica (não default "gus") ⚠️ falta
+       └─ Antes de salvar: check_duplicata(threshold=0.85) ⚠️ falta
+  ↓
+[4] hub.store.ingestar (user_id="gus", curador="haiku") ✅
+  ↓
+[5] Log MD diário ✅
+  ↓
+[6] Health-check externo (cron diário 7h: alerta se transcript >24h pendente) ⚠️ falta
+```
+
+### Gaps (4 mudanças, ~50 linhas total)
+
+| # | Mudança | LOC | Impacto |
+|---|---|---|---|
+| 1 | Truncamento sanduíche | 3 | Sessões longas com decisão no início |
+| 2 | `area` no schema da tool (default "gus" se modelo não souber) | 8 | Filtros corretos no NeuroGus |
+| 3 | `check_duplicata` antes de `ingestar` | 30 | Reduz duplicatas inter-sessão |
+| 4 | Workflow `health-check-curador.yml` | ~30 | Detecta cron quebrado |
+
+**Não-mudanças importantes (manter):**
+- Agent SDK com tools — ★ certo
+- Filtro de tool_use/result — ★ certo
+- Redação PII — ★ certo
+- No-op silencioso em ambiente sem ANTHROPIC_API_KEY — ★ certo
+
+---
+
+## 🌿 Curador — formato ideal
+
+**Reescrita arquitetural** seguindo padrão do Retro Engine. ~280 linhas novas + 3 imports trocados (per segundo texto).
+
+### Estado terminal
+
+```
+Input (turnos Telegram | arquivo Chat | transcript Code)
+  ↓
+[1] PRÉ-FILTRO BINÁRIO (Haiku barato, ~200 tokens)
+       "Esta janela tem fato/decisão/preferência relevante? sim/não"
+       Se NÃO → descarta sem chamar GPT (economia em small talk)
+       Se SIM → segue
+  ↓
+[2] AGENT SDK LOOP — ambos modelos rodam pipeline COMPLETA em paralelo
+       │
+       ├─ Haiku                                    GPT-4o-mini (ou Sonnet+GPT-4o em Chat)
+       │  ↓                                              ↓
+       │  Loop até 8 rounds com tools:
+       │  - registrar_fragmento(conteudo, tipo, camada, area*, confianca)
+       │  - sessao_trivial(motivo)
+       │  - descartar_fragmento(motivo)  ← novo, modelo pode auto-rejeitar
+       │
+       │  *area = OBRIGATÓRIA. Sem fallback "" — schema rejeita.
+       │
+       │  Antes de cada registrar_fragmento:
+       │  → check_duplicata(conteudo, user_id, threshold=0.85)
+       │     ↓
+       │     Se já existe similar:
+       │       devolve fragmento existente pro modelo
+       │       modelo decide: descartar | atualizar updated_at+confianca
+       │     Se não existe:
+       │       hub.store.ingestar(metadata.curador="haiku"|"gpt")
+  ↓
+[3] QUARENTENA pra fragmentos que falharam validação:
+       - area inválida ou ""
+       - tipo enum inválido
+       - confianca < 0.4
+       Vão pra _log/quarentena/AAAA-MM-DD.jsonl, não pro Hub.
+       Revisão semanal manual.
+  ↓
+[4] LOGGING CENTRALIZADO em _log/curador/AAAA-MM-DD.md
+       Campo `origem`: telegram | chat | code
+       Não importa qual porta chamou — formato único.
+```
+
+### Por porta — diferenças mínimas
+
+| Porta | Pré-filtro | Modelos | Volume | Custo/turno |
+|---|---|---|---|---|
+| **Telegram** | ON (small talk frequente) | Haiku 4.5 + GPT-4o-mini | alto | ~$0.001 |
+| **Chat (raw)** | OFF (já curado) | **Sonnet 4.6 + GPT-4o** | baixo | ~$0.015 |
+| **Code (cron)** | ON | Haiku 4.5 + GPT-4o-mini | médio | ~$0.001 |
+
+### Pré-requisito inegociável
+
+**Saneamento do Hub primeiro.** Sem isso, `check_duplicata` bate em fragmentos vagos do passado e bloqueia fragmentos novos legítimos.
+
+Estimativa: ~70% do Hub é lixo segundo `_meta-relatorio-hub.md`. Limpeza antes de migrar.
+
+---
+
+## 📋 Sequência de execução recomendada
+
+```
+[FASE 1] Saneamento Hub                    1-2 dias
+  ├─ Auditoria fragmentos com curador=gpt (já tem demanda 2026-05-03)
+  ├─ Listar candidatos a deletar (_indices/_limpeza-hub-candidatos.md já existe!)
+  └─ Mass delete via tool admin
+
+[FASE 2] Quarentena no curador atual       2h
+  ├─ Trocar fallback silencioso por rejeição
+  ├─ Criar _log/quarentena/
+  └─ Para de acumular novo lixo (mesmo antes do Agent SDK)
+
+[FASE 3] Curador v2 — Agent SDK            ~1 dia
+  ├─ check_duplicata em hub/store.py (~30 linhas)
+  ├─ hub/curador.py reescrito (~280 linhas)
+  ├─ Testes paridade com curador v1 (rolling 7 dias)
+  └─ Logging centralizado
+
+[FASE 4] Retro Engine refinements          ~2h
+  ├─ Truncamento sanduíche
+  ├─ area dinâmica
+  ├─ check_duplicata (reusa de Fase 3)
+  └─ Workflow health-check
+```
+
+**Total: 3-4 dias de trabalho focado**, divisíveis em sessões.
+
+---
+
+## 🎯 Princípios de design comuns aos dois
+
+1. **Modelo conhece o Hub antes de propor** (push controlado)
+2. **`area` obrigatória — nunca fallback ""** (raiz do meta-lixo)
+3. **Quarentena em vez de descarte silencioso** (preserva pra revisão)
+4. **A/B continua, deduplicação cross-modelo natural** (Haiku salva primeiro → GPT bate em check_duplicata)
+5. **Logging único por componente, não por porta** (diagnóstico simples)
+6. **Health-check externo** (sem alerta = se perde silenciosamente)
+
+---
+
+Quer que eu rascunhe a **Fase 1 (saneamento Hub)** já como demanda formal? Ou tem dúvida em alguma decisão de design acima antes?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pushed.
+user: Continue from where you left off.
+assistant: No response requested.
+user: mas esse saneamento seria feito como? por qual porta? quais portas tem acesso a editar hub?
+assistant: Boa pergunta — preciso verificar antes de chutar. Vou olhar quais tools de delete existem em cada porta:
+assistant: # 🗝️ Quem pode editar o Hub — mapa de acesso
+
+| Porta | Lê | Escreve | **Deleta** |
+|---|---|---|---|
+| **Telegram (TioGu)** | ✅ | ✅ | ✅ tool `deletar_memoria` |
+| **Claude Chat** (via MCP) | ✅ | ✅ `ingestar_fragmento` | ❌ **NÃO TEM tool de delete** |
+| **Claude Code** (web) | ✅ via MCP | ✅ via MCP | ❌ não tem |
+| **Custom GPT** (via API) | ✅ | ✅ | ✅ POST `/deletar_memoria` |
+| **Scripts diretos** (Python) | ✅ | ✅ | ✅ `hub.store.deletar()` |
+
+**Detalhe importante:** o MCP server NÃO expõe tool de delete (de propósito — proteção contra Claude Chat deletar coisas por engano). Só Telegram e API REST têm acesso direto.
+
+---
+
+# 🎉 A boa notícia: o saneamento já está PROJETADO
+
+Olhando os scripts, já existem **2 prontos** pra saneamento:
+
+```
+.github/scripts/limpeza_hub_dryrun.py    ← gera lista de candidatos (não deleta)
+.github/scripts/limpeza_hub_aplicar.py   ← aplica delete após aprovação manual
+```
+
+Comentário do `dryrun.py`:
+> "Item 1.7 do plano de saneamento (02/05/2026). Diagnóstico A1+A5+A6 mostrou que ~70% do conteúdo do Hub atual é lixo."
+
+Detecta **4 tipos de lixo**:
+
+1. **Duplicatas semânticas** (Jaccard ≥ 0.7) — mantém o mais antigo + maior confiança
+2. **Cross-brain pollution** — fragmentos no brain `gus` que falam sobre Gustavo (não autobiografia)
+3. **Meta-lixo de bot** — "X demandas pendentes", "auditoria identificou...", etc.
+4. **Tipo padrão sem area** — exatamente o problema que a consultoria apontou (`tipo=episodico, area=""`)
+
+**Trilha de auditoria:** todo delete escreve em `_log/deletar-hub/AAAA-MM-DD.jsonl` antes de remover. Reversível em caso de erro (re-ingestar pelos logs).
+
+---
+
+# 📋 Caminho recomendado pro saneamento
+
+**NÃO é por porta** — é via **GitHub Actions** com aprovação humana entre etapas:
+
+```
+[1] Disparar workflow_dispatch: limpeza-hub-dryrun.yml
+       ↓
+[2] Script roda em GHA (tem secrets QDRANT)
+       ↓
+[3] Gera _indices/_limpeza-hub-candidatos.md (já existe esse arquivo!)
+    com lista de UUIDs propostos pra delete + razão
+       ↓
+[4] Tu (Gustavo) revisa o MD no celular ou desktop
+       ↓
+[5] Se aprovar: dispara workflow_dispatch: limpeza-hub-aplicar.yml
+       ↓
+[6] Script aplica deletes, gera _log/deletar-hub/AAAA-MM-DD.jsonl
+       ↓
+[7] Se errou alguma coisa: rollback via re-ingestar pelos logs
+```
+
+**Vantagens desse caminho:**
+- Não depende de UI (Telegram/Chat) — escalável pra mil deletes
+- Tem aprovação humana entre dryrun e aplicar
+- Auditoria completa (não some sem rastro)
+- Roda com env vars do GHA, sem expor token Qdrant em outros ambientes
+
+---
+
+# ✅ O que falta verificar antes de executar
+
+3 perguntas pra responder primeiro:
+
+1. **Os scripts existem mas foram rodados alguma vez?** Posso conferir se tem entries em `_log/deletar-hub/`
+2. **Tem workflow YAML configurado pra dispatch?** Se não, tenho que criar — ~10 linhas
+3. **Threshold Jaccard 0.7 está bom?** Pode ser conservador demais (deixa duplicatas) ou agressivo (deleta legítimos). Pode rodar dryrun com 0.7 primeiro pra ver o volume.
+
+Quer que eu confira essas 3 coisas e prepare o caminho pro dispatch? Ou tem outra pergunta antes?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pushed.
+nao sei se foram rodados.
+não sei 
+pode ser
+
+então o github que faria esse saneamento? seria pontual, certo? como ele saberia quem apagar?
+user: Continue from where you left off.
+assistant: No response requested.
+user: nao sei se foram rodados.
+não sei 
+pode ser
+
+então o github que faria esse saneamento? seria pontual, certo? como ele saberia quem apagar?
+assistant: Vou verificar e explicar:
+assistant: # ✅ Respondendo:
+
+**Foi rodado?** ❌ Nunca. Pasta `_log/deletar-hub/` não existe, arquivo `_indices/_limpeza-hub-candidatos.md` também não.
+
+**Workflows existem?** ✅ Sim, prontos pra disparar:
+- `.github/workflows/limpeza-hub-dryrun.yml`
+- `.github/workflows/limpeza-hub-aplicar.yml`
+
+**Threshold 0.7?** Default no script, configurável via env `LIMPEZA_JACCARD`.
+
+---
+
+# 🎯 Sim, GitHub Actions faz o saneamento. E é pontual.
+
+Não é cron recorrente — é **`workflow_dispatch`** (botão "Run workflow" no GitHub). Roda quando tu pedir, fica idle no resto do tempo.
+
+---
+
+# 🔍 Como o script sabe quem apagar — 4 critérios
+
+Olhei o código. Detecta 4 tipos de lixo:
+
+## 1️⃣ Duplicatas semânticas (Jaccard ≥ 0.7)
+
+**Lógica:** compara o texto de cada par de fragmentos. Tokeniza palavras, calcula coeficiente Jaccard (palavras em comum / palavras totais). Se ≥ 70% iguais, são duplicatas.
+
+**Exemplo:**
+```
+Fragmento A: "Gustavo é anestesiologista trabalha na Dimagem em Vitória"
+Fragmento B: "Anestesiologista Gustavo trabalha em Vitória clínica Dimagem"
+                ↑ Jaccard ~0.85 → marca B (mais novo) pra delete, mantém A
+```
+
+**Critério de qual manter:** mais antigo + maior `confianca`.
+
+## 2️⃣ Cross-brain pollution (brain `gus` falando sobre Gustavo)
+
+**Lógica:** regex em fragmentos com `user_id="gus"`. Se o texto descreve fato biográfico do Gustavo, está no brain errado.
+
+**Padrões detectados:**
+```python
+r"\bnasci(do)?\s+em\b",                    # "Nasci em Vitória"
+r"^gustavo\s+(é|tem|gosta|prefere|mora)",  # "Gustavo gosta de café"
+r"\buser\s+(wants?|prefers?|likes)\b",     # "User prefers X" (extração GPT em inglês)
+r"\b(insurance|patient|exam|mri)\b",       # Dimagem clínico
+```
+
+**Exemplo:**
+```
+Brain: gus
+Texto: "Gustavo nasceu em Vitória ES, mora em Paty dos Alferes RJ"
+       ↑ deveria ser brain="gustavo" — bate em 2 padrões
+       → marca pra delete (não move automático, só sinaliza)
+```
+
+## 3️⃣ Meta-lixo de bot (auto-referência sem valor)
+
+**Lógica:** regex em conteúdo que só descreve o estado do sistema, não tem valor biográfico.
+
+**Padrões:**
+```python
+r"\b\d+\s*(demandas?)\b.*\binbox-claude-code\b",  # "5 demandas pendentes em..."
+r"\btiogu\b.*\b~?\d+\s+tools\b",                  # "TioGu tem 21 tools"
+r"\bauditoria\s+(do\s+)?chat\b.*\bidentificou",   # "Auditoria do chat identificou..."
+r"\bretro-?engine\b.*\b(no-op|anthropic_missing)\b",  # "Retro engine no-op anthropic_missing"
+```
+
+**Exemplo:**
+```
+"O TioGu possui 21 tools ativas e o Hub tem 1081 fragmentos"
+↑ é status de sistema, não é fato sobre Gustavo. Lixo.
+→ marca pra delete
+```
+
+## 4️⃣ Não-classificados (tipo padrão, area vazia)
+
+**Lógica:** se um fragmento tem `tipo=episodico` + `camada=sessao` + `area=""` simultaneamente, é forte sinal que entrou via fallback silencioso (o que a consultoria apontou como causa-raiz!).
+
+**Exemplo:**
+```
+{
+  "tipo": "episodico",       ← default
+  "camada_temporal": "sessao",  ← default
+  "area": ""                  ← vazio
+}
+                              ↑ os 3 defaults = entrou sem classificação real
+                              → marca pra delete
+```
+
+---
+
+# 📋 O que o dryrun gera
+
+Arquivo `_indices/_limpeza-hub-candidatos.md` tipo:
+
+```markdown
+## Candidato: 0329c718-...
+**Brain:** gustavo
+**Razão:** Duplicata semântica de UUID xyz (jaccard=0.85)
+**Severidade:** forte
+**Texto:** "Gustavo é anestesiologista..."
+
+## Candidato: a4f5b2c1-...
+**Brain:** gus
+**Razão:** Cross-brain pollution (padrão "Gustavo nasceu...")
+**Severidade:** forte
+**Texto:** "Gustavo nasceu em Vitória..."
+
+## Candidato: ...
+```
+
+---
+
+# 🎬 Fluxo concreto
+
+1. **Tu disparas** `workflow_dispatch: limpeza-hub-dryrun.yml` no GitHub
+2. **Script roda em GHA** (lê Hub via secrets QDRANT)
+3. **Gera `_indices/_limpeza-hub-candidatos.md`** + commit automático em main
+4. **Tu abres o MD no celular** (vai pro Drive via sync)
+5. **Edita removendo o que NÃO quer apagar** (linha por linha)
+6. **Commita as remoções**
+7. **Disparas `limpeza-hub-aplicar.yml`** — só apaga o que sobrou no MD
+8. **Trilha:** `_log/deletar-hub/2026-05-07.jsonl` com o conteúdo deletado (rollback possível)
+
+---
+
+# 🤔 O que precisamos decidir
+
+1. **Posso criar o workflow YAML?** (já existe, vou só verificar se está OK pra dispatch — provavelmente sim já que o cleanup mem0 não tocou nele)
+2. **Disparar o dryrun agora?** Demora ~2min. Não deleta nada — só lista.
+3. **Qual threshold Jaccard?** 0.7 default é razoável. Pode rodar e olhar volume.
+
+Quer disparar o dryrun agora pra ver quantos candidatos aparecem? Sem risco — não deleta.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
