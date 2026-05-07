@@ -3,10 +3,10 @@ tipo: demanda
 origem: gustavo
 destino: claude-code
 prioridade: media
-status: pendente
+status: concluido
 criado_em: 2026-05-06T21:30:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: "2026-05-07T00:00:00-03:00"
+processado_por: claude-code
 acao_sugerida: implementar
 destino_path: .github/scripts/
 contexto: Evoluir workflows GitHub Actions de scripts determinísticos para agentes que raciocinam sobre o contexto antes de agir (Claude Agent SDK).
@@ -33,3 +33,10 @@ ver fragmentos novos, adaptar o output ao contexto real do dia.
 
 Briefing gerado pelo agente é visivelmente mais adaptado ao dia real
 do que o template atual. Custo de tokens dentro do aceitável.
+
+## Implementado em
+
+Branch `claude/review-project-structure-esL3J` — commit `ad86e5e`.
+`briefing_matinal.py` reescrito como agente com 4 tools: `buscar_hub`,
+`buscar_commits`, `ler_arquivo`, `enviar_briefing`. Claude decide o que
+buscar em loop (até 10 rounds) antes de gerar o briefing.
