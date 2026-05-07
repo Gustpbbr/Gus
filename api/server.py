@@ -16,6 +16,7 @@ from fastapi.responses import HTMLResponse
 
 from api.routes import router
 from hub.routes import router as hub_router
+from api.hub_cc import router as hub_cc_router
 
 
 def create_app() -> FastAPI:
@@ -51,6 +52,7 @@ def create_app() -> FastAPI:
         return HTMLResponse(content=CAMERA_PWA_HTML)
 
     app.include_router(router)
-    app.include_router(hub_router)  # Hub Qdrant direto — ADR-001 Fase 1
+    app.include_router(hub_router)   # Hub Qdrant direto — ADR-001 Fase 1
+    app.include_router(hub_cc_router)  # Claude Code — leitura interna
 
     return app
