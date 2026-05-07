@@ -1,6 +1,6 @@
 ---
 tipo: meta-memoria
-atualizado: 2026-05-06T08:12:07.009325-03:00
+atualizado: 2026-05-07T08:14:03.948417-03:00
 hub_total_geral: 10485
 hub_total_gustavo: 5295
 hub_total_gus: 5190
@@ -24,8 +24,8 @@ Análise automática e determinística do armazém de memórias do Gus (coleçã
 - **Mais recente:** 2026-05-05 — *"A vantagem competitiva na anestesia ambulatorial estará na organização de uma op..."*
 
 ## Frescor
-- **Últimas 24h:** 23 (0.4%)
-- **Últimos 7 dias:** 5253 (99.2%)
+- **Últimas 24h:** 0 (0.0%)
+- **Últimos 7 dias:** 5276 (99.6%)
 - **Últimos 30 dias:** 19 (0.4%)
 - **Mais de 30 dias:** 0 (0.0%)
 
