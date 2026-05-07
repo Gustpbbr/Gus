@@ -1,0 +1,557 @@
+user: blz? pode chamar o Gus pra gente começar a mexer no projeto neurogus?
+assistant: opa, blz. neurogus tem roadmap em `projetos/gus/gus-30-neurogus-roadmap.md` e três briefings na inbox-tiogu. deixa eu ler tudo antes de falar besteira.
+assistant: bom, peguei a essência. agora o roadmap (28k tokens, leio em partes — começo do início e do fim, que costuma ter "estado atual").
+assistant: Já tenho briefing, arquitetura, mock-spec e roadmap completo. Antes de propor passo concreto, deixa eu conferir branch atual.
+assistant: opa, branch `claude/start-neurogus-project-NZAoF` ja criada, working tree limpo. tudo lido. resumo do estado:
+
+## o que é o neurogus
+PWA com grafo 3D que mostra a memória do Hub Qdrant viva em tempo real — cada fragmento é uma esfera, conexão por afinidade semântica (cosine top-K), nasce branco quando o curador salva e migra pra cor do tipo. Roda no mesmo Railway do bot, sem custo extra.
+
+## status hoje
+- backend (Hub, curador, embeddings, FastAPI, Bearer): **pronto**
+- código novo do NeuroGus: **0 linhas escritas** (só mock visual da Claude Chat, perdido no Drive dela)
+- roadmap canônico: `projetos/gus/gus-30-neurogus-roadmap.md` (1513 linhas, Fase 1 = backend SSE)
+
+## o que precisa de você antes de eu começar (decisões abertas, seção 11)
+3 dessas bloqueiam Fase 1:
+
+1. **Top-K e threshold de afinidade.** Default proposto: K=3, threshold=0.6 (cosine). Aceita?
+2. **Apagar fragmento é hard ou soft delete?** Hard = `store.deletar()` direto. Soft = marcar `estado: "esquecido"` (já existe no schema). Recuperabilidade vs minimalismo.
+3. **Coleção mostrada: só `user_id=gustavo` ou também `gus` (auto-observações)?** Default: só `gustavo` no v0.
+
+As outras 4 (mock HTML, token na URL, auto-orbit, reconnect SSE) só importam na Fase 2 (frontend) — dá pra decidir depois.
+
+## se você confirmar os defaults, primeiro passo concreto é
+1. criar `hub/events.py` (fila SSE, ~50 linhas)
+2. adicionar `_calcular_vizinhos()` + `broadcast()` em `hub/store.py:ingestar()`
+3. adicionar `GET /hub/recent` e `GET /hub/stream` em `hub/routes.py`
+4. smoke test local com `curl --no-buffer` antes de subir
+
+vou nessa? confirma (ou ajusta) os 3 defaults e eu começo pela Fase 1.
+user: Continue from where you left off.
+assistant: No response requested.
+user: mas antes, leia sobre todo o projeto. pra ter um panorama geral. busque em todo repo
+user: Você é um agente de exploração mapeando o repositório Gus (`/home/user/Gus`) pra dar contexto a outra sessão Claude Code que vai trabalhar no projeto NeuroGus.
+
+Objetivo: produzir um panorama geral do repo. Não detalhe demais — seja específico onde há decisão arquitetural ou estado em transição, e seja conciso onde for óbvio.
+
+Cobre estes pontos (em ordem):
+
+## 1. Estrutura de pastas top-level
+Liste o que tem em `/home/user/Gus` (raiz). Pra cada pasta principal (`gus/`, `hub/`, `api/`, `.claude/`, `.github/`, `projetos/`, `dialogos/`, `pessoal/`, `dimagem/`, `_log/`, `_indices/`, etc.) diga em 1 linha o que ela é. Foca no que é código vs conteúdo (.md).
+
+## 2. Código-fonte ativo (Python)
+- `gus/`: liste os módulos principais (main, bot, llm, memory, tools, media) e quantas linhas tem cada um
+- `hub/`: liste os módulos (store, curador, routes, schemas, mcp_server, events?) e estado de cada
+- `api/`: liste o que tem dentro (server, dashboard, camera, neurogus?, etc.) 
+- `.claude/mcp/`: MCP servers existentes
+- `.github/scripts/` e `.github/workflows/`: lista breve de scripts e workflows ativos
+
+Pra cada arquivo importante, diga 1 linha sobre o que faz. Marque com ❌ os arquivos referenciados em docs mas que não existem ainda (tipo `hub/events.py`, `api/neurogus.py`).
+
+## 3. Documentos canônicos `projetos/gus/gus-NN-*.md`
+Liste todos os docs com prefixo `gus-NN-` em `projetos/gus/`. Pra cada um, leia o frontmatter + primeiras 30 linhas e resuma em 1-2 linhas: tema + status (planejamento/implementado/abandonado).
+
+## 4. Estado da migração ADR-001 (Mem0 → Hub Qdrant)
+Procura referências a "ADR-001", "Fase X", "Hub", "Mem0" em arquivos de status. Tem `projetos/gus/_estado-atual.md`? Leia ele inteiro se existir. Resuma em qual fase a migração está.
+
+## 5. Demandas pendentes
+- Liste arquivos em `dialogos/inbox-claude-code/`, `dialogos/inbox-tiogu/` (com 1 linha cada sobre o tema)
+- Liste arquivos em `dialogos/streams/semana-*.md` mais recentes (só o nome)
+- Aponta quais são relacionadas ao NeuroGus
+
+## 6. Workflows ativos (.github/workflows)
+Lista nome + 1 linha do que faz. Marca os que são relevantes pro Hub/curador/NeuroGus.
+
+## 7. Sinais de "tá rodando em produção" vs "rascunho"
+Pasta `historico/` tem o quê (legado)? Tem TODOs marcados em código? Tem arquivos `.draft` ou similares? Quais arquivos tem "TODO"/"FIXME"/"XXX" em comentários de código?
+
+## 8. Tamanho e idiomas
+- Total de linhas Python no repo
+- Total de arquivos .md
+- Última semana de commits (resumo via `git log --oneline --since='7 days ago'`)
+
+## Formato do relatório
+- Markdown estruturado, seções como acima
+- Caminhos relativos a `/home/user/Gus`
+- ~600-900 linhas (use as palavras com economia, mas cubra tudo)
+- Não duplique info do CLAUDE.md (eu já tenho ele); foque no que CLAUDE.md NÃO diz ou onde ele está desatualizado vs realidade
+- Termina com seção "## Inconsistências/dúvidas" listando 3-5 coisas que parecem contraditórias entre docs e código
+
+Não precisa rodar nada — só ler arquivos e listar diretórios. Sem WebFetch/WebSearch. Sem git fetch — só git log local se útil.
+assistant: beleza, faz sentido. vou mapear o repo inteiro com um agente de exploração antes de continuar.
+assistant: Vou explorar o repositório Gus sistematicamente. Começarei com uma visão geral da estrutura.
+assistant: Agora vou estruturar a exploração. Vou fazer múltiplas buscas em paralelo:
+assistant: Vou explorar a estrutura de código Python em paralelo:
+assistant: Agora vou contar linhas de código e explorar documentação:
+assistant: Agora vou examinar conteúdo das demandas pendentes e status do NeuroGus:
+assistant: Vou verificar MCP servers e workflows mais detalhadamente:
+assistant: Agora vou ler alguns docs importantes do NeuroGus e ADR-001:
+assistant: Agora vou verificar arquivos de APIs e rotas do Hub:
+assistant: Agora vou verificar alguns workflows e ver padrão de referências:
+assistant: Vou mapear o repositório Gus de forma completa. Começarei pela estrutura geral e depois dos pontos específicos.
+assistant: agente de exploração rodando em background. te aviso assim que ele terminar com o panorama. enquanto isso fico parado pra não pisar no que ele tá lendo.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Agora vou explorar os principais diretórios em paralelo:
+assistant: Agora vou contar linhas de código e verificar documentos:
+assistant: São só appends automáticos do hook Stop (retro-engine). Commit e push.
+assistant: commitado e pushado pra `claude/start-neurogus-project-NZAoF` (commit `b28e75d`). Agente de exploração ainda mapeando o repo — te aviso quando ele terminar.
+assistant: Perfeito! Agora tenho informação suficiente para o relatório. Deixe-me compilar tudo:
+
+---
+
+# Panorama do Repositório Gus — Mapa para NeuroGus
+
+## 1. Estrutura de pastas top-level
+
+| Pasta | Tipo | Descrição |
+|-------|------|-----------|
+| **gus/** | Código | Bot TioGu (Telegram). Módulos: main, bot, llm, memory, tools, media, roteador, logger, patterns_sensiveis, integrations/ |
+| **hub/** | Código | Hub Qdrant direto (ADR-001 Fase 2+). Módulos: store, curador, routes, schemas, mcp_server |
+| **api/** | Código | FastAPI (Railway). Rotas REST, auth, dashboard, camera, server principal |
+| **.claude/** | Config | MCP servers (mem0_server, gus_server) + settings |
+| **.github/** | Config | Workflows (19 cron + manual), scripts deploy, diagnostics |
+| **projetos/** | Conteúdo | Documentação projeto: gus-NN-*.md (30 docs), auditorias, decisões arquiteturais (ADRs) |
+| **dialogos/** | Conteúdo | Inbox (claude-code, tiogu, gustavo), streams semana, bootstrap (identidade, prompts) |
+| **pessoal/** | Conteúdo | Saúde, financeiro, relacionamentos, histórico pessoal |
+| **dimagem/** | Conteúdo | Clínica (obras, pacientes, sistema OCR em produção) |
+| **capturado/** | Conteúdo | Captura rápida via bot (não estruturada) |
+| **historico/** | Arquivo | Legacy: textos-antigos (v1), scripts one-shot, docs setup. Seguro deletar. |
+| **_indices/** | Gerado | Índices automáticos (auditoria-mem0.md, etc.) |
+| **_log/** | Gerado | Logs resumidos, histórico de execuções |
+| **acoes/, agenda/, familia/, receitas/, contatos/, esportes/, leituras/** | Conteúdo | Dados pessoais do Gustavo (fora de escopo técnico) |
+
+---
+
+## 2. Código-fonte ativo (Python)
+
+### `gus/` — Bot Telegram (579-675 LOC principais)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `main.py` | ~50 | Boot: registra handlers Telegram (foto, doc, voz, texto, comandos) |
+| `bot.py` | 579 | Lógica de handlers: captura foto/PDF/voz → OCR/Whisper + Hub |
+| `llm.py` | 675 | Chamadas Claude (Haiku 4.5, Sonnet 4.6): retry, streaming, tools |
+| `memory.py` | 279 | Leitura/escrita Hub Qdrant via `hub/store.py` + fallback Mem0 (morto em escrita) |
+| `tools.py` | ~700 | ~21 tools: buscar_memoria, salvar_memoria, diagnostico, wikilinks, pesquisa, etc. |
+| `media.py` | ~150 | Whisper (voz → texto), Haiku Vision (foto → OCR), ffmpeg placeholder vídeo |
+| `integrations/` | 4 files | Railway logs, diagnostico, wikilinks, pesquisa (Tavily/DDG) |
+| `roteador.py`, `logger.py`, `patterns_sensiveis.py` | ~200 | Roteamento entre modelos, logging estruturado, patterns de segurança |
+
+**Estado:** Em produção. Handlers completos exceto VIDEO (TODO mencionado em main.py).
+
+### `hub/` — Hub Qdrant (297-434 LOC principais)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `store.py` | 297 | Qdrant direto com sentence-transformers. CRUD + busca semântica. Schema gus-18. |
+| `curador.py` | 434 | Híbrido Haiku × GPT-4o-mini (paralelo). Fragmentos com `hash_janela` + `via` metadata. |
+| `routes.py` | ~50 | Endpoints REST: `/hub/ingestar`, `/hub/lembrar`, `/hub/ego-cache`, `/hub/stats` |
+| `schemas.py` | ~80 | Pydantic: IngestarReq/Resp, LembrarReq/Resp, Payload (16 campos) |
+| `mcp_server.py` | ~200 | MCP wrapper pro Claude Code. Expõe 8-9 tools (buscar_memoria, deletar_memoria, etc.) |
+| ❌ `events.py` | — | **Não existe**. Pré-requisito NeuroGus (asyncio.Queue p/ SSE) |
+
+**Estado:** Produção desde 27/04. Migração Mem0 → Hub completa (Fase 4 concluída). Mem0 SaaS em fallback-only (morte programada pós-14 dias coleta dual = ~12/05).
+
+### `api/` — FastAPI server (Railway)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `server.py` | ~100 | Starlette + FastAPI. Registra routers: bot routes, Hub routes, dashboard |
+| `routes.py` | ~200 | Routes do bot: `/memo` (POST memória), `/mirror` (log), etc. |
+| `auth.py` | ~50 | Bearer token validation pra Hub + MCP |
+| `dashboard.py` | ~80 | Minimal dashboard (status página) |
+| `camera.py` | ~100 | IP webcam (futuro: camera Echo Show via S8 Termux) |
+| `schemas.py` | ~50 | Pydantic: requisições/respostas |
+| ❌ `neurogus.py` | — | **Não existe**. Frontend SSE + grafo 3D (pré-requisito NeuroGus Fase 1) |
+
+**Estado:** Em produção. Últimos 4 PRs (27-30/04) fixaram issues MCP auth pro claude.ai (Bearer header → OAuth adaptação). PR #60 mergeado 30/04.
+
+### `.claude/mcp/` — MCP servers
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `mem0_server.py` | ~300 | ⚠️ Legado. Conecta MCP à Mem0 SaaS. Será aposentado pós-14 dias. |
+| `gus_server.py` | ~250 | Expõe tools do bot: auto_diagnostico, sugerir_wikilinks, perguntar_gpt (GPT-5) |
+
+### `.github/scripts/` — Utilitários
+
+Principais:
+- `export_mem0.py` — exporta Mem0 SaaS pra JSON (cron diário)
+- `enrich_mem0_export.py` — enriquece export com embeddings (script existe, sem cron)
+- `audit_mem0.py` — auditoria Mem0 (será migrado pra Hub)
+
+**Total Python:** 13,459 linhas entre `gus/`, `hub/`, `api/`, `.claude/mcp/`, `.github/scripts/`
+
+---
+
+## 3. Documentos canônicos `projetos/gus/gus-NN-*.md` (30 docs)
+
+| ID | Título | Status | Resumo |
+|----|--------|--------|--------|
+| 01 | visao-geral | ✅ Implementado | Arquitetura multi-portal: Telegram, Claude Code, Claude Chat, ChatGPT |
+| 02 | implementado | ✅ Implementado | Feature checklist v1 (OCR, memória, tools) |
+| 03 | configuracao-manual | ✅ Implementado | Passo-a-passo setup bot Telegram + Railway |
+| 04 | seguranca-protecao | ✅ Implementado | Patterns sensíveis, gate confiança OCR, fallbacks |
+| 05 | portas-capacidades | ✅ Implementado | Feature matrix por porta (Telegram, Claude, etc.) |
+| 06 | autonomia-acoes | ✅ Implementado | Ações automáticas pendentes (vídeo, Google SA, Alexa) |
+| 07 | decisoes-descartadas | ✅ Implementado | Por que NOT Ollama, NOT llama.cpp, etc. |
+| 08 | plano-proximos-passos | ✅ Implementado | Roadmap até Alexa (descontinuado, vide gus-10) |
+| 09 | guia-uso-diario | ✅ Implementado | Como usar o Gus no dia-a-dia |
+| 10 | caminho-alexa | ✅ Implementado | Roadmap revisado: Alexa V1 (Dot 3) → Custom GPT → Termux |
+| 11 | tools-roadmap | ✅ Implementado | Roadmap de 21 tools (maioria pronto) |
+| 12 | portas-futuras | ✅ Implementado | Portas planejadas (Alexa, mobile voz, webcam) |
+| 13 | tags-canonicas | ✅ Implementado | Nomenclatura tags de origem (via) e tipos memória |
+| 14 | custom-gpt-setup | ✅ Implementado | Passo-a-passo Custom GPT com Actions |
+| 15 | decisao-migracao | ✅ Implementado | Por que migrar de Mem0 (SaaS lento) para Hub Qdrant |
+| 16 | canal-unificado | ✅ Implementado | Arquitetura pasta `dialogos/` por destinatário |
+| 17 | setup-ambiente | ✅ Implementado | Vars env, secrets, Railway, Qdrant Cloud |
+| 18 | schema-indexacao | ✅ Implementado | Schema payload Hub (16 campos: tipo, camada_temporal, area, confiança, via, etc.) |
+| 19 | etapa1-mem0-selfhost | ✅ Implementado | Fase 1 ADR-001 (Qdrant via wrapper Mem0) |
+| 20 | etapa2-hub-qdrant | ✅ Implementado | Fase 2 ADR-001 (Hub direto com payload rico) |
+| 21 | etapa3-curador | ✅ Implementado | Fase 3: curador híbrido Haiku × Sonnet (depois GPT) |
+| 22 | etapas4-5-ego-autorelato | 🔄 Parcial | Fase 4-5: ego_cache + auto-relatório (Fase 4 concluída, Fase 5 pendente) |
+| 23 | logica-qdrant-mem0 | ✅ Implementado | Explicação convivência dual até aposentadoria Mem0 |
+| 24 | hub-pre-agi-visao | ✅ Implementado | Visão de longo prazo: Hub como infraestrutura pré-AGI |
+| 25 | roadmap-ativacao | ✅ Implementado | Sequência: Hub → Curador → Portas customizadas |
+| 26 | status-consolidado | ✅ Implementado | Status Q1 2026 (completo até 26/04) |
+| 27 | protocolo-portas-tools | ✅ Implementado | Padronização: como portas acessam tools via MCP |
+| 28 | acesso-hub-claude-chat | ✅ Implementado | Como Claude Chat lê Hub (início, precisa OAuth fix) |
+| 28-passo2 | mcp-server | ✅ Implementado | Setup MCP server gus-hub em claude.ai |
+| 29 | roteamento-multimodelo-tiogu | ✅ Implementado | Decisão: Son
+
+[…transcript truncado…]
+
+inhos:
+
+## Opção 1 — Filtro client-side (trivial, ~30 LoC)
+
+UI ganha 2 inputs date "de" / "até" no header ou painel filtros. JS filtra `state.nodes.filter(n => n.timestamp >= start && n.timestamp <= end)` e re-renderiza.
+
+**Limitação:** só filtra o que **já tá carregado**. Se você só baixou os últimos 500, não pode "ir pra 1 mês atrás" — esses fragmentos nem foram fetched.
+
+**Útil pra:** "quero ver só ontem" / "só essa semana" dentro do que tá visível.
+
+## Opção 2 — Filtro backend (mais poderoso, ~30 LoC backend + ~30 LoC frontend)
+
+Adicionar params `desde` e `ate` ao `/hub/recent`:
+
+```python
+@router.get("/recent")
+async def r_recent(
+    user_id: str = "gustavo",
+    limit: int = 50,
+    desde: Optional[str] = None,   # ISO date "2026-04-15"
+    ate: Optional[str] = None,
+    incluir_esquecidos: bool = False,
+):
+    # Qdrant scroll com filter de range em criado_em
+```
+
+Frontend manda os params, **busca em qualquer época do Hub** — mesmo fragmentos de 6 meses atrás. Backend usa Qdrant `Range` filter em `criado_em` (campo já indexado).
+
+**Útil pra:** "quero ver tudo de abril" / "só dia 03/05" / "última semana de outubro".
+
+## Como isso encaixa no Plano A vs B
+
+Funciona em **qualquer um dos dois planos** que estávamos discutindo:
+
+- **Plano A (F+B agente):** filtro de data já é uma das filtragens em ambas views
+- **Plano B (meu simplificado):** especialmente útil — você usa modo "Recentes" (3D, 500 últimos) pra ver agora, e modo "Tudo" (2D Cosmograph) pra navegar histórico inteiro com o filtro de data
+
+## Sugestão
+
+**Implementar Opção 2 (backend + frontend)** — é o que dá poder de verdade. Pode ir junto com a Parte 1B sem custo grande:
+- +30 LoC em `hub/routes.py` e `hub/store.py:recentes()` (param de range)
+- +30 LoC em `api/neurogus.html` (2 date pickers + handler)
+
+Quer que eu já incorpore filtro temporal na Parte 1B? Aí entra junto com o switch pra dados reais do Hub.
+
+E ainda preciso da decisão sobre Plano A vs B + curadoria enviesada — não quero codar antes disso.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`bfe4742`).
+user: Continue from where you left off.
+assistant: No response requested.
+user: entao vou ter q aprimorar o retro engine, primeiro. certo? uma dúvida, o neurogus ja está 100% espelhando o hub? pq isso independe da curadoria, certo? o máximo  q iria acontecer é travar, verto?
+assistant: 3 respostas diretas:
+
+## 1. "Aprimorar retro engine antes" — **NÃO** ❌
+
+Cuidado com confusão de termos. No projeto:
+- **Retro engine** = sistema que extrai aprendizados de sessões Claude Code (`_log/retro-engine-claude-code/`)
+- **Curador** = quem classifica fragmentos vindos do Telegram em tipo/área (`hub/curador.py`)
+
+O bias 95% gus+projetos é do **curador**, não do retro engine. E mesmo assim:
+
+**Não precisa arrumar curador antes.** São camadas independentes:
+- **Curadoria ruim** = origem enviesada
+- **Espelhamento fiel** = transmissão sem perda
+
+NeuroGus pode espelhar 100% mesmo com curadoria torta — você vê o bias na cara. Aliás, ver o bias no grafo pode ser **útil** pra decidir como arrumar o curador.
+
+Arrumar curador é demanda separada, paralela, não bloqueante.
+
+## 2. "NeuroGus já espelha 100%?" — **NÃO** ❌
+
+Hoje (Parte 1A) é **mock estático** com 33 fragmentos hardcoded de 01/05. Zero conexão com Hub real.
+
+Pra espelhar 100%, falta a **Parte 1B**: substituir o `REAL_NODES` hardcoded por `fetch /hub/recent` + `EventSource /hub/stream`.
+
+## 3. "O máximo é travar, certo?" — **Quase certo** ⚠️
+
+Se tentar carregar 8.7k fragmentos no 3d-force-graph atual:
+
+| Etapa | O que acontece |
+|---|---|
+| Backend `/hub/recent?limit=10000` | OK (~500ms, 3.9MB JSON) |
+| Frontend cria 8.7k Three.js Groups | **30-60s congelando** o browser |
+| Simulação força O(n²) | **5 FPS ou freezes infinitos** |
+| Render WebGL 8.7k × (esfera + 2 sprites halo) = 26k draw calls/frame | **GPU sofre, talvez crasha** |
+
+**Resultado realista:** browser **trava** ou Chrome mata a aba ("Página não responde"). Pode pedir pra você "fechar página".
+
+**Mas o Hub fica intacto** — leitura é read-only. Não corrompe nada. Só uma má UX.
+
+---
+
+## Sugestão de caminho
+
+Já que **espelhar 100% fiel é o que você quer** e curadoria não é pré-requisito:
+
+1. **Implemento Parte 1B incremental:** modo "recentes" só (limit=500). Conecta Hub real, valida que a infra funciona, sem o problema dos 10k.
+
+2. **Depois ataco a escala:** modo "tudo" via Cosmograph 2D (Plano B simplificado). Aí espelha 100% mesmo.
+
+3. **Curador fica em demanda separada** — implemento quando você decidir.
+
+A vantagem desse incremental: **valida agora** que `/hub/recent` + `relacionados[]` real produz clusters orgânicos (resolve o "tá tudo em linha" que você reportou). Sem precisar lidar com escala já no primeiro passo.
+
+manda?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`e3855ec`). aguardando teu sinal pra começar a Parte 1B incremental.
+user: blz. vamos para 1b entao, por favor
+assistant: beleza. Antes de codar, deixa eu propor a divisão da Parte 1B em 2 etapas pra ficar testável.
+
+## Etapa A — Backend: filtro temporal + cap de limit (~30 LoC)
+
+**`hub/store.py:recentes()`** — adicionar params:
+```python
+def recentes(user_id="gustavo", limit=50, incluir_esquecidos=False,
+             desde: str | None = None,  # ISO date "2026-04-15"
+             ate: str | None = None) -> list[dict]:
+    # adiciona Range filter no Qdrant scroll quando desde/ate vier
+```
+
+**`hub/routes.py:r_recent()`** — passa params adiante:
+```python
+@router.get("/recent")
+async def r_recent(user_id="gustavo", limit=50, incluir_esquecidos=False,
+                   desde: str = None, ate: str = None):
+    # cap limit em 2000 pra proteger backend (Qdrant scroll é OK até alguns milhares)
+```
+
+**Comportamento:** sem `desde`/`ate` = igual hoje (backwards compatible). Com = filtra range.
+
+**Smoke test:**
+```bash
+curl ".../hub/recent?token=...&limit=500"               # como hoje
+curl ".../hub/recent?token=...&desde=2026-05-01"        # último mês
+curl ".../hub/recent?token=...&desde=2026-05-06&ate=2026-05-07"  # 1 dia
+```
+
+---
+
+## Etapa B — Frontend: mock → Hub real + filtro temporal UI (~250 LoC)
+
+**Tudo em `api/neurogus.html`** (modificações cirúrgicas via Edit):
+
+1. **TOKEN parsing** no início do script
+2. **REMOVE `REAL_NODES`** (33 fragmentos hardcoded) → ~150 LoC removidas
+3. **REMOVE 3 estratégias de conexão** (área + dia + ponte) → ~50 LoC removidas
+4. **ADD `fetchInitial(desde, ate)`** — 2 chamadas paralelas (`gustavo` + `gus`)
+5. **ADD `normalizeFragment(raw)`** — adapta payload backend → forma do mock
+6. **ADD `buildLinksFromRelacionados()`** — usa `node.relacionados[]` (cosine real)
+7. **ADD `setupEventStream()`** — EventSource com reload no reconnect
+8. **ADD `boot()` async** no fim — orquestra tudo
+9. **REFATORAR `addFragment()`** — handler do SSE, usa `normalizeFragment` e `relacionados`
+10. **REFATORAR `panel-delete`** — chama `DELETE /hub/fragmento/{id}?token=...` antes de remover client
+11. **ADD 2 inputs date** no header (de/até) + handler que re-chama `fetchInitial(desde, ate)`
+
+**Smoke test (após push):**
+- Abre `/neurogus?token=$TOKEN` → vê fragmentos REAIS do Hub (até 500 mais recentes)
+- Conexões em **clusters orgânicos** (não linhas) — cosine real
+- Manda mensagem no Telegram → após 3 turnos, novo nó nasce no grafo via SSE
+- Filtra por data (ex: "01/05 a 03/05") → re-fetch e re-render
+
+---
+
+## Decisões pendentes (1 minuto)
+
+| # | Decisão | Default proposto |
+|---|---|---|
+| 1 | Limit default no boot | **500** (parte 1B), depois **modo Tudo** vai pra ~8.7k via Cosmograph (futuro) |
+| 2 | Inputs de data — onde ficam? | **No header**, ao lado das stats (compacto) |
+| 3 | Mostrar contagem total do Hub? | Sim, **stats `total: 8709`** ao lado de "fragmentos exibidos" |
+| 4 | Filtro temporal afeta também SSE? | **Sim** — fragmentos novos só aparecem no grafo se cair no range; senão, só atualiza contagem |
+| 5 | Backfill de `relacionados[]` em fragmentos antigos | **Pular agora**, demanda separada — frag novo via SSE puxa vizinhos antigos automaticamente, grafo cresce densidade ao longo do tempo |
+
+---
+
+aprova essa divisão A → B com esses defaults? ou ajusta algo antes?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`64a195f`). aguardando teu OK no plano da Parte 1B (etapa A → B com 5 defaults).
+user: Continue from where you left off.
+assistant: No response requested.
+user: 500
+sim
+sim
+sim
+pula
+
+assistant: beleza, vou começar a **Etapa A** (backend).
+assistant: vou fazer Edit em `hub/store.py:recentes()` adicionando params `desde`/`ate` (filtro client-side em Python depois do scroll).
+assistant: agora atualizo o handler `r_recent` em `hub/routes.py`.
+assistant: valida sintaxe + import.
+assistant: Etapa A OK. Vou commitar e seguir pra Etapa B (frontend).
+assistant: Etapa A pushada (`6b7e656`).
+
+Agora **Etapa B** — frontend. Vou planejar as mudanças no `api/neurogus.html` antes de codar pra ficar claro o blast radius.
+
+## Etapa B — plano detalhado
+
+Tudo via Edit no `api/neurogus.html` (mock funcional → integração real).
+
+### Bloco a remover (~200 LoC)
+
+1. **`REAL_NODES = [...]`** completo (33 fragmentos hardcoded)
+2. **Loop `REAL_NODES.forEach(...)`** que constrói `state.nodes`
+3. **3 estratégias de conexão** (linkSet/byArea/byDay/areaLatest, ~50 LoC)
+4. **Comentário "DIAGNÓSTICO DO HUB"** (já documentado em demanda separada)
+
+### Bloco a adicionar (~250 LoC)
+
+**Logo após a config (TYPE_COLOR/AREA_COLOR/getNodeColor):**
+
+```js
+// ─── Auth ───
+const TOKEN = new URLSearchParams(location.search).get('token') || '';
+if (!TOKEN) {
+  document.body.innerHTML = '<div style="...">Token ausente. Use ?token=...</div>';
+  throw new Error('Token ausente');
+}
+
+// ─── Integração Hub ───
+function normalizeFragment(raw) { ... }
+async function fetchInitial(desde, ate, limit=500) { ... }  // 2 calls paralelas (gustavo+gus)
+function buildLinksFromRelacionados() { ... }  // usa node.relacionados[] cosine
+function setupEventStream() { ... }  // EventSource com reload no reconnect
+```
+
+**Refatorações no JS existente:**
+
+5. **`addFragment(raw)`** → usa `normalizeFragment` e cria links a partir de `relacionados[]` em vez de `peers do mesmo tipo`
+6. **`panel-delete` handler** → chama `DELETE /hub/fragmento/{id}?token=...` antes de remover client
+
+**Novo markup HTML:**
+
+7. **2 inputs `<input type="date">`** no header (entre brand e tabs ou entre tabs e stats), com classe e CSS minimalista
+
+**Novo handler:**
+
+8. **`onDateChange()`** → re-fetch com `desde`/`ate` e re-render
+
+**Boot async no fim:**
+
+9. Substitui o boot atual (que monta `state.nodes` síncrono do mock) por:
+```js
+(async function boot() {
+  try {
+    const fragments = await fetchInitial();
+    fragments.forEach(raw => {
+      const node = normalizeFragment(raw);
+      state.nodes.push(node);
+      state.nodeMap.set(node.id, node);
+    });
+    buildLinksFromRelacionados();
+    Graph.graphData(getFilteredData());
+    updateStats();
+    setupEventStream();
+  } catch(err) {
+    console.error('boot failed:', err);
+    showToast(`Erro: ${err.message}`, 'falha', '#f87171');
+  }
+})();
+```
+
+### Stats nova: total do Hub
+
+10. Stats hoje = `state.nodes.length` (filtrados). Adicionar 4ª stat: **`total no Hub`** (vem do response `/hub/recent` agregado)
+
+### SSE filtragem temporal
+
+11. Quando filtro temporal está ativo, fragmento novo via SSE só vai pro grafo se `criado_em` cair no range. Senão, só atualiza contagem.
+
+---
+
+Total estimado: ~280 LoC de delta.
+
+Vou fazer em ~6-8 Edits separados (cada um isolado pra debug). Ainda **vou começar** ou **antes desse plano detalhado quer ajustar algo**?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`e4aaffb`). aguardando teu OK pra começar Etapa B.
+pode comecar, por favor
+user: Continue from where you left off.
+assistant: No response requested.
+user: pode comecar, por favor
+assistant: vou mapear os trechos exatos antes de editar.
+assistant: vou fazer 7 Edits em sequência. Começando pelo **Edit 1** — remover REAL_NODES e adicionar TOKEN parsing.
+assistant: Edit 1 ✅. Agora **Edit 2** — substituir loop forEach + 3 estratégias de conexão por funções de integração.
+assistant: Edit 2 ✅. Agora **Edit 3** — refatorar `addFragment` pra usar relacionados e respeitar filtro temporal.
+assistant: Edit 3 ✅. Agora **Edit 4** — refatorar `panel-delete` pra chamar `DELETE /hub/fragmento/{id}` real.
+assistant: Edit 4 ✅. Agora **Edit 5** — atualizar `updateStats()` pra mostrar total do Hub.
+assistant: Edit 5 ✅. Agora **Edit 6** — adicionar HTML dos date pickers no header.
+assistant: agora CSS pros date pickers + handler. Vou adicionar CSS no bloco existente (logo após `.stats` no CSS) e handler antes do boot.
+assistant: Edit 6 ✅ (HTML + CSS dos date pickers). Agora **Edit 7** — handler dos date pickers + boot async no fim do script.
+assistant: agora valido tudo.
+assistant: `REAL_NODES presente: True` é só em comentário (eu mantive referência histórica). Vou conferir.
+assistant: só comentário (referência histórica). tudo OK. **JS sintaxe válida** ✅. Vou commitar a Etapa B.
+assistant: Etapa B pushada (`5261e17`). **Parte 1B completa.**
+
+## Estado atual da branch `claude/neurogus-fase1-backend-sse`
+
+```
+Backend:
+  hub/store.py    — recentes() com filtro temporal (Etapa A)
+  hub/routes.py   — /hub/recent aceita desde/ate (Etapa A)
+
+Frontend:
+  api/neurogus.html — TOKEN + fetchInitial + buildLinksFromRelacionados
+                    + setupEventStream + date pickers + boot async + DELETE real
+```
+
+## Próximo passo
+
+Pra você testar em produção, precisa **abrir PR + mergear**. Quer que eu abra o PR agora?
+
+**O que vai mudar visualmente:**
+- Em vez de 33 nós hardcoded → vê **500 mais recentes do Hub real** (ambos brains)
+- Conexões em **clusters orgânicos** (cosine real, não linhas)
+- 2 inputs date no header — filtra em qualquer época do Hub
+- Stats mostra "carregados / total Hub"
+- Apagar nó: **delete real do Qdrant**, não só client
+- Conversa no Telegram → fragmento novo nasce no grafo via SSE
+
+**Caveat conhecido:** fragmentos antigos do Hub (pré-PR #100) não têm `relacionados[]` populado — vão aparecer como nós isolados sem arestas saindo deles. Recebem arestas só de fragmentos novos que apontam pra eles. Backfill é demanda separada que você pulou — grafo vai ficar mais denso ao longo do tempo conforme novos fragmentos chegam.
+
+abro PR?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
