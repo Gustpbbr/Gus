@@ -1,0 +1,823 @@
+[…início truncado…]
+
+” + perguntas livres
+
+Aí sim essa porta passa a ter sentido: não só “tem 10.485 memórias”, mas consulta as 10.485 quando precisar.
+
+assistant: Plano direto. Deixa eu ler o `hub/store.py` para confirmar as assinaturas antes de implementar:
+
+assistant: Tenho tudo. Vou implementar os 5 endpoints diretamente no `api/gpt_inbox.py`:
+
+assistant: Now add the 5 hub endpoints after the existing `/gpt/contexto` endpoint:
+
+assistant: Perfeito. Vou agora atualizar o bootstrap do Custom GPT para documentar os novos endpoints e depois commitar tudo:
+
+assistant: Feito e enviado. Aqui o que foi implementado:
+
+**5 novos endpoints em `api/gpt_inbox.py`** (todos protegidos por `GPT_INBOX_SECRET` no path, credenciais Qdrant nunca saem):
+
+| Endpoint | Função Hub | Parâmetros principais |
+|---|---|---|
+| `GET /<secret>/gpt/hub/search` | `lembrar()` | `q`, `user_id`, `limit`, `tipo`, `area`, `estado` |
+| `GET /<secret>/gpt/hub/list` | `listar_filtrado()` | `tipo`, `via`, `area`, `camada_temporal`, `curador`, `limit` |
+| `GET /<secret>/gpt/hub/recent` | `recentes()` | `user_id`, `limit`, `incluir_esquecidos` |
+| `GET /<secret>/gpt/hub/ego-cache` | `ego_cache()` | `user_id` |
+| `GET /<secret>/gpt/hub/audit` | `auditar()` | — |
+
+**Próximo passo — ordem correta:**
+
+1. **Railway redeploy** — empurra o código novo automaticamente via push no main (ou merge desta branch)
+2. **Testar no navegador** — `https://gus-production-58a7.up.railway.app/<secret>/gpt/hub/search?q=anestesia`
+3. **Atualizar schema no GPT Builder** — importar `https://gus-production-58a7.up.railway.app/openapi.json` de novo (vai aparecer os 5 endpoints novos como actions disponíveis, mas eles usam `GPT_INBOX_SECRET` no path, então o Custom GPT precisa ter o secret nas instruções de sistema, não no Bearer)
+
+Esse último ponto é importante: os endpoints `/gpt/hub/*` usam o secret na URL, não Bearer. O Custom GPT precisa saber o valor do `GPT_INBOX_SECRET` nas instruções de sistema para construir as chamadas. Ou eu posso criar um wrapper que aceite Bearer e use o secret internamente — o que preferir.
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado e enviado.
+
+user: ja mergeeou?
+
+assistant: Não, ainda não. Os commits estão só nesta branch (`claude/review-project-structure-esL3J`), 11 commits à frente do main. O Railway redeploya só quando vai pro main.
+
+Quer que eu faça o merge agora?
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pronto.
+
+user: sim, pode  fazer
+
+assistant: Mergeado e no main. Railway vai redeployar automaticamente agora.
+
+Enquanto isso, o próximo passo quando o deploy terminar (~2-3min): testar no navegador:
+```
+https://gus-production-58a7.up.railway.app/<secret>/gpt/hub/search?q=anestesia&limit=5
+```
+
+Se retornar fragmentos, os endpoints estão vivos e o Custom GPT pode começar a usá-los.
+
+user: deu certo. qual o proximo passo a passo com links e textos finais?
+
+```
+{"modo":"semantico","query":"anestesia","user_id":"gustavo","total":5,"fragmentos":[{"id":"592c5181-d1cf-4a4d-9af3-53241b7a38a4","conteudo":"Gustavo é anestesiologista.","score":0.5472857,"tipo":"biografico","estado":"ativo","via":"claude-code","area":"gus","criado_em":"2026-05-03T14:08:33.511316-03:00","curador":"gpt"},{"id":"9e631fd8-87a8-41e9-8943-78bdf53d3aba","conteudo":"Gustavo é anestesiologista.","score":0.5472857,"tipo":"biografico","estado":"ativo","via":"claude-code","area":"gus","criado_em":"2026-05-03T14:09:25.519527-03:00","curador":"gpt"},{"id":"a461d40c-9f77-47b2-84b8-bc5ebdc25ab0","conteudo":"Gustavo é anestesiologista.","score":0.5472857,"tipo":"biografico","estado":"ativo","via":"claude-code","area":"gus","criado_em":"2026-05-03T12:16:26.885633-03:00","curador":"gpt"},{"id":"42f94443-cee3-461d-8043-593f5491b347","conteudo":"Gustavo é anestesiologista.","score":0.54728556,"tipo":"biografico","estado":"ativo","via":"claude-code","area":"gus","criado_em":"2026-05-03T07:41:34.984654-03:00","curador":"gpt"},{"id":"975f9f66-efe1-4954-8a4d-678885afde45","conteudo":"O mercado de anestesia ambulatorial responde a uma mudança estrutural nas operações de saúde.","score":0.5308972,"tipo":"fato","estado":"ativo","via":"telegram-claude","area":"projetos","criado_em":"2026-05-05T15:02:34.371656-03:00","curador":"gpt"}]}
+```
+
+assistant: Passo a passo completo:
+
+---
+
+## Passo 1 — Atualizar o schema de Actions no GPT Builder
+
+1. Abra **https://chatgpt.com/gpts/editor** → selecione o Gus
+2. Aba **Configure** → clique em **Actions** (ou no lápis das Actions existentes)
+3. Clique em **Import from URL**
+4. Cole a URL:
+   ```
+   https://gus-production-58a7.up.railway.app/openapi.json
+   ```
+5. Clique em **Import** — os 5 novos endpoints vão aparecer na lista de actions disponíveis
+
+---
+
+## Passo 2 — Atualizar as Instruções do Custom GPT
+
+No campo **Instructions**, adicione este bloco (substituindo `SEU_SECRET_AQUI` pelo valor real do `GPT_INBOX_SECRET` que você usa no `/gpt/contexto`):
+
+```
+## Hub Qdrant — acesso direto
+
+O secret para os endpoints Hub é: SEU_SECRET_AQUI
+
+Use estes endpoints sob demanda (não no boot — só quando Gustavo perguntar algo):
+
+- Gustavo pergunta sobre memória/histórico → GET /SEU_SECRET_AQUI/gpt/hub/search?q=<pergunta>&limit=20
+- "O que temos em saúde?" / filtro por área → GET /SEU_SECRET_AQUI/gpt/hub/list?area=saude&limit=50
+- "O que aconteceu essa semana?" → GET /SEU_SECRET_AQUI/gpt/hub/recent?limit=30
+- No boot, para contexto do Gus → GET /SEU_SECRET_AQUI/gpt/hub/ego-cache
+- Pedido de auditoria do Hub → GET /SEU_SECRET_AQUI/gpt/hub/audit
+
+Parâmetros úteis do search: tipo, area, estado (padrão: ativo), user_id (gustavo ou gus)
+Parâmetros úteis do list: tipo, via, area, camada_temporal, curador
+
+Nunca expor o secret em respostas ao Gustavo.
+```
+
+---
+
+## Passo 3 — Salvar e testar
+
+1. Clique em **Save** (botão verde, canto superior direito)
+2. No chat de teste, escreva:
+
+```
+ativa o Gus
+```
+
+Deve chamar `ego-cache` + `contexto` e apresentar estado do sistema.
+
+Depois teste:
+```
+o que você sabe sobre anestesia ambulatorial?
+```
+
+Deve chamar `hub/search?q=anestesia+ambulatorial` e retornar fragmentos reais.
+
+---
+
+O único trabalho manual é substituir o `SEU_SECRET_AQUI` pelo valor que você já usa. Tudo o mais já está no Railway e no schema.
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pronto.
+
+user: Continue from where you left off.
+
+assistant: No response requested.
+
+user: vc deu as instruçoes erradas, mas o chat gtp conseguiu acertar
+
+
+Gus
+Ao vivo
+·
+Apenas para mim
+Última edição em 7 de mai.
+
+
+Compartilhar
+
+Atualizar
+
+
+Editar ações
+Permitir que seu GPT recupere informações ou realize ações fora do ChatGPT.
+Saiba mais.
+Autenticação
+Nenhum
+
+Schema
+https://...
+
+Importar
+
+Cancelar
+openapi: 3.1.0
+info:
+  title: Gus Context API
+  version: 1.1.0
+  description: API operacional da porta GPT Chat do ecossistema Gus.
+
+servers:
+  - url: https://gus-production-58a7.up.railway.app
+
+paths:
+  /cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/contexto:
+    get:
+      operationId: get_gus_contexto
+      summary: Retorna contexto determinístico do Gus
+      description: Retorna inbox pendente da porta GPT Chat e estatísticas do Hub Qdrant.
+      responses:
+        "200":
+          description: Contexto retornado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "404":
+          description: Secret inválido ou rota não encontrada
+        "503":
+          description: Serviço indisponível
+
+  /cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/inbox/gpt-chat:
+    get:
+      operationId: get_gpt_chat_inbox
+      summary: Retorna inbox determinístico da porta GPT Chat
+      description: Lista demandas pendentes ou parciais do inbox GPT Chat.
+      responses:
+        "200":
+          description: Inbox retornado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "404":
+          description: Secret inválido ou rota não encontrada
+        "503":
+          description: Serviço indisponível
+
+  /cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/search:
+    get:
+      operationId: search_gus_hub
+      summary: Busca semântica no Hub
+      description: Busca fragmentos relevantes no Hub Qdrant por consulta em linguagem natural.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Consulta em linguagem natural.
+          schema:
+            type: string
+        - name: user_id
+          in: query
+          required: false
+          description: Brain alvo. Use gustavo ou gus.
+          schema:
+            type: string
+            default: gustavo
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: tipo
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: area
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: estado
+          in: query
+          required: false
+          schema:
+            type: string
+            default: ativo
+      responses:
+        "200":
+          description: Busca realizada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "404":
+          description: Secret inválido ou rota não encontrada
+        "503":
+          description: Hub indisponível
+
+  /cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/list:
+    get:
+      operationId: list_gus_hub
+      summary: Lista fragmentos filtrados do Hub
+      description: Lista fragmentos do Hub por filtros estruturados, sem busca semântica.
+      parameters:
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: string
+            default: gustavo
+        - name: tipo
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: via
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: area
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: camada_temporal
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: curador
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 200
+      responses:
+        "200":
+          description: Lista retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "404":
+          description: Secret inválido ou rota não encontrada
+        "503":
+          description: Hub indisponível
+
+  /cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/recent:
+    get:
+      operationId: get_recent_gus_hub
+      summary: Retorna fragmentos recentes do Hub
+      description: Retorna fragmentos recentes do Hub, ordenados por data de criação.
+      parameters:
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: string
+            default: gustavo
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 200
+        - name: incluir_esquecidos
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Fragmentos recentes retornados com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "404":
+          description: Secret inválido ou rota não encontrada
+        "503":
+          description: Hub indisponível
+
+  /cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/ego-cache:
+    get:
+      operationId: get_gus_ego_cache
+      summary: Retorna ego-cache do Gus
+      description: Retorna identidade operacional, procedurais estáveis, decisões recentes e meta-reflexões.
+      parameters:
+        - name: user_id
+          in: query
+          required: false
+          schema:
+            type: string
+            default: gustavo
+      responses:
+        "200":
+          description: Ego-cache retornado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "404":
+          description: Secret inválido ou rota não encontrada
+        "503":
+          description: Hub indisponível
+
+  /cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/audit:
+    get:
+      operationId: audit_gus_hub
+      summary: Audita a qualidade do Hub
+      description: Retorna auditoria de qualidade da coleção Hub.
+      responses:
+        "200":
+          description: Auditoria retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "404":
+          description: Secret inválido ou rota não encontrada
+        "503":
+          description: Hub indisponível
+
+Formato
+In context=('paths', '/cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/contexto', '200', 'response', 'content', 'application/json', 'schema'), object schema missing properties
+In context=('paths', '/cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/inbox/gpt-chat', '200', 'response', 'content', 'application/json', 'schema'), object schema missing properties
+In context=('paths', '/cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/search', '200', 'response', 'content', 'application/json', 'schema'), object schema missing properties
+In context=('paths', '/cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/list', '200', 'response', 'content', 'application/json', 'schema'), object schema missing properties
+In context=('paths', '/cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/recent', '200', 'response', 'content', 'application/json', 'schema'), object schema missing properties
+In context=('paths', '/cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/ego-cache', '200', 'response', 'content', 'application/json', 'schema'), object schema missing properties
+In context=('paths', '/cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/audit', '200', 'response', 'content', 'application/json', 'schema'), object schema missing properties
+Ações disponíveis
+Nome	Método	Caminho	
+get_gus_contexto	get	/cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/contexto	
+Testar
+get_gpt_chat_inbox	get	/cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/inbox/gpt-chat	
+Testar
+search_gus_hub	get	/cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/search	
+Testar
+list_gus_hub	get	/cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/list	
+Testar
+get_recent_gus_hub	get	/cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/recent	
+Testar
+get_gus_ego_cache	get	/cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/ego-cache	
+Testar
+audit_gus_hub	get	/cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/audit	
+Testar
+Política de privacidade
+https://app.example.com/privacy
+Pré-visualizar
+Modelo
+Call the gus-production-58a7.up.railway.app API with the audit_gus_hub operation
+
+[debug] Calling HTTP endpoint
+[debug] Response received
+
+Falou com gus-production-58a7.up.railway.app
+Pensou por alguns segundos
+Auditoria executada.
+
+Total: 500
+Via claude-code: 10.365
+Fragmentos curtos <30: 1
+Fragmentos sem tipo: 0
+
+
+Call the gus-production-58a7.up.railway.app API with the get_gus_contexto operation
+
+
+Comunicação com App interrompida
+[debug] Calling HTTP endpoint
+[debug] Response received
+
+Falou com gus-production-58a7.up.railway.app
+Modo Gus ativado.
+
+Inbox: 2 demanda(s) pendente(s). Hub: 10.485 memórias ativas.
+
+[alta] Estudo sobre o mercado pet felino — # Estudo sobre o mercado pet felino
+
+[alta] Análise do Mercado de Anestesia Ambulatorial no Rio de Janeiro — # Análise do Mercado de Anestesia Ambulatorial no Rio de Janeiro
+
+Como deseja prosseguir?
+
+
+Call the gus-production-58a7.up.railway.app API with the search_gus_hub operation
+
+
+Comunicação com App interrompida
+[debug] Calling HTTP endpoint
+[debug] Response received
+
+Falou com gus-production-58a7.up.railway.app
+Busca executada.
+
+Consulta: demandas pendentes inbox gpt-chat anestesia ambulatorial mercado pet felino
+Resultados: 10 fragmentos.
+
+Principal achado: há registro da demanda de estudo sobre mercado pet felino como prioridade alta e status pendente.
+
+
+Call the gus-production-58a7.up.railway.app API with the list_gus_hub operation
+
+
+Comunicação com App interrompida
+[debug] Calling HTTP endpoint
+[debug] Response received
+
+Falou com gus-production-58a7.up.railway.app
+Listagem executada.
+
+User: gustavo
+Total retornado: 20 fragmentos.
+
+Primeiro item: “O projeto Phronesis está em publicação e revisão no Alignment Forum.”
+
+
+Call the gus-production-58a7.up.railway.app API with the get_recent_gus_hub operation
+
+
+Comunicação com App interrompida
+[debug] Calling HTTP endpoint
+[debug] Response received
+
+Falou com gus-production-58a7.up.railway.app
+Recentes consultados.
+
+User: gustavo
+Total retornado: 20 fragmentos.
+
+Mais recente: “Três decisões no projeto NeuroGus precisam ser confirmadas antes do desenvolvimento começar.”
+
+
+Call the gus-production-58a7.up.railway.app API with the get_gus_ego_cache operation
+
+
+Comunicação com App interrompida
+[debug] Calling HTTP endpoint
+[debug] Response received
+
+Falou com gus-production-58a7.up.railway.app
+Ego cache consultado.
+
+User: gustavo
+Identidade: 0 itens
+Protegidos: 0 itens
+Decisões recentes: 3
+Meta-reflexões: 5
+
+
+quais sao as decisoes recentes e as meta reflexoes?
+
+Decisões recentes
+A comunicação com a API do Mem0 SaaS deve ser verificada para confirmar a existência de conteúdos históricos e decidir sobre a eliminação do secret.
+
+Três decisões no projeto NeuroGus precisam ser confirmadas antes do desenvolvimento começar.
+
+O arquivo gus-identity.md tem que ser atualizado para refletir a mudança do Google Drive de “GitHub-Sync” para “Gus-Sync”.
+
+Meta-reflexões
+Fase 1 do NeuroGus envolve criar o backend e configuração inicial do grafo 3D.
+
+A continuidade cross-porta é uma necessidade de UX que permite que o usuário sinta que está interagindo com a mesma entidade através de diferentes portas.
+
+Se um PR precisa ser lido pra entender o presente, é sinal de doc desatualizado — não de PR importante.
+
+O filtro e a tradução dos 204 fragmentos estão planejados para a Fase 5.
+
+O plano de saneamento da memória inclui 9 itens, sendo essa fase crítica para evitar poluição futura da base de dados.
+
+
+Call the gus-production-58a7.up.railway.app API with the audit_gus_hub operation
+
+
+Comunicação com App interrompida
+[debug] Calling HTTP endpoint
+[debug] Response received
+
+Falou com gus-production-58a7.up.railway.app
+Auditoria executada.
+
+Total: 500
+Via claude-code: 10.365
+Fragmentos curtos <30: 1
+Fragmentos sem tipo: 0
+
+assistant: Tudo funcionando. Dois pontos do output que vale notar:
+
+**1. `ego_cache`: Identidade 0, Protegidos 0**
+Esses campos buscam fragmentos com `tipo="identidade_operacional"` e `tipo="procedural"` com `estado="estavel"`. O Hub ainda não tem fragmentos com esses tipos marcados — são tipos reservados para popular manualmente depois. Decisões e meta-reflexões já têm conteúdo porque `tipo="decisao"` e `tipo="meta_reflexao"` estão sendo usados.
+
+**2. `audit`: "Total: 500" vs "Via claude-code: 10.365"**
+O `auditar()` faz scroll limitado a 500 para analisar qualidade, mas os counts por `via` são queries exatas na coleção inteira. Por isso o "total" parece menor — é o lote auditado, não o total real. O total real é 10.485 (do `contexto`). Não é bug dos endpoints novos, é uma inconsistência pré-existente no `auditar()`.
+
+Quanto às instruções erradas: o GPT Chat acertou que a abordagem correta é o secret fixo no path do schema YAML — o que eu sugeri (reimportar `/openapi.json`) geraria `{secret}` como parâmetro dinâmico, que o GPT Builder não saberia preencher. O schema manual com o valor hardcoded é o jeito certo.
+
+Próxima evolução natural da porta Custom GPT: popular fragmentos de `tipo="identidade_operacional"` e `tipo="procedural"` no Hub para o `ego_cache` ter substância no boot. Isso pode ser feito via TioGu ou via uma sessão dedicada.
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pronto.
+
+user: 1. ego_cache: Identidade 0, Protegidos 0 - sao de pessima qualidade. depois temos q ter uma curadoria super rigorosa, mas de baixa prioridade. 
+coisas sobre o custom, ele tem bootstrap? sabe da existencia da pasta dialogos? pode ter acesso direto ao github / drive? pode escrever no hub?
+
+assistant: Respondendo cada ponto:
+
+**Bootstrap existe?**
+Sim, criei `dialogos/_bootstrap/custom-gpt-bootstrap.md` v1.1 hoje. Mas ele não é carregado automaticamente — ele só tem efeito se o conteúdo for colado no campo **Instructions** do GPT Builder, ou se o Custom GPT for instruído a lê-lo via `read_from_github` no boot. Hoje as instruções dele ainda são o que você digitou na hora que criou.
+
+**Sabe da existência de `dialogos/`?**
+Não. O schema atual só tem os 7 endpoints `/gpt/hub/*` e `/gpt/contexto`. Não tem `read_from_github` nem `list_github_directory` — esses existem em `api/routes.py` mas usam Bearer token (`CUSTOM_GPT_TOKEN`), que está em um schema separado... que na verdade não está configurado ainda no Custom GPT de você. O GPT Builder só enxerga o que está no schema YAML.
+
+**Acesso direto ao GitHub / Drive?**
+- GitHub: pode ter — basta adicionar os endpoints `read_from_github`, `list_github_directory`, `save_to_github` ao schema YAML. Eles já existem no Railway.
+- Drive: não tem nenhum endpoint exposto para Drive. O Drive é acessado só via Apps Script (interno) e pelos workflows do GitHub Actions.
+
+**Pode escrever no Hub?**
+Não ainda. Todos os 7 endpoints que adicionei são GET (leitura). Não tem endpoint de escrita no `gpt_inbox.py`. O `salvar_memoria` existe em `api/routes.py` mas usa Bearer — estaria em outro schema.
+
+---
+
+**Resumo do que falta para o Custom GPT estar completo:**
+
+| Capacidade | Estado | O que falta |
+|---|---|---|
+| Ler Hub (busca/filtro/recentes) | ✅ | — |
+| Escrever no Hub | ❌ | `POST /{secret}/gpt/hub/ingestar` |
+| Ler GitHub | ❌ | Adicionar ao schema YAML |
+| Salvar no GitHub | ❌ | Adicionar ao schema YAML |
+| Conhecer `dialogos/` | ❌ | Mencionar nas Instructions |
+| Ter bootstrap carregado | ❌ | Colar `custom-gpt-bootstrap.md` nas Instructions |
+
+Quer que eu implemente o endpoint de escrita no Hub agora e prepare o bloco de Instructions final para colar no GPT Builder?
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pronto.
+
+user: planeje por aqui um passo a passo completo de tudo isso
+
+assistant: ## Plano completo — Custom GPT porta final
+
+---
+
+### Fase 1 — Backend (Claude Code implementa)
+
+**3 endpoints novos em `api/gpt_inbox.py`:**
+
+**1. `POST /{secret}/gpt/hub/ingestar`**
+Escreve fragmento no Hub. Parâmetros: `conteudo`, `tipo`, `area`, `camada_temporal`, `confianca`, `user_id`. Usa `hub.store.ingestar()` internamente com `via="custom-gpt"` fixo.
+
+**2. `GET /{secret}/github/read?path=...`**
+Lê qualquer arquivo do repositório. Wrapper leve sobre `_gh_read()` que já existe. Permite ao Custom GPT ler `dialogos/`, `projetos/gus/_estado-atual.md`, etc.
+
+**3. `POST /{secret}/github/save`**
+Salva arquivo no repositório. Parâmetros: `path`, `conteudo`, `mensagem_commit`. Restrito por segurança: só aceita paths dentro de `dialogos/inbox-gpt-chat/` e `dialogos/inbox-tiogu/` — o Custom GPT não deve poder editar código ou arquivos sensíveis.
+
+---
+
+### Fase 2 — Schema YAML (Gustavo faz no GPT Builder)
+
+Adicionar os 3 endpoints ao YAML existente. Claude Code gera o bloco YAML pronto para copiar e colar — não precisa escrever nada.
+
+---
+
+### Fase 3 — Instructions (Gustavo cola no GPT Builder)
+
+Substituir as instruções atuais pelo conteúdo do `custom-gpt-bootstrap.md` + bloco de comportamento:
+
+```
+## Estrutura do repositório (GitHub)
+- dialogos/inbox-gpt-chat/  → demandas criadas por esta porta
+- dialogos/inbox-tiogu/     → demandas pra o bot Telegram
+- dialogos/_bootstrap/      → bootstraps de todas as portas
+- projetos/gus/_estado-atual.md → estado atual do sistema
+- gus/system_prompt.md      → personalidade do bot Telegram
+
+## Comportamento no boot
+1. GET /{secret}/gpt/hub/ego-cache  → contexto essencial
+2. GET /{secret}/gpt/contexto        → inbox + stats
+3. Apresentar estado e perguntar como prosseguir
+
+## Quando escrever no Hub
+Sempre confirmar conteúdo com Gustavo antes de chamar ingestar.
+Usar tipo/área/camada_temporal corretos (ver tabela no bootstrap).
+
+## Quando criar demanda no GitHub
+Perguntar "quer que eu crie uma demanda para o Claude Code?" quando 
+Gustavo pedir algo técnico que esta porta não executa.
+Salvar em dialogos/inbox-{destino}/ com frontmatter correto.
+```
+
+---
+
+### Fase 4 — Testes
+
+| Comando | Esperado |
+|---|---|
+| "ativa o Gus" | ego-cache + contexto, apresenta inbox |
+| "o que você sabe sobre anestesia?" | hub/search |
+| "lista o que temos em saúde" | hub/list?area=saude |
+| "salva que prefiro respostas curtas" | confirma → hub/ingestar |
+| "leia o estado atual do projeto" | github/read?path=projetos/gus/_estado-atual.md |
+| "cria uma demanda para o Claude Code implementar X" | github/save em inbox-claude-code |
+
+---
+
+### Ordem de execução
+
+```
+1. Claude Code implementa Fase 1 (30min)
+2. Railway redeploya automaticamente
+3. Testar endpoints no navegador
+4. Gustavo atualiza YAML no GPT Builder (Fase 2)
+5. Gustavo atualiza Instructions (Fase 3)
+6. Testes da Fase 4
+```
+
+---
+
+Posso começar a Fase 1 agora se quiser.
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pronto.
+
+user: pode começar
+
+assistant: Agora adiciono os 3 endpoints no final do arquivo:
+
+assistant: Tem um resíduo de código que ficou feio no meio da adição do modelo Pydantic — vou limpar:
+
+assistant: Agora commit e push:
+
+assistant: Feito. Fase 1 concluída. Enquanto o Railway redeploya (~2-3min), já preparo o bloco YAML para você adicionar ao schema e o texto das Instructions.
+
+**YAML — adicionar ao schema existente no GPT Builder** (3 novos paths, mesma URL base):
+
+```yaml
+  /cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/ingestar:
+    post:
+      operationId: ingestar_hub
+      summary: Salva fragmento no Hub
+      description: Salva uma memória no Hub Qdrant com via=custom-gpt. Confirme o conteúdo com Gustavo antes de chamar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [conteudo]
+              properties:
+                conteudo:
+                  type: string
+                user_id:
+                  type: string
+                  default: gustavo
+                tipo:
+                  type: string
+                  default: episodico
+                area:
+                  type: string
+                  default: ""
+                camada_temporal:
+                  type: string
+                  default: sessao
+                confianca:
+                  type: number
+                  default: 0.7
+      responses:
+        "200":
+          description: Fragmento salvo
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/github/read:
+    get:
+      operationId: github_read
+      summary: Lê arquivo do repositório GitHub
+      parameters:
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Path do arquivo (ex: projetos/gus/_estado-atual.md)
+      responses:
+        "200":
+          description: Conteúdo do arquivo
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/github/save:
+    post:
+      operationId: github_save
+      summary: Salva arquivo em dialogos/inbox-*
+      description: Restrito a dialogos/inbox-gpt-chat/, inbox-tiogu/, inbox-claude-code/. Use para criar demandas.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path, conteudo]
+              properties:
+                path:
+                  type: string
+                conteudo:
+                  type: string
+                mensagem_commit:
+                  type: string
+      responses:
+        "200":
+          description: Arquivo salvo
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+```
+
+Railway deve terminar o deploy em ~2min. Depois que confirmar que está no ar, passo o bloco de Instructions.
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pronto.
