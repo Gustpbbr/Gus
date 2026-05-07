@@ -1,19 +1,24 @@
-"""Endpoint determinístico de inbox para a porta GPT Chat.
+"""Endpoints para as portas GPT Chat e Custom GPT.
 
 GET /{secret}/gpt/inbox/{porta}    — inbox de uma porta
-GET /{secret}/gpt/contexto         — inbox gpt-chat + hub stats (token único)
+GET /{secret}/gpt/contexto         — inbox gpt-chat + hub stats
+GET /{secret}/gpt/hub/search       — busca semântica no Hub
+GET /{secret}/gpt/hub/list         — listagem filtrada do Hub
+GET /{secret}/gpt/hub/recent       — fragmentos mais recentes
+GET /{secret}/gpt/hub/ego-cache    — identidade + decisões + meta-reflexões
+GET /{secret}/gpt/hub/audit        — qualidade da coleção
 
-Requer GPT_INBOX_SECRET no Railway. HUB_READ_TOKEN fica interno — GPT Chat
-nunca o vê. GPT Chat acessa via:
-  https://gus-production-58a7.up.railway.app/<secret>/gpt/inbox/gpt-chat
-  https://gus-production-58a7.up.railway.app/<secret>/gpt/contexto
+Requer GPT_INBOX_SECRET no Railway. Credenciais Qdrant ficam internas — nunca
+saem para o cliente.
 """
 import asyncio
 import os
 import re
 
 import httpx
-from fastapi import APIRouter, HTTPException
+from typing import Optional
+
+from fastapi import APIRouter, HTTPException, Query
 
 router = APIRouter()
 
@@ -166,3 +171,96 @@ async def gpt_contexto(secret: str):
         "inbox": inbox,
         "hub": hub,
     }
+
+
+# ── Hub endpoints (busca, listagem, recentes, ego-cache, auditoria) ──────────
+# Credenciais Qdrant ficam internas. Único segredo externo: GPT_INBOX_SECRET.
+
+@router.get("/{secret}/gpt/hub/search")
+async def gpt_hub_search(
+    secret: str,
+    q: str = Query(..., description="Consulta em linguagem natural"),
+    user_id: str = Query("gustavo", description="Brain alvo: gustavo ou gus"),
+    limit: int = Query(20, ge=1, le=100),
+    tipo: Optional[str] = Query(None),
+    area: Optional[str] = Query(None),
+    estado: Optional[str] = Query("ativo"),
+):
+    """Busca semântica no Hub Qdrant. Retorna fragmentos mais relevantes para a query."""
+    _verificar_secret(secret)
+    try:
+        from hub.store import lembrar
+        fragmentos = await asyncio.to_thread(lembrar, q, user_id, limit, tipo, estado, area)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Hub inacessível: {str(e)[:120]}")
+    return {"modo": "semantico", "query": q, "user_id": user_id, "total": len(fragmentos), "fragmentos": fragmentos}
+
+
+@router.get("/{secret}/gpt/hub/list")
+async def gpt_hub_list(
+    secret: str,
+    user_id: str = Query("gustavo"),
+    tipo: Optional[str] = Query(None),
+    via: Optional[str] = Query(None),
+    area: Optional[str] = Query(None),
+    camada_temporal: Optional[str] = Query(None),
+    curador: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+):
+    """Listagem filtrada do Hub — sem busca semântica. Filtra por tipo, área, via, curador etc."""
+    _verificar_secret(secret)
+    try:
+        from hub.store import listar_filtrado
+        fragmentos = await asyncio.to_thread(
+            listar_filtrado, user_id, tipo, via, area, camada_temporal, curador, limit
+        )
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Hub inacessível: {str(e)[:120]}")
+    return {"modo": "filtrado", "user_id": user_id, "total": len(fragmentos), "fragmentos": fragmentos}
+
+
+@router.get("/{secret}/gpt/hub/recent")
+async def gpt_hub_recent(
+    secret: str,
+    user_id: str = Query("gustavo"),
+    limit: int = Query(50, ge=1, le=200),
+    incluir_esquecidos: bool = Query(False),
+):
+    """Fragmentos mais recentes do Hub, ordenados por criado_em desc."""
+    _verificar_secret(secret)
+    try:
+        from hub.store import recentes
+        fragmentos = await asyncio.to_thread(recentes, user_id, limit, incluir_esquecidos)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Hub inacessível: {str(e)[:120]}")
+    return {"modo": "recentes", "user_id": user_id, "total": len(fragmentos), "fragmentos": fragmentos}
+
+
+@router.get("/{secret}/gpt/hub/ego-cache")
+async def gpt_hub_ego_cache(
+    secret: str,
+    user_id: str = Query("gustavo"),
+):
+    """Ego cache: identidade operacional, procedurais estáveis, decisões recentes, meta-reflexões.
+
+    Use no boot do Custom GPT para contexto essencial do Gus sem busca semântica.
+    """
+    _verificar_secret(secret)
+    try:
+        from hub.store import ego_cache
+        cache = await asyncio.to_thread(ego_cache, user_id)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Hub inacessível: {str(e)[:120]}")
+    return {"modo": "ego_cache", "user_id": user_id, "cache": cache}
+
+
+@router.get("/{secret}/gpt/hub/audit")
+async def gpt_hub_audit(secret: str):
+    """Auditoria de qualidade da coleção Hub: fragmentos curtos, sem tipo, distribuição por curador/via."""
+    _verificar_secret(secret)
+    try:
+        from hub.store import auditar
+        resultado = await asyncio.to_thread(auditar)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Hub inacessível: {str(e)[:120]}")
+    return {"modo": "auditoria", "resultado": resultado}
