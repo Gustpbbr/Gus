@@ -53,6 +53,10 @@ const PORTAS_VALIDAS = {
 // ============================================================================
 
 function isExcluded(path) {
+  if (typeof path !== 'string') {
+    Logger.log('isExcluded: path inválido (tipo ' + typeof path + '): ' + JSON.stringify(path));
+    return true;  // Skip itens sem path válido em vez de quebrar
+  }
   if (INCLUDE_OVERRIDES[path]) return false;
   if (EXCLUDE_PATHS[path]) return true;
   for (let i = 0; i < EXCLUDE_PREFIXES.length; i++) {
