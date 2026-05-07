@@ -1,0 +1,721 @@
+user: oi, blz? posso falar com o Gus? 
+assistant: oi, blz sim. é o Gus aqui — porta Claude Code. o que manda?
+user: Continue from where you left off.
+assistant: No response requested.
+user: primeiro tenha um panorama geral do projeto. segue um guia para vc ver. depois vamos focar em um assunto específico, mas te falo apos vc ler tudo necessário do projeto. segue uma dica de outra aba do code
+
+Aqui vai a receita ordenada por valor por contexto. Foco: mínimo necessário pra não inflar contexto à toa.
+Core obrigatório (sempre, em toda aba nova)
+Arquivo
+Pra quê
+dialogos/_bootstrap/gus-bootstrap.md
+manual operacional do Gus, regras de comportamento, como cada porta usa o Hub
+dialogos/_bootstrap/gus-identity.md
+quem é o Gustavo + quem é o Gus enquanto entidade
+dialogos/_bootstrap/gus-estado-atual.md
+handoff auto-gerado pelo cron 03h, snapshot do Hub
+projetos/gus/_estado-atual.md
+onde paramos na sessão anterior (mais "operacional" que o bootstrap)
+Esses 4 dão 80% do contexto pra qualquer aba nova.
+Live — preferir sobre arquivo
+Se a aba tem MCP gus-hub conectado:
+ego_cache_atual() — identidade + últimas 3 decisões + 5 meta-reflexões
+fragmentos_recentes(horas=24) — o que rolou desde ontem
+contar_fragmentos() — sanity check
+Hub é mais fresco que gus-estado-atual.md (que é snapshot das 03h). Sempre que possível, prefira tools MCP a arquivo .md.
+Específicos do contexto da pergunta
+Só ler se a conversa for sobre:
+Tema
+Arquivo
+Próximos passos / NeuroGus
+projetos/gus/gus-08-plano-proximos-passos.md, projetos/gus/gus-30-neurogus-roadmap.md
+Caminho Alexa
+projetos/gus/gus-10-caminho-alexa.md
+MCP / claude.ai connector
+projetos/gus/gus-28-passo2-mcp-server.md
+Roteamento multi-modelo
+projetos/gus/gus-29-roteamento-multimodelo-tiogu.md
+Hub Qdrant arquitetura
+projetos/gus/gus-18-schema-indexacao.md, gus-20-etapa2-hub-qdrant.md, gus-21-etapa3-curador.md
+Decisão migração ADR-001
+projetos/gus/gus-15-decisao-migracao.md
+Demanda da semana
+dialogos/streams/semana-2026-04-21.md (último arquivo da pasta)
+Demandas pendentes pra essa porta
+dialogos/inbox-<porta>/
+O que NÃO precisa ler
+gus-01 a gus-09 (a não ser por curiosidade arqueológica — bootstrap já resume)
+pessoal/, dimagem/, receitas/ etc. — só sob demanda explícita
+historico/ — pasta morta de conteúdo legado
+Logs antigos (>3 dias)
+_log/sessoes-claude-code/ — arquivos longos de transcript
+Truque pra Claude Chat web
+Como ele lê via Drive Project knowledge, o boot dele já tem gus-bootstrap.md como project instruction. Aí ele só precisa fazer:
+Ler gus-estado-atual.md (snapshot 03h)
+Chamar ego_cache_atual() via MCP gus-hub (estado vivo)
+Pra Claude Code, o CLAUDE.md na raiz é auto-injetado em toda sessão — então já cobre o "core obrigatório".
+Quer que eu padronize isso num arquivo dialogos/_bootstrap/checklist-boot-aba-nova.md pra deixar canonizado?
+
+
+Ah, entendi mal. PRs são histórico, não documentação — uma aba nova não precisa ler nenhum.
+Por que não
+O estado final dos PRs já tá no código + nos docs gus-XX atualizados
+PRs descrevem o caminho, não onde a gente tá. Nova aba quer onde tamo.
+60 PRs = ruído gigante no contexto pra ganho zero
+Quando vale olhar PR
+Situação
+Qual PR
+"Por que esse arquivo tá assim?"
+git log --oneline <arquivo> → abre o PR específico
+"O que mudou hoje?"
+Lista PRs mergeados nas últimas 24h: gh pr list --state merged --limit 10
+Bug recente
+PR mais recente que tocou o código quebrado
+Decisão arquitetural não-óbvia
+PR description costuma ter o "porquê"
+Boa prática
+O que tem que ficar nos docs (não nos PRs):
+Decisões arquiteturais → ADR (gus-15 é exemplo)
+Como configurar algo → gus-XX-setup
+Estado atual do projeto → gus-26-status-consolidado, _estado-atual
+Se um PR precisa ser lido pra entender o presente, é sinal de doc desatualizado — não de PR importante.
+Receita
+Aba nova só precisa olhar PRs se:
+Você falar "tá quebrando X depois do PR #YY" → aí sim, lê o PR
+Investigar bug específico no código mexido recentemente
+Senão, esquece os 60. Os 7 docs do checklist anterior te dão o estado atual.
+assistant: ok, panorama carregado. resumo do que captei:
+
+**onde tamo:**
+- ADR-001 em curso — Mem0 SaaS aposentando, Hub Qdrant é fonte de verdade
+- Curador híbrido Haiku × Sonnet rodando coleta dual até **12/05/2026** (Fase 5)
+- Última sessão (27/04): 5 demandas resolvidas, R2/R6/R7 mergeados, bug 400 do curador corrigido
+- Hoje (01/05) = ~4 dias depois. `gus-estado-atual.md` mostra Hub com 19 frags, mas **nenhum fragmento novo nas últimas 6h** — sistema ocioso ou curador parado (vale checar)
+
+**inbox-claude-code com 4 demandas pendentes:**
+- captura-multiporta-curador
+- curador-bidirecional-cron
+- drive-sync-oauth-fix
+- _frontmatter-referencia (template, não é demanda)
+
+**branch atual:** `claude/initial-setup-iWTfL` (não é a `claude/fix-curador-mem0-cleanup` que ficou aberta com PR #10 do dia 27/04 — vale conferir se mergeou)
+
+**alerta interessante:** o CLAUDE.md desta porta diz que captura proativa via MCP `mem0-gus__salvar_memoria*` está **quebrada neste ambiente** (sem ANTHROPIC_API_KEY/QDRANT_URL). Conhecimento desta sessão sobrevive só via commit/PR/docs.
+
+manda o foco específico que tu quer atacar.
+user: vamos ver isso. acredito que tenha uma demanda aberta na aba diálogos sobre isso tbm
+tbm
+
+PR #63 mergeado — arquivamento feito. Inbox agora 4 pendências reais.
+Caminho 2 — passo a passo
+Visão geral
+Código
+Passo 1 — Hook salvar transcript no repo (~30 linhas)
+Arquivo: .claude/hooks/retro_engine.py
+Adicionar antes da chamada Haiku (que falha sem env vars):
+Python
+Passo 2 — Hook commit auto (~10 linhas)
+~/.claude/stop-hook-git-check.sh já avisa se há mudanças. Estende pra também stagear/commitar transcripts automaticamente:
+Bash
+Atenção: git push pode falhar se branch não tracked. Implementar fallback gracioso (loga warning, não quebra).
+Passo 3 — Script cron processar (~80 linhas)
+Arquivo novo: .github/scripts/curador_claude_code.py
+Python
+Passo 4 — Workflow GitHub Actions (~30 linhas)
+Arquivo novo: .github/workflows/curador-claude-code.yml
+Yaml
+Passo 5 — .gitkeep + README na pasta
+Arquivos:
+_log/transcripts-claude-code/.gitkeep — cria pasta vazia no repo
+_log/transcripts-claude-code/README.md — explica o que é, como cron processa, política PII
+Passo 6 — Validar end-to-end
+Implementa Passos 1-5 numa branch
+Mergeia
+Próxima sessão Code que rodar Stop hook deve gerar _log/transcripts-claude-code/<timestamp>__<id>.jsonl
+Commit auto-empurra pro repo
+Cron roda em até 30min
+Verificar logs do workflow no GitHub
+Buscar no Hub: mcp__mem0-gus__buscar_memorias(query="claude-code") deve retornar fragmentos novos
+Pontos de atenção
+Risco
+Mitigação
+PII em transcripts públicos
+Rodar gus.patterns_sensiveis.redact() ANTES de salvar arquivo
+Custo Haiku/GPT explodindo
+Cap MAX_CHARS=50K; cron a cada 30min limita 48 runs/dia
+Push falhar no hook
+Fallback gracioso, transcript fica local, pega na próxima
+Conflito git durante push
+Hook usa git pull --rebase antes do push
+Curador retornando lixo
+Logs do workflow no GitHub permitem revisar; quarentenar fragmentos com confiança baixa
+Custo estimado
+Haiku: ~$0.0001/sessão × 2 (gus+gustavo) = $0.0002/sessão
+GPT-4o-mini: ~$0.0001/sessão × 2 = $0.0002/sessão
+Total: <$0.50/mês mesmo com 50 sessões/dia
+Onde implementar
+Tudo na demanda dialogos/inbox-claude-code/2026-05-01-curador-bidirecional-cron.md (já criada). Próxima aba pode pegar e implementar — ~2-3h.
+Quer que eu implemente agora, ou prefere deixar pra outra sessão? Aviso que não vou conseguir testar end-to-end nesta sessão (env vars ausentes, vai precisar de cron real rodando).
+
+
+
+[sessão Code]
+    ↓ Stop hook
+salva transcript bruto em _log/transcripts-claude-code/<timestamp>__<id>.jsonl
+    ↓ stop-hook-git-check.sh detecta + commita + push
+[GitHub Actions cron — a cada 30min]
+    ↓ checkout + pip install
+processa transcripts não-processados:
+    1. roda curador bidirecional Haiku × GPT-4o-mini
+    2. extrai 2 listas: gus + gustavo
+    3. salva fragmentos no Hub via hub.store.ingestar
+    4. move arquivo pra _log/transcripts-claude-code/processados/
+    ↓ commit + push
+[Hub Qdrant]
+ambos brains alimentados, zero atrito UX
+
+
+
+def _persist_transcript_pra_cron(transcript: str) -> Path:
+    """Salva transcript em pasta processada pelo cron GitHub Actions.
+    Esse é o caminho que funciona quando ambiente Web não tem env vars."""
+    transcripts_dir = REPO_ROOT / "_log" / "transcripts-claude-code"
+    transcripts_dir.mkdir(parents=True, exist_ok=True)
+
+    session_id = uuid.uuid4().hex[:12]
+    nome = f"{datetime.now(BRT).strftime('%Y-%m-%dT%H-%M')}__{session_id}.jsonl"
+    out_path = transcripts_dir / nome
+
+    # Filtra PII via regex existente em gus.patterns_sensiveis
+    try:
+        from gus.patterns_sensiveis import redact
+        transcript_safe = redact(transcript)
+    except Exception:
+        transcript_safe = transcript  # fallback: não filtra
+
+    out_path.write_text(transcript_safe, encoding="utf-8")
+    return out_path
+
+# Em main(), DEPOIS do _ler_transcript:
+out_path = _persist_transcript_pra_cron(transcript)
+log.info(f"Transcript salvo pra cron processar: {out_path.name}")
+
+# Daí tenta extrair via Haiku (legacy path, pode falhar sem env vars):
+try:
+    fragmentos = _extrair_fragmentos(transcript)
+    # ...
+except RuntimeError:
+    # Já salvou pra cron — vida segue
+    _logar_sessao(0, 0, [str(e)], f"(transcript {out_path.name} salvo pra cron)")
+    return
+
+
+
+# No fim do hook git-check, antes do exit:
+TRANSCRIPTS_NOVOS=$(git status --porcelain _log/transcripts-claude-code/ 2>/dev/null | head -5)
+if [ -n "$TRANSCRIPTS_NOVOS" ]; then
+    git add _log/transcripts-claude-code/
+    git commit -m "chore(transcripts): captura sessão $(date +%Y-%m-%dT%H-%M)" --quiet
+    git push origin HEAD --quiet 2>/dev/null || echo "push falhou — manual depois"
+fi
+
+
+
+
+"""Cron: processa transcripts Claude Code novos com curador bidirecional."""
+import asyncio
+import sys
+from pathlib import Path
+
+# Adiciona repo root ao path
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from hub.curador import curar_turnos
+
+TRANSCRIPTS_DIR = Path("_log/transcripts-claude-code")
+PROCESSADOS_DIR = TRANSCRIPTS_DIR / "processados"
+MIN_CHARS = 200
+MAX_CHARS = 50_000  # cap pra evitar custo absurdo
+
+
+async def processar(path: Path) -> dict:
+    """Lê transcript, roda curador 2x (gus + gustavo), move pra processados/."""
+    conteudo = path.read_text(encoding="utf-8")
+
+    if len(conteudo) < MIN_CHARS:
+        path.rename(PROCESSADOS_DIR / path.name)
+        return {"file": path.name, "skip": "muito curto"}
+
+    # Trunca pra cap de custo (mantém início + fim)
+    if len(conteudo) > MAX_CHARS:
+        meio = MAX_CHARS // 2
+        conteudo = conteudo[:meio] + "\n\n[…transcript truncado…]\n\n" + conteudo[-meio:]
+
+    # Roda curador 2x (uma por brain)
+    resultados = {}
+    for user_id in ("gustavo", "gus"):
+        try:
+            r = await curar_turnos(
+                conteudo,
+                via="claude-code",
+                user_id=user_id,
+            )
+            resultados[user_id] = r.get("salvos", 0)
+        except Exception as e:
+            resultados[user_id] = f"erro: {str(e)[:120]}"
+
+    # Move pra processados/
+    PROCESSADOS_DIR.mkdir(exist_ok=True)
+    path.rename(PROCESSADOS_DIR / path.name)
+
+    return {"file": path.name, **resultados}
+
+
+async def main():
+    PROCESSADOS_DIR.mkdir(exist_ok=True)
+    transcripts = sorted(p for p in TRANSCRIPTS_DIR.glob("*.jsonl") if p.is_file())
+
+    if not transcripts:
+        print("Nenhum transcript novo")
+        return
+
+    for path in transcripts:
+        resultado = await processar(path)
+        print(resultado)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
+
+
+
+name: Curador Claude Code (cron)
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"  # a cada 30 min
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install -r requirements.txt -r .github/scripts/requirements.txt
+
+      - name: Process transcripts
+        env:
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python .github/scripts/curador_claude_code.py
+
+      - name: Commit processed transcripts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add _log/transcripts-claude-code/
+          if ! git diff --cached --quiet; then
+            git commit -m "auto: processa transcripts Claude Code"
+            git push
+          fi
+assistant: Lido. Esse plano da outra aba mapeia exato pra demanda `2026-05-01-curador-bidirecional-cron.md` (Caminho 2). Antes de cravar a implementação, preciso verificar alguns pontos no código atual pra não codar baseado em suposição.
+assistant: Conferi os pontos críticos do plano vs realidade do código. Encontrei 4 furos que precisam decisão antes de codar:
+
+**1. `patterns_sensiveis.redact()` não existe**
+Só tem `escanear()` que retorna lista de nomes de patterns achados. O plano assume `redact()`. Duas opções:
+- (a) Criar `redact()` no `patterns_sensiveis.py` (substitui matches por `[REDACTED-<tipo>]`)
+- (b) Em vez de redigir, **bloquear save** se `escanear()` achar qualquer pattern (mais conservador — risco zero de PII no repo público)
+
+Recomendo **(b)** — transcript com PII fica só local, não trash. Mais seguro pra repo público.
+
+**2. `curar_turnos` espera `list[dict]`, não string**
+Plano passa `conteudo` (string) — quebraria. A função certa é `curar_arquivo(body, via, user_id)` que aceita string. Já existe e é usada pelo `ingest_mem0_from_chat.py`. Trocar pra ela.
+
+**3. Auto-commit do transcript — Opção B do plano não funciona aqui**
+`stop-hook-git-check.sh` está em `~/.claude/` (user settings, fora do repo). Editá-lo só afeta esta máquina; outras sessões Code on the web podem não ter. Melhor:
+- (c) **`retro_engine.py` faz `git add + commit + push` direto após salvar transcript** (já roda como hook do projeto, in-repo)
+- Tratar push falhar com fallback gracioso (loga aviso, transcript fica local pra próxima sessão)
+
+**4. `openai` não está em `.github/scripts/requirements.txt`**
+`hub/curador.py` usa `AsyncOpenAI`. Cron quebra sem `openai` no requirements. Adicionar.
+
+**Outros achados:**
+- Pasta `_log/transcripts-claude-code/` não existe — criar com `.gitkeep`
+- Atual branch é `claude/clarify-session-purpose-4otLR`, vou trabalhar nela
+- `retro_engine.py` já tem `_ler_transcript()` decente (parseia JSONL, trunca em 30K chars) — reaproveitar
+
+**Plano refeito (Fase 1 + 2 do plano original, ~150 linhas):**
+
+1. `gus/patterns_sensiveis.py` — adiciona `redact()` opcionalmente, mas implemento estratégia de **bloquear se PII detectada** no hook
+2. `.claude/hooks/retro_engine.py` — após `
+
+[…transcript truncado…]
+
+ue fazem coisas fundamentalmente diferentes mas são
+apresentados como parte do mesmo "sistema de curadoria". O Retro Engine
+é arquiteturalmente correto — acabou de ser bem refatorado. O Curador
+tem a arquitetura certa mas um problema filosófico no centro que nenhuma
+refatoração de código resolve sozinha.
+
+**Veredicto rápido:**
+
+| Componente | Qualidade técnica | Qualidade do output | Risco |
+|---|---|---|---|
+| Retro Engine | ★★★★☆ Boa | ★★★☆☆ Razoável | 🟡 Médio |
+| Curador | ★★★☆☆ Razoável | ★★☆☆☆ Problemática | 🔴 Alto |
+
+---
+
+## PARTE 1 — Retro Engine
+
+### O que faz
+
+Hook `Stop` do Claude Code. Ao final de cada sessão, lê o transcript
+JSONL, filtra só os turnos conversacionais reais (descartando tool_use,
+tool_result, thinking, summaries de continuação), e roda Haiku em loop
+de tool calling para extrair fragmentos autobiográficos do **agente**
+— não sobre o Gustavo, mas sobre como o sistema Gus pensa e evolui.
+Salva com `user_id="gus"`.
+
+É a "memória de trabalho" do próprio sistema. Análogo ao que um engenheiro
+escreveria num diário técnico ao fim do dia.
+
+### O que está bem feito
+
+**A separação de responsabilidades é precisa.**
+O Retro Engine sabe exatamente o que não é seu trabalho: fatos sobre o
+Gustavo. O comentário `DIFERENÇA CRÍTICA` no prompt não é boilerplate —
+é a distinção que evita que o brain `gus` se contamine com episódios
+pessoais. Poucos sistemas de memória têm essa clareza.
+
+**A transição para Agent SDK (tool calling) foi a decisão certa.**
+A versão anterior provavelmente fazia uma chamada simples e esperava JSON
+formatado. A versão atual usa loop de até 8 rounds com duas ferramentas
+(`registrar_fragmento` e `sessao_trivial`). Isso resolve o problema
+clássico de extração holística: o modelo pode raciocinar entre fragmentos,
+decidir parar quando não há mais nada relevante, e sinalizar explicitamente
+quando a sessão foi trivial em vez de forçar extração de lixo.
+
+**O `_ler_transcript` faz o trabalho sujo correto.**
+Filtrar `type=tool_use`, `type=tool_result`, `type=thinking`, e os
+summaries de continuação (`_CONTINUATION_MARKERS`) é essencial. Sem isso,
+80% do transcript de uma sessão técnica é ruído de ferramentas. O código
+faz isso com parsing robusto — não regex, JSON line por line.
+
+**Fail gracefully é tratado seriamente.**
+Toda função tem try/except. O `main()` encapsula o fluxo inteiro. Ausência
+de `ANTHROPIC_API_KEY` vira no-op silencioso — não quebra o fim da sessão
+do usuário. `exit 0` está implícito no design. Isso é correto para um hook.
+
+**Redação PII antes de commitar o transcript.**
+`_persist_transcript_pra_cron` chama `gus.patterns_sensiveis.redact()`
+antes de salvar qualquer coisa no repo. Decisão certa de segurança.
+
+### Problemas reais
+
+**Problema 1 — O truncamento prioriza o fim, mas decisões ficam no início.**
+
+```python
+if len(texto) > MAX_TRANSCRIPT_CHARS:
+    texto = "[…início truncado…]\\n\\n" + texto[-MAX_TRANSCRIPT_CHARS:]
+```
+
+Sessões longas onde a decisão arquitetural foi tomada na primeira hora
+(ex: "vou refatorar X desta forma") e o resto foi execução mecânica:
+o Retro Engine vai ler só a parte de execução e perder a decisão.
+A heurística de "decisões ficam no fim" não é universal.
+
+**Solução:** truncamento em sanduíche — `início[:5000] + [...] + fim[-25000:]`.
+Preserva o contexto inicial sem aumentar custo total.
+
+**Problema 2 — Sem deduplicação antes de salvar.**
+
+`_ingestar_no_hub` salva diretamente sem consultar se fragmento similar
+já existe. Em sessões que retomam temas recorrentes ("o sistema usa
+Qdrant como backbone"), o mesmo fato vira múltiplos fragmentos quase
+idênticos ao longo de semanas.
+
+**Solução:** antes de cada `ingestar`, busca semântica rápida com threshold
+0.88. Se já existe fragmento similar com `user_id="gus"`, atualiza
+`updated_at` e `confianca` em vez de criar duplicata.
+
+**Problema 3 — Apenas `area="gus"` hardcoded.**
+
+```python
+ingestar(conteudo, {"area": "gus", ...})
+```
+
+O Retro Engine nunca classifica `area` dinamicamente. Um `decisao_arquitetural`
+sobre Fluux vai com `area="gus"` em vez de `area="projetos"`. Isso impede
+filtros por área no NeuroGus e nas buscas do Hub.
+
+**Solução:** passar `area` como campo opcional no `input_schema` de
+`registrar_fragmento`. Se o modelo não preencher, default `"gus"`.
+
+**Problema 4 — Cron como único caminho no Claude Code Web.**
+
+O hook dispara no Stop, mas no ambiente web não tem env vars. O transcript
+é commitado e o cron processa depois. Isso cria um lag de até 30 minutos
+entre o fim da sessão e a extração dos fragmentos — e se o cron falhar,
+a sessão se perde silenciosamente.
+
+Não há alertas. Não há retry. Não há fila.
+
+**Solução de curto prazo:** health-check workflow diário que conta arquivos
+em `_log/transcripts-claude-code/` não processados há >2h e notifica
+via Telegram.
+
+---
+
+## PARTE 2 — Curador
+
+### O que faz
+
+Recebe trechos de conversa (janelas de 3 turnos do Telegram, arquivos
+.md do Claude Chat, transcripts do Claude Code via cron) e extrai
+fragmentos atômicos sobre o Gustavo. Roda **dois modelos em paralelo**
+— Haiku (Anthropic) e GPT-4o-mini (OpenAI) — sobre o mesmo input,
+ambos salvam no Hub com `metadata.curador` distinto para comparação A/B.
+
+### O que está bem feito
+
+**A arquitetura paralela é elegante e tem propósito claro.**
+`asyncio.gather` rodando Haiku e GPT simultaneamente, mesmo `hash_janela`
+para parear os fragmentos depois — isso é design intencional para A/B,
+não over-engineering. O custo adicional (~$0.0001 por janela pelo GPT-mini)
+é trivial.
+
+**A camada de validação `_validar_fragmento` existe e funciona.**
+Enums importados de `hub.vocabularios` (fonte única de verdade), clamp
+de confiança em [0,1], descarte de fragmentos com menos de 10 chars.
+Não é completa, mas é melhor que nada e está no lugar certo.
+
+**O bug do `str.format()` foi documentado e corrigido de forma defensiva.**
+O comentário em `_render_prompt` explica o problema, a causa raiz, e por
+que `replace()` é mais robusto. Isso é boa prática de manutenibilidade —
+quem ler em 6 meses vai entender por que não voltaram pro `format()`.
+
+**Dois prompts distintos por tipo de input (`PROMPT_CURADOR` vs
+`PROMPT_CURADOR_ARQUIVO`) é a decisão certa.**
+Janelas de Telegram são turnos crus, ruidosos, com small talk. Arquivos
+do Claude Chat já são curadoria preliminar. Tratar os dois com o mesmo
+prompt seria subótimo em ambas as direções.
+
+**Resiliência por design.**
+Se Anthropic estiver offline, GPT continua salvando. Se GPT falhar,
+Haiku continua. A dupla extração resolve disponibilidade e redundância
+ao mesmo tempo.
+
+### Problemas reais
+
+**Problema central — extração holística vs. extração por fragmento.**
+
+Este é o problema filosófico que o relatório interno reconhece mas não
+resolve. O curador recebe um bloco de turnos e pede ao modelo que extraia
+"todos os fragmentos relevantes" de uma vez. O modelo vê o contexto inteiro,
+decide o que é relevante globalmente, e devolve uma lista.
+
+O problema: o modelo não sabe o que já existe no Hub. Cada chamada é
+stateless em relação à memória. Resultado inevitável:
+- Fragmentos vagos que fazem sentido no contexto da conversa mas são
+  inúteis isolados ("Gustavo gosta de organização")
+- Duplicatas — o mesmo fato extraído em sessões diferentes
+- `tipo=episodico` como default implícito quando o modelo não tem certeza
+- `area=""` quando o contexto não é óbvio
+
+A solução correta — que o Retro Engine já implementou com o Agent SDK —
+é extração por fragmento com consulta prévia ao Hub. O modelo extrai
+um fragmento, consulta se já existe algo similar, decide se registra ou
+descarta, passa pro próximo.
+
+O curador atual é como um jornalista que escreve todos os artigos do dia
+sem checar o arquivo histórico do jornal. O Retro Engine novo é o jornalista
+que consulta o arquivo antes de cada parágrafo.
+
+**Problema 2 — Validação permissiva que mascara o problema.**
+
+```python
+if tipo not in TIPOS_VALIDOS:
+    logger.warning(f"Curador devolveu tipo inválido {tipo!r}, usando 'episodico'")
+    tipo = "episodico"
+
+if area and area not in AREAS_VALIDAS:
+    area = ""
+```
+
+O fallback silencioso para `episodico` e `area=""` é o motivo pelo qual
+o Hub tem 70% de meta-lixo. O código não rejeita o fragmento — ele aceita
+e degrada silenciosamente. `warning` no log que ninguém lê em tempo real
+não é validação, é ilusão de validação.
+
+**Solução:** fragmento com `area=""` vai para quarentena, não para o Hub.
+Quarentena em `_log/quarentena/AAAA-MM-DD.jsonl`. Rotina semanal revisa.
+O curador é forçado a classificar corretamente ou o fragmento não entra.
+
+**Problema 3 — `hash_janela` previne duplicata intra-sessão, não
+inter-sessão.**
+
+Duas sessões diferentes que discutem o mesmo tema produzem fragmentos
+diferentes com hashes diferentes. Não há verificação de similaridade
+semântica antes de salvar. O A/B intencional (Haiku vs GPT) cria
+duplicação controlada. Tudo além disso é duplicação real.
+
+**Problema 4 — Logging fragmentado por porta.**
+
+Cada porta (Telegram, Chat, Code) loga em lugares diferentes ou não
+loga centralizado. Para saber se o curador rodou nas últimas 24h, você
+precisa checar 3 locais. Isso torna diagnóstico lento e anomalias passam
+despercebidas.
+
+**Problema 5 — Prompt muito longo para o que pede.**
+
+`PROMPT_CURADOR` tem ~1200 tokens só no template. Para Haiku rodando a
+cada 3 turnos de Telegram (muitas vezes small talk), isso é desproporcional.
+O modelo lê 1200 tokens de instrução para extrair 0 fragmentos de "tudo bem?"
+
+---
+
+## PARTE 3 — Análise comparativa e alternativas
+
+### Poderiam ser feitos de forma mais simples?
+
+**Retro Engine: não, a complexidade atual é justificada.**
+
+O loop de tool calling parece mais complexo que uma chamada simples, mas
+resolve um problema real: sem ele, o modelo tenta extrair algo mesmo de
+sessões triviais, gerando lixo. A ferramenta `sessao_trivial` é o mecanismo
+de saída elegante. Remover o loop voltaria ao problema da versão anterior.
+
+O que *pode* ser simplificado: a lógica de commit/push poderia ser um
+GitHub Action separado que observa o diretório de transcripts, em vez de
+ser código dentro do hook. O hook ficaria com só 3 responsabilidades:
+filtrar transcript → extrair fragmentos → salvar no Hub. O commit seria
+efeito colateral do Action.
+
+**Curador: sim, pode ser mais simples e mais eficaz ao mesmo tempo.**
+
+A versão atual tem complexidade acidental. O paralelo Haiku+GPT foi
+adicionado por cima de uma arquitetura de extração holística que já tinha
+limitações. O resultado é um sistema que faz duas coisas medianas em vez
+de uma coisa bem.
+
+**Alternativa mais simples e melhor:**
+
+```
+Input → Haiku classifica se tem algo relevante (1 chamada binária barata)
+       → Se sim: Agent SDK por fragmento com consulta Hub (igual ao Retro Engine)
+       → Se não: descarta (sem chamar GPT)
+GPT roda só em fragmentos que Haiku aprovou → comparação A/B mais limpa
+```
+
+Custo total similar. Qualidade substancialmente melhor. O A/B continua,
+mas compara outputs sobre fragmentos que já passaram por um filtro.
+
+### Deveriam ser um sistema único?
+
+Não. A separação atual é conceitualmente correta:
+- Retro Engine = autobiografia do agente (`user_id="gus"`)
+- Curador = memória factual sobre o Gustavo (`user_id="gustavo"`)
+
+Mesclar os dois criaria confusão de responsabilidade. O que deve mudar
+é que os dois usem a mesma arquitetura de extração (Agent SDK por
+fragmento). Hoje só o Retro Engine usa — o Curador está uma versão atrás.
+
+---
+
+## PARTE 4 — Recomendações priorizadas
+
+### 🔴 ALTA — Migrar Curador para Agent SDK por fragmento
+
+**Por quê é prioritário:** é a única mudança que resolve os 3 principais
+problemas ao mesmo tempo (duplicatas, `area` vazia, fragmentos vagos).
+O Retro Engine provou o padrão funciona — é replicação, não experimento.
+
+**Escopo concreto:**
+1. Adicionar ferramenta `registrar_fragmento` ao curador com campos
+   obrigatórios `area`, `tipo`, `camada_temporal`
+2. Antes de chamar `ingestar`, a ferramenta faz busca semântica no Hub
+   (threshold 0.85) — se existe similar, retorna `"ja_existe"` em vez
+   de salvar
+3. Fragmento com `area=""` retorna erro para o modelo corrigir —
+   nunca aceita default silencioso
+4. GPT continua rodando em paralelo, mas sobre os fragmentos aprovados
+   pelo loop Haiku, não sobre o bloco inteiro
+
+**Pré-requisito:** saneamento do Hub primeiro. Migrar o curador sem
+limpar a base contamina a busca semântica de deduplicação com o próprio
+lixo que se quer evitar.
+
+### 🟡 MÉDIA — Truncamento em sanduíche no Retro Engine
+
+**Por quê:** mudança de 3 linhas, alto impacto em sessões longas onde
+a decisão estava no início.
+
+```python
+if len(texto) > MAX_TRANSCRIPT_CHARS:
+    inicio = texto[:5_000]
+    fim = texto[-(MAX_TRANSCRIPT_CHARS - 5_000):]
+    texto = inicio + "\\n\\n[…meio truncado…]\\n\\n" + fim
+```
+
+### 🟡 MÉDIA — Quarentena em vez de fallback silencioso
+
+**Por quê:** o fallback para `episodico`/`area=""` é a causa raiz do
+Hub com 70% de lixo. Não é um bug — é uma decisão de design que está
+errada.
+
+Mudar o `_validar_fragmento` para rejeitar em vez de degradar, com
+destino `_log/quarentena/` para revisão manual semanal.
+
+### 🟢 BAIXA — Logging centralizado do curador
+
+**Por quê:** um arquivo `_log/curador/AAAA-MM-DD.md` alimentado pelas
+3 portas com campo `origem` resolve o diagnóstico fragmentado sem
+nenhuma mudança arquitetural.
+
+### 🟢 BAIXA — Health-check de cron
+
+**Por quê:** 30 minutos de trabalho. Workflow diário que conta transcripts
+não processados e notifica Telegram se >3 acumulados.
+
+---
+
+## Conclusão
+
+O Retro Engine está bem. A transição para Agent SDK foi a decisão
+arquitetural certa e o código reflete isso com clareza. Os problemas
+que restam são incrementais — truncamento, deduplicação, `area` dinâmica.
+
+O Curador funciona mas tem uma dívida filosófica no centro: extração
+holística stateless num sistema que precisa de extração contextual com
+consciência da memória existente. Toda a complexidade do código ao redor
+(paralelo async, validação de enum, dois prompts distintos) está
+construída sobre essa fundação frágil.
+
+A boa notícia: o caminho já está pavimentado pelo próprio Retro Engine.
+A migração do Curador para Agent SDK não é reinvenção — é convergência.
+Os dois componentes passariam a usar a mesma arquitetura de extração,
+o que simplifica manutenção e torna o comportamento previsível.
+
+**Ordem de execução recomendada:**
+1. Saneamento do Hub (Fase 1 do roadmap) — sem isso, deduplicação
+   semântica funciona sobre lixo
+2. Quarentena em vez de fallback silencioso — para de acumular novo lixo
+3. Migração do Curador para Agent SDK — resolve o problema estrutural
+4. Truncamento sanduíche no Retro Engine — incremental, pode ir junto
+
+assistant: Acho que tu colou o **mesmo texto** que mandou antes — esse é idêntico ao primeiro (palavra por palavra). Provavelmente o segundo não foi pra área de transferência.
+
+Manda o segundo (o complemento) que eu leio.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
