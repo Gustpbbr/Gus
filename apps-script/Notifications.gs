@@ -19,13 +19,15 @@ function sendTelegramAlert(message) {
   }
 
   const url = 'https://api.telegram.org/bot' + token + '/sendMessage';
+  // Apps Script + JSON tem quirk com chars não-ASCII (emoji etc) que pode
+  // resultar em "Bad Request: message text is empty" no Telegram. Form-encoded
+  // funciona estável e Telegram aceita os dois formatos.
   const opts = {
     method: 'post',
-    contentType: 'application/json',
-    payload: JSON.stringify({
+    payload: {
       chat_id: chatId,
       text: message,
-    }),
+    },
     muteHttpExceptions: true,
   };
 
