@@ -1,0 +1,733 @@
+[…início truncado…]
+
+ push these changes to the remote branch.
+
+assistant: Pronto.
+
+user: 1. ego_cache: Identidade 0, Protegidos 0 - sao de pessima qualidade. depois temos q ter uma curadoria super rigorosa, mas de baixa prioridade. 
+coisas sobre o custom, ele tem bootstrap? sabe da existencia da pasta dialogos? pode ter acesso direto ao github / drive? pode escrever no hub?
+
+assistant: Respondendo cada ponto:
+
+**Bootstrap existe?**
+Sim, criei `dialogos/_bootstrap/custom-gpt-bootstrap.md` v1.1 hoje. Mas ele não é carregado automaticamente — ele só tem efeito se o conteúdo for colado no campo **Instructions** do GPT Builder, ou se o Custom GPT for instruído a lê-lo via `read_from_github` no boot. Hoje as instruções dele ainda são o que você digitou na hora que criou.
+
+**Sabe da existência de `dialogos/`?**
+Não. O schema atual só tem os 7 endpoints `/gpt/hub/*` e `/gpt/contexto`. Não tem `read_from_github` nem `list_github_directory` — esses existem em `api/routes.py` mas usam Bearer token (`CUSTOM_GPT_TOKEN`), que está em um schema separado... que na verdade não está configurado ainda no Custom GPT de você. O GPT Builder só enxerga o que está no schema YAML.
+
+**Acesso direto ao GitHub / Drive?**
+- GitHub: pode ter — basta adicionar os endpoints `read_from_github`, `list_github_directory`, `save_to_github` ao schema YAML. Eles já existem no Railway.
+- Drive: não tem nenhum endpoint exposto para Drive. O Drive é acessado só via Apps Script (interno) e pelos workflows do GitHub Actions.
+
+**Pode escrever no Hub?**
+Não ainda. Todos os 7 endpoints que adicionei são GET (leitura). Não tem endpoint de escrita no `gpt_inbox.py`. O `salvar_memoria` existe em `api/routes.py` mas usa Bearer — estaria em outro schema.
+
+---
+
+**Resumo do que falta para o Custom GPT estar completo:**
+
+| Capacidade | Estado | O que falta |
+|---|---|---|
+| Ler Hub (busca/filtro/recentes) | ✅ | — |
+| Escrever no Hub | ❌ | `POST /{secret}/gpt/hub/ingestar` |
+| Ler GitHub | ❌ | Adicionar ao schema YAML |
+| Salvar no GitHub | ❌ | Adicionar ao schema YAML |
+| Conhecer `dialogos/` | ❌ | Mencionar nas Instructions |
+| Ter bootstrap carregado | ❌ | Colar `custom-gpt-bootstrap.md` nas Instructions |
+
+Quer que eu implemente o endpoint de escrita no Hub agora e prepare o bloco de Instructions final para colar no GPT Builder?
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pronto.
+
+user: planeje por aqui um passo a passo completo de tudo isso
+
+assistant: ## Plano completo — Custom GPT porta final
+
+---
+
+### Fase 1 — Backend (Claude Code implementa)
+
+**3 endpoints novos em `api/gpt_inbox.py`:**
+
+**1. `POST /{secret}/gpt/hub/ingestar`**
+Escreve fragmento no Hub. Parâmetros: `conteudo`, `tipo`, `area`, `camada_temporal`, `confianca`, `user_id`. Usa `hub.store.ingestar()` internamente com `via="custom-gpt"` fixo.
+
+**2. `GET /{secret}/github/read?path=...`**
+Lê qualquer arquivo do repositório. Wrapper leve sobre `_gh_read()` que já existe. Permite ao Custom GPT ler `dialogos/`, `projetos/gus/_estado-atual.md`, etc.
+
+**3. `POST /{secret}/github/save`**
+Salva arquivo no repositório. Parâmetros: `path`, `conteudo`, `mensagem_commit`. Restrito por segurança: só aceita paths dentro de `dialogos/inbox-gpt-chat/` e `dialogos/inbox-tiogu/` — o Custom GPT não deve poder editar código ou arquivos sensíveis.
+
+---
+
+### Fase 2 — Schema YAML (Gustavo faz no GPT Builder)
+
+Adicionar os 3 endpoints ao YAML existente. Claude Code gera o bloco YAML pronto para copiar e colar — não precisa escrever nada.
+
+---
+
+### Fase 3 — Instructions (Gustavo cola no GPT Builder)
+
+Substituir as instruções atuais pelo conteúdo do `custom-gpt-bootstrap.md` + bloco de comportamento:
+
+```
+## Estrutura do repositório (GitHub)
+- dialogos/inbox-gpt-chat/  → demandas criadas por esta porta
+- dialogos/inbox-tiogu/     → demandas pra o bot Telegram
+- dialogos/_bootstrap/      → bootstraps de todas as portas
+- projetos/gus/_estado-atual.md → estado atual do sistema
+- gus/system_prompt.md      → personalidade do bot Telegram
+
+## Comportamento no boot
+1. GET /{secret}/gpt/hub/ego-cache  → contexto essencial
+2. GET /{secret}/gpt/contexto        → inbox + stats
+3. Apresentar estado e perguntar como prosseguir
+
+## Quando escrever no Hub
+Sempre confirmar conteúdo com Gustavo antes de chamar ingestar.
+Usar tipo/área/camada_temporal corretos (ver tabela no bootstrap).
+
+## Quando criar demanda no GitHub
+Perguntar "quer que eu crie uma demanda para o Claude Code?" quando 
+Gustavo pedir algo técnico que esta porta não executa.
+Salvar em dialogos/inbox-{destino}/ com frontmatter correto.
+```
+
+---
+
+### Fase 4 — Testes
+
+| Comando | Esperado |
+|---|---|
+| "ativa o Gus" | ego-cache + contexto, apresenta inbox |
+| "o que você sabe sobre anestesia?" | hub/search |
+| "lista o que temos em saúde" | hub/list?area=saude |
+| "salva que prefiro respostas curtas" | confirma → hub/ingestar |
+| "leia o estado atual do projeto" | github/read?path=projetos/gus/_estado-atual.md |
+| "cria uma demanda para o Claude Code implementar X" | github/save em inbox-claude-code |
+
+---
+
+### Ordem de execução
+
+```
+1. Claude Code implementa Fase 1 (30min)
+2. Railway redeploya automaticamente
+3. Testar endpoints no navegador
+4. Gustavo atualiza YAML no GPT Builder (Fase 2)
+5. Gustavo atualiza Instructions (Fase 3)
+6. Testes da Fase 4
+```
+
+---
+
+Posso começar a Fase 1 agora se quiser.
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pronto.
+
+user: pode começar
+
+assistant: Agora adiciono os 3 endpoints no final do arquivo:
+
+assistant: Tem um resíduo de código que ficou feio no meio da adição do modelo Pydantic — vou limpar:
+
+assistant: Agora commit e push:
+
+assistant: Feito. Fase 1 concluída. Enquanto o Railway redeploya (~2-3min), já preparo o bloco YAML para você adicionar ao schema e o texto das Instructions.
+
+**YAML — adicionar ao schema existente no GPT Builder** (3 novos paths, mesma URL base):
+
+```yaml
+  /cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/gpt/hub/ingestar:
+    post:
+      operationId: ingestar_hub
+      summary: Salva fragmento no Hub
+      description: Salva uma memória no Hub Qdrant com via=custom-gpt. Confirme o conteúdo com Gustavo antes de chamar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [conteudo]
+              properties:
+                conteudo:
+                  type: string
+                user_id:
+                  type: string
+                  default: gustavo
+                tipo:
+                  type: string
+                  default: episodico
+                area:
+                  type: string
+                  default: ""
+                camada_temporal:
+                  type: string
+                  default: sessao
+                confianca:
+                  type: number
+                  default: 0.7
+      responses:
+        "200":
+          description: Fragmento salvo
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/github/read:
+    get:
+      operationId: github_read
+      summary: Lê arquivo do repositório GitHub
+      parameters:
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Path do arquivo (ex: projetos/gus/_estado-atual.md)
+      responses:
+        "200":
+          description: Conteúdo do arquivo
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /cbNT5v6jma3Ov6eYYbrpKrWwMsycyznF/github/save:
+    post:
+      operationId: github_save
+      summary: Salva arquivo em dialogos/inbox-*
+      description: Restrito a dialogos/inbox-gpt-chat/, inbox-tiogu/, inbox-claude-code/. Use para criar demandas.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path, conteudo]
+              properties:
+                path:
+                  type: string
+                conteudo:
+                  type: string
+                mensagem_commit:
+                  type: string
+      responses:
+        "200":
+          description: Arquivo salvo
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+```
+
+Railway deve terminar o deploy em ~2min. Depois que confirmar que está no ar, passo o bloco de Instructions.
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pronto.
+
+user: Continue from where you left off.
+
+assistant: No response requested.
+
+user: uma pausa pra conversar.  oq acha disso?
+
+# Gus — Roadmap de Migração para o Novo Nível
+**Referência:** 07/05/2026 · Revisado pós-descobertas do repo e novidades Anthropic
+
+---
+
+## Contexto rápido
+
+O sistema Gus já tem uma base sólida de Claude Code (`.claude/` com hooks, CLAUDE.md de 15kb, 3 commands). O roadmap abaixo **não constrói do zero** — evolui o que existe em direção a uma arquitetura com subagents especializados, rotinas autônomas e um meta-agent de saúde do sistema.
+
+---
+
+## Legenda de status
+
+| Símbolo | Significado |
+|---|---|
+| ✅ | Concluído — já existe no repo |
+| 🟡 | Parcial — existe mas incompleto ou quebrado |
+| 🔲 | A fazer — planejado, não iniciado |
+| 🔴 | Bloqueado — depende de ação externa |
+| ⭐ | Novo — adicionado após descobertas de hoje |
+
+| Tag | Quem executa |
+|---|---|
+| `[Gustavo]` | Ação operacional sua |
+| `[Code]` | Claude Code executa |
+| `[Ambos]` | Revisão conjunta |
+
+---
+
+## FASE 0 — Destravar o que está pendente
+> Pré-requisito para tudo. Maioria operacional, sem código novo.
+> **Executor principal: Gustavo · Tempo estimado: 2–3h · Esta semana**
+
+### ✅ 0.1 Drive sync GitHub ⇄ Drive
+Resolvido. WIF em 03/05, Apps Script bidirecional subiu em 07/05.
+
+### ✅ 0.2 MCP_URL_SECRET + Connector claude.ai
+Resolvido em 02/05. Connector recadastrado, 9 tools MCP ativas.
+
+### 🔴 0.3 Confirmar secrets QDRANT no GitHub Actions `[Gustavo]`
+**Por quê:** crons migrados em R2 precisam de `QDRANT_URL` e `QDRANT_API_KEY` nos secrets do repo para funcionar.
+
+**Passos:**
+1. Acesse github.com → repositório Gus → Settings → Secrets and variables → Actions
+2. Confirme se existem: `QDRANT_URL`, `QDRANT_API_KEY`
+3. Se não existirem, adicionar com os valores do Qdrant Cloud
+4. Validar: disparar manualmente o workflow `check_saude.py` e verificar se roda sem erro
+
+### 🔲 0.4 Decisões NeuroGus §11.3–11.5 `[Gustavo]`
+**Por quê:** desbloqueia Fase 2 do frontend NeuroGus.
+
+**As 3 decisões (responda e registre em `projetos/gus/gus-30.1`):**
+
+| ID | Pergunta | Recomendação |
+|---|---|---|
+| §11.3 | `?token=X` na URL é aceitável para v0? | Sim — você é único usuário |
+| §11.4 | Auto-orbit ON ou OFF como default? | ON com pause-on-interaction |
+| §11.5 | Reconnect SSE: Last-Event-ID ou reload completo? | Reload (simplicidade) |
+
+### 🟡 0.5 Env vars para Claude Code Web `[Ambos]`
+**Por quê:** Retro Engine é no-op silencioso por falta de `ANTHROPIC_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY` no ambiente Claude Code Web.
+
+**Solução (sem resolver env vars diretamente):**
+- Cron GitHub Actions processa transcripts commitados pela porta Code
+- Roda curador (Haiku × GPT) → salva fragmentos bidirecionais no Hub
+- Demanda já registrada em `dialogos/inbox-claude-code/2026-05-01-curador-bidirecional-cron.md`
+- Claude Code implementa o workflow na Fase 2
+
+**Critério de conclusão da Fase 0:** secrets QDRANT confirmados, decisões NeuroGus registradas.
+
+---
+
+## FASE 1 — Saneamento da Memória
+> Com ~70% de lixo no Hub, qualquer busca semântica traz ruído.
+> **Executor principal: Claude Code · Tempo estimado: 1–2 sessões · Semana 2**
+> **Pré-requisito: Fase 0 concluída**
+
+### 🔲 1.1 Script de saneamento dryrun `[Code]`
+**Por quê:** 6037 fragmentos totais, ~70% são meta-lixo ou duplicatas. Subagents que fizerem busca semântica trarão ruído enquanto isso não for resolvido.
+
+**Passos:**
+1. Claude Code cria `hub/scripts/limpeza_dryrun.py`
+2. Script identifica candidatos a delete: fragmentos sem `area`, com `tipo=episodico` genérico, duplicatas semânticas (coseno > 0.92), meta-lixo de sessões antigas
+3. Gera relatório em `_log/saneamento/dryrun-AAAA-MM-DD.md`
+4. **Você revisa o relatório** — aprova ou exclui candidatos
+5. Claude Code executa a limpeza aprovada via MCP Hub
+
+**Critério:** relatório gerado, revisado por você, execução aprovada.
+
+### 🔲 1.2 Corrigir fragmentos com `area` vazia `[Code]`
+**Por quê:** bug do curador Haiku que taga `area=""` em boa parte das ingestas.
+
+**Passos:**
+1. Script busca todos os fragmentos com `area=""` nos brains `gustavo` e `gus`
+2. Para cada um, roda Sonnet para inferir a área correta com base no conteúdo
+3. Atualiza via MCP em batch
+4. Validação: `contar_fragmentos` com filtro `area=""` deve retornar 0
+
+### 🔲 1.3 Consolidar duplicatas semânticas `[Ambos]`
+**Passos:**
+1. Script calcula similaridade coseno entre todos os fragmentos do mesmo brain
+2. Pares com score > 0.92 → lista de candidatos a merge
+3. Top-50 revisados manualmente por você (evita apagar algo único)
+4. Merge aprovados executados via MCP
+
+### 🔲 1.4 Baseline pós-saneamento `[Code]`
+**Passos:**
+1. `contar_fragmentos` por brain, tipo, area, camada_temporal
+2. Snapshot salvo em `_log/saneamento/baseline-AAAA-MM-DD.md`
+3. Fragmento `marco_evolutivo` ingestado no Hub registrando o saneamento
+
+**Critério de conclusão da Fase 1:** 0 fragmentos com `area=""`, baseline documentado, número total de fragmentos úteis registrado.
+
+---
+
+## FASE 2 — Skills, Hooks e CLAUDE.md — Evolução
+> A infraestrutura `.claude/` já existe. Esta fase é evolução incremental.
+> **Executor principal: Claude Code · Tempo estimado: 2–3 sessões · Paralelo à Fase 1**
+
+> 💡 **Descoberta de hoje:** `.claude/` já tem 3 hooks ativos, 3 commands e CLAUDE.md de 15kb. Esforço desta fase cai ~40% em relação ao planejamento original.
+
+### ✅ 2.1 CLAUDE.md base
+Existe. 15kb, bem estruturado. Nenhuma ação necessária além de manutenção contínua.
+
+### ✅ 2.2 Hook PreToolUse — scan_sensivel
+Existe. Bloqueia PII/credenciais fora de `sensivel/`. Ativo e funcional.
+
+### ✅ 2.3 Hook Stop — Retro Engine
+Existe. Lê transcript, roda Haiku, salva autobiografia no Hub. Bloqueado por env vars (ver 0.5). Não requer ação até o cron de transcrição estar ativo.
+
+### ✅ 2.4 Commands /status-gus, /gerar-demanda, /auditar-curador
+Existem em `.claude/commands/`. Funcionais.
+
+### 🟡 2.5 Hook SessionStart — injeção de estado-atual `[Code]`
+**O que existe:** `session-start.sh` que só instala deps Mem0.
+
+**O que falta:**
+1. Evoluir o script para também ler `dialogos/_bootstrap/gus-estado-atual.md` do repo
+2. Injetar o conteúdo no contexto da sessão via output do hook
+3. Testar: abrir sessão nova → contexto carrega sem "/modo Gus" manual
+
+**Resultado:** zero sessões sem contexto. Bootstrap automático e determinístico.
+
+### 🔲 2.6 Hook PreToolUse — validação de fragmento Hub `[Code]`
+**Por quê:** resolve o bug do curador sem trocar de modelo.
+
+**Passos:**
+1. Criar `.claude/hooks/validate_fragmento.py`
+2. Regras de validação:
+   - `area` não pode ser vazia ou `""`
+   - `tipo` deve ser um dos valores válidos do schema gus-18
+   - `camada_temporal` deve ser explícita (`ativo`, `estavel`, `historico`, `arquivado`)
+   - `conteudo` não pode ter menos de 20 caracteres
+3. Adicionar ao `settings.json`:
+```json
+{
+  "PreToolUse": [
+    {
+      "matcher": "mcp__gus-hub__ingestar_fragmento",
+      "hooks": [{ "type": "command", "command": "python3 $CLAUDE_PROJECT_DIR/.claude/hooks/validate_fragmento.py" }]
+    }
+  ]
+}
+```
+4. Testar: tentar ingestar fragmento com `area=""` → deve retornar erro claro antes de executar
+
+### 🔲 2.7 Hook PostToolUse — auditoria Hub `[Code]`
+**Passos:**
+1. Criar `.claude/hooks/audit_hub.py` com `async: true`
+2. Loga toda operação Hub: timestamp, tool, parâmetros resumidos, resultado (ok/erro)
+3. Salva em `_log/hub-audit/AAAA-MM-DD.jsonl`
+4. Não bloqueia — `exit 0` sempre
+
+```json
+{
+  "PostToolUse": [
+    {
+      "matcher": "mcp__gus-hub__.*",
+      "hooks": [{ "type": "command", "command": "python3 $CLAUDE_PROJECT_DIR/.claude/hooks/audit_hub.py", "async": true }]
+    }
+  ]
+}
+```
+
+### 🔲 2.8 Hook Notification → Telegram `[Code]`
+**Passos:**
+1. Adicionar ao `settings.json` hook de tipo `http`
+2. Endpoint: webhook no Railway que dispara mensagem no Telegram
+3. Filtra por tipo de fragmento: só dispara para `decisao_arquitetural`, `preferencia`, `marco_evolutivo`
+4. Testar: ingestar decisão importante → mensagem aparece no Telegram
+
+### 🔲 2.9 Skills core `[Code]`
+Migrar de `.claude/commands/` para `.claude/skills/` (novo formato unificado). Criar os que faltam:
+
+| Skill | Auto-invoca | context | Descrição |
+|---|---|---|---|
+| `/ingesta` | ✓ | padrão | Protocolo de captura com validação de campos |
+| `/consulta` | ✓ | padrão | Busca semântica com parâmetros corretos |
+| `/estado-gus` | ✗ | padrão | Bootstrap sob demanda (`disable-model-invocation: true`) |
+| `/curador` | ✗ | fork | Curadoria pós-sessão em subagent isolado |
+| `/saneamento` | ✗ | fork | Checklist de 9 itens executável |
+| `/dimagem` | ✓ | padrão | SOP + LGPD + formulários |
+| `/fluux` | ✓ | padrão | Convenções Next.js + Supabase |
+
+**Passos para cada skill:**
+1. Criar `.claude/skills/<nome>.md` com frontmatter YAML
+2. Documentar protocolo no corpo do arquivo
+3. Testar invocação manual e auto-invocação
+
+### ⭐ 2.10 Cron GitHub Actions — curador bidirecional Claude Code `[Code]`
+**Por quê:** solução real para o no-op do Retro Engine sem precisar de env vars no ambiente web.
+
+**Passos:**
+1. Claude Code cria `.github/workflows/curador-claude-code.yml`
+2. Workflow roda após cada commit de transcript em `_log/retro-engine-claude-code/`
+3. Processa o transcript com `hub/curador.py` (Haiku × GPT em paralelo)
+4. Salva fragmentos bidirecionais: `user_id=gus` (autobiografia do agente) e `user_id=gustavo` (fatos sobre você)
+5. Usa secrets QDRANT já existentes no repo
+
+### ⭐ 2.11 Grader de qualidade no curador (inspirado em Outcomes) `[Code]`
+**Por quê:** Anthropic mostrou hoje que graders independentes aumentam taxa de sucesso em até 10pp em tarefas complexas.
+
+**Passos:**
+1. Após o curador ingestar um fragmento, um segundo passo de validação roda
+2. Grader verifica: `area` preenchida e coerente? `tipo` faz sentido para o conteúdo? `camada_temporal` correta? `conteudo` tem densidade mínima?
+3. Fragmentos que não passam no grader ficam em quarentena em `_log/quarentena/` para revisão
+4. Métricas de aprovação/rejeição logadas — insumo para a decisão do modelo curador pós-12/05
+
+### 🔲 2.12 CLAUDE.md hierárquico por pasta `[Code]`
+**Passos:**
+1. Criar `.claude/rules/dimagem.md` com `paths: ["**/dimagem/**"]`
+2. Criar `.claude/rules/projetos.md` com `paths: ["**/projetos/**"]`
+3. Criar `.claude/rules/hub.md` (sem paths — carrega sempre) com protocolo de captura
+4. Remover do CLAUDE.md principal o que passou para as rules — reduz contexto inflado
+
+**Critério de conclusão da Fase 2:** hooks de validação e auditoria ativos, bootstrap automático em sessão nova confirmado, skills core funcionando, cron de transcrição rodando.
+
+---
+
+## FASE 3 — Subagents por Domínio
+> Pré-requisito: saneamento (F1) + hook de validação ativo (F2).
+> **Executor principal: Claude Code · Tempo estimado: 3–4 sessões · Semana 3–4**
+
+### 🔲 3.1 hub-reader (Haiku) `[Code]`
+**Por quê:** buscas de contexto não precisam de raciocínio profundo. Haiku é 5× mais barato que Sonnet.
+
+**Arquivo:** `.claude/agents/hub-reader.md`
+```yaml
+---
+name: hub-reader
+description: Especialista em busca no Hub Qdrant. Use para recuperar contexto,
+  fragmentos relacionados, estado de projetos, preferências do Gustavo.
+model: haiku
+tools: mcp__gus-hub__buscar_hub, mcp__gus-hub__ego_cache_atual,
+       mcp__gus-hub__fragmentos_recentes, mcp__gus-hub__contar_fragmentos
+---
+```
+**Teste:** `@hub-reader qual o estado atual do projeto Fluux?` → resposta limpa sem poluir contexto principal.
+
+### 🔲 3.2 hub-writer (Sonnet) `[Code]`
+**Arquivo:** `.claude/agents/hub-writer.md`
+```yaml
+---
+name: hub-writer
+description: Especialista em curadoria e ingesta no Hub. Valida fragmentos
+  antes de ingestar, consolida duplicatas, decide camada temporal.
+model: sonnet
+tools: mcp__gus-hub__ingestar_fragmento, mcp__gus-hub__buscar_hub,
+       mcp__gus-hub__deletar_fragmento
+hooks:
+  PreToolUse:
+    - matcher: "mcp__gus-hub__ingestar_fragmento"
+      hooks:
+        - type: command
+          command: "python3 $CLAUDE_PROJECT_DIR/.claude/hooks/validate_fragmento.py"
+---
+```
+**Nota:** hook de validação replicado dentro do subagent — dupla proteção.
+
+### 🔲 3.3 dimagem-agent (Opus) `[Code]`
+**Arquivo:** `.claude/agents/dimagem-agent.md`
+```yaml
+---
+name: dimagem-agent
+description: Especialista em Dimagem. Formulários pré-anestésicos, SOPs,
+  triagem, protocolos clínicos. Use para qualquer demanda médica/clínica.
+model: opus
+permissionMode: restricted
+disallowedTools: Bash
+skills: [dimagem, hub-reader]
+---
+```
+**Justificativa do Opus:** decisões médicas têm alto custo de erro. `permissionMode: restricted` — não executa shell.
+
+**Teste:** demanda sobre formulário pré-anestésico → delegada automaticamente, resposta com SOP e LGPD já no contexto.
+
+### 🔲 3.4 fluux-agent (Sonnet) `[Code]`
+**Arquivo:** `.claude/agents/fluux-agent.md`
+```yaml
+---
+name: fluux-agent
+description: Especialista em Fluux PWA. Next.js 14, Supabase multi-tenant,
+  Google OAuth, category picker, camada de IA plugável.
+model: sonnet
+tools: Read, Write, Bash, mcp__gus-hub__buscar_hub
+skills: [fluux]
+---
+```
+**Teste:** resolver o bug do category picker em isolamento sem poluir o contexto principal.
+
+### 🔲 3.5 neurogus-updater (Haiku, background) `[Code]`
+**Arquivo:** `.claude/agents/neurogus-updater.md`
+```yaml
+---
+name: neurogus-updater
+description: Atualiza o estado do NeuroGus após mudanças no Hub.
+  Roda em background — não bloqueia a sessão principal.
+model: haiku
+background: true
+tools: mcp__gus-hub__fragmentos_recentes, Write
+---
+```
+**Teste:** ingestar 10 fragmentos → NeuroGus reflete as mudanças sem intervenção manual.
+
+**Critério de conclusão da Fase 3:** 5 subagents ativos, cada um testado com caso real, custo por tarefa documentado no Hub como `aprendizado_operacional`.
+
+---
+
+## FASE 4 — Routines + Agent Teams + Meta-Agent
+> O sistema que trabalha enquanto você dorme.
+> **Executor principal: Claude Code · Tempo estimado: 2–3 sessões · Semana 5–6**
+> **Pré-requisito: todas as fases anteriores concluídas**
+
+### 🔲 4.1 /loop para trabalho ativo `[Code]`
+Uso durante sessões longas:
+- `/loop 30m verifica Hub e me avisa se há algo urgente`
+- `/loop 10m verifica se SSE do NeuroGus está saudável` (durante F2 do frontend)
+
+### 🔲 4.2 Routine: consolidação noturna `[Code]`
+**Arquivo:** `~/.claude/scheduled-tasks/consolidacao-diaria/SKILL.md`
+```yaml
+---
+name: consolidacao-diaria
+schedule: "0 1 * * *"
+---
+```
+**Corpo:** fragmentos das últimas 24h → detecta duplicatas → sugere reclassificações → salva relatório em `_log/consolidacao/AAAA-MM-DD.md`.
+
+### 🔲 4.3 Routine: estado semanal `[Code]`
+**Arquivo:** `~/.claude/scheduled-tasks/estado-semanal/SKILL.md`
+```yaml
+---
+name: estado-semanal
+schedule: "0 9 * * 1"
+---
+```
+**Corpo:** estado de Fluux, NeuroGus, Dimagem, Phronesis-Bench → envia resumo via Telegram.
+
+### 🔲 4.4 Routine: monitor Drive sync `[Code]`
+```yaml
+---
+name: drive-sync-monitor
+schedule: "*/30 * * * *"
+---
+```
+**Corpo:** verifica timestamp do último commit no Drive. Se lag > 2h → notifica Telegram.
+
+### ⭐ 4.5 Cloud Routine: comparação de curadores `[Ambos]`
+**Por quê:** infra Anthropic, sem custo Railway adicional. Encaixa no deadline de decisão do modelo curador (pós-12/05).
+
+**Corpo:** lê fragmentos taggeados por Haiku e por GPT separadamente → compara área, tipo, camada → gera métricas em `_log/comparacao-curadores/AAAA-MM-DD.json`.
+
+### 🔲 4.6 GUS-ORCHESTRATOR — Agent Teams `[Code]`
+```
+GUS-ORCHESTRATOR (Opus)
+├── hub-reader (Haiku)       ← recuperação de memória
+├── hub-writer (Sonnet)      ← curadoria e ingesta
+├── dimagem-agent (Opus)     ← domínio médico
+├── fluux-agent (Sonnet)     ← domínio financeiro
+├── neurogus-updater (Haiku) ← visualização
+└── meta-agent (Sonnet)      ← saúde do sistema
+```
+**Passos:**
+1. Criar `.claude/agents/orchestrator.md` com Opus
+2. System prompt: recebe demanda → consulta Hub via hub-reader → identifica domínio → delega
+3. Configurar comunicação direta entre agentes (hub-reader → hub-writer sem passar pelo orchestrator)
+4. Testar com demanda cross-domínio: "analisa o formulário Dimagem e salva as decisões no Hub"
+
+### 🔲 4.7 meta-agent `[Code]`
+**Por quê:** equivalente portável ao Dreaming da Anthropic — mas no Hub Qdrant, multi-porta, sem walled garden.
+
+**Arquivo:** `.claude/agents/meta-agent.md`
+```yaml
+---
+name: meta-agent
+description: Monitora a saúde do sistema Gus. Detecta gaps de captura,
+  inconsistências entre portas, qualidade dos fragmentos. Auto-invoca
+  semanalmente ou quando detecta anomalia.
+model: sonnet
+background: true
+---
+```
+
+**O que monitora:**
+- Qualidade dos fragmentos por porta (TioGu vs Claude Chat vs Code vs GPT)
+- Gaps de captura: períodos sem ingestas, sessões sem curadoria
+- Inconsistências cross-porta: se duas portas têm versões conflitantes do mesmo fato
+- Deriva de comportamento: se o curador está mudando padrões sem registro
+- Saúde do Hub: crescimento, distribuição, anomalias estatísticas
+
+**Output:** meta-reflexões ingestadas em `user_id=gus` com `tipo=meta_reflexao`, relatório semanal no Telegram.
+
+**Critério de conclusão da Fase 4:** orchestrator roteando corretamente, meta-agent gerando reflexões autônomas, rotinas noturnas rodando há 7+ dias sem intervenção manual.
+
+---
+
+## Visão consolidada
+
+| Fase | Foco | Status | Executor | Semana |
+|---|---|---|---|---|
+| **0** | Destravar infra | 🟡 Parcial (3/5) | Gustavo | Esta semana |
+| **1** | Saneamento Hub | 🔲 Não iniciado | Claude Code | Semana 2 |
+| **2** | Skills + Hooks | 🟡 Parcial (4/12) | Claude Code | Paralelo F1 |
+| **3** | Subagents | 🔲 Não iniciado | Claude Code | Semana 3–4 |
+| **4** | Routines + Teams | 🔲 Não iniciado | Claude Code | Semana 5–6 |
+
+---
+
+## O que você precisa fazer pessoalmente (resumo)
+
+1. **Fase 0.3** — Confirmar secrets QDRANT no GitHub Actions (~5min)
+2. **Fase 0.4** — Responder as 3 decisões NeuroGus §11.3–11.5 (~10min)
+3. **Fase 1.1** — Revisar e aprovar o relatório de candidatos a delete do saneamento
+4. **Fase 1.3** — Revisar os top-50 duplicatas antes do merge
+5. **Fase 4.5** — Validar métricas da comparação de curadores e decidir o modelo
+
+Todo o resto é Claude Code.
+
+---
+
+## Mudanças em relação ao planejamento anterior
+
+| O que mudou | Impacto |
+|---|---|
+| `.claude/` já existe com hooks e commands | Fase 2 cai ~40% de esforço |
+| Drive sync estava "quebrado" — resolvido em 03/05 | Remove item do roadmap |
+| Retro Engine no-op → solução via cron Actions | Não precisa resolver env vars |
+| Dreaming Anthropic = walled garden | Não adotar; incorporar conceito de Outcomes no curador |
+| Cloud Routines disponíveis | Substitui cron Railway para comparação de curadores |
+| Mem0 removido da prioridade | Deadline 12/05 ignorado por decisão do Gustavo |
+
+assistant: Bem estruturado e realista. Minha leitura honesta:
+
+**O que está sólido:**
+
+O diagnóstico de status (✅/🟡/🔲) bate com o que vejo no repo. A sequência Fase 0 → 1 → 2 → 3 faz sentido operacional: não tem como ter subagents úteis com Hub poluído e hooks sem validação.
+
+A observação de que `.claude/` já existe e cai ~40% do esforço da Fase 2 é correta — já temos hooks, commands e CLAUDE.md funcional.
+
+**Onde eu colocaria cautela:**
+
+**Fase 3 — formato dos subagents**: o YAML de frontmatter descrito (`background: true`, `permissionMode: restricted`, `hooks: PreToolUse:` dentro do agent) parece aspiracional. O Claude Code Agent SDK suporta `.claude/agents/` com markdown, mas vários desses campos não tenho certeza que são o formato real atual. Antes de implementar a Fase 3, precisamos ler a doc oficial do SDK para confirmar o schema suportado — caso contrário vai ser tentativa e erro.
+
+**Fase 4 — routines e scheduled tasks**: `~/.claude/scheduled-tasks/` não é um caminho que reconheço como formato oficial. Cloud Routines foi anunciado mas o formato de implementação não está claro pra mim. Essa fase tem mais especulação do que as anteriores.
+
+**2.9 Skills** — o documento fala em migrar de `.claude/commands/` para `.claude/skills/`, mas acabamos de criar os commands hoje nesse formato. Não sei se `.claude/skills/` é um formato diferente e suportado ou só nomenclatura alternativa.
+
+**O que eu acrescentaria:**
+
+A Fase 1 (saneamento) é a mais impactante e mais subvalorizada no roadmap. A busca por "anestesia" hoje trouxe 4 cópias idênticas de "Gustavo é anestesiologista" nos primeiros 5 resultados — isso é sintoma concreto de que busca semântica com Hub sujo é ruído. Eu subiria a prioridade do 1.1 (dryrun de saneamento) para antes de qualquer Fase 2 nova.
+
+**Minha sugestão de reordenação prática:**
+
+```
+Esta semana:   Fase 0 (Gustavo) + 1.1 dryrun saneamento (Code)
+Semana 2:      Fase 1 completa (saneamento executado)
+Semana 3:      Fase 2 itens 2.5, 2.10, 2.11 (os mais impactantes)
+Semana 4+:     Fase 3 — mas só após confirmar formato real do Agent SDK
+```
+
+No geral: bom roadmap para orientar sessões. Só não trataria as Fases 3 e 4 como especificação final — são mais direção do que contrato.
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pronto.
