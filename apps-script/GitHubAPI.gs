@@ -105,13 +105,34 @@ function ghGetChangedFiles(baseSha, headSha) {
 
 /**
  * Lê conteúdo de um arquivo do GitHub (UTF-8 decoded).
+ * Fallback: se Contents API retornar encoding=none (arquivo > 1MB),
+ * usa Git Blob API com o SHA pra pegar o conteúdo completo.
  */
 function ghFetchFileContent(path) {
   const cfg = ghGetProps_();
   const enc = encodeURIComponent(path).replace(/%2F/g, '/');
   const data = ghApi('GET', '/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + enc + '?ref=' + cfg.branch);
   if (!data) throw new Error('Arquivo não encontrado no GitHub: ' + path);
-  if (data.encoding !== 'base64') throw new Error('Encoding inesperado: ' + data.encoding);
+
+  if (data.encoding === 'none') {
+    // Arquivo > 1MB, Contents API não retorna conteúdo. Usa Blob API.
+    if (!data.sha) throw new Error('Arquivo grande sem SHA (' + path + ')');
+    return ghFetchBlobContent_(data.sha);
+  }
+
+  if (data.encoding !== 'base64') {
+    throw new Error('Encoding inesperado: ' + data.encoding);
+  }
+  const bytes = Utilities.base64Decode(data.content);
+  return Utilities.newBlob(bytes).getDataAsString('utf-8');
+}
+
+
+function ghFetchBlobContent_(sha) {
+  const cfg = ghGetProps_();
+  const data = ghApi('GET', '/repos/' + cfg.owner + '/' + cfg.repo + '/git/blobs/' + sha);
+  if (!data) throw new Error('Blob não encontrado: ' + sha);
+  if (data.encoding !== 'base64') throw new Error('Blob encoding inesperado: ' + data.encoding);
   const bytes = Utilities.base64Decode(data.content);
   return Utilities.newBlob(bytes).getDataAsString('utf-8');
 }

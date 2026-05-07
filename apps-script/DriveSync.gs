@@ -15,6 +15,10 @@ const EXCLUDE_PATHS = {
   'CLAUDE.md': true,
   'README.md': true,
   'gus/system_prompt.md': true,
+  // Auditoria gigante (90k+ linhas), gerada por workflow. Não faz sentido
+  // espelhar pro Drive — só inflou tempo de sync e quebrava em arquivos
+  // > 1MB do GitHub Contents API.
+  '_indices/_limpeza-hub-candidatos.md': true,
 };
 
 const EXCLUDE_PREFIXES = [
