@@ -161,15 +161,28 @@ async def r_recent(
     user_id: str = "gustavo",
     limit: int = 50,
     incluir_esquecidos: bool = False,
+    desde: str | None = None,
+    ate: str | None = None,
 ):
     """Lista fragmentos recentes pro boot do grafo NeuroGus.
 
     Por default exclui fragmentos com estado='esquecido'. Para ver
     o substrato de retro-aprendizado, passa incluir_esquecidos=true.
+
+    Filtro temporal opcional (gus-30.1 Parte 1B):
+    - `desde` e `ate` em formato ISO date ('2026-05-01') ou datetime
+      ('2026-05-01T12:00:00'). Sem fuso = assume BRT do payload.
+    - Range é client-side em Python (criado_em não é campo indexado
+      no Qdrant). Pra evitar scroll vazio, scroll_limit sobe quando
+      filtro temporal ativo (até 5000).
+
+    `limit` é capped em 2000 pra proteger o backend de payloads grandes.
     """
+    if limit > 2000:
+        limit = 2000
     try:
         fragmentos = await asyncio.to_thread(
-            recentes, user_id, limit, incluir_esquecidos
+            recentes, user_id, limit, incluir_esquecidos, desde, ate
         )
         return {"fragmentos": fragmentos, "total": len(fragmentos)}
     except Exception as e:

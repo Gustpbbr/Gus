@@ -434,13 +434,22 @@ def re_lembrar(memory_id: str) -> bool:
 
 
 def recentes(user_id: str = "gustavo", limit: int = 50,
-             incluir_esquecidos: bool = False) -> list[dict]:
+             incluir_esquecidos: bool = False,
+             desde: Optional[str] = None,
+             ate: Optional[str] = None) -> list[dict]:
     """Lista fragmentos ordenados por criado_em desc (mais recentes primeiro).
 
     Usado pelo /hub/recent pra boot do grafo do NeuroGus. Por default
     omite fragmentos com estado='esquecido' (substrato de aprendizado,
     não pertence ao grafo ativo). incluir_esquecidos=True traz tudo
     pra modo "ver esquecidos" do NeuroGus (gus-30.1 §3.2).
+
+    Filtro temporal opcional via `desde` e `ate` (formato ISO date ou
+    datetime — ex: '2026-05-01' ou '2026-05-01T12:00:00'). Aplicado
+    client-side após scroll porque `criado_em` não é campo indexado
+    no Qdrant (gus-30.1 Parte 1B). Pra ranges grandes (semanas+),
+    sobe o limit pra cobrir o range — sem isso, scroll só pega N
+    primeiros e filtro descarta a maioria.
 
     Retorna fragmentos com payload reduzido pro frontend, incluindo
     'relacionados' (IDs dos vizinhos por afinidade semântica).
@@ -452,10 +461,15 @@ def recentes(user_id: str = "gustavo", limit: int = 50,
     if not incluir_esquecidos:
         must_not.append(FieldCondition(key="estado", match=MatchValue(value="esquecido")))
 
+    # Quando há filtro temporal, puxa mais do scroll pra ter chance de
+    # encontrar fragmentos no range (ordem do scroll não é garantida).
+    # Cap em 5000 pra proteção do backend.
+    scroll_limit = limit if (desde is None and ate is None) else min(5000, max(limit * 10, 1000))
+
     pontos, _ = client.scroll(
         collection_name=COLLECTION,
         scroll_filter=Filter(must=must, must_not=must_not),
-        limit=limit,
+        limit=scroll_limit,
         with_payload=True,
         with_vectors=False,
     )
@@ -476,6 +490,17 @@ def recentes(user_id: str = "gustavo", limit: int = 50,
         }
         for p in pontos
     ]
+
+    # Filtro temporal client-side. Comparação lexicográfica funciona pra
+    # strings ISO 8601 desde que ambos os lados estejam no mesmo formato.
+    # Pra ate, padding implicitly: "2026-05-07" < "2026-05-07T23:59:59"
+    # então pra incluir dia 07 inteiro, normalizamos pra fim do dia.
+    if desde:
+        fragmentos = [f for f in fragmentos if (f.get("criado_em") or "") >= desde]
+    if ate:
+        # Se vier só data (10 chars), considera fim do dia
+        ate_norm = ate if len(ate) > 10 else ate + "T23:59:59"
+        fragmentos = [f for f in fragmentos if (f.get("criado_em") or "") <= ate_norm]
 
     # Ordena descendente por criado_em (Qdrant scroll não garante ordem)
     fragmentos.sort(key=lambda f: f.get("criado_em") or "", reverse=True)
