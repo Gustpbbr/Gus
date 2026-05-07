@@ -63,6 +63,18 @@ async def _gh_list(folder: str) -> list[dict]:
         return data if isinstance(data, list) else []
 
 
+async def _gh_list_recursive(folder: str) -> list[dict]:
+    """Lista arquivos recursivamente incluindo subpastas."""
+    items = await _gh_list(folder)
+    result = []
+    for item in items:
+        if item["type"] == "file":
+            result.append(item)
+        elif item["type"] == "dir":
+            result.extend(await _gh_list_recursive(item["path"]))
+    return result
+
+
 async def _gh_read(download_url: str) -> str:
     async with httpx.AsyncClient(timeout=15) as client:
         r = await client.get(download_url)
@@ -74,7 +86,7 @@ async def _listar_inbox(porta: str) -> dict:
     """Lógica central do inbox, sem autenticação — chamável internamente."""
     folder = f"dialogos/inbox-{porta}"
     try:
-        items = await _gh_list(folder)
+        items = await _gh_list_recursive(folder)
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 404:
             return {"porta": porta, "modo": "deterministico", "total": 0, "arquivos": [],

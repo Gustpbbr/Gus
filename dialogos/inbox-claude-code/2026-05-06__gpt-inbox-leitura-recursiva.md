@@ -3,10 +3,10 @@ tipo: demanda
 origem: gustavo
 destino: claude-code
 prioridade: baixa
-status: pendente
+status: concluido
 criado_em: 2026-05-06T21:13:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: "2026-05-07T15:35:00-03:00"
+processado_por: "claude-code"
 acao_sugerida: implementar
 destino_path: api/gpt_inbox.py
 contexto: Adicionar leitura recursiva de subpastas no endpoint GET /<secret>/gpt/inbox/<porta>. Hoje o endpoint lê só o nível imediato da pasta.

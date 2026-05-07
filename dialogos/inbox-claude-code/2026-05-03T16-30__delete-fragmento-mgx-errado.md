@@ -3,10 +3,11 @@ tipo: demanda
 origem: claude-chat
 destino: claude-code
 prioridade: alta
-status: pendente
+status: bloqueado
 criado_em: 2026-05-03T16:30:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: "2026-05-07T15:30:00-03:00"
+processado_por: "claude-code"
+bloqueio: "HUB_READ_TOKEN ausente neste ambiente. Deletar via TioGu: 'delete fragmento 0329c718-36be-4727-b967-36d99a450781' ou via Railway console."
 acao_sugerida: deletar fragmento do Hub Qdrant por UUID
 destino_path: dialogos/inbox-claude-code/
 contexto: Fragmento gerado pelo curador GPT com conteúdo incorreto sobre MGX. Gustavo identificou como errado na sessão Claude Chat de 03/05/2026.

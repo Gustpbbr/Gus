@@ -3,10 +3,10 @@ tipo: demanda
 origem: gustavo
 destino: claude-code
 prioridade: media
-status: pendente
+status: concluido
 criado_em: 2026-05-06T21:30:00-03:00
-processado_em: ""
-processado_por: ""
+processado_em: "2026-05-07T15:35:00-03:00"
+processado_por: "claude-code"
 acao_sugerida: implementar
 destino_path: .claude/skills/
 contexto: Criar skills customizadas do Gus para uso no Claude Code: /status-gus, /gerar-demanda, /auditar-curador.
