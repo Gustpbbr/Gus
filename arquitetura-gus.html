@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gus — Mapa de Arquitetura</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222535;
+    --border: #2e3248;
+    --text: #e2e8f0;
+    --text-dim: #8892a4;
+    --green: #22c55e;
+    --green-dim: #166534;
+    --yellow: #eab308;
+    --yellow-dim: #713f12;
+    --red: #ef4444;
+    --red-dim: #7f1d1d;
+    --blue: #3b82f6;
+    --blue-dim: #1e3a5f;
+    --purple: #a855f7;
+    --purple-dim: #4a1772;
+    --orange: #f97316;
+    --orange-dim: #7c2d12;
+    --cyan: #06b6d4;
+    --cyan-dim: #164e63;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: linear-gradient(135deg, #1a1d27 0%, #0f1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(90deg, #a855f7, #3b82f6, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  header .meta {
+    font-size: 13px;
+    color: var(--text-dim);
+    text-align: right;
+    line-height: 1.6;
+  }
+
+  .pulse-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+    margin-right: 6px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+    50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+  }
+
+  /* TABS */
+  .tabs-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 40px;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    padding: 14px 20px;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 14px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .tab-btn:hover { color: var(--text); }
+
+  .tab-btn.active {
+    color: var(--purple);
+    border-bottom-color: var(--purple);
+  }
+
+  .tab-content { display: none; padding: 32px 40px; }
+  .tab-content.active { display: block; }
+
+  /* SECTION TITLES */
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+
+  .section-desc {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  /* CARDS GRID */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    border-color: var(--purple);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .card-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .card-title { font-size: 15px; font-weight: 600; }
+  .card-sub { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+
+  .card-body { font-size: 13px; color: var(--text-dim); line-height: 1.7; }
+
+  /* STATUS BADGES */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    margin: 2px;
+  }
+
+  .badge-green  { background: var(--green-dim);  color: var(--green); }
+  .badge-yellow { background: var(--yellow-dim); color: var(--yellow); }
+  .badge-red    { background: var(--red-dim);    color: var(--red); }
+  .badge-blue   { background: var(--blue-dim);   color: var(--blue); }
+  .badge-purple { background: var(--purple-dim); color: var(--purple); }
+  .badge-orange { background: var(--orange-dim); color: var(--orange); }
+  .badge-cyan   { background: var(--cyan-dim);   color: var(--cyan); }
+
+  /* MERMAID WRAPPER */
+  .diagram-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    overflow-x: auto;
+  }
+
+  .diagram-box .diagram-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 16px;
+  }
+
+  .mermaid { text-align: center; }
+
+  /* TABLE */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-bottom: 24px;
+  }
+
+  .data-table th {
+    background: var(--surface2);
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .data-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+
+  .data-table tr:hover td { background: var(--surface2); }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 12px;
+    color: #e2e8f0;
+    overflow-x: auto;
+    line-height: 1.7;
+    margin-bottom: 16px;
+  }
+
+  .code-comment { color: #6b7280; }
+  .code-key { color: #a855f7; }
+  .code-val { color: #22c55e; }
+  .code-path { color: #3b82f6; }
+  .code-warn { color: #eab308; }
+
+  /* FLOW CONNECTOR */
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .flow-node {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .flow-arrow {
+    font-size: 18px;
+    color: var(--text-dim);
+    padding: 0 6px;
+  }
+
+  /* STAT BOXES */
+  .stats-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    min-width: 140px;
+    text-align: center;
+  }
+
+  .stat-number { font-size: 28px; font-weight: 700; }
+  .stat-label { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+
+  /* TIMELINE */
+  .timeline { position: relative; padding-left: 24px; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 4px; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 16px;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -20px; top: 6px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--purple);
+  }
+
+  .timeline-date { font-size: 11px; color: var(--text-dim); }
+  .timeline-text { font-size: 13px; margin-top: 2px; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🤖 Gus — Arquitetura do Sistema</h1>
+    <div style="font-size:13px;color:var(--text-dim);margin-top:4px;">
+      Agente pessoal de Gustavo Pratti · Sistema multiporta
+    </div>
+  </div>
+  <div class="meta">
+    <div><span class="pulse-dot"></span>Sistema ativo</div>
+    <div>Atualizado: 2026-05-07</div>
+    <div>Branch: visualizacao-arquitetura-gus</div>
+  </div>
+</header>
+
+<!-- TABS BAR -->
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="showTab('visao-geral')">🗺️ Visão Geral</button>
+  <button class="tab-btn" onclick="showTab('portas')">🚪 Portas</button>
+  <button class="tab-btn" onclick="showTab('codigo')">🧩 Código</button>
+  <button class="tab-btn" onclick="showTab('memoria')">🧠 Memória</button>
+  <button class="tab-btn" onclick="showTab('fluxo')">⚡ Fluxo de Mensagem</button>
+  <button class="tab-btn" onclick="showTab('workflows')">⚙️ Workflows</button>
+  <button class="tab-btn" onclick="showTab('servicos')">☁️ Serviços</button>
+  <button class="tab-btn" onclick="showTab('pendencias')">🔴 Pendências</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 1: VISÃO GERAL -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-visao-geral" class="tab-content active">
+  <div class="section-title">Arquitetura Geral do Sistema</div>
+  <div class="section-desc">
+    Gus é um agente pessoal com identidade única que opera por múltiplas portas.
+    Todas compartilham a mesma memória central (Hub Qdrant), o mesmo repositório
+    de conhecimento (GitHub) e o mesmo espelho de documentos (Google Drive).
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-number" style="color:var(--green)">4</div>
+      <div class="stat-label">Portas ativas</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" style="color:var(--blue)">3</div>
+      <div class="stat-label">Serviços Railway</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" style="color:var(--purple)">22</div>
+      <div class="stat-label">Tools disponíveis</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" style="color:var(--cyan)">25</div>
+      <div class="stat-label">Workflows GitHub</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" style="color:var(--yellow)">173+</div>
+      <div class="stat-label">Testes verdes</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-number" style="color:var(--orange)">108</div>
+      <div class="stat-label">PRs mergeados</div>
+    </div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="diagram-title">Mapa de Alto Nível</div>
+    <div class="mermaid">
+graph TB
+  G["👤 Gustavo"]
+
+  G -->|"voz/texto/foto"| TG["📱 Telegram<br/>@Tiogubot"]
+  G -->|"texto/análise"| CC["💬 Claude Chat<br/>claude.ai"]
+  G -->|"código/eng"| CK["💻 Claude Code<br/>claude.ai/code"]
+  G -->|"texto/busca"| GPT["🤖 GPT Chat<br/>ChatGPT"]
+
+  TG --> BOT["🚂 Bot Railway<br/>gus/main.py"]
+  CC --> MCP["🔌 MCP Server<br/>hub/mcp_server.py"]
+  CK --> HOOKS["🪝 Hooks + MCP<br/>.claude/"]
+  GPT --> API["🌐 API Endpoint<br/>api/server.py"]
+
+  BOT --> HUB
+  MCP --> HUB
+  HOOKS --> HUB
+  API --> HUB
+
+  HUB[("🧠 Hub Qdrant<br/>gus_hub<br/>memória central")]
+
+  BOT --> GH
+  MCP --> GH
+  HOOKS --> GH
+
+  GH["📁 GitHub<br/>Gustpbbr/Gus<br/>código + MDs"]
+
+  GH <-->|"Apps Script<br/>bidirecional"| DRIVE["📄 Google Drive<br/>espelho MDs"]
+
+  style G fill:#7c3aed,color:#fff,stroke:#a855f7
+  style HUB fill:#164e63,color:#06b6d4,stroke:#06b6d4
+  style GH fill:#1e3a5f,color:#3b82f6,stroke:#3b82f6
+  style DRIVE fill:#166534,color:#22c55e,stroke:#22c55e
+  style BOT fill:#7c2d12,color:#f97316,stroke:#f97316
+  style MCP fill:#4a1772,color:#a855f7,stroke:#a855f7
+  style API fill:#1e3a5f,color:#3b82f6,stroke:#3b82f6
+    </div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="diagram-title">Camadas do Sistema</div>
+    <div class="mermaid">
+graph LR
+  subgraph INPUT["🚪 Entrada (Portas)"]
+    TG2["Telegram"]
+    CH["Claude Chat"]
+    CO["Claude Code"]
+    GP["GPT Chat"]
+  end
+
+  subgraph PROC["⚙️ Processamento"]
+    LLM["LLM Dispatcher<br/>Anthropic + OpenAI"]
+    TOOLS["22 Tools"]
+    CUR["Curador<br/>Haiku × GPT-4o-mini"]
+  end
+
+  subgraph MEM["🧠 Memória"]
+    HUB2["Hub Qdrant<br/>gus_hub"]
+    MEM0["Mem0 SaaS<br/>⏳ até 12/05"]
+  end
+
+  subgraph KNOW["📚 Conhecimento"]
+    GH2["GitHub MDs"]
+    DRV["Google Drive"]
+  end
+
+  INPUT --> PROC
+  PROC --> MEM
+  PROC --> KNOW
+  MEM --> LLM
+  KNOW --> LLM
+
+  style INPUT fill:#1a1d27,stroke:#2e3248,color:#e2e8f0
+  style PROC fill:#1a1d27,stroke:#2e3248,color:#e2e8f0
+  style MEM fill:#1a1d27,stroke:#2e3248,color:#e2e8f0
+  style KNOW fill:#1a1d27,stroke:#2e3248,color:#e2e8f0
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 2: PORTAS -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-portas" class="tab-content">
+  <div class="section-title">Portas de Acesso</div>
+  <div class="section-desc">
+    Cada porta é um canal de comunicação com o Gus. Mesma identidade, mesmo Hub,
+    canais diferentes com capacidades distintas.
+  </div>
+
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#7c2d12">📱</div>
+        <div>
+          <div class="card-title">Telegram — @Tiogubot</div>
+          <div class="card-sub">Porta principal · 24/7 via Railway</div>
+        </div>
+      </div>
+      <div class="card-body">
+        Captura rápida, foto, áudio, PDF, voz. Personalidade completa do Gus.
+        Curador automático a cada 3 turnos salva fragmentos no Hub.
+      </div>
+      <div style="margin-top:12px">
+        <span class="badge badge-green">✅ Ativo</span>
+        <span class="badge badge-green">✅ Curador automático</span>
+        <span class="badge badge-cyan">173+ testes</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#4a1772">💬</div>
+        <div>
+          <div class="card-title">Claude Chat</div>
+          <div class="card-sub">claude.ai · Reflexão e análise longa</div>
+        </div>
+      </div>
+      <div class="card-body">
+        Acessa Hub via MCP Server (real-time, PR #83). Lê Google Drive como
+        contexto. Bootstrap v6.2 com boot casual.
+      </div>
+      <div style="margin-top:12px">
+        <span class="badge badge-green">✅ Ativo</span>
+        <span class="badge badge-green">✅ Captura real-time</span>
+        <span class="badge badge-yellow">⚠️ MCP_URL_SECRET ?</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#1e3a5f">💻</div>
+        <div>
+          <div class="card-title">Claude Code</div>
+          <div class="card-sub">claude.ai/code · Engenharia</div>
+        </div>
+      </div>
+      <div class="card-body">
+        Desenvolvimento, manutenção, evolução do sistema. Hub endpoints
+        internos (Opção B, PR #110). Retro engine no-op neste ambiente.
+      </div>
+      <div style="margin-top:12px">
+        <span class="badge badge-green">✅ Ativo</span>
+        <span class="badge badge-yellow">⚠️ Captura parcial</span>
+        <span class="badge badge-red">🔴 Sem API keys</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#164e63">🤖</div>
+        <div>
+          <div class="card-title">GPT Chat</div>
+          <div class="card-sub">ChatGPT · Nova porta (05/05)</div>
+        </div>
+      </div>
+      <div class="card-body">
+        Endpoint determinístico de inbox (PR #108). Bootstrap v1.4 com
+        leitura do Hub Qdrant. Sem escrita ainda.
+      </div>
+      <div style="margin-top:12px">
+        <span class="badge badge-green">✅ Ativo</span>
+        <span class="badge badge-yellow">⚠️ Leitura Hub apenas</span>
+        <span class="badge badge-cyan">v1.4</span>
+      </div>
+    </div>
+
+    <div class="card" style="opacity:0.6">
+      <div class="card-header">
+        <div class="card-icon" style="background:#374151">📱</div>
+        <div>
+          <div class="card-title">Custom GPT Mobile</div>
+          <div class="card-sub">ChatGPT Builder · Voz mobile</div>
+        </div>
+      </div>
+      <div class="card-body">Porta futura para uso por voz no celular.</div>
+      <div style="margin-top:12px"><span class="badge badge-yellow">⏳ Futuro</span></div>
+    </div>
+
+    <div class="card" style="opacity:0.6">
+      <div class="card-header">
+        <div class="card-icon" style="background:#374151">🔈</div>
+        <div>
+          <div class="card-title">Alexa</div>
+          <div class="card-sub">Echo Show · Voz em casa</div>
+        </div>
+      </div>
+      <div class="card-body">Porta futura para uso doméstico por voz.</div>
+      <div style="margin-top:12px"><span class="badge badge-yellow">⏳ Futuro</span></div>
+    </div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="diagram-title">Captura de memória por porta</div>
+    <div class="mermaid">
+graph LR
+  TG3["📱 Telegram"] -->|"a cada 3 turnos"| CUR2["Curador<br/>Haiku × GPT"]
+  CH2["💬 Claude Chat"] -->|"real-time MCP"| MCP2["MCP Server"]
+  CO2["💻 Claude Code"] -->|"hub endpoints"| HE["Hub Endpoints<br/>Opção B"]
+  GP2["🤖 GPT Chat"] -->|"leitura apenas"| HUB3[("Hub Qdrant")]
+  CUR2 --> HUB3
+  MCP2 --> HUB3
+  HE --> HUB3
+
+  style HUB3 fill:#164e63,color:#06b6d4,stroke:#06b6d4
+  style CUR2 fill:#4a1772,color:#a855f7,stroke:#a855f7
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 3: CÓDIGO -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-codigo" class="tab-content">
+  <div class="section-title">Estrutura de Código</div>
+
+  <div class="diagram-box">
+    <div class="diagram-title">Módulos principais</div>
+    <div class="mermaid">
+graph TB
+  subgraph BOT["🚂 gus/ — Bot Telegram (Railway)"]
+    MAIN["main.py<br/>entry point"]
+    BOT2["bot.py<br/>integrador"]
+    HAND["handlers/<br/>text · photo · doc · voice · cmd · responder"]
+    STATE["state.py<br/>estado conversa"]
+    LLM2["llm.py<br/>dispatcher LLM"]
+    MEM2["memory.py<br/>adapter Hub+Mem0"]
+    TOOLS2["tools/<br/>dispatcher · github · web · acoes · schemas"]
+    INT["integrations/<br/>dimagem · diagnostico · railway · pesquisa · gpt · wikilinks"]
+    MEDIA["media.py<br/>processa mídia"]
+    PAT["patterns_sensiveis.py<br/>PII (fonte única)"]
+  end
+
+  subgraph HUB4["🧠 hub/ — Hub Qdrant"]
+    STORE["store.py<br/>ingestar/lembrar/listar"]
+    CUR3["curador.py<br/>Haiku × GPT paralelo"]
+    MCP3["mcp_server.py<br/>FastAPI + MCP"]
+    SCH["schemas.py<br/>Pydantic gus-18"]
+    VOC["vocabularios.py<br/>NeuroGus"]
+  end
+
+  subgraph API2["⚡ api/ — NeuroGus (Fase 1)"]
+    SRV["server.py"]
+    RTS["routes.py<br/>/hub/recent · /hub/stream SSE"]
+    DASH["dashboard.py"]
+    CAM["camera.py"]
+    AUTH["auth.py"]
+  end
+
+  MAIN --> BOT2
+  BOT2 --> HAND
+  HAND --> LLM2
+  LLM2 --> MEM2
+  LLM2 --> TOOLS2
+  LLM2 --> INT
+  MEM2 --> STORE
+  CUR3 --> STORE
+  MCP3 --> STORE
+
+  style BOT fill:#1a1d27,stroke:#f97316,color:#e2e8f0
+  style HUB4 fill:#1a1d27,stroke:#06b6d4,color:#e2e8f0
+  style API2 fill:#1a1d27,stroke:#a855f7,color:#e2e8f0
+    </div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="diagram-title">Dispatcher LLM — Roteamento de modelos</div>
+    <div class="mermaid">
+flowchart LR
+  MSG["Mensagem"] --> TYPE{Tem mídia?}
+  TYPE -->|"foto/PDF/doc"| ANT["Anthropic<br/>Claude Sonnet<br/>Vision + PDF"]
+  TYPE -->|"texto puro"| OAI["OpenAI<br/>GPT-4o-mini<br/>20× mais barato"]
+  ANT -->|"falha"| HAIKU["Claude Haiku<br/>fallback"]
+  OAI -->|"falha"| ANT
+
+  style ANT fill:#7c2d12,color:#f97316,stroke:#f97316
+  style OAI fill:#164e63,color:#06b6d4,stroke:#06b6d4
+  style HAIKU fill:#4a1772,color:#a855f7,stroke:#a855f7
+    </div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="diagram-title">Apps Script — Sync GitHub ↔ Drive</div>
+    <div class="mermaid">
+graph LR
+  GH3["📁 GitHub<br/>main branch"]
+  AS["⚙️ Apps Script<br/>script.google.com"]
+  DRV2["📄 Google Drive<br/>conta gustavo"]
+
+  GH3 -->|"push trigger"| AS
+  AS -->|"mirror MDs"| DRV2
+  DRV2 -->|"edição manual"| AS
+  AS -->|"commit + push"| GH3
+
+  style GH3 fill:#1e3a5f,color:#3b82f6,stroke:#3b82f6
+  style AS fill:#166534,color:#22c55e,stroke:#22c55e
+  style DRV2 fill:#713f12,color:#eab308,stroke:#eab308
+    </div>
+  </div>
+
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#166534">🧪</div>
+        <div><div class="card-title">Testes</div></div>
+      </div>
+      <div class="card-body">
+        <strong style="color:var(--green)">173+ testes verdes</strong> cobrindo
+        bot Telegram. Suite roda em ~3.5s.<br><br>
+        <span style="color:var(--red)">⚠️ Hub (store.py, curador.py): 0 testes</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#1e3a5f">🔒</div>
+        <div><div class="card-title">Segurança</div></div>
+      </div>
+      <div class="card-body">
+        <strong>patterns_sensiveis.py</strong> — fonte única de regex PII.<br>
+        Hook PreToolUse bloqueia Write/Edit com credenciais.<br>
+        <code style="font-size:11px;color:var(--purple)">_sensivel/</code> sincroniza mas repo é Private.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 4: MEMÓRIA -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-memoria" class="tab-content">
+  <div class="section-title">Sistema de Memória</div>
+  <div class="section-desc">
+    O Hub Qdrant é a fonte da verdade. Schema gus-18 com campos ricos.
+    Dois brains separados: gustavo (sobre o usuário) e gus (auto-observações do agente).
+  </div>
+
+  <div class="diagram-box">
+    <div class="diagram-title">Arquitetura de Memória</div>
+    <div class="mermaid">
+graph TB
+  subgraph HUB5["🧠 Hub Qdrant — coleção gus_hub"]
+    BR1["user_id=gustavo<br/>memória sobre o usuário"]
+    BR2["user_id=gus<br/>auto-observações do agente"]
+  end
+
+  subgraph LEG["⏳ Legado (até 12/05)"]
+    MEM3["Mem0 SaaS<br/>fallback de leitura"]
+    OLD["coleção 'gus'<br/>~204 mems históricas"]
+  end
+
+  TG4["Telegram"] -->|"curador auto"| CUR4["Curador<br/>Haiku × GPT"]
+  CC3["Claude Chat"] -->|"MCP real-time"| MCP4["MCP Server"]
+  CUR4 --> BR1
+  CUR4 --> BR2
+  MCP4 --> BR1
+
+  MEM3 -.->|"fallback leitura"| BR1
+  OLD -.->|"migração pendente"| BR1
+
+  style HUB5 fill:#164e63,color:#06b6d4,stroke:#06b6d4
+  style LEG fill:#1a1d27,stroke:#7f1d1d,color:#ef4444
+  style CUR4 fill:#4a1772,color:#a855f7,stroke:#a855f7
+    </div>
+  </div>
+
+  <div class="section-title" style="margin-top:8px">Schema gus-18 — Campos de um fragmento</div>
+  <div class="diagram-box">
+    <div class="diagram-title">Estrutura de dados</div>
+    <table class="data-table">
+      <tr><th>Campo</th><th>Tipo</th><th>Descrição</th><th>Exemplo</th></tr>
+      <tr><td><code>conteudo</code></td><td>string</td><td>O fragmento em si</td><td>"Prefere comunicação direta"</td></tr>
+      <tr><td><code>tipo</code></td><td>enum</td><td>Categoria</td><td>preferencia · fato · evento · contexto · rotina</td></tr>
+      <tr><td><code>area</code></td><td>enum</td><td>Domínio da vida</td><td>saude · financeiro · projetos · relacoes</td></tr>
+      <tr><td><code>camada_temporal</code></td><td>enum</td><td>Frequência</td><td>recente · recorrente · permanente</td></tr>
+      <tr><td><code>confianca</code></td><td>float [0,1]</td><td>Certeza do curador</td><td>0.85</td></tr>
+      <tr><td><code>estado</code></td><td>enum</td><td>Ainda é verdade?</td><td>ativo · obsoleto · revisao</td></tr>
+      <tr><td><code>via</code></td><td>string</td><td>Origem</td><td>telegram · claude-code · claude-chat</td></tr>
+      <tr><td><code>curador</code></td><td>string</td><td>Modelo que extraiu</td><td>haiku · gpt</td></tr>
+      <tr><td><code>hash_janela</code></td><td>string</td><td>ID da janela de turnos</td><td>sha256 dos turnos</td></tr>
+      <tr><td><code>user_id</code></td><td>string</td><td>De quem é a memória</td><td>gustavo · gus</td></tr>
+      <tr><td><code>criado_em</code></td><td>datetime</td><td>Timestamp</td><td>2026-05-07T13:00:00</td></tr>
+    </table>
+  </div>
+
+  <div class="diagram-box">
+    <div class="diagram-title">Curador — Fluxo de extração de fragmentos</div>
+    <div class="mermaid">
+sequenceDiagram
+  participant T as Telegram
+  participant B as bot.py
+  participant C as curador.py
+  participant H as Haiku
+  participant G as GPT-4o-mini
+  participant HUB as Hub Qdrant
+
+  T->>B: mensagem do Gustavo
+  B->>B: conta turnos
+  alt a cada 3 turnos
+    B->>C: curar_turnos(messages)
+    par Paralelo
+      C->>H: extrai fragmentos
+      C->>G: extrai fragmentos
+    end
+    H-->>C: 5-8 fragmentos
+    G-->>C: 5-8 fragmentos
+    C->>C: valida schema gus-18
+    C->>HUB: ingestar(fragmento, curador="haiku")
+    C->>HUB: ingestar(fragmento, curador="gpt")
+  end
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 5: FLUXO DE MENSAGEM -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-fluxo" class="tab-content">
+  <div class="section-title">Fluxo de uma Mensagem no Telegram</div>
+
+  <div class="diagram-box">
+    <div class="diagram-title">Sequência completa</div>
+    <div class="mermaid">
+sequenceDiagram
+  participant G as 👤 Gustavo
+  participant TG5 as Telegram
+  participant H2 as handlers/
+  participant M as media.py
+  participant MEM as memory.py
+  participant HUB6 as Hub Qdrant
+  participant LLM3 as llm.py
+  participant TOOLS3 as tools/
+  participant ANT2 as Anthropic
+  participant OAI2 as OpenAI
+  participant R as responder.py
+
+  G->>TG5: mensagem (texto/foto/áudio/doc)
+  TG5->>H2: handler por tipo
+  opt tem mídia
+    H2->>M: processar mídia
+    M-->>H2: texto extraído
+  end
+  H2->>MEM: buscar memórias relevantes
+  MEM->>HUB6: busca semântica
+  HUB6-->>MEM: fragmentos relevantes
+  MEM-->>H2: contexto de memória
+  H2->>LLM3: gerar_resposta(messages, context)
+  alt texto puro
+    LLM3->>OAI2: GPT-4o-mini
+  else foto/doc/PDF
+    LLM3->>ANT2: Claude Sonnet
+  end
+  loop tool use (até resposta final)
+    ANT2-->>LLM3: tool_use request
+    LLM3->>TOOLS3: executar tool
+    TOOLS3-->>LLM3: resultado
+  end
+  LLM3-->>H2: resposta final
+  H2->>R: _redigir_resposta()
+  R->>R: remove PII do output
+  R->>TG5: reply_text()
+  TG5->>G: 💬 resposta
+    </div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="diagram-title">22 Tools disponíveis por categoria</div>
+    <div class="mermaid">
+mindmap
+  root((22 Tools))
+    GitHub
+      read_from_github
+      save_to_github
+      list_github_directory
+      list_branches
+      list_commits
+    Memória
+      search_memory
+      salvar_memoria_gus
+      buscar_memoria_gus
+      deletar_memoria
+      auditoria_mem0
+    Web
+      search_web
+      pesquisar_pubmed
+      pesquisar_arxiv
+    Diagnóstico
+      auto_diagnostico
+      logs_railway
+    Roteamento
+      rotear_arquivo
+      criar_acao
+    IA externa
+      perguntar_gpt
+      sugerir_wikilinks
+      meta_memoria
+    Sistema
+      disparar_workflow
+      dimagem OCR
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 6: WORKFLOWS -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-workflows" class="tab-content">
+  <div class="section-title">GitHub Actions — 25 Workflows</div>
+
+  <div class="diagram-box">
+    <div class="diagram-title">Mapa de automações</div>
+    <div class="mermaid">
+graph LR
+  subgraph CRON["⏰ Cron Automáticos"]
+    CS["check-saude<br/>7h30 BRT diário"]
+    CC4["check-cost<br/>alerta custo"]
+    BM["briefing-matinal<br/>diário"]
+    RS["retrospectiva-semanal"]
+    RQ["reflexao-quinzenal"]
+    MR["meta-relatorio-hub"]
+    AH["auditoria-hub"]
+  end
+
+  subgraph PUSH["📤 Disparados por Push"]
+    TS["tests.yml<br/>173+ testes"]
+    TSC["test-scripts.yml"]
+    SD["sync-docs.yml"]
+    AC["archive-completed-demandas"]
+    NI["notificar-inbox-tiogu"]
+  end
+
+  subgraph MANUAL["🖱️ Dispatch Manual"]
+    CC5["curador-claude-code"]
+    ICR["ingest-chat-raw"]
+    GE["gerar-estado-claude-chat"]
+    LHD["limpeza-hub-dryrun"]
+    LHA["limpeza-hub-aplicar"]
+    MG["migrar-gus-para-hub ⚠️"]
+    EM["export-mem0"]
+    ID["import-from-drive"]
+    DD["delete-drive-file"]
+    SDF["sync-to-drive-full"]
+  end
+
+  subgraph LEG2["🗑️ Legacy"]
+    FQ["fix-qdrant-dims"]
+    MM["migrate-mem0-to-qdrant"]
+    STD["sync-to-drive"]
+  end
+
+  CS -->|"alerta"| TG6["📱 Telegram"]
+  BM -->|"envia"| TG6
+  TS -->|"CI verde"| GH4["✅ GitHub CI"]
+
+  style CRON fill:#1a1d27,stroke:#22c55e,color:#e2e8f0
+  style PUSH fill:#1a1d27,stroke:#3b82f6,color:#e2e8f0
+  style MANUAL fill:#1a1d27,stroke:#a855f7,color:#e2e8f0
+  style LEG2 fill:#1a1d27,stroke:#6b7280,color:#6b7280
+    </div>
+  </div>
+
+  <table class="data-table">
+    <tr><th>Workflow</th><th>Trigger</th><th>Status</th><th>Função</th></tr>
+    <tr><td>check-saude</td><td>Cron 7h30 BRT</td><td><span class="badge badge-green">✅</span></td><td>Health check 6 serviços, alerta se warn/erro</td></tr>
+    <tr><td>check-cost</td><td>Cron</td><td><span class="badge badge-green">✅</span></td><td>Alerta se custo próximo do HARD_LIMIT</td></tr>
+    <tr><td>briefing-matinal</td><td>Cron diário</td><td><span class="badge badge-green">✅</span></td><td>Envia briefing via Telegram</td></tr>
+    <tr><td>retrospectiva-semanal</td><td>Cron semanal</td><td><span class="badge badge-green">✅</span></td><td>Reflexão + salva Hub</td></tr>
+    <tr><td>reflexao-quinzenal</td><td>Cron quinzenal</td><td><span class="badge badge-green">✅</span></td><td>Reflexão profunda</td></tr>
+    <tr><td>meta-relatorio-hub</td><td>Periódico</td><td><span class="badge badge-green">✅</span></td><td>Stats do Hub</td></tr>
+    <tr><td>auditoria-hub</td><td>Periódico</td><td><span class="badge badge-green">✅</span></td><td>Auditoria qualidade Hub</td></tr>
+    <tr><td>tests.yml</td><td>Push main</td><td><span class="badge badge-green">✅</span></td><td>173+ testes CI</td></tr>
+    <tr><td>sync-docs</td><td>Push main</td><td><span class="badge badge-green">✅</span></td><td>Regenera docs estáticas</td></tr>
+    <tr><td>archive-completed-demandas</td><td>Automático</td><td><span class="badge badge-green">✅</span></td><td>Arquiva demandas concluídas</td></tr>
+    <tr><td>curador-claude-code</td><td>Manual</td><td><span class="badge badge-green">✅</span></td><td>Processa transcripts Code → Hub</td></tr>
+    <tr><td>ingest-chat-raw</td><td>Manual</td><td><span class="badge badge-green">✅</span></td><td>Ingesta Claude Chat → Hub</td></tr>
+    <tr><td>migrar-gus-para-hub</td><td>Manual</td><td><span class="badge badge-yellow">⏳ PENDENTE</span></td><td>Migra 204 mems históricas</td></tr>
+    <tr><td>limpeza-hub-dryrun</td><td>Manual</td><td><span class="badge badge-green">✅</span></td><td>Preview do que seria deletado</td></tr>
+    <tr><td>limpeza-hub-aplicar</td><td>Manual</td><td><span class="badge badge-green">✅</span></td><td>Executa limpeza Hub</td></tr>
+    <tr><td>fix-qdrant-dims</td><td>Manual</td><td><span class="badge badge-orange">⚠️ Legacy</span></td><td>One-shot, provavelmente obsoleto</td></tr>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 7: SERVIÇOS -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-servicos" class="tab-content">
+  <div class="section-title">Serviços Externos e Infraestrutura</div>
+
+  <div class="diagram-box">
+    <div class="diagram-title">Mapa de dependências externas</div>
+    <div class="mermaid">
+graph TB
+  subgraph RAIL["🚂 Railway (cloud)"]
+    R1["Bot Telegram<br/>gus/main.py<br/>python -m gus.main"]
+    R2["MCP Server<br/>hub/mcp_server.py<br/>⚠️ sem MCP_URL_SECRET"]
+    R3["NeuroGus API<br/>api/server.py<br/>SSE endpoints"]
+  end
+
+  subgraph QDRANT["🧠 Qdrant Cloud"]
+    Q1["cluster gus<br/>gus_hub (gus-18)<br/>all-MiniLM-L6-v2 dim=384"]
+  end
+
+  subgraph GOOGLE["🔵 Google"]
+    G1["Drive<br/>espelho MDs"]
+    G2["Apps Script<br/>sync bidirecional"]
+  end
+
+  subgraph AI["🤖 IA"]
+    A1["Anthropic<br/>Claude Sonnet / Haiku"]
+    A2["OpenAI<br/>GPT-4o-mini"]
+  end
+
+  subgraph MISC["🔧 Outros"]
+    M1["Telegram<br/>@BotFather"]
+    M2["Tavily<br/>busca web"]
+    M3["Mem0 SaaS<br/>⏳ até 12/05"]
+    M4["GitHub<br/>Gustpbbr/Gus"]
+  end
+
+  R1 --> Q1
+  R2 --> Q1
+  R1 --> A1
+  R1 --> A2
+  R1 --> M2
+  R1 --> M1
+  R1 --> M3
+  M4 --> G2
+  G2 --> G1
+
+  style RAIL fill:#1a1d27,stroke:#f97316,color:#e2e8f0
+  style QDRANT fill:#164e63,color:#06b6d4,stroke:#06b6d4
+  style GOOGLE fill:#166534,color:#22c55e,stroke:#22c55e
+  style AI fill:#4a1772,color:#a855f7,stroke:#a855f7
+  style MISC fill:#1a1d27,stroke:#2e3248,color:#e2e8f0
+    </div>
+  </div>
+
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#7c2d12">🚂</div>
+        <div><div class="card-title">Railway</div><div class="card-sub">Deploy + hosting</div></div>
+      </div>
+      <div class="card-body">
+        3 serviços: Bot (Dockerfile), MCP (Dockerfile.mcp), NeuroGus (api/).<br>
+        Deploy automático a cada push na main.<br>
+        Hobby plan (~US$5/mês por serviço).
+      </div>
+      <div style="margin-top:12px">
+        <span class="badge badge-green">✅ Bot ativo</span>
+        <span class="badge badge-yellow">⚠️ MCP sem auth</span>
+        <span class="badge badge-green">✅ NeuroGus Fase 1</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#164e63">🧠</div>
+        <div><div class="card-title">Qdrant Cloud</div><div class="card-sub">Memória vetorial</div></div>
+      </div>
+      <div class="card-body">
+        Coleção <code>gus_hub</code> com schema gus-18.<br>
+        Embedding: all-MiniLM-L6-v2 (dim=384).<br>
+        <span style="color:var(--red)">⚠️ Sem backup configurado.</span>
+      </div>
+      <div style="margin-top:12px">
+        <span class="badge badge-green">✅ Ativo</span>
+        <span class="badge badge-red">🔴 Sem backup</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#7c2d12">🤖</div>
+        <div><div class="card-title">Anthropic</div><div class="card-sub">LLM principal</div></div>
+      </div>
+      <div class="card-body">
+        Claude Sonnet (principal) + Haiku (fallback + curador).<br>
+        SDK v0.50+ (upgrade PR #96).<br>
+        Prompt caching em 2 blocos.
+      </div>
+      <div style="margin-top:12px"><span class="badge badge-green">✅ Ativo</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#164e63">⚡</div>
+        <div><div class="card-title">OpenAI</div><div class="card-sub">Dispatcher + curador</div></div>
+      </div>
+      <div class="card-body">
+        GPT-4o-mini para texto puro (20× mais barato).<br>
+        Curador paralelo ao Haiku.<br>
+        Vision fallback (PR #91).
+      </div>
+      <div style="margin-top:12px"><span class="badge badge-green">✅ Ativo</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#166534">📄</div>
+        <div><div class="card-title">Google Drive</div><div class="card-sub">Espelho de documentos</div></div>
+      </div>
+      <div class="card-body">
+        Sync bidirecional via Apps Script (PR #109).<br>
+        Resolveu o problema do OAuth expirado.<br>
+        Fonte da verdade em script.google.com.
+      </div>
+      <div style="margin-top:12px"><span class="badge badge-green">✅ Resolvido 07/05</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#713f12">🔍</div>
+        <div><div class="card-title">Tavily</div><div class="card-sub">Busca web</div></div>
+      </div>
+      <div class="card-body">
+        Busca web principal do bot.<br>
+        DuckDuckGo como fallback sem key.<br>
+        Free: 1.000 buscas/mês.
+      </div>
+      <div style="margin-top:12px"><span class="badge badge-green">✅ Ativo</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- TAB 8: PENDÊNCIAS -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+<div id="tab-pendencias" class="tab-content">
+  <div class="section-title">Pendências e Próximos Passos</div>
+
+  <div class="cards-grid">
+    <div class="card" style="border-color:var(--red)">
+      <div class="card-header">
+        <div class="card-icon" style="background:var(--red-dim)">🔴</div>
+        <div><div class="card-title">MCP_URL_SECRET</div><div class="card-sub">Alta prioridade · Gustavo</div></div>
+      </div>
+      <div class="card-body">
+        MCP Server rodando sem autenticação. Qualquer pessoa com a URL pode
+        ler memórias. Configurar no Railway MCP → Variables → MCP_URL_SECRET
+        e recadastrar Connector no claude.ai.
+      </div>
+    </div>
+
+    <div class="card" style="border-color:var(--yellow)">
+      <div class="card-header">
+        <div class="card-icon" style="background:var(--yellow-dim)">⏳</div>
+        <div><div class="card-title">Aposentar Mem0 SaaS</div><div class="card-sub">Deadline 12/05 — 5 dias</div></div>
+      </div>
+      <div class="card-body">
+        Coleta dual (Haiku × GPT) termina 12/05. Após: remover fallback
+        Mem0 de memory.py, remover MEM0_API_KEY do Railway e GitHub Secrets,
+        desinstalar mem0ai do requirements.txt.
+      </div>
+    </div>
+
+    <div class="card" style="border-color:var(--yellow)">
+      <div class="card-header">
+        <div class="card-icon" style="background:var(--yellow-dim)">📦</div>
+        <div><div class="card-title">Migrar 204 mems históricas</div><div class="card-sub">Média prioridade</div></div>
+      </div>
+      <div class="card-body">
+        Workflow <code>migrar-gus-para-hub</code> existe e está pronto.
+        Nunca foi disparado. 204 fragmentos da coleção legada "gus" (Mem0
+        self-hosted) aguardando migração para gus_hub.
+      </div>
+    </div>
+
+    <div class="card" style="border-color:var(--purple)">
+      <div class="card-header">
+        <div class="card-icon" style="background:var(--purple-dim)">🧩</div>
+        <div><div class="card-title">NeuroGus Fase 2</div><div class="card-sub">Bloqueado em decisões</div></div>
+      </div>
+      <div class="card-body">
+        Fase 1 backend SSE no ar (PR #100). Fase 2 (frontend PWA) bloqueada
+        em decisões §11.1-11.5 do Gustavo: K=3/threshold, mock HTML, UX.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#374151">🧪</div>
+        <div><div class="card-title">Testes do Hub</div><div class="card-sub">Baixa prioridade</div></div>
+      </div>
+      <div class="card-body">
+        hub/store.py e hub/curador.py com zero cobertura de testes.
+        O bug format() vs replace() ficou ativo 3 dias — testes teriam
+        capturado.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon" style="background:#374151">🗑️</div>
+        <div><div class="card-title">Limpar workflows legacy</div><div class="card-sub">Baixa prioridade</div></div>
+      </div>
+      <div class="card-body">
+        fix-qdrant-dims.yml (one-shot obsoleto) e migrate-mem0-to-qdrant.yml
+        (substituído por migrar-gus-para-hub) podem ser removidos.
+      </div>
+    </div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="diagram-title">Timeline de PRs — últimas 2 semanas</div>
+    <div class="mermaid">
+gantt
+  title PRs mergeados (28/04 → 07/05/2026)
+  dateFormat YYYY-MM-DD
+  axisFormat %d/%m
+
+  section MCP + Curador
+  Fix MCP lifespan #57/#58   :done, 2026-04-28, 1d
+  MCP_URL_SECRET no path #60  :done, 2026-04-29, 1d
+  Curador-chat bidirecional #67 :done, 2026-04-30, 1d
+
+  section Saneamento Bot
+  Fase 1 TioGu — 163 testes #73 :done, 2026-05-02, 1d
+  Quick wins S4/M5/M7/C2/C7 #90 :done, 2026-05-03, 1d
+  Vision fallback OpenAI #91   :done, 2026-05-03, 1d
+  Refator bot handlers/ #92    :done, 2026-05-03, 1d
+  Split tools/ pacote #95      :done, 2026-05-03, 1d
+  Upgrade Anthropic SDK #96    :done, 2026-05-03, 1d
+  Reescreve system_prompt #97  :done, 2026-05-03, 1d
+
+  section Novas funcionalidades
+  NeuroGus Fase 1 SSE #100     :done, 2026-05-04, 1d
+  GPT Chat inbox endpoint #108 :done, 2026-05-06, 1d
+  Apps Script Drive sync #109  :done, 2026-05-07, 1d
+  Hub endpoints internos #110  :done, 2026-05-07, 1d
+    </div>
+  </div>
+</div>
+
+<script>
+  // Inicializa Mermaid
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background: '#1a1d27',
+      primaryColor: '#4a1772',
+      primaryTextColor: '#e2e8f0',
+      primaryBorderColor: '#a855f7',
+      lineColor: '#8892a4',
+      secondaryColor: '#1e3a5f',
+      tertiaryColor: '#164e63',
+      edgeLabelBackground: '#1a1d27',
+      clusterBkg: '#1a1d27',
+      titleColor: '#e2e8f0',
+      nodeTextColor: '#e2e8f0',
+    },
+    flowchart: { curve: 'basis', htmlLabels: true },
+    sequence: { useMaxWidth: true },
+    gantt: { useMaxWidth: true },
+  });
+
+  // Troca de abas
+  function showTab(name) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.target.classList.add('active');
+
+    // Re-renderiza Mermaid na aba ativa (fix para diagramas não visíveis)
+    setTimeout(() => {
+      mermaid.init(undefined, document.querySelectorAll('#tab-' + name + ' .mermaid'));
+    }, 100);
+  }
+</script>
+</body>
+</html>
