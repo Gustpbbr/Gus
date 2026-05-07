@@ -498,3 +498,108 @@ def stats() -> dict:
         "user_id_gustavo": total_gustavo,
         "user_id_gus": total_gus,
     }
+
+
+def _filtros_ext(
+    user_id: str,
+    tipo: Optional[str] = None,
+    via: Optional[str] = None,
+    area: Optional[str] = None,
+    camada_temporal: Optional[str] = None,
+    curador: Optional[str] = None,
+) -> Filter:
+    must = [FieldCondition(key="user_id", match=MatchValue(value=user_id))]
+    for key, val in (
+        ("tipo", tipo),
+        ("via", via),
+        ("area", area),
+        ("camada_temporal", camada_temporal),
+        ("curador", curador),
+    ):
+        if val:
+            must.append(FieldCondition(key=key, match=MatchValue(value=val)))
+    return Filter(must=must)
+
+
+def listar_filtrado(
+    user_id: str = "gustavo",
+    tipo: Optional[str] = None,
+    via: Optional[str] = None,
+    area: Optional[str] = None,
+    camada_temporal: Optional[str] = None,
+    curador: Optional[str] = None,
+    limit: int = 50,
+) -> list[dict]:
+    """Lista com filtros avançados, sem embedding. Para operações de inspeção."""
+    client = _get_client()
+    pontos, _ = client.scroll(
+        collection_name=COLLECTION,
+        scroll_filter=_filtros_ext(user_id, tipo, via, area, camada_temporal, curador),
+        limit=limit,
+        with_payload=True,
+        with_vectors=False,
+    )
+    return [
+        {
+            "id": str(p.id),
+            "conteudo": (p.payload or {}).get("conteudo", ""),
+            "tipo": (p.payload or {}).get("tipo"),
+            "estado": (p.payload or {}).get("estado"),
+            "via": (p.payload or {}).get("via"),
+            "area": (p.payload or {}).get("area"),
+            "camada_temporal": (p.payload or {}).get("camada_temporal"),
+            "curador": (p.payload or {}).get("curador"),
+            "confianca": (p.payload or {}).get("confianca"),
+            "criado_em": (p.payload or {}).get("criado_em"),
+        }
+        for p in pontos
+    ]
+
+
+def auditar() -> dict:
+    """Verifica qualidade da coleção. Retorna problemas e distribuições."""
+    client = _get_client()
+
+    def _contar_campo(campo: str, valor: str) -> int:
+        return client.count(
+            collection_name=COLLECTION,
+            count_filter=Filter(must=[FieldCondition(key=campo, match=MatchValue(value=valor))]),
+            exact=True,
+        ).count
+
+    curadores = {}
+    for c in ("haiku", "sonnet", "telegram", "claude-code", "mgx", "api"):
+        n = _contar_campo("curador", c)
+        if n:
+            curadores[c] = n
+
+    vias = {}
+    for v in ("telegram", "claude-code", "api", "github-action"):
+        n = _contar_campo("via", v)
+        if n:
+            vias[v] = n
+
+    todos, _ = client.scroll(
+        collection_name=COLLECTION,
+        limit=500,
+        with_payload=True,
+        with_vectors=False,
+    )
+    curtos = [
+        {"id": str(p.id), "conteudo": (p.payload or {}).get("conteudo", "")[:80]}
+        for p in todos
+        if len((p.payload or {}).get("conteudo", "")) < 30
+    ]
+    sem_tipo = [
+        {"id": str(p.id), "conteudo": (p.payload or {}).get("conteudo", "")[:80]}
+        for p in todos
+        if not (p.payload or {}).get("tipo")
+    ]
+
+    return {
+        "total": len(todos),
+        "por_curador": curadores,
+        "por_via": vias,
+        "fragmentos_curtos_lt30": curtos,
+        "fragmentos_sem_tipo": sem_tipo,
+    }
