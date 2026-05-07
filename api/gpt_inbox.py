@@ -1,17 +1,21 @@
 """Endpoints para as portas GPT Chat e Custom GPT.
 
-GET /{secret}/gpt/inbox/{porta}    — inbox de uma porta
-GET /{secret}/gpt/contexto         — inbox gpt-chat + hub stats
-GET /{secret}/gpt/hub/search       — busca semântica no Hub
-GET /{secret}/gpt/hub/list         — listagem filtrada do Hub
-GET /{secret}/gpt/hub/recent       — fragmentos mais recentes
-GET /{secret}/gpt/hub/ego-cache    — identidade + decisões + meta-reflexões
-GET /{secret}/gpt/hub/audit        — qualidade da coleção
+GET  /{secret}/gpt/inbox/{porta}    — inbox de uma porta
+GET  /{secret}/gpt/contexto         — inbox gpt-chat + hub stats
+GET  /{secret}/gpt/hub/search       — busca semântica no Hub
+GET  /{secret}/gpt/hub/list         — listagem filtrada do Hub
+GET  /{secret}/gpt/hub/recent       — fragmentos mais recentes
+GET  /{secret}/gpt/hub/ego-cache    — identidade + decisões + meta-reflexões
+GET  /{secret}/gpt/hub/audit        — qualidade da coleção
+POST /{secret}/gpt/hub/ingestar     — salva fragmento no Hub
+GET  /{secret}/github/read          — lê arquivo do repositório
+POST /{secret}/github/save          — salva em dialogos/inbox-* (restrito)
 
-Requer GPT_INBOX_SECRET no Railway. Credenciais Qdrant ficam internas — nunca
-saem para o cliente.
+Requer GPT_INBOX_SECRET no Railway. Credenciais Qdrant e GitHub ficam
+internas — nunca saem para o cliente.
 """
 import asyncio
+import base64
 import os
 import re
 
@@ -264,3 +268,123 @@ async def gpt_hub_audit(secret: str):
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"Hub inacessível: {str(e)[:120]}")
     return {"modo": "auditoria", "resultado": resultado}
+
+
+# ── Escrita no Hub ────────────────────────────────────────────────────────────
+
+from pydantic import BaseModel
+
+class IngestarHubReq(BaseModel):
+    conteudo: str
+    user_id: str = "gustavo"
+    tipo: str = "episodico"
+    area: str = ""
+    camada_temporal: str = "sessao"
+    confianca: float = 0.7
+
+
+@router.post("/{secret}/gpt/hub/ingestar")
+async def gpt_hub_ingestar(secret: str, req: IngestarHubReq):
+    """Salva fragmento no Hub Qdrant com via='custom-gpt' fixo.
+
+    Confirme o conteúdo com Gustavo antes de chamar.
+    """
+    _verificar_secret(secret)
+    if not req.conteudo or not req.conteudo.strip():
+        raise HTTPException(status_code=400, detail="conteudo vazio")
+    metadata = {
+        "user_id": req.user_id,
+        "tipo": req.tipo,
+        "area": req.area,
+        "camada_temporal": req.camada_temporal,
+        "confianca": req.confianca,
+        "via": "custom-gpt",
+    }
+    try:
+        from hub.store import ingestar
+        frag_id = await asyncio.to_thread(ingestar, req.conteudo.strip(), metadata)
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Hub inacessível: {str(e)[:120]}")
+    return {"ok": True, "id": frag_id, "conteudo": req.conteudo.strip(), "via": "custom-gpt"}
+
+
+# ── GitHub read / save (restrito) ─────────────────────────────────────────────
+
+@router.get("/{secret}/github/read")
+async def github_read(
+    secret: str,
+    path: str = Query(..., description="Path do arquivo no repositório (ex: projetos/gus/_estado-atual.md)"),
+):
+    """Lê arquivo do repositório GitHub. Retorna conteúdo decodificado."""
+    _verificar_secret(secret)
+    repo = os.getenv("GITHUB_REPO", "Gustpbbr/Gus")
+    url = f"https://api.github.com/repos/{repo}/contents/{path.lstrip('/')}"
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(url, headers=_gh_headers())
+            if r.status_code == 404:
+                raise HTTPException(status_code=404, detail=f"Arquivo não encontrado: {path}")
+            r.raise_for_status()
+            data = r.json()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"GitHub inacessível: {str(e)[:120]}")
+
+    conteudo = base64.b64decode(data.get("content", "")).decode("utf-8")
+    return {"path": path, "sha": data.get("sha"), "conteudo": conteudo}
+
+
+_PATHS_PERMITIDOS = (
+    "dialogos/inbox-gpt-chat/",
+    "dialogos/inbox-tiogu/",
+    "dialogos/inbox-claude-code/",
+)
+
+
+class GithubSaveReq(BaseModel):
+    path: str
+    conteudo: str
+    mensagem_commit: str = ""
+
+
+@router.post("/{secret}/github/save")
+async def github_save(secret: str, req: GithubSaveReq):
+    """Salva arquivo no repositório. Restrito a dialogos/inbox-*.
+
+    Use para criar demandas direcionadas ao Claude Code, TioGu ou GPT Chat.
+    """
+    _verificar_secret(secret)
+    path = req.path.lstrip("/")
+    if not any(path.startswith(p) for p in _PATHS_PERMITIDOS):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Path não permitido. Aceitos: {', '.join(_PATHS_PERMITIDOS)}",
+        )
+    repo = os.getenv("GITHUB_REPO", "Gustpbbr/Gus")
+    url = f"https://api.github.com/repos/{repo}/contents/{path}"
+    conteudo_b64 = base64.b64encode(req.conteudo.encode()).decode()
+    mensagem = req.mensagem_commit or f"demanda: {path.split('/')[-1]}"
+
+    # Verifica se arquivo já existe para pegar o sha (update vs create)
+    sha = None
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(url, headers=_gh_headers())
+            if r.status_code == 200:
+                sha = r.json().get("sha")
+    except Exception:
+        pass
+
+    payload: dict = {"message": mensagem, "content": conteudo_b64}
+    if sha:
+        payload["sha"] = sha
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.put(url, headers=_gh_headers(), json=payload)
+            r.raise_for_status()
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"GitHub inacessível: {str(e)[:120]}")
+
+    return {"ok": True, "path": path, "acao": "atualizado" if sha else "criado"}
