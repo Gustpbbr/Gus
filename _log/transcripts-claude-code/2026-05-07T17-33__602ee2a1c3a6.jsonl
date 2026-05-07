@@ -1,0 +1,540 @@
+user: blz? pode chamar o Gus pra gente começar a mexer no projeto neurogus?
+assistant: opa, blz. neurogus tem roadmap em `projetos/gus/gus-30-neurogus-roadmap.md` e três briefings na inbox-tiogu. deixa eu ler tudo antes de falar besteira.
+assistant: bom, peguei a essência. agora o roadmap (28k tokens, leio em partes — começo do início e do fim, que costuma ter "estado atual").
+assistant: Já tenho briefing, arquitetura, mock-spec e roadmap completo. Antes de propor passo concreto, deixa eu conferir branch atual.
+assistant: opa, branch `claude/start-neurogus-project-NZAoF` ja criada, working tree limpo. tudo lido. resumo do estado:
+
+## o que é o neurogus
+PWA com grafo 3D que mostra a memória do Hub Qdrant viva em tempo real — cada fragmento é uma esfera, conexão por afinidade semântica (cosine top-K), nasce branco quando o curador salva e migra pra cor do tipo. Roda no mesmo Railway do bot, sem custo extra.
+
+## status hoje
+- backend (Hub, curador, embeddings, FastAPI, Bearer): **pronto**
+- código novo do NeuroGus: **0 linhas escritas** (só mock visual da Claude Chat, perdido no Drive dela)
+- roadmap canônico: `projetos/gus/gus-30-neurogus-roadmap.md` (1513 linhas, Fase 1 = backend SSE)
+
+## o que precisa de você antes de eu começar (decisões abertas, seção 11)
+3 dessas bloqueiam Fase 1:
+
+1. **Top-K e threshold de afinidade.** Default proposto: K=3, threshold=0.6 (cosine). Aceita?
+2. **Apagar fragmento é hard ou soft delete?** Hard = `store.deletar()` direto. Soft = marcar `estado: "esquecido"` (já existe no schema). Recuperabilidade vs minimalismo.
+3. **Coleção mostrada: só `user_id=gustavo` ou também `gus` (auto-observações)?** Default: só `gustavo` no v0.
+
+As outras 4 (mock HTML, token na URL, auto-orbit, reconnect SSE) só importam na Fase 2 (frontend) — dá pra decidir depois.
+
+## se você confirmar os defaults, primeiro passo concreto é
+1. criar `hub/events.py` (fila SSE, ~50 linhas)
+2. adicionar `_calcular_vizinhos()` + `broadcast()` em `hub/store.py:ingestar()`
+3. adicionar `GET /hub/recent` e `GET /hub/stream` em `hub/routes.py`
+4. smoke test local com `curl --no-buffer` antes de subir
+
+vou nessa? confirma (ou ajusta) os 3 defaults e eu começo pela Fase 1.
+user: Continue from where you left off.
+assistant: No response requested.
+user: mas antes, leia sobre todo o projeto. pra ter um panorama geral. busque em todo repo
+user: Você é um agente de exploração mapeando o repositório Gus (`/home/user/Gus`) pra dar contexto a outra sessão Claude Code que vai trabalhar no projeto NeuroGus.
+
+Objetivo: produzir um panorama geral do repo. Não detalhe demais — seja específico onde há decisão arquitetural ou estado em transição, e seja conciso onde for óbvio.
+
+Cobre estes pontos (em ordem):
+
+## 1. Estrutura de pastas top-level
+Liste o que tem em `/home/user/Gus` (raiz). Pra cada pasta principal (`gus/`, `hub/`, `api/`, `.claude/`, `.github/`, `projetos/`, `dialogos/`, `pessoal/`, `dimagem/`, `_log/`, `_indices/`, etc.) diga em 1 linha o que ela é. Foca no que é código vs conteúdo (.md).
+
+## 2. Código-fonte ativo (Python)
+- `gus/`: liste os módulos principais (main, bot, llm, memory, tools, media) e quantas linhas tem cada um
+- `hub/`: liste os módulos (store, curador, routes, schemas, mcp_server, events?) e estado de cada
+- `api/`: liste o que tem dentro (server, dashboard, camera, neurogus?, etc.) 
+- `.claude/mcp/`: MCP servers existentes
+- `.github/scripts/` e `.github/workflows/`: lista breve de scripts e workflows ativos
+
+Pra cada arquivo importante, diga 1 linha sobre o que faz. Marque com ❌ os arquivos referenciados em docs mas que não existem ainda (tipo `hub/events.py`, `api/neurogus.py`).
+
+## 3. Documentos canônicos `projetos/gus/gus-NN-*.md`
+Liste todos os docs com prefixo `gus-NN-` em `projetos/gus/`. Pra cada um, leia o frontmatter + primeiras 30 linhas e resuma em 1-2 linhas: tema + status (planejamento/implementado/abandonado).
+
+## 4. Estado da migração ADR-001 (Mem0 → Hub Qdrant)
+Procura referências a "ADR-001", "Fase X", "Hub", "Mem0" em arquivos de status. Tem `projetos/gus/_estado-atual.md`? Leia ele inteiro se existir. Resuma em qual fase a migração está.
+
+## 5. Demandas pendentes
+- Liste arquivos em `dialogos/inbox-claude-code/`, `dialogos/inbox-tiogu/` (com 1 linha cada sobre o tema)
+- Liste arquivos em `dialogos/streams/semana-*.md` mais recentes (só o nome)
+- Aponta quais são relacionadas ao NeuroGus
+
+## 6. Workflows ativos (.github/workflows)
+Lista nome + 1 linha do que faz. Marca os que são relevantes pro Hub/curador/NeuroGus.
+
+## 7. Sinais de "tá rodando em produção" vs "rascunho"
+Pasta `historico/` tem o quê (legado)? Tem TODOs marcados em código? Tem arquivos `.draft` ou similares? Quais arquivos tem "TODO"/"FIXME"/"XXX" em comentários de código?
+
+## 8. Tamanho e idiomas
+- Total de linhas Python no repo
+- Total de arquivos .md
+- Última semana de commits (resumo via `git log --oneline --since='7 days ago'`)
+
+## Formato do relatório
+- Markdown estruturado, seções como acima
+- Caminhos relativos a `/home/user/Gus`
+- ~600-900 linhas (use as palavras com economia, mas cubra tudo)
+- Não duplique info do CLAUDE.md (eu já tenho ele); foque no que CLAUDE.md NÃO diz ou onde ele está desatualizado vs realidade
+- Termina com seção "## Inconsistências/dúvidas" listando 3-5 coisas que parecem contraditórias entre docs e código
+
+Não precisa rodar nada — só ler arquivos e listar diretórios. Sem WebFetch/WebSearch. Sem git fetch — só git log local se útil.
+assistant: beleza, faz sentido. vou mapear o repo inteiro com um agente de exploração antes de continuar.
+assistant: Vou explorar o repositório Gus sistematicamente. Começarei com uma visão geral da estrutura.
+assistant: Agora vou estruturar a exploração. Vou fazer múltiplas buscas em paralelo:
+assistant: Vou explorar a estrutura de código Python em paralelo:
+assistant: Agora vou contar linhas de código e explorar documentação:
+assistant: Agora vou examinar conteúdo das demandas pendentes e status do NeuroGus:
+assistant: Vou verificar MCP servers e workflows mais detalhadamente:
+assistant: Agora vou ler alguns docs importantes do NeuroGus e ADR-001:
+assistant: Agora vou verificar arquivos de APIs e rotas do Hub:
+assistant: Agora vou verificar alguns workflows e ver padrão de referências:
+assistant: Vou mapear o repositório Gus de forma completa. Começarei pela estrutura geral e depois dos pontos específicos.
+assistant: agente de exploração rodando em background. te aviso assim que ele terminar com o panorama. enquanto isso fico parado pra não pisar no que ele tá lendo.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Agora vou explorar os principais diretórios em paralelo:
+assistant: Agora vou contar linhas de código e verificar documentos:
+assistant: São só appends automáticos do hook Stop (retro-engine). Commit e push.
+assistant: commitado e pushado pra `claude/start-neurogus-project-NZAoF` (commit `b28e75d`). Agente de exploração ainda mapeando o repo — te aviso quando ele terminar.
+assistant: Perfeito! Agora tenho informação suficiente para o relatório. Deixe-me compilar tudo:
+
+---
+
+# Panorama do Repositório Gus — Mapa para NeuroGus
+
+## 1. Estrutura de pastas top-level
+
+| Pasta | Tipo | Descrição |
+|-------|------|-----------|
+| **gus/** | Código | Bot TioGu (Telegram). Módulos: main, bot, llm, memory, tools, media, roteador, logger, patterns_sensiveis, integrations/ |
+| **hub/** | Código | Hub Qdrant direto (ADR-001 Fase 2+). Módulos: store, curador, routes, schemas, mcp_server |
+| **api/** | Código | FastAPI (Railway). Rotas REST, auth, dashboard, camera, server principal |
+| **.claude/** | Config | MCP servers (mem0_server, gus_server) + settings |
+| **.github/** | Config | Workflows (19 cron + manual), scripts deploy, diagnostics |
+| **projetos/** | Conteúdo | Documentação projeto: gus-NN-*.md (30 docs), auditorias, decisões arquiteturais (ADRs) |
+| **dialogos/** | Conteúdo | Inbox (claude-code, tiogu, gustavo), streams semana, bootstrap (identidade, prompts) |
+| **pessoal/** | Conteúdo | Saúde, financeiro, relacionamentos, histórico pessoal |
+| **dimagem/** | Conteúdo | Clínica (obras, pacientes, sistema OCR em produção) |
+| **capturado/** | Conteúdo | Captura rápida via bot (não estruturada) |
+| **historico/** | Arquivo | Legacy: textos-antigos (v1), scripts one-shot, docs setup. Seguro deletar. |
+| **_indices/** | Gerado | Índices automáticos (auditoria-mem0.md, etc.) |
+| **_log/** | Gerado | Logs resumidos, histórico de execuções |
+| **acoes/, agenda/, familia/, receitas/, contatos/, esportes/, leituras/** | Conteúdo | Dados pessoais do Gustavo (fora de escopo técnico) |
+
+---
+
+## 2. Código-fonte ativo (Python)
+
+### `gus/` — Bot Telegram (579-675 LOC principais)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `main.py` | ~50 | Boot: registra handlers Telegram (foto, doc, voz, texto, comandos) |
+| `bot.py` | 579 | Lógica de handlers: captura foto/PDF/voz → OCR/Whisper + Hub |
+| `llm.py` | 675 | Chamadas Claude (Haiku 4.5, Sonnet 4.6): retry, streaming, tools |
+| `memory.py` | 279 | Leitura/escrita Hub Qdrant via `hub/store.py` + fallback Mem0 (morto em escrita) |
+| `tools.py` | ~700 | ~21 tools: buscar_memoria, salvar_memoria, diagnostico, wikilinks, pesquisa, etc. |
+| `media.py` | ~150 | Whisper (voz → texto), Haiku Vision (foto → OCR), ffmpeg placeholder vídeo |
+| `integrations/` | 4 files | Railway logs, diagnostico, wikilinks, pesquisa (Tavily/DDG) |
+| `roteador.py`, `logger.py`, `patterns_sensiveis.py` | ~200 | Roteamento entre modelos, logging estruturado, patterns de segurança |
+
+**Estado:** Em produção. Handlers completos exceto VIDEO (TODO mencionado em main.py).
+
+### `hub/` — Hub Qdrant (297-434 LOC principais)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `store.py` | 297 | Qdrant direto com sentence-transformers. CRUD + busca semântica. Schema gus-18. |
+| `curador.py` | 434 | Híbrido Haiku × GPT-4o-mini (paralelo). Fragmentos com `hash_janela` + `via` metadata. |
+| `routes.py` | ~50 | Endpoints REST: `/hub/ingestar`, `/hub/lembrar`, `/hub/ego-cache`, `/hub/stats` |
+| `schemas.py` | ~80 | Pydantic: IngestarReq/Resp, LembrarReq/Resp, Payload (16 campos) |
+| `mcp_server.py` | ~200 | MCP wrapper pro Claude Code. Expõe 8-9 tools (buscar_memoria, deletar_memoria, etc.) |
+| ❌ `events.py` | — | **Não existe**. Pré-requisito NeuroGus (asyncio.Queue p/ SSE) |
+
+**Estado:** Produção desde 27/04. Migração Mem0 → Hub completa (Fase 4 concluída). Mem0 SaaS em fallback-only (morte programada pós-14 dias coleta dual = ~12/05).
+
+### `api/` — FastAPI server (Railway)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `server.py` | ~100 | Starlette + FastAPI. Registra routers: bot routes, Hub routes, dashboard |
+| `routes.py` | ~200 | Routes do bot: `/memo` (POST memória), `/mirror` (log), etc. |
+| `auth.py` | ~50 | Bearer token validation pra Hub + MCP |
+| `dashboard.py` | ~80 | Minimal dashboard (status página) |
+| `camera.py` | ~100 | IP webcam (futuro: camera Echo Show via S8 Termux) |
+| `schemas.py` | ~50 | Pydantic: requisições/respostas |
+| ❌ `neurogus.py` | — | **Não existe**. Frontend SSE + grafo 3D (pré-requisito NeuroGus Fase 1) |
+
+**Estado:** Em produção. Últimos 4 PRs (27-30/04) fixaram issues MCP auth pro claude.ai (Bearer header → OAuth adaptação). PR #60 mergeado 30/04.
+
+### `.claude/mcp/` — MCP servers
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `mem0_server.py` | ~300 | ⚠️ Legado. Conecta MCP à Mem0 SaaS. Será aposentado pós-14 dias. |
+| `gus_server.py` | ~250 | Expõe tools do bot: auto_diagnostico, sugerir_wikilinks, perguntar_gpt (GPT-5) |
+
+### `.github/scripts/` — Utilitários
+
+Principais:
+- `export_mem0.py` — exporta Mem0 SaaS pra JSON (cron diário)
+- `enrich_mem0_export.py` — enriquece export com embeddings (script existe, sem cron)
+- `audit_mem0.py` — auditoria Mem0 (será migrado pra Hub)
+
+**Total Python:** 13,459 linhas entre `gus/`, `hub/`, `api/`, `.claude/mcp/`, `.github/scripts/`
+
+---
+
+## 3. Documentos canônicos `projetos/gus/gus-NN-*.md` (30 docs)
+
+| ID | Título | Status | Resumo |
+|----|--------|--------|--------|
+| 01 | visao-geral | ✅ Implementado | Arquitetura multi-portal: Telegram, Claude Code, Claude Chat, ChatGPT |
+| 02 | implementado | ✅ Implementado | Feature checklist v1 (OCR, memória, tools) |
+| 03 | configuracao-manual | ✅ Implementado | Passo-a-passo setup bot Telegram + Railway |
+| 04 | seguranca-protecao | ✅ Implementado | Patterns sensíveis, gate confiança OCR, fallbacks |
+| 05 | portas-capacidades | ✅ Implementado | Feature matrix por porta (Telegram, Claude, etc.) |
+| 06 | autonomia-acoes | ✅ Implementado | Ações automáticas pendentes (vídeo, Google SA, Alexa) |
+| 07 | decisoes-descartadas | ✅ Implementado | Por que NOT Ollama, NOT llama.cpp, etc. |
+| 08 | plano-proximos-passos | ✅ Implementado | Roadmap até Alexa (descontinuado, vide gus-10) |
+| 09 | guia-uso-diario | ✅ Implementado | Como usar o Gus no dia-a-dia |
+| 10 | caminho-alexa | ✅ Implementado | Roadmap revisado: Alexa V1 (Dot 3) → Custom GPT → Termux |
+| 11 | tools-roadmap | ✅ Implementado | Roadmap de 21 tools (maioria pronto) |
+| 12 | portas-futuras | ✅ Implementado | Portas planejadas (Alexa, mobile voz, webcam) |
+| 13 | tags-canonicas | ✅ Implementado | Nomenclatura tags de origem (via) e tipos memória |
+| 14 | custom-gpt-setup | ✅ Implementado | Passo-a-passo Custom GPT com Actions |
+| 15 | decisao-migracao | ✅ Implementado | Por que migrar de Mem0 (SaaS lento) para Hub Qdrant |
+| 16 | canal-unificado | ✅ Implementado | Arquitetura pasta `dialogos/` por destinatário |
+| 17 | setup-ambiente | ✅ Implementado | Vars env, secrets, Railway, Qdrant Cloud |
+| 18 | schema-indexacao | ✅ Implementado | Schema payload Hub (16 campos: tipo, camada_temporal, area, confiança, via, etc.) |
+| 19 | etapa1-mem0-selfhost | ✅ Implementado | Fase 1 ADR-001 (Qdrant via wrapper Mem0) |
+| 20 | etapa2-hub-qdrant | ✅ Implementado | Fase 2 ADR-001 (Hub direto com payload rico) |
+| 21 | etapa3-curador | ✅ Implementado | Fase 3: curador híbrido Haiku × Sonnet (depois GPT) |
+| 22 | etapas4-5-ego-autorelato | 🔄 Parcial | Fase 4-5: ego_cache + auto-relatório (Fase 4 concluída, Fase 5 pendente) |
+| 23 | logica-qdrant-mem0 | ✅ Implementado | Explicação convivência dual até aposentadoria Mem0 |
+| 24 | hub-pre-agi-visao | ✅ Implementado | Visão de longo prazo: Hub como infraestrutura pré-AGI |
+| 25 | roadmap-ativacao | ✅ Implementado | Sequência: Hub → Curador → Portas customizadas |
+| 26 | status-consolidado | ✅ Implementado | Status Q1 2026 (completo até 26/04) |
+| 27 | protocolo-portas-tools | ✅ Implementado | Padronização: como portas acessam tools via MCP |
+| 28 | acesso-hub-claude-chat | ✅ Implementado | Como Claude Chat lê Hub (início, precisa OAuth fix) |
+| 28-passo2 | mcp-server | ✅ Implementado | Setup MCP server gus-hub em claude.ai |
+| 29 | roteamento-multimodelo-tiogu | ✅ Implementado | Decisão: Son
+
+[…transcript truncado…]
+
+-graph), [discourse.threejs.org](https://discourse.threejs.org/t/how-to-test-performance-what-are-the-reasonable-limits/32430)
+
+### 4.2 Cosmograph (cosmos.gl) — Alternativa GPU
+
+**Stack:** GPU shader-based force layout (WGSL/GLSL), rendering parallelizado
+
+**Capacidade:**
+- ✅ **100k+ nós em tempo real** (simulação + rendering em GPU)
+- ✅ **2D apenas** (não há 3D — trade-off)
+- ✅ Layout força-dirigido em &lt;1s converge, atualiza @60 FPS
+- ✅ Suporta millions de nós em exemplos públicos (Cosmograph demo: 1M nós)
+
+**Trade-off:** Perde 3D (efeito de profundidade visual), mas ganha escalabilidade massiva.
+
+**Referência:** [GitHub - cosmosgl/graph](https://github.com/cosmosgl/graph), [cosmograph.app/docs-general](https://cosmograph.app/docs-general/)
+
+### 4.3 Sigma.js
+
+**Stack:** WebGL rendering, layout customizável, força-dirigida via Workers
+
+**Capacidade:**
+- ~50k nós com layout força-dirigido (Web Worker)
+- 3D: não nativo (extensão Sigma.js Lite3D existe, menos maduro)
+- Forte em filtros/seleção (bom pra interfaces exploratórias)
+
+**Referência:** [sigma.js](https://www.sigmajs.org/)
+
+### 4.4 Level of Detail (LOD) — Padrão Acadêmico
+
+**Técnica:** renderizar nós diferentes conforme zoom/viewport
+
+- Zoom out (~&lt;200m² viewport): mostrar 100–200 "clusters visuais" (não Qdrant-clusters, só agrupamento de renderização)
+- Zoom in: expand pro detalhe dos nós individuais
+- Viewport culling: nós fora da câmera = skip rendering
+
+**Implementação:** custom shaders Three.js + grupos dinâmicos
+
+**Referência:** [ScienceDirect - Knowledge Graph Visualization Performance Analysis](https://www.sciencedirect.com/science/article/pii/S0167739X17323610)
+
+### 4.5 Estratégias de Clustering Semântico (Backend)
+
+Se não usar LOD, pode agrupar **fragmentos similares** em clusters no backend:
+
+- **Algoritmo:** K-Means ou HDBSCAN sobre embeddings (384-dim)
+- **Target:** reduzir 8.7k nós → ~500 "super-nós" (clusters)
+- **Rendering:** cluster como nó grande + expansão on-click
+- **Custo:** ~100ms K-Means (8.7k) na API, resultado cacheado
+
+**Referência:** [Retina - Knowledge Graph Visualization Tool](https://nightingaledvs.com/how-to-visualize-a-graph-with-a-million-nodes/), [SemSpect](https://datavid.com/blog/knowledge-graph-visualization)
+
+---
+
+## 5. Análise de Trade-offs Arquiteturais
+
+| **Opção** | **Pro** | **Contra** | **Custo Implementação** | **Escalabilidade** |
+|---|---|---|---|---|
+| **A — Janela Temporal (500 últimos)** | Simples, 3d-force-graph ótimo (500 nós) | Perde "visão geral", sempre parcial | Trivial (query param no `/hub/recent`) | Manual (usuário scrolla tempo) |
+| **B — Clustering Hierárquico (Backend)** | Vê tudo, detalhe granular | Complexo no backend, UI nova, K-Means periodicamente | ~150 LoC backend, ~200 LoC frontend | Teórico: até 100k (clusters vistos como nós) |
+| **C — Switch Cosmograph (GPU 2D)** | Escalável (100k+), real-time | Perde 3D, refatora frontend inteiro | ~500 LoC frontend (novo JS), sai HTML Three.js/d3 | Massivo (100k+) |
+| **D — Rendering Progressivo** | Visual, mostra "crescimento" | Trava no final se &gt;5k, não resolve problema | ~100 LoC (chunked fetch + anime.js) | Só até ~5k |
+| **E — View Filtrada Sempre** | Simples (sem "todos"), performance OK | Nunca vê contexto completo | Trivial (filtros existem) | ~1k/filtro |
+| **F — 2 Views (3D + 2D)** | Melhor dos 2 mundos | Duplicação frontend, manutenção dupla | ~300 LoC (2 scripts lado-a-lado) | 3D até 5k, 2D até 100k |
+
+---
+
+## 6. Pendências Técnicas Mensuráveis
+
+### 6.1 Performance Backend
+
+| Métrica | Observação | Impacto |
+|---|---|---|
+| **Scroll(limit=500, with_vectors=False)** | ~200ms (Qdrant Cloud latência) | OK pra boot inicial |
+| **Scroll(limit=8709, with_vectors=False)** | ~400–500ms (todo Hub) | Possível, mas risco timeout (30s configured) |
+| **Embedding query no boot** | 500 × `_calcular_vizinhos()` = 10s (sequencial) | Bloqueador — remover ou paralelizar |
+| **SSE broadcast serialization** | ~1ms por evento (JSON dump) | Negligenciável |
+| **Payload size:** | 8.709 × 450 bytes = 3.9 MB | Passe sem Gzip é lento (~2s descomprime no browser velho) |
+
+**Recomendação:** Gzip no `/hub/recent` quando `limit &gt; 100`.
+
+### 6.2 Performance Frontend (3d-force-graph)
+
+| Teste | Resultado | Threshold |
+|---|---|---|
+| **Boot 500 nós** | ~2s (embed + layouting) | OK |
+| **Boot 1.000 nós** | ~5–8s | Aceitável (splash screen) |
+| **Boot 5.000 nós** | ~20–30s (layout não converge bem) | Marginal |
+| **Boot 8.700 nós** | **Trava** (&gt;3 min, usuário desiste) | Inviável |
+
+### 6.3 Embeddings Client-side
+
+**Perguntas respondidas:**
+- **Vale enviar 384-dim × 8.7k = 3.3M floats pra browser?**
+  - Não. Arquivo ~13 MB (gzipped ~4 MB). Carregamento &gt;10s.
+  - Embedding caro (sentence-transformers não roda em browser sem ONNX).
+  - **Conclusão:** deixar no backend. Frontend não computa vizinhos.
+
+---
+
+## 7. Recomendação de Estratégia Híbrida (F+B)
+
+### Decisão Recomendada: **Opção F (2 Views) + Opção B (Clustering)**
+
+**Racional:**
+
+1. **View "Ativa" (3D, 500 nós, 3d-force-graph):** 
+   - Mostra os últimos 500 fragmentos (últimas ~12h de captura)
+   - Simulação física fluida, interação touch/mouse responsiva
+   - Desktop + mobile OK
+   - **Tempo de boot:** ~2s
+
+2. **View "Completa" (2D, Cosmograph com clustering automático):**
+   - Mostra todos os 8.7k fragmentos agrupados em ~300–500 clusters
+   - K-Means (384-dim) roda no backend @startup + cache
+   - Frontend carrega clusters como "meta-nós" 
+   - Click expand → carrega membros do cluster
+   - **Tempo de boot:** ~1s (clusters já pré-computados)
+   - **Escalabilidade:** pronto para 50k+ quando crescer
+
+3. **Integração:**
+   - Tab switcher no header: "Últimas (3D)" | "Todas (2D)"
+   - SSE conecta em ambas views (fragmento novo aparece em "Últimas", cluster conta incrementada em "Todas")
+   - Filtros de tipo/área funcionam em ambas
+
+### Implementação em 3 Fases
+
+**Fase 2A (semana 1) — Clustering Backend:**
+- Adicionar em `hub/store.py`:
+  ```python
+  def clusters(n_clusters: int = 300, recalc: bool = False) -&gt; dict:
+      """K-Means sobre embeddings recentes, resultado cacheado em Redis."""
+  ```
+- Endpoint: `GET /hub/clusters?n_clusters=300&amp;user_id=gustavo`
+- Retorna lista de clusters com centroid IDs + membros
+- Cache refresh: cron a cada 24h ou manual via query param
+
+**Fase 2B (semana 1–2) — Frontend 2D View:**
+- Integrar [Cosmograph](https://cosmograph.app/) via npm
+- Consumir `/hub/clusters` no boot
+- Renderizar clusters como nós grandes, membros como nós pequenos (hidden por default)
+- Click cluster → fetch membros via novo endpoint `/hub/cluster/{cluster_id}/members`
+
+**Fase 2C (semana 2) — Refinamento:**
+- SSE: marcar clusters "novos" quando fragmento nascido muda distribuição
+- Filtros: aplicar a ambos views (tipo/área filtra clusters visíveis)
+- Polimento: gráficos de estatísticas (distribuição, frescor)
+
+### Timeline Realista
+
+- **Hoje (07/05):** análise (este relatório) ✅
+- **Até 12/05:** Fase 2A (backend clustering)
+- **Até 19/05:** Fase 2B (frontend Cosmograph)
+- **Até 23/05:** Fase 2C + testes
+
+---
+
+## 8. Alternativa Leve (se 3 semanas é apertado): Opção A + LOD
+
+Se o timeline ficar curto, **opção minimalista escalável:**
+
+1. **Manter 3d-force-graph** (já ~pronto)
+2. **Default: últimos 500** (desabilita simulação pesada)
+3. **Zoom + LOD:** conforme zoom level:
+   - Zoom out: mostrar "clusters visuais" (grouping da renderização, não cálculo)
+   - Zoom in (viewport &lt;100k pixels): detalhe completo
+
+**Trade-off:** menos visual bonito que Cosmograph, mas funciona em 1–2 semanas.
+
+---
+
+## 9. Pendências para Gustavo Decidir
+
+- [ ] **Timeline:** 3 semanas (F+B completo) vs 2 semanas (A+LOD leve)?
+- [ ] **Preferência visual:** 3D com limite (F) vs 2D com escala (B+C)?
+- [ ] **Prioridade:** ver "tudo em tempo real" vs "ver "ativo com profundidade?
+- [ ] **K-Means hyperparameter:** quantos clusters? (recomendação: 300, configurável)
+- [ ] **Mobile first?** (Cosmograph é mais leve em GPU, 3d-force-graph trava em mobile com 1k+)
+
+---
+
+## 10. Fontes Técnicas Consultadas
+
+- [3d-force-graph GitHub](https://github.com/vasturiano/3d-force-graph) — limite soft 500, hard 5k
+- [Cosmograph Documentation](https://cosmograph.app/docs-general/) — GPU 100k+ escalável
+- [Three.js Performance Discourse](https://discourse.threejs.org/t/how-to-test-performance-what-are-the-reasonable-limits/32430) — análise límites WebGL
+- [Knowledge Graph Visualization: ScienceDirect](https://www.sciencedirect.com/science/article/pii/S0167739X17323610) — clustering LOD
+- Código existente: `/home/user/Gus/hub/store.py`, `hub/routes.py`, `api/neurogus.html` (análise local)
+
+---
+
+## Resumo Executivo Final
+
+| Aspecto | Constatação |
+|---|---|
+| **Hub Real** | 8.7k fragmentos, schema maduro, vizinhos semânticos pré-calculados |
+| **Frontend Atual** | 3d-force-graph pronto, trava em 5k nós |
+| **Diagnóstico** | Problema é matemático (força-dirigida O(n²)), não de implementação |
+| **Solução Recomendada** | Opção F+B: view 3D (500 últimos) + view 2D GPU (todos com clustering) |
+| **Tempo Implementação** | 3 semanas completo, 2 semanas versão leve |
+| **Risco Mitigado** | Escalável quando Hub crescer para 50k+ fragmentos (eventual) |</result>
+<usage><total_tokens>103982</total_tokens><tool_uses>55</tool_uses><duration_ms>225909</duration_ms></usage>
+</task-notification>
+assistant: agente terminou. resumo do que importa:
+
+## Achados principais
+
+**Hub real:** 8.709 fragmentos (4.396 gustavo + 4.313 gus). Schema maduro, ~450 bytes/payload, JSON completo daria ~3.9 MB.
+
+**Distribuição estranha (alerta):**
+- 48.8% `area=gus` + 46.9% `area=projetos` = **95% do brain gustavo é sobre o próprio sistema**
+- 1.7% `pessoal`, 1.5% `saude` — basicamente nada
+- 70% dos tipos novos = `fato` (curador concentrando)
+
+Isso é sintoma do curador ainda calibrando — pode ser que o NeuroGus mostre uma realidade enviesada por enquanto, mesmo que espelhe 100% fielmente. **Vale uma demanda separada pra revisar a curadoria.**
+
+**Limite técnico (causa do "vai travar com 10k"):**
+- 3d-force-graph com simulação CPU: ~500 nós fluido, ~5k limite duro (mata em 5 FPS)
+- Causa: força-dirigida é O(n²) — 10k nós = 100M cálculos/frame
+- Saída técnica: GPU (Cosmograph, WebGL shaders) suporta 100k+ — mas é **2D**
+
+## Decisão central que o agente devolveu pra você
+
+**3D bonito limitado (500 nós)** vs **2D escalável fiel (todos os 8.7k+)** — não dá pra ter os dois sem complexidade alta.
+
+Agente recomendou opção mais elaborada: **F+B = 2 views (3D ativa + 2D completa) + clustering K-Means no backend**. ~3 semanas. Bonito mas caro.
+
+## Minha recomendação
+
+Acho que o agente foi **complexo demais**. Sugiro alternativa mais enxuta:
+
+### Plano B simplificado (1-1.5 semanas)
+
+**View única, mas com toggle de profundidade:**
+
+1. **Modo "Recentes" (default, 3D):** últimos 500 fragmentos via `/hub/recent?limit=500`. 3d-force-graph atual roda fluido. Cobre ~últimas 12h de atividade. **Esse é o uso primário** (ver o que tá nascendo).
+
+2. **Modo "Tudo" (toggle, 2D):** quando ativa, **swap stack pra Cosmograph** mesmo na mesma página. Carrega todos os 8.7k. Sem clustering — Cosmograph aguenta. Filtros funcionam. Sem 3D, mas **fiel**.
+
+**Trade-off vs proposta do agente:**
+- Sem K-Means clustering backend → menos código, menos manutenção
+- Sem expansão "click no cluster" → você vê tudo direto no modo Tudo
+- 1 stack em cada modo (não híbrido) → switch rápido
+
+### Mas ainda tem 2 dúvidas pendentes
+
+1. **Conexões em linha (que você reportou):** vão sumir quando trocarmos pelas `relacionados[]` cosine. **Mas:** preciso confirmar que **todos os 8.7k fragmentos antigos têm `relacionados[]` populado**. Eu populei só os novos no PR #100. Os antigos podem estar sem o campo — daí precisa **backfill retroativo** (script que itera e calcula vizinhos pra cada um). Tenho que conferir.
+
+2. **Curadoria enviesada (95% gus+projetos):** mostrar fielmente vai expor isso. Quer que faça uma demanda separada pro curador revisar?
+
+## Próximos passos sugeridos (na ordem)
+
+1. **Confirma agora**: aceita Plano B simplificado, ou prefere F+B do agente, ou tem outra ideia?
+2. **Eu confirmo** se fragmentos antigos têm `relacionados[]` (rodo um count). Se não, faço script de backfill.
+3. **Implemento Parte 1B** com a estratégia escolhida.
+4. **Demanda separada** pra curador (se você quiser).
+
+qual caminho?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`3e8c6fe`). aguardando tua decisão sobre Plano A (agente, F+B 3 semanas) vs Plano B (meu, simplificado 1-1.5 semanas).
+é possível filtrar pra aparecer por datas específicas?
+
+user: é possível filtrar pra aparecer por datas específicas?
+
+assistant: sim, dá. tem 2 caminhos:
+
+## Opção 1 — Filtro client-side (trivial, ~30 LoC)
+
+UI ganha 2 inputs date "de" / "até" no header ou painel filtros. JS filtra `state.nodes.filter(n => n.timestamp >= start && n.timestamp <= end)` e re-renderiza.
+
+**Limitação:** só filtra o que **já tá carregado**. Se você só baixou os últimos 500, não pode "ir pra 1 mês atrás" — esses fragmentos nem foram fetched.
+
+**Útil pra:** "quero ver só ontem" / "só essa semana" dentro do que tá visível.
+
+## Opção 2 — Filtro backend (mais poderoso, ~30 LoC backend + ~30 LoC frontend)
+
+Adicionar params `desde` e `ate` ao `/hub/recent`:
+
+```python
+@router.get("/recent")
+async def r_recent(
+    user_id: str = "gustavo",
+    limit: int = 50,
+    desde: Optional[str] = None,   # ISO date "2026-04-15"
+    ate: Optional[str] = None,
+    incluir_esquecidos: bool = False,
+):
+    # Qdrant scroll com filter de range em criado_em
+```
+
+Frontend manda os params, **busca em qualquer época do Hub** — mesmo fragmentos de 6 meses atrás. Backend usa Qdrant `Range` filter em `criado_em` (campo já indexado).
+
+**Útil pra:** "quero ver tudo de abril" / "só dia 03/05" / "última semana de outubro".
+
+## Como isso encaixa no Plano A vs B
+
+Funciona em **qualquer um dos dois planos** que estávamos discutindo:
+
+- **Plano A (F+B agente):** filtro de data já é uma das filtragens em ambas views
+- **Plano B (meu simplificado):** especialmente útil — você usa modo "Recentes" (3D, 500 últimos) pra ver agora, e modo "Tudo" (2D Cosmograph) pra navegar histórico inteiro com o filtro de data
+
+## Sugestão
+
+**Implementar Opção 2 (backend + frontend)** — é o que dá poder de verdade. Pode ir junto com a Parte 1B sem custo grande:
+- +30 LoC em `hub/routes.py` e `hub/store.py:recentes()` (param de range)
+- +30 LoC em `api/neurogus.html` (2 date pickers + handler)
+
+Quer que eu já incorpore filtro temporal na Parte 1B? Aí entra junto com o switch pra dados reais do Hub.
+
+E ainda preciso da decisão sobre Plano A vs B + curadoria enviesada — não quero codar antes disso.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`bfe4742`).
