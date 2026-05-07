@@ -760,24 +760,24 @@ graph LR
     <div class="diagram-title">Arquitetura de Memória</div>
     <div class="mermaid">
 graph TB
-  subgraph HUB5["🧠 Hub Qdrant — coleção gus_hub"]
-    BR1["user_id=gustavo<br/>memória sobre o usuário"]
-    BR2["user_id=gus<br/>auto-observações do agente"]
+  subgraph HUB5[Hub Qdrant — gus_hub]
+    BR1[user_id=gustavo]
+    BR2[user_id=gus]
   end
 
-  subgraph LEG["⏳ Legado (até 12/05)"]
-    MEM3["Mem0 SaaS<br/>fallback de leitura"]
-    OLD["coleção 'gus'<br/>~204 mems históricas"]
+  subgraph LEG[Legado ate 12/05]
+    MEM3[Mem0 SaaS — fallback]
+    OLD[colecao gus — 204 mems]
   end
 
-  TG4["Telegram"] -->|"curador auto"| CUR4["Curador<br/>Haiku × GPT"]
-  CC3["Claude Chat"] -->|"MCP real-time"| MCP4["MCP Server"]
+  TG4[Telegram] -->|curador auto| CUR4[Curador Haiku x GPT]
+  CC3[Claude Chat] -->|MCP real-time| MCP4[MCP Server]
   CUR4 --> BR1
   CUR4 --> BR2
   MCP4 --> BR1
 
-  MEM3 -.->|"fallback leitura"| BR1
-  OLD -.->|"migração pendente"| BR1
+  MEM3 -.->|fallback| BR1
+  OLD -.->|migracao pendente| BR1
 
   style HUB5 fill:#164e63,color:#06b6d4,stroke:#06b6d4
   style LEG fill:#1a1d27,stroke:#7f1d1d,color:#ef4444
