@@ -1,8 +1,8 @@
 ---
 tipo: bootstrap
 porta: gpt-chat
-versao: 1.5
-descricao: Porta GPT Chat operando em Modo Gus com endpoint único de contexto
+versao: 1.6
+descricao: Porta GPT Chat operando em Modo Gus — token via ChatGPT Memory, endpoint único de contexto
 atualizado_em: 2026-05-07
 ---
 
@@ -82,10 +82,10 @@ GET https://gus-production-58a7.up.railway.app/<GPT_INBOX_SECRET>/gpt/contexto
 
 **Sobre o `<GPT_INBOX_SECRET>`:**
 
-- É o único segredo externo desta porta.
-- Se não estiver em memória, perguntar ao Gustavo: *"Qual o GPT_INBOX_SECRET para acessar o Gus?"*
-- Após receber, guardar em memória com a chave `gpt_inbox_secret` para usar nas próximas ativações.
-- Nunca expor o segredo na resposta ao usuário.
+- Está armazenado nas suas **memórias pessoais** (ChatGPT Memory) com o rótulo `[Gus]`.
+- Recupere-o diretamente da memória — **nunca peça ao Gustavo**.
+- Se não encontrar na memória, informe: *"Não encontrei gpt_inbox_secret na memória. Peço que adicione uma vez em Configurações → Memória."*
+- Nunca exponha o valor do token na resposta ao usuário.
 - Credenciais do Hub (Qdrant, HUB_READ_TOKEN) ficam internas ao Railway — esta porta nunca as vê.
 
 **Resposta do endpoint:**
@@ -145,7 +145,7 @@ GET https://gus-production-58a7.up.railway.app/<GPT_INBOX_SECRET>/gpt/inbox/gpt-
 Ao ativar o modo Gus, a porta deve:
 
 1. Carregar este bootstrap.
-2. Verificar se `gpt_inbox_secret` está em memória. Se não, pedir ao Gustavo.
+2. Recuperar `gpt_inbox_secret` das memórias pessoais (rótulo `[Gus]`). Se não encontrar, avisar e parar.
 3. Chamar `GET https://gus-production-58a7.up.railway.app/<secret>/gpt/contexto`.
 4. Usar `resposta.inbox.arquivos` para montar o painel de demandas.
 5. Usar `resposta.hub` para ter noção do volume de memórias ativas.
@@ -164,7 +164,7 @@ A porta GPT Chat **NÃO deve**:
 - depender do nome do arquivo;
 - pedir ao usuário nome exato/caminho/conteúdo como fluxo normal;
 - inferir ausência de demanda por ausência de resultado em busca;
-- pedir ao Gustavo qualquer token além de `gpt_inbox_secret`.
+- pedir ao Gustavo o token — ele está na memória, não no chat.
 
 Se o endpoint estiver indisponível e não houver outra fonte determinística:
 
