@@ -1,13 +1,14 @@
 """Endpoint determinístico de inbox para a porta GPT Chat.
 
-GET /{secret}/gpt/inbox/{porta}
+GET /{secret}/gpt/inbox/{porta}    — inbox de uma porta
+GET /{secret}/gpt/contexto         — inbox gpt-chat + hub stats (token único)
 
-Retorna listagem completa com frontmatter parseado — sem depender de busca
-indexada (que o conector GitHub do ChatGPT usa e que é não-determinística).
-
-Requer GPT_INBOX_SECRET no Railway. GPT Chat acessa via:
+Requer GPT_INBOX_SECRET no Railway. HUB_READ_TOKEN fica interno — GPT Chat
+nunca o vê. GPT Chat acessa via:
   https://gus-production-58a7.up.railway.app/<secret>/gpt/inbox/gpt-chat
+  https://gus-production-58a7.up.railway.app/<secret>/gpt/contexto
 """
+import asyncio
 import os
 import re
 
@@ -69,33 +70,15 @@ async def _gh_read(download_url: str) -> str:
         return r.text
 
 
-@router.get("/{secret}/gpt/inbox/{porta}")
-async def gpt_inbox(secret: str, porta: str):
-    """Listagem determinística do inbox de uma porta — para uso pelo GPT Chat."""
-    try:
-        expected = _secret()
-    except RuntimeError:
-        raise HTTPException(status_code=503, detail="GPT_INBOX_SECRET não configurado no Railway")
-
-    if secret != expected:
-        raise HTTPException(status_code=404)
-
-    if porta not in _PORTAS_VALIDAS:
-        raise HTTPException(status_code=400, detail=f"Porta inválida: {porta}")
-
+async def _listar_inbox(porta: str) -> dict:
+    """Lógica central do inbox, sem autenticação — chamável internamente."""
     folder = f"dialogos/inbox-{porta}"
-
     try:
         items = await _gh_list(folder)
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 404:
-            return {
-                "porta": porta,
-                "modo": "deterministico",
-                "total": 0,
-                "arquivos": [],
-                "aviso": f"Pasta {folder} ainda não existe",
-            }
+            return {"porta": porta, "modo": "deterministico", "total": 0, "arquivos": [],
+                    "aviso": f"Pasta {folder} ainda não existe"}
         raise HTTPException(status_code=503, detail="GitHub inacessível")
     except Exception:
         raise HTTPException(status_code=503, detail="Erro ao acessar GitHub")
@@ -105,40 +88,69 @@ async def gpt_inbox(secret: str, porta: str):
         name = item.get("name", "")
         if not name.endswith(".md") or name.startswith("_"):
             continue
-
         try:
             content = await _gh_read(item["download_url"])
         except Exception:
             continue
-
         fm = _parse_frontmatter(content)
-
-        # Inclui pendente, parcial e sem status — exclui concluido/arquivado
         status = fm.get("status", "pendente").lower()
         if status in ("concluido", "arquivado", "cancelado"):
             continue
-
         title_m = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
         titulo = title_m.group(1).strip() if title_m else name.removesuffix(".md")
-
         body = re.sub(r"^---.*?---\s*", "", content, flags=re.DOTALL).strip()
         resumo = (body.split("\n\n")[0] if body else "")[:200]
-
-        arquivos.append({
-            "path": f"{folder}/{name}",
-            "nome": name,
-            "frontmatter": fm,
-            "titulo": titulo,
-            "resumo": resumo,
-        })
+        arquivos.append({"path": f"{folder}/{name}", "nome": name,
+                         "frontmatter": fm, "titulo": titulo, "resumo": resumo})
 
     arquivos.sort(key=lambda x: _PRIORIDADE_ORDEM.get(
-        str(x["frontmatter"].get("prioridade", "")).lower(), 3
-    ))
+        str(x["frontmatter"].get("prioridade", "")).lower(), 3))
+    return {"porta": porta, "modo": "deterministico", "total": len(arquivos), "arquivos": arquivos}
 
+
+async def _hub_stats_interno() -> dict | None:
+    """Chama hub.store.stats() internamente — HUB_READ_TOKEN não sai da API."""
+    try:
+        from hub.store import stats
+        return await asyncio.to_thread(stats)
+    except Exception as e:
+        return {"erro": str(e)[:120]}
+
+
+def _verificar_secret(secret: str) -> None:
+    try:
+        expected = _secret()
+    except RuntimeError:
+        raise HTTPException(status_code=503, detail="GPT_INBOX_SECRET não configurado no Railway")
+    if secret != expected:
+        raise HTTPException(status_code=404)
+
+
+@router.get("/{secret}/gpt/inbox/{porta}")
+async def gpt_inbox(secret: str, porta: str):
+    """Listagem determinística do inbox de uma porta — para uso pelo GPT Chat."""
+    _verificar_secret(secret)
+    if porta not in _PORTAS_VALIDAS:
+        raise HTTPException(status_code=400, detail=f"Porta inválida: {porta}")
+    return await _listar_inbox(porta)
+
+
+@router.get("/{secret}/gpt/contexto")
+async def gpt_contexto(secret: str):
+    """Contexto agregado: inbox gpt-chat + hub stats.
+
+    GPT Chat usa este endpoint com apenas GPT_INBOX_SECRET.
+    HUB_READ_TOKEN e credenciais Qdrant ficam internas ao Railway — nunca
+    saem para o cliente.
+    """
+    _verificar_secret(secret)
+    inbox, hub = await asyncio.gather(
+        _listar_inbox("gpt-chat"),
+        _hub_stats_interno(),
+    )
     return {
-        "porta": porta,
+        "porta": "gpt-chat",
         "modo": "deterministico",
-        "total": len(arquivos),
-        "arquivos": arquivos,
+        "inbox": inbox,
+        "hub": hub,
     }
