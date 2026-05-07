@@ -112,7 +112,58 @@ body::after {
   50%      { opacity: 1;   transform: scale(1.15); }
 }
 
-.stats { display: flex; gap: var(--s-8); pointer-events: auto; }
+.stats { display: flex; gap: var(--s-8); pointer-events: auto; align-items: center; }
+
+/* ─── Filtro temporal (Parte 1B) ─── */
+.date-range {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--panel);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 6px 8px;
+  pointer-events: auto;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+}
+.date-input {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: var(--fs-micro);
+  letter-spacing: 0.04em;
+  padding: 4px 6px;
+  outline: none;
+  cursor: pointer;
+  width: 110px;
+  color-scheme: dark;
+}
+.date-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.7) brightness(1.4);
+  cursor: pointer;
+  opacity: 0.6;
+}
+.date-input::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+.date-sep {
+  color: var(--text-faint);
+  font-size: var(--fs-micro);
+  user-select: none;
+}
+.date-clear {
+  appearance: none; background: transparent; border: none;
+  color: var(--text-mute); cursor: pointer;
+  font-size: 16px; line-height: 1;
+  padding: 2px 6px; border-radius: 4px;
+  transition: all 0.15s;
+}
+.date-clear:hover { color: var(--c-meta); background: rgba(249,168,212,0.06); }
+@media (max-width: 768px) {
+  .date-range { padding: 4px 6px; gap: 4px; }
+  .date-input { width: 95px; font-size: 10px; padding: 3px 4px; }
+}
+@media (max-width: 480px) {
+  .date-range { display: none; }  /* sem espaço em telas pequenas */
+}
 .stat { display: flex; flex-direction: column; align-items: flex-end; }
 .stat__value {
   font-family: 'Instrument Serif', serif;
@@ -904,6 +955,12 @@ body.view-list .hint {
   </nav>
 
   <div class="stats">
+    <div class="date-range" id="date-range">
+      <input type="date" id="date-from" class="date-input" aria-label="Data início">
+      <span class="date-sep">→</span>
+      <input type="date" id="date-to" class="date-input" aria-label="Data fim">
+      <button class="date-clear" id="date-clear" title="Limpar filtro">×</button>
+    </div>
     <div class="stat">
       <span class="stat__value" id="stat-frags">0</span>
       <span class="stat__label">fragmentos</span>
@@ -1127,140 +1184,27 @@ const TYPE_LABEL = {
 };
 const TYPES = Object.keys(TYPE_COLOR);
 
-// ─── DADOS REAIS DO HUB (snapshot 01/05/2026, hardcoded pra Parte 1A) ───
-// Etapa 1B substitui isso por fetch /hub/recent + EventSource /hub/stream.
-// user_id=gustavo: 19 fragmentos (todos episodico via telegram-claude)
-// user_id=gus: 14 fragmentos (brain do agente)
-const REAL_NODES = [
-  // ── user_id: gustavo ──
-  {
-    id: 'cb860bdb', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
-    camada: 'semana', confianca: 0.82, criado_em: '2026-04-27T22:42:58.905671-03:00',
-    conteudo: 'Hub Qdrant + curador híbrido Haiku×Sonnet operacionais. 16 workflows ativos. Experimento 14 dias encerra ~12/05.',
-  },
-  {
-    id: '06caf6bb', tipo: 'episodico', area: 'dimagem', curador: 'telegram-claude',
-    camada: 'rotina', confianca: 0.90, criado_em: '2026-04-28T16:52:13.259826-03:00',
-    conteudo: 'Gustavo é anestesiologista no Dimagem. Gus descreve OS com dados factuais apenas — sem análise clínica.',
-  },
-  {
-    id: 'f6dc75c7', tipo: 'episodico', area: 'dimagem', curador: 'telegram-claude',
-    camada: 'rotina', confianca: 0.85, criado_em: '2026-04-27T21:13:20.235049-03:00',
-    conteudo: 'Pacientes organizados por plano: Assim Taquara vs Intermédica + Leve Saúde. Arquivos .md separados por data e plano.',
-  },
-  {
-    id: 'bf6e32f3', tipo: 'episodico', area: 'dimagem', curador: 'telegram-claude',
-    camada: 'sessao', confianca: 0.78, criado_em: '2026-04-28T16:54:42.753593-03:00',
-    conteudo: 'Padrão de resposta OS: detecta imagem, lista pacientes do dia, solicita confirmação. Roberta Xavier Lins — RM Coluna Dorsal+Lombar 15h-19h30, Intermédica.',
-  },
-  {
-    id: '0ccf0b81', tipo: 'episodico', area: 'dimagem', curador: 'telegram-claude',
-    camada: 'sessao', confianca: 0.75, criado_em: '2026-04-28T17:11:16.171835-03:00',
-    conteudo: 'Protocolo de análise de fotos de OS estabelecido. Analete da Silva Pinto — RM Crânio+Espectroscopia+Fluxo Liquórico, Assim São Gonçalo. Questão aberta: arquivar OS com datas históricas.',
-  },
-  {
-    id: '474e334c', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
-    camada: 'rotina', confianca: 0.88, criado_em: '2026-04-28T14:14:00.787655-03:00',
-    conteudo: 'Gus pode disparar os 8 workflows manualmente. Auto-diagnóstico com health check completo (GitHub, Qdrant, Anthropic, Tavily, Railway).',
-  },
-  {
-    id: '9aabe8eb', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
-    camada: 'sessao', confianca: 0.72, criado_em: '2026-04-27T23:17:13.803912-03:00',
-    conteudo: 'Decisão: limpar backlog desatualizado. Migração Mem0→Qdrant pendente — grosso das 204 memórias ainda no Mem0.',
-  },
-  {
-    id: '3c58cbb8', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
-    camada: 'sessao', confianca: 0.80, criado_em: '2026-04-28T09:43:02.465881-03:00',
-    conteudo: 'Workflow migração Mem0→Qdrant rodando. Infra estável: GitHub PAT, Qdrant, Haiku, Tavily, Railway todos OK.',
-  },
-  {
-    id: '11b98c82', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
-    camada: 'sessao', confianca: 0.82, criado_em: '2026-04-28T10:43:06.928236-03:00',
-    conteudo: 'Pasta demandas: Gustpbbr/Gus/dialogos/inbox-tiogu/. PR #14 mergeado (protocolo portas e tools). Auditoria automática e export diário funcionando.',
-  },
-  {
-    id: '6855c44f', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
-    camada: 'sessao', confianca: 0.76, criado_em: '2026-04-28T12:39:42.427990-03:00',
-    conteudo: 'Gus dispara workflows sem justificar execução recente. Ciclo de importação: 15min. 7 arquivos processados (4 antigas dia 26 + 3 do NeuroGus).',
-  },
-  {
-    id: 'c95ad8c6', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
-    camada: 'rotina', confianca: 0.85, criado_em: '2026-04-28T12:14:07.555970-03:00',
-    conteudo: 'Gus = identidade unificada. Tiogu = bot no Telegram. Mesma entidade em múltiplas plataformas: Claude Chat, Claude Code, futuro Alexa e Custom GPT.',
-  },
-  {
-    id: '772f611d', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
-    camada: 'rotina', confianca: 0.90, criado_em: '2026-04-28T11:16:00.100735-03:00',
-    conteudo: 'Drive inbox: Gus-Sync/dialogos/inbox-tiogu/. Arquivos .md com frontmatter obrigatório. Convenção: <timestamp>__<descricao>.md.',
-  },
-  {
-    id: '2b68d542', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
-    camada: 'sessao', confianca: 0.65, criado_em: '2026-04-27T21:03:00.110331-03:00',
-    conteudo: 'Post-merge: auto_diagnóstico acessa Hub Qdrant. Problema: 0 fragmentos para user_id=gustavo. Workflow "Ingest Mem0" falhando pós-merge.',
-  },
-  {
-    id: '0f7a70ea', tipo: 'episodico', area: 'projetos', curador: 'telegram-claude',
-    camada: 'sessao', confianca: 0.78, criado_em: '2026-04-28T12:33:29.493521-03:00',
-    conteudo: 'Projeto NeuroGus: 3 demandas chegaram (briefing, arquitetura, código v1). Sistema de múltiplos canais com o Gus.',
-  },
-  {
-    id: 'e414b653', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
-    camada: 'sessao', confianca: 0.80, criado_em: '2026-04-28T14:46:41.619831-03:00',
-    conteudo: 'Schema gus-18 não tem campo "origem". Melhorias documentadas como sugestões. Demandas de código em inbox-claude-code/.',
-  },
-  {
-    id: '6b589952', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
-    camada: 'sessao', confianca: 0.82, criado_em: '2026-04-28T14:40:03.833598-03:00',
-    conteudo: 'Bug resolvido: UnicodeDecodeError fallback UTF-8→Latin-1. Gus Chat salva em UTF-8 sem BOM. Gaps de memória: áreas financeira e receitas sem fragmentos.',
-  },
-  {
-    id: '9608b85a', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
-    camada: 'sessao', confianca: 0.78, criado_em: '2026-04-28T13:19:58.940137-03:00',
-    conteudo: 'Bug download_content linha 150: byte 0xB6 inválido. Solução: fallback UTF-8→Latin-1 ou errors="replace". Gustavo autorizou correção.',
-  },
-  {
-    id: '7ef3b811', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
-    camada: 'rotina', confianca: 0.83, criado_em: '2026-04-28T14:07:55.607223-03:00',
-    conteudo: 'Workflows sync-to-drive-full e sync-to-drive executados regularmente. Pasta sensivel/ excluída da sync. Drive = espelho do GitHub.',
-  },
-  {
-    id: '809ba3f9', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
-    camada: 'sessao', confianca: 0.76, criado_em: '2026-04-28T12:42:16.364256-03:00',
-    conteudo: 'Script import_from_drive.py linha 150: implementar fallback encoding UTF-8→Latin-1. Arquivo 2026-04-28T14-30__frontmatter-referencia.md com byte 0xB6 inválido.',
-  },
-
-  // ── user_id: gus (brain do agente) ──
-  {
-    id: '863b1659', tipo: 'procedural', area: 'dimagem', curador: 'telegram-claude',
-    camada: 'rotina', confianca: 0.95, criado_em: '2026-04-28T16:53:13.683158-03:00',
-    conteudo: 'Padrão OS Dimagem obrigatório: detecta data, lista pacientes em tabela, pede confirmação. Nunca expandir análise clínica.',
-  },
-  {
-    id: '0571de21', tipo: 'episodico', area: 'pessoal', curador: 'telegram-claude',
-    camada: 'sessao', confianca: 0.60, criado_em: '2026-04-30T19:24:36.695117-03:00',
-    conteudo: 'Memórias pessoais de Gustavo sobre filmes, gostos e experiências de vida registradas.',
-  },
-  {
-    id: 'a0211b7b', tipo: 'preferencia', area: 'pessoal', curador: 'telegram-claude',
-    camada: 'permanente', confianca: 0.92, criado_em: '2026-04-30T18:23:45.808851-03:00',
-    conteudo: 'Filme preferido: Moulin Rouge.',
-  },
-  {
-    id: '9ce9a144', tipo: 'episodico', area: 'pessoal', curador: 'telegram-claude',
-    camada: 'sessao', confianca: 0.75, criado_em: '2026-04-30T18:19:03.474238-03:00',
-    conteudo: 'Gostou muito do filme do Michael Jackson.',
-  },
-  {
-    id: 'c8d68c55', tipo: 'biografico', area: 'pessoal', curador: 'telegram-claude',
-    camada: 'permanente', confianca: 0.98, criado_em: '2026-04-30T18:23:45.858415-03:00',
-    conteudo: 'Nasceu em Vitória.',
-  },
-  {
-    id: 'f53183d9', tipo: 'biografico', area: 'pessoal', curador: 'telegram-claude',
-    camada: 'permanente', confianca: 0.95, criado_em: '2026-04-30T18:23:45.947064-03:00',
-    conteudo: 'Já teve um cachorro chamado Ralph.',
-  },
-];
+// ─── Auth (Parte 1B — Etapa B) ───
+// Token vem via ?token= na URL. EventSource não suporta header customizado,
+// então padronizamos query param em todas as chamadas pro Hub. Quando ausente,
+// trava o boot e mostra mensagem (proteção mínima — URL secreta na prática).
+const TOKEN = new URLSearchParams(location.search).get('token') || '';
+if (!TOKEN) {
+  document.body.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:center;height:100vh;
+                background:#050514;color:#fff;font-family:'JetBrains Mono',monospace;
+                padding:40px;text-align:center;flex-direction:column;gap:24px">
+      <h1 style="font-family:'Instrument Serif',serif;font-style:italic;font-size:48px;
+                 background:linear-gradient(135deg,#fff 0%,#00f5ff 100%);
+                 -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                 letter-spacing:-0.02em">NeuroGus</h1>
+      <p style="color:rgba(255,255,255,0.6);max-width:480px;line-height:1.6">
+        Token ausente.<br>Acesse via <code style="color:#00f5ff">/neurogus?token=...</code>
+      </p>
+    </div>
+  `;
+  throw new Error('Token ausente — abortando boot');
+}
 
 // ─── Cor por área (expandido na Parte 1A — 9 áreas canônicas gus-18 + fallback) ───
 const AREA_COLOR = {
@@ -1307,79 +1251,87 @@ const rand = (a) => a[Math.floor(Math.random() * a.length)];
 const randF = (a, b) => a + Math.random() * (b - a);
 const $ = (id) => document.getElementById(id);
 
-// Construir nós a partir dos dados reais — COR via getNodeColor (regra meio-termo)
-REAL_NODES.forEach((raw, i) => {
-  const color = getNodeColor(raw);
+// Construir nós a partir de payload do backend Hub Qdrant.
+// Substitui REAL_NODES estático da Parte 1A por integração real (Parte 1B).
+function normalizeFragment(raw) {
   const node = {
     id: raw.id,
-    conteudo: raw.conteudo,
-    tipo: raw.tipo,
-    area: raw.area,
-    curador: raw.curador,
-    camada: raw.camada,
-    confianca: raw.confianca,
-    timestamp: raw.criado_em,
-    color,
-    val: 0.8 + raw.confianca * 0.8,
+    conteudo: raw.conteudo || '',
+    tipo: raw.tipo || 'episodico',
+    area: raw.area || '',
+    user_id: raw.user_id || 'gustavo',
+    estado: raw.estado || 'ativo',
+    curador: raw.curador || raw.via || 'desconhecido',
+    camada: raw.camada_temporal || raw.camada || 'sessao',
+    confianca: typeof raw.confianca === 'number' ? raw.confianca : 0.7,
+    timestamp: raw.criado_em || raw.timestamp || new Date().toISOString(),
+    relacionados: raw.relacionados || [],
     _isNew: false,
   };
-  state.nodes.push(node);
-  state.nodeMap.set(node.id, node);
-  state.nextId = i + 2;
-});
-
-// ─── CONEXÕES baseadas em afinidade real (3 estratégias — Etapa 1B substitui por relacionados[] cosine) ───
-const linkSet = new Set();
-function addLink(a, b) {
-  const key = [a, b].sort().join('||');
-  if (!linkSet.has(key)) {
-    linkSet.add(key);
-    state.links.push({ source: a, target: b });
-  }
+  node.color = getNodeColor(node);
+  node.val = 0.8 + node.confianca * 0.8;
+  return node;
 }
 
-// 1. Conectar vizinhos na MESMA ÁREA
-const byArea = {};
-state.nodes.forEach(n => {
-  if (!byArea[n.area]) byArea[n.area] = [];
-  byArea[n.area].push(n);
-});
-Object.values(byArea).forEach(group => {
-  for (let i = 0; i < group.length - 1; i++) {
-    addLink(group[i].id, group[i+1].id);
+// ─── Fetch inicial: 2 brains paralelos (gustavo + gus) ───
+async function fetchInitial(desde, ate, limit = 500) {
+  const params = (uid) => {
+    const p = new URLSearchParams({
+      user_id: uid, limit: String(limit), token: TOKEN,
+    });
+    if (desde) p.set('desde', desde);
+    if (ate) p.set('ate', ate);
+    return p.toString();
+  };
+  const [respGustavo, respGus] = await Promise.all([
+    fetch(`/hub/recent?${params('gustavo')}`),
+    fetch(`/hub/recent?${params('gus')}`),
+  ]);
+  if (!respGustavo.ok || !respGus.ok) {
+    throw new Error(`HTTP ${respGustavo.status}/${respGus.status} ao carregar /hub/recent`);
   }
-});
+  const [dataG, dataU] = await Promise.all([respGustavo.json(), respGus.json()]);
+  return [...(dataG.fragmentos || []), ...(dataU.fragmentos || [])];
+}
 
-// 2. Conectar fragmentos do MESMO DIA
-const byDay = {};
-state.nodes.forEach(n => {
-  const day = (n.timestamp || '').slice(0, 10);
-  if (!day) return;
-  if (!byDay[day]) byDay[day] = [];
-  byDay[day].push(n);
-});
-Object.values(byDay).forEach(group => {
-  if (group.length <= 4) {
-    for (let i = 0; i < group.length - 1; i++) {
-      addLink(group[i].id, group[i+1].id);
-    }
-  } else {
-    for (let i = 0; i < group.length - 1; i += 2) {
-      addLink(group[i].id, group[i+1].id);
-    }
-  }
-});
+// ─── Constrói arestas a partir de node.relacionados[] (cosine top-K do backend) ───
+// Substitui as 3 estratégias do mock (área + dia + ponte) — agora vem do Hub real.
+function buildLinksFromRelacionados() {
+  const linkSet = new Set();
+  state.links.length = 0;
+  state.nodes.forEach(node => {
+    (node.relacionados || []).forEach(otherId => {
+      if (node.id === otherId) return;
+      if (!state.nodeMap.has(otherId)) return;
+      const key = [node.id, otherId].sort().join('||');
+      if (!linkSet.has(key)) {
+        linkSet.add(key);
+        state.links.push({ source: node.id, target: otherId });
+      }
+    });
+  });
+}
 
-// 3. Ponte entre áreas: mais recentes de cada área (hub backbone)
-const areaLatest = {};
-state.nodes.forEach(n => {
-  if (!areaLatest[n.area] || n.timestamp > areaLatest[n.area].timestamp) {
-    areaLatest[n.area] = n;
-  }
-});
-const latestNodes = Object.values(areaLatest);
-for (let i = 0; i < latestNodes.length - 1; i++) {
-  addLink(latestNodes[i].id, latestNodes[i+1].id);
+// ─── SSE: fragmentos novos em tempo real (Parte 1B) ───
+// Reconnect: reload completo após desconexão (decisão A4 do gus-30.1).
+function setupEventStream() {
+  const url = `/hub/stream?token=${encodeURIComponent(TOKEN)}`;
+  const es = new EventSource(url);
+  es.onopen = () => console.info('[neurogus] SSE conectado');
+  es.onmessage = (e) => {
+    try {
+      const raw = JSON.parse(e.data);
+      addFragment(raw);
+    } catch (err) {
+      console.error('[neurogus] erro parsing SSE:', err);
+    }
+  };
+  es.onerror = (err) => {
+    console.warn('[neurogus] SSE caiu — reload em 5s', err);
+    es.close();
+    setTimeout(() => location.reload(), 5000);
+  };
+  return es;
 }
 
 function getFilteredData() {
@@ -1955,10 +1907,16 @@ Graph.onEngineTick(updateLabelsAndIndicators);
 
 // ─── Stats ───
 function updateStats() {
-  $('stat-frags').textContent = state.nodes.length;
+  // Carregados no grafo (filtrado por viewport/filtro temporal)
+  const loaded = state.nodes.length;
+  const hubTotal = typeof state.hubTotal === 'number' ? state.hubTotal : null;
+  // Mostra "carregados / total" se conhecemos total do Hub, senão só carregados
+  $('stat-frags').textContent = hubTotal !== null && hubTotal !== loaded
+    ? `${loaded}/${hubTotal}`
+    : String(loaded);
   $('stat-conns').textContent = state.links.length;
   const today = new Date().toISOString().slice(0, 10);
-  $('stat-today').textContent = state.nodes.filter((n) => n.timestamp.startsWith(today)).length;
+  $('stat-today').textContent = state.nodes.filter((n) => (n.timestamp || '').startsWith(today)).length;
 }
 updateStats();
 
@@ -2223,23 +2181,34 @@ function closePanel() {
 
 $('panel-close').addEventListener('click', closePanel);
 
-// Atual: hard delete só client-side. Etapa 1B conecta no DELETE /hub/fragmento/{id}
-// e Parte 2 troca por modal de soft+hard delete.
-$('panel-delete').addEventListener('click', () => {
+// Hard delete via API real (Parte 1B). Parte 2 troca por modal de soft+hard delete.
+$('panel-delete').addEventListener('click', async () => {
   if (!state.selectedId) return;
   const id = state.selectedId;
+  try {
+    const r = await fetch(`/hub/fragmento/${encodeURIComponent(id)}?token=${encodeURIComponent(TOKEN)}`, {
+      method: 'DELETE',
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  } catch (err) {
+    console.error('hard delete falhou:', err);
+    showToast(`Erro ao apagar: ${err.message}`, 'falha', '#f87171');
+    return;
+  }
+  // Sucesso no backend — remove client-side e atualiza grafo
   state.nodes = state.nodes.filter((n) => n.id !== id);
   state.nodeMap.delete(id);
   state.links = state.links.filter((l) => {
     const { s, t } = linkExtract(l);
     return s !== id && t !== id;
   });
+  if (typeof state.hubTotal === 'number') state.hubTotal = Math.max(0, state.hubTotal - 1);
   removeLabel(id);
   state.selectedNeighbors = new Set();
   Graph.graphData(getFilteredData());
   updateStats();
   closePanel();
-  showToast('fragmento removido', 'apagado', '#f87171');
+  showToast('fragmento apagado do Hub', 'apagado', '#f87171');
 });
 
 // ─── Toast ───
@@ -2254,29 +2223,37 @@ function showToast(text, label, color) {
   setTimeout(() => el.classList.remove('is-shown'), 3800);
 }
 
-// ─── Adicionar fragmento (handler pra SSE ativado na Etapa 1B) ───
+// ─── Adicionar fragmento (handler do SSE — Parte 1B) ───
+// Usa normalizeFragment + relacionados[] do backend (cosine real).
+// Quando filtro temporal está ativo, fragmento fora do range só atualiza
+// contagem do Hub mas não vira nó no grafo (gus-30.1 decisão #4).
 function addFragment(raw) {
   if (!raw || !raw.conteudo) return;
-  const color = getNodeColor(raw);
-  const node = {
-    id: raw.id || ('new_' + (++state.nextId)),
-    conteudo: raw.conteudo,
-    tipo: raw.tipo || 'episodico',
-    area: raw.area || '',
-    curador: raw.curador || 'desconhecido',
-    camada: raw.camada || 'sessao',
-    confianca: raw.confianca || 0.7,
-    timestamp: raw.criado_em || new Date().toISOString(),
-    color,
-    val: 0.8 + (raw.confianca || 0.7) * 0.8,
-    _isNew: true,
-  };
+  if (state.nodeMap.has(raw.id)) return;  // dedup
+
+  // Atualiza contagem total do Hub independente do filtro
+  state.hubTotal = (state.hubTotal || 0) + 1;
+
+  // Filtro temporal: se range ativo e fragmento fora dele, não desenha
+  const ts = raw.criado_em || new Date().toISOString();
+  if (state.dateFrom && ts < state.dateFrom) { updateStats(); return; }
+  if (state.dateTo) {
+    const ateNorm = state.dateTo.length > 10 ? state.dateTo : state.dateTo + 'T23:59:59';
+    if (ts > ateNorm) { updateStats(); return; }
+  }
+
+  const node = normalizeFragment(raw);
+  node._isNew = true;
   state.nodes.push(node);
   state.nodeMap.set(node.id, node);
-  const peers = state.nodes.filter((p) => p.tipo === node.tipo && p.id !== node.id);
-  if (peers.length) {
-    state.links.push({ source: node.id, target: peers[peers.length - 1].id });
-  }
+
+  // Cria arestas com vizinhos cosine (relacionados[] vindo do backend)
+  (node.relacionados || []).forEach(otherId => {
+    if (state.nodeMap.has(otherId) && otherId !== node.id) {
+      state.links.push({ source: node.id, target: otherId });
+    }
+  });
+
   Graph.graphData(getFilteredData());
   setTimeout(() => {
     node._isNew = false;
@@ -2286,7 +2263,7 @@ function addFragment(raw) {
   showToast(
     node.conteudo.length > 70 ? node.conteudo.slice(0, 70) + '…' : node.conteudo,
     node.tipo.replace(/_/g, ' '),
-    color
+    node.color
   );
 }
 
@@ -2308,6 +2285,70 @@ setTimeout(() => {
   filtersEl.classList.add('is-collapsed');
   filtersToggle.setAttribute('aria-expanded', 'false');
 }, 2500);
+
+// ─── Filtro temporal: handler (Parte 1B) ───
+const dateFromEl = $('date-from');
+const dateToEl = $('date-to');
+const dateClearEl = $('date-clear');
+state.dateFrom = '';
+state.dateTo = '';
+
+async function applyDateFilter() {
+  state.dateFrom = dateFromEl.value || '';
+  state.dateTo = dateToEl.value || '';
+  // Re-fetch do Hub com novo range
+  showToast('carregando...', 'filtro temporal', 'var(--c-identidade)');
+  state.nodes.length = 0;
+  state.links.length = 0;
+  state.nodeMap.clear();
+  state.selectedNeighbors.clear();
+  clearAllLabels();
+  closePanel();
+  try {
+    const fragments = await fetchInitial(state.dateFrom, state.dateTo, 500);
+    fragments.forEach(raw => {
+      const node = normalizeFragment(raw);
+      state.nodes.push(node);
+      state.nodeMap.set(node.id, node);
+    });
+    buildLinksFromRelacionados();
+    Graph.graphData(getFilteredData());
+    updateStats();
+    showToast(`${state.nodes.length} fragmentos carregados`, 'pronto', '#34d399');
+  } catch (err) {
+    console.error('filtro temporal falhou:', err);
+    showToast(`Erro: ${err.message}`, 'falha', '#f87171');
+  }
+}
+
+dateFromEl.addEventListener('change', applyDateFilter);
+dateToEl.addEventListener('change', applyDateFilter);
+dateClearEl.addEventListener('click', () => {
+  dateFromEl.value = '';
+  dateToEl.value = '';
+  applyDateFilter();
+});
+
+// ─── Boot: carrega Hub real + ativa SSE (Parte 1B) ───
+(async function boot() {
+  try {
+    const fragments = await fetchInitial('', '', 500);
+    fragments.forEach(raw => {
+      const node = normalizeFragment(raw);
+      state.nodes.push(node);
+      state.nodeMap.set(node.id, node);
+    });
+    state.hubTotal = state.nodes.length;  // Inicial = N carregados; cresce via SSE
+    buildLinksFromRelacionados();
+    Graph.graphData(getFilteredData());
+    updateStats();
+    setupEventStream();
+    console.info(`[neurogus] boot OK: ${state.nodes.length} fragmentos, ${state.links.length} arestas`);
+  } catch (err) {
+    console.error('[neurogus] boot failed:', err);
+    showToast(`Erro ao carregar Hub: ${err.message}`, 'falha', '#f87171');
+  }
+})();
 </script>
 </body>
 </html>
