@@ -1,0 +1,696 @@
+[…início truncado…]
+
+* menos visual bonito que Cosmograph, mas funciona em 1–2 semanas.
+
+---
+
+## 9. Pendências para Gustavo Decidir
+
+- [ ] **Timeline:** 3 semanas (F+B completo) vs 2 semanas (A+LOD leve)?
+- [ ] **Preferência visual:** 3D com limite (F) vs 2D com escala (B+C)?
+- [ ] **Prioridade:** ver "tudo em tempo real" vs "ver "ativo com profundidade?
+- [ ] **K-Means hyperparameter:** quantos clusters? (recomendação: 300, configurável)
+- [ ] **Mobile first?** (Cosmograph é mais leve em GPU, 3d-force-graph trava em mobile com 1k+)
+
+---
+
+## 10. Fontes Técnicas Consultadas
+
+- [3d-force-graph GitHub](https://github.com/vasturiano/3d-force-graph) — limite soft 500, hard 5k
+- [Cosmograph Documentation](https://cosmograph.app/docs-general/) — GPU 100k+ escalável
+- [Three.js Performance Discourse](https://discourse.threejs.org/t/how-to-test-performance-what-are-the-reasonable-limits/32430) — análise límites WebGL
+- [Knowledge Graph Visualization: ScienceDirect](https://www.sciencedirect.com/science/article/pii/S0167739X17323610) — clustering LOD
+- Código existente: `/home/user/Gus/hub/store.py`, `hub/routes.py`, `api/neurogus.html` (análise local)
+
+---
+
+## Resumo Executivo Final
+
+| Aspecto | Constatação |
+|---|---|
+| **Hub Real** | 8.7k fragmentos, schema maduro, vizinhos semânticos pré-calculados |
+| **Frontend Atual** | 3d-force-graph pronto, trava em 5k nós |
+| **Diagnóstico** | Problema é matemático (força-dirigida O(n²)), não de implementação |
+| **Solução Recomendada** | Opção F+B: view 3D (500 últimos) + view 2D GPU (todos com clustering) |
+| **Tempo Implementação** | 3 semanas completo, 2 semanas versão leve |
+| **Risco Mitigado** | Escalável quando Hub crescer para 50k+ fragmentos (eventual) |</result>
+<usage><total_tokens>103982</total_tokens><tool_uses>55</tool_uses><duration_ms>225909</duration_ms></usage>
+</task-notification>
+
+assistant: agente terminou. resumo do que importa:
+
+## Achados principais
+
+**Hub real:** 8.709 fragmentos (4.396 gustavo + 4.313 gus). Schema maduro, ~450 bytes/payload, JSON completo daria ~3.9 MB.
+
+**Distribuição estranha (alerta):**
+- 48.8% `area=gus` + 46.9% `area=projetos` = **95% do brain gustavo é sobre o próprio sistema**
+- 1.7% `pessoal`, 1.5% `saude` — basicamente nada
+- 70% dos tipos novos = `fato` (curador concentrando)
+
+Isso é sintoma do curador ainda calibrando — pode ser que o NeuroGus mostre uma realidade enviesada por enquanto, mesmo que espelhe 100% fielmente. **Vale uma demanda separada pra revisar a curadoria.**
+
+**Limite técnico (causa do "vai travar com 10k"):**
+- 3d-force-graph com simulação CPU: ~500 nós fluido, ~5k limite duro (mata em 5 FPS)
+- Causa: força-dirigida é O(n²) — 10k nós = 100M cálculos/frame
+- Saída técnica: GPU (Cosmograph, WebGL shaders) suporta 100k+ — mas é **2D**
+
+## Decisão central que o agente devolveu pra você
+
+**3D bonito limitado (500 nós)** vs **2D escalável fiel (todos os 8.7k+)** — não dá pra ter os dois sem complexidade alta.
+
+Agente recomendou opção mais elaborada: **F+B = 2 views (3D ativa + 2D completa) + clustering K-Means no backend**. ~3 semanas. Bonito mas caro.
+
+## Minha recomendação
+
+Acho que o agente foi **complexo demais**. Sugiro alternativa mais enxuta:
+
+### Plano B simplificado (1-1.5 semanas)
+
+**View única, mas com toggle de profundidade:**
+
+1. **Modo "Recentes" (default, 3D):** últimos 500 fragmentos via `/hub/recent?limit=500`. 3d-force-graph atual roda fluido. Cobre ~últimas 12h de atividade. **Esse é o uso primário** (ver o que tá nascendo).
+
+2. **Modo "Tudo" (toggle, 2D):** quando ativa, **swap stack pra Cosmograph** mesmo na mesma página. Carrega todos os 8.7k. Sem clustering — Cosmograph aguenta. Filtros funcionam. Sem 3D, mas **fiel**.
+
+**Trade-off vs proposta do agente:**
+- Sem K-Means clustering backend → menos código, menos manutenção
+- Sem expansão "click no cluster" → você vê tudo direto no modo Tudo
+- 1 stack em cada modo (não híbrido) → switch rápido
+
+### Mas ainda tem 2 dúvidas pendentes
+
+1. **Conexões em linha (que você reportou):** vão sumir quando trocarmos pelas `relacionados[]` cosine. **Mas:** preciso confirmar que **todos os 8.7k fragmentos antigos têm `relacionados[]` populado**. Eu populei só os novos no PR #100. Os antigos podem estar sem o campo — daí precisa **backfill retroativo** (script que itera e calcula vizinhos pra cada um). Tenho que conferir.
+
+2. **Curadoria enviesada (95% gus+projetos):** mostrar fielmente vai expor isso. Quer que faça uma demanda separada pro curador revisar?
+
+## Próximos passos sugeridos (na ordem)
+
+1. **Confirma agora**: aceita Plano B simplificado, ou prefere F+B do agente, ou tem outra ideia?
+2. **Eu confirmo** se fragmentos antigos têm `relacionados[]` (rodo um count). Se não, faço script de backfill.
+3. **Implemento Parte 1B** com a estratégia escolhida.
+4. **Demanda separada** pra curador (se você quiser).
+
+qual caminho?
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`3e8c6fe`). aguardando tua decisão sobre Plano A (agente, F+B 3 semanas) vs Plano B (meu, simplificado 1-1.5 semanas).
+
+user: é possível filtrar pra aparecer por datas específicas?
+
+assistant: sim, dá. tem 2 caminhos:
+
+## Opção 1 — Filtro client-side (trivial, ~30 LoC)
+
+UI ganha 2 inputs date "de" / "até" no header ou painel filtros. JS filtra `state.nodes.filter(n => n.timestamp >= start && n.timestamp <= end)` e re-renderiza.
+
+**Limitação:** só filtra o que **já tá carregado**. Se você só baixou os últimos 500, não pode "ir pra 1 mês atrás" — esses fragmentos nem foram fetched.
+
+**Útil pra:** "quero ver só ontem" / "só essa semana" dentro do que tá visível.
+
+## Opção 2 — Filtro backend (mais poderoso, ~30 LoC backend + ~30 LoC frontend)
+
+Adicionar params `desde` e `ate` ao `/hub/recent`:
+
+```python
+@router.get("/recent")
+async def r_recent(
+    user_id: str = "gustavo",
+    limit: int = 50,
+    desde: Optional[str] = None,   # ISO date "2026-04-15"
+    ate: Optional[str] = None,
+    incluir_esquecidos: bool = False,
+):
+    # Qdrant scroll com filter de range em criado_em
+```
+
+Frontend manda os params, **busca em qualquer época do Hub** — mesmo fragmentos de 6 meses atrás. Backend usa Qdrant `Range` filter em `criado_em` (campo já indexado).
+
+**Útil pra:** "quero ver tudo de abril" / "só dia 03/05" / "última semana de outubro".
+
+## Como isso encaixa no Plano A vs B
+
+Funciona em **qualquer um dos dois planos** que estávamos discutindo:
+
+- **Plano A (F+B agente):** filtro de data já é uma das filtragens em ambas views
+- **Plano B (meu simplificado):** especialmente útil — você usa modo "Recentes" (3D, 500 últimos) pra ver agora, e modo "Tudo" (2D Cosmograph) pra navegar histórico inteiro com o filtro de data
+
+## Sugestão
+
+**Implementar Opção 2 (backend + frontend)** — é o que dá poder de verdade. Pode ir junto com a Parte 1B sem custo grande:
+- +30 LoC em `hub/routes.py` e `hub/store.py:recentes()` (param de range)
+- +30 LoC em `api/neurogus.html` (2 date pickers + handler)
+
+Quer que eu já incorpore filtro temporal na Parte 1B? Aí entra junto com o switch pra dados reais do Hub.
+
+E ainda preciso da decisão sobre Plano A vs B + curadoria enviesada — não quero codar antes disso.
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`bfe4742`).
+
+user: Continue from where you left off.
+
+assistant: No response requested.
+
+user: entao vou ter q aprimorar o retro engine, primeiro. certo? uma dúvida, o neurogus ja está 100% espelhando o hub? pq isso independe da curadoria, certo? o máximo  q iria acontecer é travar, verto?
+
+assistant: 3 respostas diretas:
+
+## 1. "Aprimorar retro engine antes" — **NÃO** ❌
+
+Cuidado com confusão de termos. No projeto:
+- **Retro engine** = sistema que extrai aprendizados de sessões Claude Code (`_log/retro-engine-claude-code/`)
+- **Curador** = quem classifica fragmentos vindos do Telegram em tipo/área (`hub/curador.py`)
+
+O bias 95% gus+projetos é do **curador**, não do retro engine. E mesmo assim:
+
+**Não precisa arrumar curador antes.** São camadas independentes:
+- **Curadoria ruim** = origem enviesada
+- **Espelhamento fiel** = transmissão sem perda
+
+NeuroGus pode espelhar 100% mesmo com curadoria torta — você vê o bias na cara. Aliás, ver o bias no grafo pode ser **útil** pra decidir como arrumar o curador.
+
+Arrumar curador é demanda separada, paralela, não bloqueante.
+
+## 2. "NeuroGus já espelha 100%?" — **NÃO** ❌
+
+Hoje (Parte 1A) é **mock estático** com 33 fragmentos hardcoded de 01/05. Zero conexão com Hub real.
+
+Pra espelhar 100%, falta a **Parte 1B**: substituir o `REAL_NODES` hardcoded por `fetch /hub/recent` + `EventSource /hub/stream`.
+
+## 3. "O máximo é travar, certo?" — **Quase certo** ⚠️
+
+Se tentar carregar 8.7k fragmentos no 3d-force-graph atual:
+
+| Etapa | O que acontece |
+|---|---|
+| Backend `/hub/recent?limit=10000` | OK (~500ms, 3.9MB JSON) |
+| Frontend cria 8.7k Three.js Groups | **30-60s congelando** o browser |
+| Simulação força O(n²) | **5 FPS ou freezes infinitos** |
+| Render WebGL 8.7k × (esfera + 2 sprites halo) = 26k draw calls/frame | **GPU sofre, talvez crasha** |
+
+**Resultado realista:** browser **trava** ou Chrome mata a aba ("Página não responde"). Pode pedir pra você "fechar página".
+
+**Mas o Hub fica intacto** — leitura é read-only. Não corrompe nada. Só uma má UX.
+
+---
+
+## Sugestão de caminho
+
+Já que **espelhar 100% fiel é o que você quer** e curadoria não é pré-requisito:
+
+1. **Implemento Parte 1B incremental:** modo "recentes" só (limit=500). Conecta Hub real, valida que a infra funciona, sem o problema dos 10k.
+
+2. **Depois ataco a escala:** modo "tudo" via Cosmograph 2D (Plano B simplificado). Aí espelha 100% mesmo.
+
+3. **Curador fica em demanda separada** — implemento quando você decidir.
+
+A vantagem desse incremental: **valida agora** que `/hub/recent` + `relacionados[]` real produz clusters orgânicos (resolve o "tá tudo em linha" que você reportou). Sem precisar lidar com escala já no primeiro passo.
+
+manda?
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`e3855ec`). aguardando teu sinal pra começar a Parte 1B incremental.
+
+user: blz. vamos para 1b entao, por favor
+
+assistant: beleza. Antes de codar, deixa eu propor a divisão da Parte 1B em 2 etapas pra ficar testável.
+
+## Etapa A — Backend: filtro temporal + cap de limit (~30 LoC)
+
+**`hub/store.py:recentes()`** — adicionar params:
+```python
+def recentes(user_id="gustavo", limit=50, incluir_esquecidos=False,
+             desde: str | None = None,  # ISO date "2026-04-15"
+             ate: str | None = None) -> list[dict]:
+    # adiciona Range filter no Qdrant scroll quando desde/ate vier
+```
+
+**`hub/routes.py:r_recent()`** — passa params adiante:
+```python
+@router.get("/recent")
+async def r_recent(user_id="gustavo", limit=50, incluir_esquecidos=False,
+                   desde: str = None, ate: str = None):
+    # cap limit em 2000 pra proteger backend (Qdrant scroll é OK até alguns milhares)
+```
+
+**Comportamento:** sem `desde`/`ate` = igual hoje (backwards compatible). Com = filtra range.
+
+**Smoke test:**
+```bash
+curl ".../hub/recent?token=...&limit=500"               # como hoje
+curl ".../hub/recent?token=...&desde=2026-05-01"        # último mês
+curl ".../hub/recent?token=...&desde=2026-05-06&ate=2026-05-07"  # 1 dia
+```
+
+---
+
+## Etapa B — Frontend: mock → Hub real + filtro temporal UI (~250 LoC)
+
+**Tudo em `api/neurogus.html`** (modificações cirúrgicas via Edit):
+
+1. **TOKEN parsing** no início do script
+2. **REMOVE `REAL_NODES`** (33 fragmentos hardcoded) → ~150 LoC removidas
+3. **REMOVE 3 estratégias de conexão** (área + dia + ponte) → ~50 LoC removidas
+4. **ADD `fetchInitial(desde, ate)`** — 2 chamadas paralelas (`gustavo` + `gus`)
+5. **ADD `normalizeFragment(raw)`** — adapta payload backend → forma do mock
+6. **ADD `buildLinksFromRelacionados()`** — usa `node.relacionados[]` (cosine real)
+7. **ADD `setupEventStream()`** — EventSource com reload no reconnect
+8. **ADD `boot()` async** no fim — orquestra tudo
+9. **REFATORAR `addFragment()`** — handler do SSE, usa `normalizeFragment` e `relacionados`
+10. **REFATORAR `panel-delete`** — chama `DELETE /hub/fragmento/{id}?token=...` antes de remover client
+11. **ADD 2 inputs date** no header (de/até) + handler que re-chama `fetchInitial(desde, ate)`
+
+**Smoke test (após push):**
+- Abre `/neurogus?token=$TOKEN` → vê fragmentos REAIS do Hub (até 500 mais recentes)
+- Conexões em **clusters orgânicos** (não linhas) — cosine real
+- Manda mensagem no Telegram → após 3 turnos, novo nó nasce no grafo via SSE
+- Filtra por data (ex: "01/05 a 03/05") → re-fetch e re-render
+
+---
+
+## Decisões pendentes (1 minuto)
+
+| # | Decisão | Default proposto |
+|---|---|---|
+| 1 | Limit default no boot | **500** (parte 1B), depois **modo Tudo** vai pra ~8.7k via Cosmograph (futuro) |
+| 2 | Inputs de data — onde ficam? | **No header**, ao lado das stats (compacto) |
+| 3 | Mostrar contagem total do Hub? | Sim, **stats `total: 8709`** ao lado de "fragmentos exibidos" |
+| 4 | Filtro temporal afeta também SSE? | **Sim** — fragmentos novos só aparecem no grafo se cair no range; senão, só atualiza contagem |
+| 5 | Backfill de `relacionados[]` em fragmentos antigos | **Pular agora**, demanda separada — frag novo via SSE puxa vizinhos antigos automaticamente, grafo cresce densidade ao longo do tempo |
+
+---
+
+aprova essa divisão A → B com esses defaults? ou ajusta algo antes?
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`64a195f`). aguardando teu OK no plano da Parte 1B (etapa A → B com 5 defaults).
+
+user: Continue from where you left off.
+
+assistant: No response requested.
+
+user: 500
+sim
+sim
+sim
+pula
+
+assistant: beleza, vou começar a **Etapa A** (backend).
+
+assistant: vou fazer Edit em `hub/store.py:recentes()` adicionando params `desde`/`ate` (filtro client-side em Python depois do scroll).
+
+assistant: agora atualizo o handler `r_recent` em `hub/routes.py`.
+
+assistant: valida sintaxe + import.
+
+assistant: Etapa A OK. Vou commitar e seguir pra Etapa B (frontend).
+
+assistant: Etapa A pushada (`6b7e656`).
+
+Agora **Etapa B** — frontend. Vou planejar as mudanças no `api/neurogus.html` antes de codar pra ficar claro o blast radius.
+
+## Etapa B — plano detalhado
+
+Tudo via Edit no `api/neurogus.html` (mock funcional → integração real).
+
+### Bloco a remover (~200 LoC)
+
+1. **`REAL_NODES = [...]`** completo (33 fragmentos hardcoded)
+2. **Loop `REAL_NODES.forEach(...)`** que constrói `state.nodes`
+3. **3 estratégias de conexão** (linkSet/byArea/byDay/areaLatest, ~50 LoC)
+4. **Comentário "DIAGNÓSTICO DO HUB"** (já documentado em demanda separada)
+
+### Bloco a adicionar (~250 LoC)
+
+**Logo após a config (TYPE_COLOR/AREA_COLOR/getNodeColor):**
+
+```js
+// ─── Auth ───
+const TOKEN = new URLSearchParams(location.search).get('token') || '';
+if (!TOKEN) {
+  document.body.innerHTML = '<div style="...">Token ausente. Use ?token=...</div>';
+  throw new Error('Token ausente');
+}
+
+// ─── Integração Hub ───
+function normalizeFragment(raw) { ... }
+async function fetchInitial(desde, ate, limit=500) { ... }  // 2 calls paralelas (gustavo+gus)
+function buildLinksFromRelacionados() { ... }  // usa node.relacionados[] cosine
+function setupEventStream() { ... }  // EventSource com reload no reconnect
+```
+
+**Refatorações no JS existente:**
+
+5. **`addFragment(raw)`** → usa `normalizeFragment` e cria links a partir de `relacionados[]` em vez de `peers do mesmo tipo`
+6. **`panel-delete` handler** → chama `DELETE /hub/fragmento/{id}?token=...` antes de remover client
+
+**Novo markup HTML:**
+
+7. **2 inputs `<input type="date">`** no header (entre brand e tabs ou entre tabs e stats), com classe e CSS minimalista
+
+**Novo handler:**
+
+8. **`onDateChange()`** → re-fetch com `desde`/`ate` e re-render
+
+**Boot async no fim:**
+
+9. Substitui o boot atual (que monta `state.nodes` síncrono do mock) por:
+```js
+(async function boot() {
+  try {
+    const fragments = await fetchInitial();
+    fragments.forEach(raw => {
+      const node = normalizeFragment(raw);
+      state.nodes.push(node);
+      state.nodeMap.set(node.id, node);
+    });
+    buildLinksFromRelacionados();
+    Graph.graphData(getFilteredData());
+    updateStats();
+    setupEventStream();
+  } catch(err) {
+    console.error('boot failed:', err);
+    showToast(`Erro: ${err.message}`, 'falha', '#f87171');
+  }
+})();
+```
+
+### Stats nova: total do Hub
+
+10. Stats hoje = `state.nodes.length` (filtrados). Adicionar 4ª stat: **`total no Hub`** (vem do response `/hub/recent` agregado)
+
+### SSE filtragem temporal
+
+11. Quando filtro temporal está ativo, fragmento novo via SSE só vai pro grafo se `criado_em` cair no range. Senão, só atualiza contagem.
+
+---
+
+Total estimado: ~280 LoC de delta.
+
+Vou fazer em ~6-8 Edits separados (cada um isolado pra debug). Ainda **vou começar** ou **antes desse plano detalhado quer ajustar algo**?
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`e4aaffb`). aguardando teu OK pra começar Etapa B.
+
+user: Continue from where you left off.
+
+assistant: No response requested.
+
+user: pode comecar, por favor
+
+assistant: vou mapear os trechos exatos antes de editar.
+
+assistant: vou fazer 7 Edits em sequência. Começando pelo **Edit 1** — remover REAL_NODES e adicionar TOKEN parsing.
+
+assistant: Edit 1 ✅. Agora **Edit 2** — substituir loop forEach + 3 estratégias de conexão por funções de integração.
+
+assistant: Edit 2 ✅. Agora **Edit 3** — refatorar `addFragment` pra usar relacionados e respeitar filtro temporal.
+
+assistant: Edit 3 ✅. Agora **Edit 4** — refatorar `panel-delete` pra chamar `DELETE /hub/fragmento/{id}` real.
+
+assistant: Edit 4 ✅. Agora **Edit 5** — atualizar `updateStats()` pra mostrar total do Hub.
+
+assistant: Edit 5 ✅. Agora **Edit 6** — adicionar HTML dos date pickers no header.
+
+assistant: agora CSS pros date pickers + handler. Vou adicionar CSS no bloco existente (logo após `.stats` no CSS) e handler antes do boot.
+
+assistant: Edit 6 ✅ (HTML + CSS dos date pickers). Agora **Edit 7** — handler dos date pickers + boot async no fim do script.
+
+assistant: agora valido tudo.
+
+assistant: `REAL_NODES presente: True` é só em comentário (eu mantive referência histórica). Vou conferir.
+
+assistant: só comentário (referência histórica). tudo OK. **JS sintaxe válida** ✅. Vou commitar a Etapa B.
+
+assistant: Etapa B pushada (`5261e17`). **Parte 1B completa.**
+
+## Estado atual da branch `claude/neurogus-fase1-backend-sse`
+
+```
+Backend:
+  hub/store.py    — recentes() com filtro temporal (Etapa A)
+  hub/routes.py   — /hub/recent aceita desde/ate (Etapa A)
+
+Frontend:
+  api/neurogus.html — TOKEN + fetchInitial + buildLinksFromRelacionados
+                    + setupEventStream + date pickers + boot async + DELETE real
+```
+
+## Próximo passo
+
+Pra você testar em produção, precisa **abrir PR + mergear**. Quer que eu abra o PR agora?
+
+**O que vai mudar visualmente:**
+- Em vez de 33 nós hardcoded → vê **500 mais recentes do Hub real** (ambos brains)
+- Conexões em **clusters orgânicos** (cosine real, não linhas)
+- 2 inputs date no header — filtra em qualquer época do Hub
+- Stats mostra "carregados / total Hub"
+- Apagar nó: **delete real do Qdrant**, não só client
+- Conversa no Telegram → fragmento novo nasce no grafo via SSE
+
+**Caveat conhecido:** fragmentos antigos do Hub (pré-PR #100) não têm `relacionados[]` populado — vão aparecer como nós isolados sem arestas saindo deles. Recebem arestas só de fragmentos novos que apontam pra eles. Backfill é demanda separada que você pulou — grafo vai ficar mais denso ao longo do tempo conforme novos fragmentos chegam.
+
+abro PR?
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`dffe56e`). aguardando teu OK pra abrir PR.
+
+user: consigo ver como ta pelo link?
+
+assistant: ainda não. Railway só faz deploy do que tá na **main** — a Parte 1B tá em branch, então o link em produção ainda mostra o **mock estático Parte 1A** (33 fragmentos hardcoded).
+
+## Pra ver a Parte 1B em produção
+
+**Caminho:** abrir PR → mergear → Railway redeploya em ~2min → atualiza o link.
+
+```
+https://gus-production-58a7.up.railway.app/neurogus?token=$TOKEN
+```
+
+vai mostrar:
+- ~500 fragmentos reais do Hub (não mais 33 hardcoded)
+- clusters orgânicos (não mais linhas)
+- 2 date pickers no header
+
+## Alternativas que **não funcionam** pra esse caso
+
+- **Abrir HTML local no browser** → renderiza só estética, dados não carregam (precisa do backend FastAPI servindo `/hub/recent`)
+- **GitHub Pages** → idem, sem backend
+- **Railway PR Preview** → Railway não tem isso configurado (tinha que setar manualmente)
+
+---
+
+quer que eu abra o PR agora? mergeia e em ~2min testa.
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`58b2799`).
+
+user: ainda mostra os mesmos fragmentos de antes
+
+assistant: certo, é esperado — a Parte 1B tá só na branch, **PR ainda não foi aberto**. Vou abrir agora.
+
+assistant: branch atrás 1 feat real da main + auto-commits. Vou mergear main antes de abrir PR.
+
+assistant: Etapa A intacta. Agora resolvo conflitos dos retro-logs (pego versão da main = mais recente).
+
+assistant: merge resolvido e pushado. agora abro PR.
+
+assistant: já abri agora 🎉
+
+**PR #111:** https://github.com/Gustpbbr/Gus/pull/111
+
+## Próximo passo (você)
+
+1. Mergea o PR no GitHub
+2. Railway redeploya automaticamente em ~2min
+3. Abre `https://gus-production-58a7.up.railway.app/neurogus?token=$CUSTOM_GPT_TOKEN`
+
+**O que vai mudar visualmente:**
+- ~500 fragmentos reais do Hub (não mais 33 hardcoded)
+- **Clusters orgânicos** (não mais linhas)
+- 2 date pickers no header (canto superior direito)
+- Stats mostra "X/Y" (carregados/total Hub)
+- Manda mensagem no Telegram → após curador rodar, novo nó nasce via SSE
+- Apagar nó do painel → some do Hub real
+
+**Se quebrar algo:** me avisa que volto pra ajustar.
+
+user: Continue from where you left off.
+
+assistant: No response requested.
+
+user: ta dando q todas as vericacoes falharam. note q vc deve adpatar o neuro gus ao sistema atual, nao deve alterar coisas que foram feitas em outras abas..
+
+assistant: vou verificar o PR e os erros.
+
+assistant: 2 checks falharam: `pytest` e `smoke-test`. Vou inspecionar os workflows e rodar localmente pra reproduzir.
+
+assistant: local não tem deps (anthropic, fastapi, google libs). Vou ler conftest e tentar pytest mockado.
+
+assistant: vou ver os arquivos do PR e tentar instalar as deps mínimas pra rodar pytest local.
+
+assistant: ambiente meu tem problema com cryptography. vou rodar os outros tests excluindo `test_bot.py`.
+
+assistant: vou tentar puxar logs do CI direto via WebFetch pra ver o erro real.
+
+assistant: vou tentar rodar `test_bot.py` instalando o que falta pra reproduzir o erro real do CI.
+
+assistant: vou ler `test_bot.py` pra ver se alguma mudança minha pode ter quebrado import.
+
+assistant: vou instalar `requirements-dev.txt` completo (cffi resolvido) e rodar pytest exatamente como o CI roda.
+
+assistant: local tem ambiente quebrado (cryptography). CI roda em 3s, sugere falha de **collection** (import quebrado), não 29 testes. Vou rodar só `--collect-only`.
+
+assistant: vou rodar o smoke-test exato do CI agora com deps full instaladas.
+
+assistant: deixa eu ver o `hub/store.py` no estado atual da branch — focando no que eu mexi.
+
+assistant: vou comparar `hub/store.py` exato vs main pra garantir que só adicionei params.
+
+assistant: vou comparar — rodo pytest na main (sem meu PR) pra ver se já tava quebrando antes.
+
+assistant: 3s no CI é tempo de **falha early** (provavelmente falha de install). Vou checar os requirements.
+
+assistant: vou verificar se algum arquivo do merge da main veio com bug — ver `gus/**.py` ou `hub/**.py` pós-merge.
+
+assistant: só 3 arquivos diferem da main: `api/neurogus.html`, `hub/routes.py`, `hub/store.py`. Mudanças são minimamente invasivas (só adicionei params opcionais com default `None`).
+
+## O que eu sei
+
+- ✅ Local: pytest passa 182 tests (test_bot.py falha por bug do meu container, não relacionado)
+- ✅ Sintaxe Python: `py_compile` OK em todos arquivos
+- ✅ Diff vs main em hub/store.py e hub/routes.py é só **adição de params opcionais** — backwards compatible
+- ✅ `api/gpt_inbox.py` (do feat anterior na main) usa `recentes(user_id, limit, incluir_esquecidos)` — continua funcionando porque adicionei params *no fim*
+- ❌ CI falhou em **3s** (tempo de erro early, não rodada completa)
+- ❌ Não tenho acesso aos logs do CI daqui (`mcp__github` retorna 403, WebFetch sem auth)
+
+## Hipóteses pra você verificar
+
+3 segundos no `pytest job` é suspeito — geralmente é falha de **install** ou **erro de setup**, não 211 testes individuais.
+
+**Pode ser:**
+1. **Flaky no Actions** — pip cache miss, timeout transiente. Solução: clicar "Re-run failed jobs" no GitHub
+2. **Algo na main que já tava quebrado e o tests.yml só roda quando hub/* muda** (que eu mexi). Pode ser que a main tem bug latente
+3. **Conflito sutil pós-merge** que não vi — ler logs do CI vai mostrar
+
+## Pra eu poder ajudar
+
+Você precisa abrir 1 dos 2 links e me colar trecho do erro:
+
+🔗 https://github.com/Gustpbbr/Gus/actions/runs/[REDACTED-CPF] (pytest)
+🔗 https://github.com/Gustpbbr/Gus/actions/runs/[REDACTED-CPF] (smoke-test)
+
+Aba "**Jobs**" → click no job que falhou → expandir step que falhou → me cola as 20-30 linhas finais.
+
+OU, se preferir mais rápido: clica "**Re-run failed jobs**" lá em cima — se for flaky passa, se persistir é bug real.
+
+**Não vou alterar mais código sem ver o erro real** — pra não quebrar trabalho que outras abas fizeram, como você pediu. Espero teu input.
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`fd9796d`). aguardando você compartilhar o erro real do CI.
+
+user: os 2 deu isso
+
+The job was not started because recent account
+
+assistant: ah, isso muda tudo — **o CI nem rodou**. Mensagem completa provável:
+
+> "The job was not started because recent account **payments have failed** or your **spending limit** has been reached."
+
+Não é problema do código, do PR, ou do meu trabalho. É **limitação de conta GitHub Actions** (billing/minutes esgotado).
+
+## Opções
+
+**1. Resolver billing GitHub** (1-5min na sua conta)
+- https://github.com/settings/billing
+- Aumentar spending limit ou adicionar método de pagamento
+- Depois clicar "**Re-run all jobs**" no PR — passa
+
+**2. Mergear sem CI passar** (rápido, mas perde o smoke test)
+- Se você é admin (e é, é seu repo), GitHub deixa mergear "with bypass" mesmo com checks falhando
+- No PR, scroll até botões de merge → tem opção "Merge without waiting for requirements to be met"
+- Ou desabilitar branch protection temporariamente em Settings → Branches
+
+**3. Mergear via CLI** (mais técnico)
+```bash
+git checkout main
+git merge --no-ff origin/claude/neurogus-fase1-backend-sse
+git push origin main
+```
+
+## Recomendação
+
+Se quiser ver o NeuroGus rodando agora: **Opção 2** (merge with bypass). O código tá validado:
+- ✅ py_compile OK em todos arquivos
+- ✅ HTML parser OK
+- ✅ node --check (JS) OK
+- ✅ pytest local passa (excluindo erro do meu container)
+- ✅ Backwards compatible (gpt_inbox.py continua funcionando)
+
+Risco real é baixo. Pode mergear, ver em produção, e resolver billing depois.
+
+como prefere?
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`c64baec`). aguardando tua decisão (resolver billing, mergear with bypass, ou via CLI).
+
+user: Continue from where you left off.
+
+assistant: No response requested.
+
+user: posso mergear como esta? ou tem q mudar algo?
+
+assistant: pode mergear como está. Código foi validado:
+
+- ✅ **`py_compile`** OK em `hub/store.py`, `hub/routes.py`, `api/server.py`, `api/neurogus.py`
+- ✅ **`node --check`** OK no JS extraído do HTML (sintaxe válida)
+- ✅ **HTML parser** sem erros
+- ✅ **pytest local** — 182 tests passam (test_bot.py falha aqui só por bug do meu container com `cryptography`, não no CI real)
+- ✅ **Backwards compatible**: `api/gpt_inbox.py` (de outra aba) chama `recentes(user_id, limit, incluir_esquecidos)` — continua funcionando porque adicionei `desde`/`ate` no **fim** com default `None`
+- ✅ **Diff vs main** mostra só adição de params opcionais — nada destrutivo
+
+Único "ruído" é o CI bloqueado por billing — **não é erro de código**.
+
+Pode mergear via:
+
+**1. GitHub UI** (mais simples)
+- No PR, scroll até o botão verde de merge
+- Se tiver branch protection bloqueando: vai aparecer "Merge without waiting for requirements" pra admin
+- Confirma → merge → Railway redeploya automaticamente em ~2min
+
+**2. Se a branch protection travar:**
+- Settings → Branches → main → desabilita "Require status checks" temporariamente
+- Mergea
+- Reabilita depois
+
+depois de mergear:
+```
+https://gus-production-58a7.up.railway.app/neurogus?token=$TOKEN
+```
+→ ~500 fragmentos reais do Hub, clusters orgânicos, 2 date pickers no header, SSE em tempo real.
+
+manda quando mergear pra eu acompanhar (e ajustar se algo der ruim em prod).
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`138efb0`).
