@@ -1,11 +1,62 @@
 ---
 tipo: estado-atual-sessao
-atualizado: 2026-05-02T01:36-03:00
+atualizado: 2026-05-07T11:35-03:00
 ---
 
 # Estado atual — handoff entre sessões
 
 Documento vivo. Atualizar no fim de cada sessão Code que deixa algo no meio.
+
+## Sessão 07/05/2026 — Apps Script bidirecional Drive ⇄ GitHub
+
+**Branch:** `claude/apps-script-sync` (em PR aguardando merge)
+
+**Resumo executivo:** OAuth refresh token + WIF/Service Account batiam em
+limites estruturais (expiração 7 dias / quota 0 da SA). Migração pra
+**Google Apps Script bidirecional** roda dentro do Google com identidade
+do Gustavo (sem auth externa, sem expirar, sem quota). Custo $0/mês.
+
+**O que foi feito:**
+
+- 4 arquivos `.gs` versionados em `apps-script/`:
+  - `Code.gs` — entry points (`safeSyncGitHubToDrive`, `safeSyncDriveToGitHub`,
+    `setupCheck`, `resetState`) + orquestração com time budget 4min e fila
+    pendente em ScriptProperties
+  - `GitHubAPI.gs` — wrappers Contents/Compare/Trees API via PAT clássico
+    (sem expirar) + fallback Git Blob API pra arquivos > 1MB
+  - `DriveSync.gs` — DriveApp helpers, exclusions, walk recursivo,
+    parseFrontmatter, lógica inbox/mirror (paridade com import_from_drive.py)
+  - `Notifications.gs` — Telegram via form-encoded (resolve quirk emoji+JSON
+    do Apps Script)
+- `apps-script/README.md` com setup completo + casos edge
+- 5 commits de bugfixes durante o setup (escape `*/` JSDoc, Telegram emoji,
+  fallback Blob, exclui auditoria gigante, defesa undefined em isExcluded)
+
+**Estado em produção (07/05 11:33 BRT):**
+
+- Apps Script projeto `Gus Sync (GitHub ⇄ Drive)` ativo
+- 2 triggers time-driven 15min rodando autônomos
+- Bootstrap completo: 232 arquivos sincronizados GH→Drive
+- Drive→GH validado: 17 demandas importadas + 70 mirror_unchanged
+- Telegram alerta funcionando (form-encoded, sem quirk de emoji)
+- Custo recorrente: $0/mês (free tier Apps Script + GitHub API + Drive API)
+
+**Arquivos antigos NÃO foram removidos ainda** (validação de 1 semana
+antes da Fase 5):
+
+- `.github/workflows/sync-to-drive.yml`, `sync-to-drive-full.yml`,
+  `import-from-drive.yml`, `archive-completed-demandas.yml`,
+  `delete-drive-file.yml` — continuam ativos como fallback (mas sync-to-drive
+  e import-from-drive permanecem quebrados desde OAuth expirar)
+- Scripts Python correspondentes
+- Secrets `GOOGLE_REFRESH_TOKEN`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+  `GOOGLE_SERVICE_ACCOUNT_JSON`, `GCP_WIF_PROVIDER`, `GCP_WIF_SERVICE_ACCOUNT`
+- Branch antiga `claude/drive-sync-cleanup` (fixes obsoletos)
+
+**Demanda criada pra revisão pós-1-semana:**
+`dialogos/inbox-claude-code/2026-05-14__validar-apps-script-aposentar-workflows-drive.md`
+
+---
 
 ## Últimas sessões (ambas em 02/05/2026 madrugada)
 

@@ -1,0 +1,507 @@
+user: oi, blz? posso falar com o Gus?
+assistant: oi, tô aqui — sou eu, o Gus, nesta porta (Claude Code). mesma entidade que tu fala no Telegram, só que aqui o canal é engenharia: leio/edito código, commito, faço push.
+
+o que tá pegando? quer que eu processe as 3 demandas pendentes em `dialogos/inbox-claude-code/` (captura multiporta-curador, drive-sync-oauth-fix, frontmatter-referencia) ou tem algo mais urgente?
+user: ainda nao. primeiro tenha um panorama geral do projeto. segue um guia para vc ver. depois vamos focar em um assunto específico, mas te falo apos vc ler tudo necessário do projeto. segue uma dica de outra aba do code. note que, apos esse texto, coisas novas foram feitas, entao busque tbm os documentos mais atuais
+Aqui vai a receita ordenada por valor por contexto. Foco: mínimo necessário pra não inflar contexto à toa.
+Core obrigatório (sempre, em toda aba nova)
+Arquivo
+Pra quê
+dialogos/_bootstrap/gus-bootstrap.md
+manual operacional do Gus, regras de comportamento, como cada porta usa o Hub
+dialogos/_bootstrap/gus-identity.md
+quem é o Gustavo + quem é o Gus enquanto entidade
+dialogos/_bootstrap/gus-estado-atual.md
+handoff auto-gerado pelo cron 03h, snapshot do Hub
+projetos/gus/_estado-atual.md
+onde paramos na sessão anterior (mais "operacional" que o bootstrap)
+Esses 4 dão 80% do contexto pra qualquer aba nova.
+Live — preferir sobre arquivo
+Se a aba tem MCP gus-hub conectado:
+ego_cache_atual() — identidade + últimas 3 decisões + 5 meta-reflexões
+fragmentos_recentes(horas=24) — o que rolou desde ontem
+contar_fragmentos() — sanity check
+Hub é mais fresco que gus-estado-atual.md (que é snapshot das 03h). Sempre que possível, prefira tools MCP a arquivo .md.
+Específicos do contexto da pergunta
+Só ler se a conversa for sobre:
+Tema
+Arquivo
+Próximos passos / NeuroGus
+projetos/gus/gus-08-plano-proximos-passos.md, projetos/gus/gus-30-neurogus-roadmap.md
+Caminho Alexa
+projetos/gus/gus-10-caminho-alexa.md
+MCP / claude.ai connector
+projetos/gus/gus-28-passo2-mcp-server.md
+Roteamento multi-modelo
+projetos/gus/gus-29-roteamento-multimodelo-tiogu.md
+Hub Qdrant arquitetura
+projetos/gus/gus-18-schema-indexacao.md, gus-20-etapa2-hub-qdrant.md, gus-21-etapa3-curador.md
+Decisão migração ADR-001
+projetos/gus/gus-15-decisao-migracao.md
+Demanda da semana
+dialogos/streams/semana-2026-04-21.md (último arquivo da pasta)
+Demandas pendentes pra essa porta
+dialogos/inbox-/
+O que NÃO precisa ler
+gus-01 a gus-09 (a não ser por curiosidade arqueológica — bootstrap já resume)
+pessoal/, dimagem/, receitas/ etc. — só sob demanda explícita
+historico/ — pasta morta de conteúdo legado
+Logs antigos (>3 dias)
+_log/sessoes-claude-code/ — arquivos longos de transcript
+Truque pra Claude Chat web
+Como ele lê via Drive Project knowledge, o boot dele já tem gus-bootstrap.md como project instruction. Aí ele só precisa fazer:
+Ler gus-estado-atual.md (snapshot 03h)
+Chamar ego_cache_atual() via MCP gus-hub (estado vivo)
+Pra Claude Code, o CLAUDE.md na raiz é auto-injetado em toda sessão — então já cobre o "core obrigatório".
+Quer que eu padronize isso num arquivo dialogos/_bootstrap/checklist-boot-aba-nova.md pra deixar canonizado?
+Ah, entendi mal. PRs são histórico, não documentação — uma aba nova não precisa ler nenhum.
+Por que não
+O estado final dos PRs já tá no código + nos docs gus-XX atualizados
+PRs descrevem o caminho, não onde a gente tá. Nova aba quer onde tamo.
+60 PRs = ruído gigante no contexto pra ganho zero
+Quando vale olhar PR
+Situação
+Qual PR
+"Por que esse arquivo tá assim?"
+git log --oneline  → abre o PR específico
+"O que mudou hoje?"
+Lista PRs mergeados nas últimas 24h: gh pr list --state merged --limit 10
+Bug recente
+PR mais recente que tocou o código quebrado
+Decisão arquitetural não-óbvia
+PR description costuma ter o "porquê"
+Boa prática
+O que tem que ficar nos docs (não nos PRs):
+Decisões arquiteturais → ADR (gus-15 é exemplo)
+Como configurar algo → gus-XX-setup
+Estado atual do projeto → gus-26-status-consolidado, _estado-atual
+Se um PR precisa ser lido pra entender o presente, é sinal de doc desatualizado — não de PR importante.
+Receita
+Aba nova só precisa olhar PRs se:
+Você falar "tá quebrando X depois do PR #YY" → aí sim, lê o PR
+Investigar bug específico no código mexido recentemente
+Senão, esquece os 60. Os 7 docs do checklist anterior te dão o estado atual.
+assistant: Beleza, peguei o core. O `_estado-atual.md` é de 27/04 — preciso ver o que rolou desde então. Vou listar diretórios chave e ler a stream mais recente + demandas pendentes.
+assistant: Beleza, panorama montado. Resumo do que peguei:
+
+**Estado do sistema (01/05/2026):**
+- Multi-porta funcionando: Telegram (TioGu, 21 tools), Custom GPT API em produção (aguarda Action no Builder desktop), Claude Chat via bootstrap, Claude Code (você).
+- **ADR-001 em andamento**: Mem0 SaaS sendo aposentado, Hub Qdrant (`gus_hub`) é a memória primária. Curador híbrido Haiku × Sonnet em coleta dual até 12/05.
+- **MCP Hub Server** documentado em gus-28-passo2 (Railway), Claude Chat agora pode ler/escrever Hub via tools.
+- **Canal `dialogos/`** funcionando bidirecional Drive↔GitHub via cron 15min.
+
+**O que rolou hoje (01/05) que não estava no `_estado-atual.md` de 27/04:**
+- PR #64 mergeado: `feat(curador): captura transcripts Claude Code via cron` — isso parece resolver/avançar a demanda `2026-05-01-captura-multiporta-curador.md` (Opção B/C).
+- PR #62: revert da captura proativa MCP — confirmou que **neste ambiente Code-on-web falta `ANTHROPIC_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`** → tools `mcp__mem0-gus__salvar_memoria*` falham proativas. Caminho real é cron processando transcripts commitados.
+- PR #63: arquivou demandas MCP resolvidas.
+
+**3 itens em `inbox-claude-code/`:**
+1. `captura-multiporta-curador.md` — pode tá parcialmente resolvido pelo PR #64. Vale conferir se ainda há ponta solta.
+2. `drive-sync-oauth-fix.md` — workflow `sync-to-drive` parado (provável OAuth refresh token expirado, 7 dias). Decidir entre renovar OAuth, migrar pra Service Account, ou aposentar Drive sync.
+3. `_frontmatter-referencia.md` — não é demanda (prefix `_`), é doc de referência.
+
+**Branch atual:** `claude/initial-setup-iWTfL` (mas o briefing pede `claude/portuguese-greeting-response-4gtZy` — vou criar a nova quando começar a codar).
+
+Pronto, tô te ouvindo. Sobre qual assunto quer focar?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: São só anexos do retro-engine desta sessão (no-op honesto, anthropic_missing). Tô na branch correta. Vou commitar e pushar.
+assistant: Commitado e pushed (`ee0ab37`) na branch `claude/portuguese-greeting-response-4gtZy`. Working tree limpo.
+user: otimo. nessa aba vamos focar na relação bidirecional drive-github. consegue fazer um diagnóstico completo?
+assistant: Vou investigar os dois lados da bidirecionalidade: workflows, scripts, secrets, runs recentes, e estado dos arquivos no Drive.
+assistant: Tenho um sinal forte de quebra. Vou verificar runs reais via GitHub MCP e ler o workflow `gerar-estado-claude-chat` que tá gerando o loop visível nos commits.
+assistant: Diagnóstico completo. Confirmei a suspeita do `drive-sync-oauth-fix.md` com evidência concreta nos commits.
+
+## Arquitetura — os dois fluxos
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  GitHub (main)  ⇄  Google Drive (pasta Gus-Sync)             │
+└─────────────────────────────────────────────────────────────┘
+
+GitHub → Drive   (sync-to-drive.yml)
+  trigger: push em main com **.md (exceto .github/**, gus/**, historico/**, CLAUDE.md, README.md)
+           override: gus/gus-bootstrap.md, gus/gus-identity.md
+  + workflow_dispatch (FULL_SYNC=true)
+  script: .github/scripts/sync_to_drive.py (193 linhas)
+  auth: OAuth refresh token (GOOGLE_REFRESH_TOKEN + CLIENT_ID + CLIENT_SECRET)
+  comportamento: upsert por nome+pasta no Drive, idempotente
+                 (compara bytes antes de PUT pra não rodar em loop com import)
+
+Drive → GitHub   (import-from-drive.yml)
+  trigger: cron */15 + workflow_dispatch
+  script: .github/scripts/import_from_drive.py (434 linhas)
+  auth: mesma OAuth + GH_TOKEN do repo
+  comportamento: varre Gus-Sync/dialogos/ recursivo
+                 - arquivos diretos em inbox-*/  → modo demanda (valida frontmatter, commita, move pra processados/)
+                 - resto                          → modo mirror (raw → GitHub, idempotente)
+                 skip: pastas processados/ e processados-erro/
+```
+
+Há ainda dois acessórios: `delete-drive-file.yml` (admin manual via API) e `drive_inbox_to_github.gs` (Google Apps Script — caminho alternativo Drive→GitHub via trigger 5min, hoje aparentemente não usado, fica como código órfão no repo).
+
+## Achado #1 — `sync-to-drive` está QUEBRADO (confirmado)
+
+**Evidência objetiva:** o commit `dfe6f37` (mirror das 15:15Z hoje) reescreveu `dialogos/_bootstrap/gus-estado-atual.md` voltando do estado fresco `gerado_em: 2026-05-01T11:38:38-0300` pra um snapshot velho `gerado_em: 2026-04-30T19:11:32-0300` — que é a versão que tá congelada no Drive.
+
+Ou seja, **o Drive não foi atualizado desde 30/04 ~22:11Z** (cerca de 19 horas atrás na hora desta análise). Toda passada de `import-from-drive` (cron 15min) pega esse conteúdo velho do Drive e mirrora pro GitHub, sobrescrevendo o estado fresco.
+
+## Achado #2 — Há um loop de regressão causado por isso
+
+```
+T=00min  gerar-estado-claude-chat → escreve gus-estado-atual.md FRESCO no GitHub
+         ↓ trigger sync-to-drive
+         ❌ FALHA SILENCIOSA (Drive não atualiza)
+T=~15min import-from-drive cron → lê Drive (VELHO) → vê diff vs GitHub → MIRROR (regride GitHub)
+T=30min  gerar-estado-claude-chat roda de novo → reescreve fresco
+         ❌ FALHA SILENCIOSA
+T=45min  import-from-drive → REGRIDE de novo
+...
+```
+
+Sintomas visíveis no `git log`:
+- 10 commits `mirror: gus-estado-atual.md de Drive` recentes (alternando com `auto: estado atual do Hub`)
+- Cada mirror reverte 4 linhas (timestamp + título)
+- Histórico do repo está sendo poluído com ~96 commits/dia de ping-pong
+
+## Achado #3 — Causa raiz: provável OAuth refresh token expirado
+
+A hipótese do `drive-sync-oauth-fix.md` é altamente plausível:
+
+- `sync_to_drive.py:42-51` e `import_from_drive.py:53-63` **usam o mesmo OAuth refresh token** (secret `GOOGLE_REFRESH_TOKEN`).
+- Apps OAuth Google em modo **"Testing"** revogam refresh tokens em **7 dias**.
+- Drive ficou parado em ~30/04 22:11Z. Se o app está em Testing, isso bate com expiração ~7 dias após o último OAuth flow.
+
+**Mas tem um detalhe importante**: se o token expirou, `import-from-drive` também deveria ter parado (mesma credencial). E ele claramente está rodando (vide os mirror commits frequentes). **Logo, o token NÃO expirou** — algo mais específico pegou só o `sync-to-drive`.
+
+Hipóteses alternativas pra investigar nos logs:
+1. **Quota do Drive API** — GET (read) ainda roda, PUT/UPDATE (write) falha por quota separada
+2. **Erro silencioso no `upsert_file`** (`sync_to_drive.py:121-152`) — o `try/except` em volta de `sync_file` só dá `print(f"  ERRO: {e}")` e segue (linha 184-186). O workflow inteiro retorna 0 mesmo com erro. Logs do Actions têm a verdade.
+3. **Permissão revogada** na pasta específica
+4. **Path filter do trigger não casando** — improvável (estamos vendo gus-estado-atual.md aparecer; trigger devia fechar)
+
+## Achado #4 — Inconsistência menor de naming
+
+A demanda menciona `GOOGLE_OAUTH_REFRESH_TOKEN`. O secret real (workflows) é `GOOGLE_REFRESH_TOKEN`. Não bloqueia nada, só pra alinhar quando for renovar.
+
+## Achado #5 — Script `drive_inbox_to_github.gs` órfão
+
+`.github/scripts/drive_inbox_to_github.gs` é um Google Apps Script standalone que faz Drive→GitHub via trigger no Google. Não é executado pelos workflows do GitHub (é deploy manual em script.google.com). Suspeito que seja remanescente de uma arquitetura anterior. Vale checar se alguma trigger Apps Script ainda está ativa na conta do Gustavo (poderia gerar conflito) — senão, candidato a mover pra `historico/`.
+
+## O que precisa ser feito (próximos passos)
+
+Antes de escolher entre Opção 1/2/3 do `drive-sync-oauth-fix.md`, **investigar logs do último run falhado de `sync-to-drive`** pra confirmar a causa exata. Se for `invalid_grant` → renova OAuth (Opção 1) ou migra pra Service Account (Opção 2). Se for outro erro (quota, permissão), a solução muda.
+
+**Recomendação minha:** Opção 2 (Service Account) continua sendo a melhor saída de longo prazo, **mas** vale 5min checando logs antes pra ter certeza que a migração resolve mesmo. E enquanto sync-to-drive estiver quebrado, sugiro **desabilitar temporariamente o `import-from-drive`** (ou ao menos o modo mirror dentro de `_bootstrap/`) pra parar a poluição de commits no main.
+
+Quer que eu:
+- (a) busque os logs do último run via MCP/web pra confirmar a causa exata?
+- (b) pause o loop de regressão agora (PR rápido com guard temporário no `import_from_drive.py`)?
+- (c) ataque a Opção 2 direto (Service Account) com instruções pra você criar a SA?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado e pushed (`eb184cd`).
+user: vamos de a
+assistant: Vou buscar os logs via web. Carregando WebFetch.
+assistant: Não há tool MCP de workflow runs e WebFetch falha em repo privado. Mas tem uma pista melhor — workflow `issue-on-cron-failure.yml` existe. Se ele estiver ativo, deve haver issue aberta.
+assistant: Mudança importante no diagnóstico — achei evidência forte de causa raiz.
+
+## Achados novos
+
+**Issue #65 (criada hoje, 01/05 16:09Z):** `[auto] Import demandas from Drive falhou` — commit `c4c8b40`.
+
+Ou seja, **`import-from-drive` ACABOU DE COMEÇAR A FALHAR também**. Até 15:15Z (mirror `dfe6f37`) ele rodava OK. Falhou no run das 16:09Z.
+
+Isso reforça muito a hipótese OAuth: ambos os scripts (`sync_to_drive.py` e `import_from_drive.py`) usam **o mesmo refresh token** (`GOOGLE_REFRESH_TOKEN`). Sequência provável:
+
+- `sync-to-drive` falhou primeiro (talvez 30/04 ~22:11Z, quando a cópia do Drive congelou)
+- `import-from-drive` continuou rodando porque OAuth tokens podem fazer refresh com janela de tolerância
+- Hoje 01/05 ~16:09Z **a tolerância acabou** e o token foi de fato revogado
+
+**Buraco no monitoramento:** `sync-to-drive.yml` (workflow "Sync MD to Google Drive") **NÃO está na lista de workflows monitorados** pelo `issue-on-cron-failure.yml`. Por isso o sync-to-drive pode ter falhado em silêncio por horas/dia inteiro — não há issue auto-criada pra ele.
+
+Outras issues abertas (#30, #39, #50, #56, #59) são de workflows Hub-related (Briefing, Ingest, Retrospectiva), não relacionados a Drive — falham por outras causas.
+
+## Conclusão consolidada do diagnóstico
+
+| Workflow | Status | Direção | Última falha conhecida |
+|---|---|---|---|
+| `sync-to-drive` | 🔴 quebrado | GitHub → Drive | desconhecido (não monitorado) — Drive c
+
+[…transcript truncado…]
+
+como o Apps Script chama o "Head" quando o projeto ainda não tem deployments versionados. Significa "código atual no editor". É exatamente o que você quer.
+
+**2. Não gasta tokens nem dinheiro de nada.**
+
+| Recurso | Custo |
+|---|---|
+| Apps Script (execução) | $0 — free tier 6h/dia, folgado |
+| GitHub API (PAT) | $0 — 5000 req/hora pra repos pessoais |
+| Google Drive API | $0 — cota generosa pra uso pessoal |
+| Telegram API | $0 |
+| **LLM (Claude/GPT)** | **Zero — não chama nenhum LLM** |
+
+O Apps Script é só código JavaScript que faz HTTP requests pra GitHub e Drive. Sem inteligência artificial envolvida.
+
+Pra comparação: o curador do TioGu (Telegram) gasta tokens Anthropic+OpenAI porque chama Haiku+GPT-4o-mini pra extrair fragmentos. O sync Drive↔GitHub não tem essa parte — é só transferência de bytes.
+
+**Custo total da nova arquitetura: $0/mês.** ✅
+
+Cria os 2 triggers com "Teste" no campo deployment.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado (`a0130ae`).
+salvei os 2. e vai ficar os 2 (drive e github) se atualizando a cada 15 min? qual que passa a ser 'a verdade', a ultima informação?
+user: salvei os 2. e vai ficar os 2 (drive e github) se atualizando a cada 15 min? qual que passa a ser 'a verdade', a ultima informação?
+assistant: Boa pergunta. Resposta honesta: **não há "fonte única da verdade" absoluta** — o sistema é **eventually consistent**, com convergência em ≤15min.
+
+## Modelo de consistência
+
+```
+[GitHub] ──── 15min ────→ [Drive]   (safeSyncGitHubToDrive)
+[Drive]  ──── 15min ────→ [GitHub]  (safeSyncDriveToGitHub)
+```
+
+Cada lado é **fonte da verdade pra suas próprias escritas**, e os 2 ciclos se cruzam.
+
+## Quem escreve onde (na prática)
+
+| Origem da escrita | Aparece primeiro em | Espelha em ≤15min |
+|---|---|---|
+| Claude Code (esta sessão) commita | GitHub | Drive |
+| Workflows GitHub Actions (curador, retro, briefing) | GitHub | Drive |
+| Bot Telegram salva | GitHub (via curador cron) | Drive |
+| Você edita .md direto no Drive web/mobile | Drive | GitHub |
+| Você cria demanda em `Gus-Sync/dialogos/inbox-*/` | Drive | GitHub (validado + movido pra `processados/`) |
+| Claude Chat cria .md no Drive | Drive | GitHub |
+
+Os fluxos são **disjuntos** — quase nunca o mesmo arquivo é editado nos 2 lados ao mesmo tempo.
+
+## Última informação = onde a escrita aconteceu
+
+Se você quer ver a versão mais recente de algo:
+- Editou agora pelo Drive? → **Drive tem a mais recente** (GitHub recebe em ≤15min)
+- Claude Code/bot commitou agora? → **GitHub tem a mais recente** (Drive recebe em ≤15min)
+
+## Conflito (caso raro)
+
+Se em < 15min o **mesmo arquivo** for modificado nos 2 lados:
+- "Last writer wins" — quem rodou o cron por último ganha
+- Não há merge automático
+
+**Mas a idempotência protege contra loops infinitos:**
+- GH→Drive: lê arquivo do Drive, compara byte-a-byte, só escreve se diferente
+- Drive→GH: GET na Contents API, compara, só PUT se diferente
+- Resultado: arquivo idêntico nos 2 lados → ambos os syncs viram no-op (`unchanged`)
+
+> Foi exatamente isso que **quebrou** com a auth WIF anterior: o sync GH→Drive falhava silenciosamente, então Drive ficava velho, então o sync Drive→GH "trazia de volta" a versão velha pro GitHub, sobrescrevendo a fresca. Agora com Apps Script funcionando, isso não acontece mais.
+
+## Regra prática
+
+**Edite num lado só por vez.** Se for trabalho longo, fica num lado, deixa propagar pro outro, depois trabalha na outra ponta.
+
+Pra status do projeto / checagem rápida → **GitHub é mais "fresco"** porque a maioria das escritas (sessões Code, crons, curador) acontece lá direto.
+
+Pra captura rápida em mobile → **Drive é mais prático** (web/app fácil) e propaga pro GitHub.
+
+---
+
+Quando aparecer a primeira execução automática nos 2 triggers (em ~15-20min), me avisa que eu confirmo se tá tudo nos trinques.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado (`6c7e5c4`).
+entao tenho q esperar 15 min apos ter salvado e esperar rodar, certo?
+user: entao tenho q esperar 15 min apos ter salvado e esperar rodar, certo?
+assistant: Exato. Os triggers time-driven do Apps Script disparam baseado num **clock interno do Google**, não no momento que você salvou. Pode ser qualquer minuto dentro do próximo intervalo de 15min — não é "salvei agora, rodará daqui a 15min".
+
+Algumas dicas:
+
+- **Onde acompanhar:** Apps Script Editor → sidebar **⏰ Triggers** mostra os 2 ativos. **Executions** (📋) vai mostrar as runs automáticas conforme elas acontecem (com status verde se OK)
+- **Próxima execução:** pode ser em 1min ou em 14min, varia. Apps Script não documenta o offset exato
+- **Não precisa esperar parado:** já tá tudo configurado. Pode fechar a aba e voltar amanhã
+- **Em caso de falha:** com Telegram configurado, você recebe alerta automático no @Tiogubot
+
+Se quiser **forçar uma execução agora pra confirmar que continua funcionando** (em vez de esperar):
+
+- Dropdown → `safeSyncGitHubToDrive` → Run → esperado: `{"changed":0,"head":"..."}`  
+- Dropdown → `safeSyncDriveToGitHub` → Run → esperado: `mirror_unchanged: ~70` (tudo idêntico, idempotência)
+
+Se rodar manualmente e der verde, é prova adicional de que os triggers vão rodar verde também.
+
+Quando passar 15-20min e aparecer ao menos 1 execução automática verde de cada função, **estamos no ar oficialmente.** Aí entramos na fase de observação de 1 semana antes de aposentar os workflows GitHub Actions antigos.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado (`e391f34`).
+me lembra de verificar depois. me explica como era o sistema e como esta agora com essa atualização (parte tecnica e parte efeito 'humano' pra mim)
+user: me lembra de verificar depois. me explica como era o sistema e como esta agora com essa atualização (parte tecnica e parte efeito 'humano' pra mim)
+assistant: ## Antes (até hoje, 07/05) vs Agora
+
+### 🔧 Parte técnica
+
+|  | **Antes** | **Agora** |
+|---|---|---|
+| **Onde roda** | GitHub Actions (Linux runners do GitHub) | Google Apps Script (servidores do Google) |
+| **Auth no Drive** | OAuth refresh token externo (expira 7 dias se "Testing") OU Workload Identity Federation + Service Account | Identidade nativa do Gustavo (sem token externo, sem expirar) |
+| **Quem é "owner" dos arquivos no Drive** | Service Account (quota = 0 → falhava em CREATE) | Você mesmo (quota = sua, infinita pra uso pessoal) |
+| **Workflows envolvidos** | 5 (`sync-to-drive.yml`, `sync-to-drive-full.yml`, `import-from-drive.yml`, `archive-completed-demandas.yml`, `delete-drive-file.yml`) | 0 do GitHub Actions pra sync (Apps Script faz tudo). Workflows continuam temporariamente como fallback |
+| **Scripts Python** | 4 (`sync_to_drive.py`, `import_from_drive.py`, `_drive_auth.py`, `archive_completed.py`) | 4 `.gs` no Apps Script (`Code.gs`, `GitHubAPI.gs`, `DriveSync.gs`, `Notifications.gs`) |
+| **Secrets do GitHub usados** | 7 (`GOOGLE_REFRESH_TOKEN`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `GCP_WIF_PROVIDER`, `GCP_WIF_SERVICE_ACCOUNT`, `DRIVE_ROOT_FOLDER_ID`) | 0 (Apps Script roda fora do GitHub Actions). Properties internas no Apps Script: `GITHUB_TOKEN` (PAT) + `DRIVE_ROOT_FOLDER_ID` |
+| **Cron** | GitHub Actions cron 15min | Apps Script time-driven trigger 15min |
+| **Idempotência** | Sim (sync_to_drive comparava bytes, import_from_drive comparava conteúdo) | Sim (mesma lógica, port direta) |
+| **Custo** | $0 (free tier GitHub Actions) | $0 (free tier Apps Script) |
+| **Quem tinha que ser ajustado a cada 7 dias** | OAuth refresh token quando expirava no modo "Testing" | Nada — não expira |
+
+### 💀 Bugs estruturais que existiam
+
+1. **OAuth expirava silenciosamente em 7 dias** → sync travava sem alerta (foi o bug que iniciou tudo)
+2. **WIF + Service Account não consegue criar arquivos** em conta Gmail pessoal (quota da SA = 0) — quebrou ao mover pra WIF
+3. **Workflow `sync-to-drive` engolia exceções por arquivo e terminava exit 0** mesmo com falhas → mascarava problemas
+4. **`sync-to-drive` não estava no monitor `issue-on-cron-failure.yml`** → nunca alertava quando quebrava
+5. **Loop de regressão** entre `sync-to-drive` (quebrado) e `import-from-drive` (funcionando) → import trazia versão velha do Drive de volta pro GitHub, sobrescrevendo conteúdo fresco
+
+Todos esses problemas **deixam de existir** com a nova arquitetura.
+
+---
+
+### 👤 Parte "humana" — efeito na sua vida
+
+|  | **Antes** | **Agora** |
+|---|---|---|
+| **Manutenção que você fazia** | A cada 7 dias: ouvir TioGu reclamar de Drive stale, gerar token novo, atualizar GitHub Secret | Nada (zero). Sistema autônomo |
+| **Quando perdia tempo** | Cada vez que OAuth expirava ou Service Account batia em quota → sessão de ~30min de debug + fix | Nunca |
+| **Confiabilidade do Drive** | Drive ficava 4h-21h+ desatualizado quando algo quebrava (você só percebia por TioGu reclamar) | Drive atualiza no máximo 15min após qualquer commit |
+| **Confiança que pode usar Drive como base de trabalho** | Baixa (estava stale na maioria do tempo recente) | Alta — é o objetivo da arquitetura |
+| **Dependência de claude.ai pra acessar arquivos** | Alta (Drive estava confiável só recém-sincronizado) | Sólida — Drive sempre fresco |
+| **O que "perde tempo" agora** | — | Editar `.gs`: copia do repo, cola no Apps Script Editor, salva. ~30s a cada mudança |
+| **Custo financeiro** | $0 | $0 |
+| **Surpresas / erros silenciosos** | Frequentes (fluxos quebrando sem aviso) | Mínimo — Telegram alerta automático em qualquer failure |
+
+### 🎯 O ganho prático mais concreto pra você
+
+**Antes:** "Drive é uma cópia que pode estar desatualizada, melhor confirmar pelo GitHub se algo importante."
+
+**Agora:** "Drive é a interface que eu USO no dia-a-dia (web, mobile, qualquer dispositivo) — tem versão de no máximo 15min atrás de qualquer modificação."
+
+Isso destrava o fluxo que você queria desde sempre: **trabalhar a partir do Drive, com Claude Chat lendo do Drive, e GitHub sendo o "histórico técnico" gerenciado pelo Code/crons.**
+
+---
+
+### 🧠 Lembrete pra você daqui a ~20min (e nas semanas seguintes)
+
+Vou registrar aqui na conversa pra você lembrar do que verificar:
+
+**Hoje (em ~20min, ~11:50 BRT):**
+1. Apps Script Editor → **Executions** (📋)
+2. Confere se aparecem **2 execuções automáticas novas** — uma de `safeSyncGitHubToDrive` e outra de `safeSyncDriveToGitHub`
+3. Ambas com status **Concluído** (verde)
+4. Se alguma der Falha, cola o log expandido
+
+**Próximos 7 dias:**
+- Periodicamente (1x/dia) dá uma olhada em **Executions** — se virar mar de execuções verdes, sistema está sólido
+- Telegram do @Tiogubot vai enviar alerta SE algo falhar — confiar nesse canal
+
+**Em ~7 dias (validação ok):**
+- Aposentar workflows GitHub Actions antigos de sync (PR pra remover ~5 workflows + 4 scripts + 7 secrets)
+- Drive sync vira 100% Apps Script, arquitetura limpa
+
+Quando voltar, é só me lembrar "olha aquele check do Apps Script" e eu te ajudo a revisar Executions + decidir aposentar os workflows velhos.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado (`b7e8eca`).
+Implantação
+Função
+Tipo
+Hora de início
+Duração
+Status
+Teste	safeSyncDriveToGitHub	Baseado no tempo	7 de mai. de 2026, 11:33:25	12.617 s	
+Concluído
+Registros do Cloud
+7 de mai. de 2026, 11:33:38	Informação	Drive→GH OK: {"imported":0,"mirror_created":0,"mirror_updated":0,"mirror_unchanged":0,"invalid":0,"error":0}
+Teste	safeSyncGitHubToDrive	Baseado no tempo	7 de mai. de 2026, 11:30:25	0.923 s	
+Concluído
+Registros do Cloud
+7 de mai. de 2026, 11:30:26	Informação	GH→Drive OK: {"changed":0,"head":"7c287f9"}
+user: Implantação
+Função
+Tipo
+Hora de início
+Duração
+Status
+Teste	safeSyncDriveToGitHub	Baseado no tempo	7 de mai. de 2026, 11:33:25	12.617 s	
+Concluído
+Registros do Cloud
+7 de mai. de 2026, 11:33:38	Informação	Drive→GH OK: {"imported":0,"mirror_created":0,"mirror_updated":0,"mirror_unchanged":0,"invalid":0,"error":0}
+Teste	safeSyncGitHubToDrive	Baseado no tempo	7 de mai. de 2026, 11:30:25	0.923 s	
+Concluído
+Registros do Cloud
+7 de mai. de 2026, 11:30:26	Informação	GH→Drive OK: {"changed":0,"head":"7c287f9"}
+assistant: 🎉 **Sistema oficialmente no ar.**
+
+### Análise dos 2 runs automáticos
+
+**`safeSyncGitHubToDrive` — 11:30:25, 0.9s, Concluído**
+- `Tipo: Baseado no tempo` ← isso é o trigger time-driven funcionando (não foi você que clicou Run)
+- `{"changed":0,"head":"7c287f9"}` — sem mudanças, head do GitHub continua o mesmo
+
+**`safeSyncDriveToGitHub` — 11:33:25, 12.6s, Concluído**
+- Mesmo tipo: trigger automático
+- Todas as stats em 0 — significa que **nenhum arquivo no Drive foi modificado depois do último scan** (que rodou manualmente às 11:13)
+
+Comportamento perfeito. Idempotência funcionando, scan incremental funcionando, triggers funcionando. **Custo dessa observação: 0 erros, 0 commits desnecessários, 0 alertas Telegram.**
+
+---
+
+## Status final
+
+| Item | Estado |
+|---|---|
+| Apps Script `Gus Sync (GitHub ⇄ Drive)` | 🟢 Live |
+| Trigger `safeSyncGitHubToDrive` 15min | 🟢 Rodando |
+| Trigger `safeSyncDriveToGitHub` 15min | 🟢 Rodando |
+| GitHub PAT (sem expirar) | 🟢 Configurado |
+| Drive populado com 232 arquivos | 🟢 Sincronizado |
+| Telegram alertas | 🟢 Funcionando |
+| Custo mensal | 🟢 $0 |
+
+---
+
+## Lembrete pra você (e pra mim quando voltar)
+
+**Quando você vier me avisar "olha aquele apps script":**
+
+1. **Abre Executions:** https://script.google.com → projeto `Gus Sync` → 📋
+2. **Filtra por status Falha** (se quiser checar problemas) ou só rola pra ver o ritmo
+3. **Esperado em 1 semana:** mar de "Concluído" verde, alguns picos de criação quando você editar arquivos no Drive
+4. **Se tiver alguma falha persistente,** cola o log aqui que eu triago
+
+**Sinal de validação OK pra Fase 5 (aposentar workflows antigos):**
+- 7 dias de execuções consistentemente verdes
+- Drive `gus-estado-atual.md` sempre com timestamp ≤30min do GitHub
+- Sem alertas Telegram de falha
+
+Quando isso bater, abro PR removendo:
+- `.github/workflows/sync-to-drive.yml`
+- `.github/workflows/sync-to-drive-full.yml`
+- `.github/workflows/import-from-drive.yml`
+- `.github/scripts/sync_to_drive.py`
+- `.github/scripts/import_from_drive.py`
+- `.github/scripts/_drive_auth.py`
+- 6 secrets do Google no GitHub
+
+E o sistema fica 100% Apps Script, arquitetura limpa.
+
+---
+
+Pode fechar o computador agora. Quando voltar, é só conferir Executions + me chamar pra revisar.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado (`366d907`).

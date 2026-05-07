@@ -12,10 +12,12 @@ Endpoints:
 import os
 
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from api.routes import router
+from api.gpt_inbox import router as gpt_inbox_router
 from hub.routes import router as hub_router
+from api.hub_cc import router as hub_cc_router
 
 
 def create_app() -> FastAPI:
@@ -68,7 +70,23 @@ def create_app() -> FastAPI:
         from api.camera import CAMERA_PWA_HTML
         return HTMLResponse(content=CAMERA_PWA_HTML)
 
+    # NeuroGus — PWA grafo 3D do Hub Qdrant (gus-30, gus-30.1).
+    # Sem auth na rota: HTML é estático na Parte 1A. Parte 1B (próxima)
+    # vai validar ?token= antes de retornar dados via fetch /hub/recent
+    # e EventSource /hub/stream — auth dos dados, não do HTML.
+    @app.get("/neurogus", include_in_schema=False, response_class=HTMLResponse)
+    async def neurogus():
+        from api.neurogus import NEUROGUS_HTML
+        return HTMLResponse(content=NEUROGUS_HTML)
+
+    @app.get("/neurogus/manifest.json", include_in_schema=False)
+    async def neurogus_manifest():
+        from api.neurogus import MANIFEST
+        return JSONResponse(content=MANIFEST)
+
     app.include_router(router)
-    app.include_router(hub_router)  # Hub Qdrant direto — ADR-001 Fase 1
+    app.include_router(hub_router)        # Hub Qdrant direto — ADR-001 Fase 1
+    app.include_router(gpt_inbox_router)  # Inbox determinístico — GPT Chat
+    app.include_router(hub_cc_router)     # Claude Code — leitura interna
 
     return app

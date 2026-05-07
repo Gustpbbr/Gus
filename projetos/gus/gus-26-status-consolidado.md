@@ -62,8 +62,12 @@ e o caminho pra cada objetivo.
 ### Canal unificado `dialogos/`
 - `inbox-tiogu/`, `inbox-claude-code/`, `inbox-claude-chat/`,
   `inbox-custom-gpt/`, `archive/`, `processados-erro/`, `streams/`
-- Workflow `import-from-drive.yml` cron 15min: Drive → GitHub
+- **Sync Drive ⇄ GitHub via Google Apps Script** (desde 07/05/2026):
+  projeto `Gus Sync (GitHub ⇄ Drive)`, 2 triggers time-driven 15min,
+  identidade nativa do Gustavo (sem OAuth externo, sem expirar).
+  Código em `apps-script/`, doc em `apps-script/README.md`.
 - Workflow `archive-completed-demandas.yml` cron 15min: arquiva concluídas
+  (legacy — vai migrar pro Apps Script junto com aposentar workflows antigos)
 - Notificação Telegram automática quando demanda chega em `inbox-tiogu/`
 
 ### SessionStart hook do Claude Code
@@ -77,9 +81,9 @@ e o caminho pra cada objetivo.
 | `tests.yml` | PR + push main | **Unit tests (163 testes)** — novo Fase 1 |
 | `sync-docs.yml` | push + cron 04h BRT | **Auto-gera `_tools-inventario.md`** — novo Fase 2A |
 | `test-scripts.yml` | PR em scripts/hub | Smoke import dos scripts cron |
-| `sync-to-drive.yml` | push em main | GitHub → Drive (incremental) |
-| `import-from-drive.yml` | cron 15min | Drive → GitHub |
-| `archive-completed-demandas.yml` | cron 15min | Arquiva demandas |
+| ~~`sync-to-drive.yml`~~ | ~~push em main~~ | **Substituído por Apps Script** (07/05) — aposentar Fase 5 |
+| ~~`import-from-drive.yml`~~ | ~~cron 15min~~ | **Substituído por Apps Script** (07/05) — aposentar Fase 5 |
+| `archive-completed-demandas.yml` | cron 15min | Arquiva demandas (legacy — migrar pro Apps Script) |
 | `auditoria-mem0.yml` | 06:40 BRT diário | Stats Hub → `_indices/_auditoria-mem0.md` |
 | `briefing-matinal.yml` | 07:00 BRT dias úteis | Briefing diário |
 | `retrospectiva-semanal.yml` | sexta 20:00 BRT | Resumo semanal |
@@ -215,7 +219,7 @@ backend (Lambda vs Railway), intents iniciais.
 | Alexa backend | Lambda vs Railway | Antes de Skill V1 |
 | Alexa intents iniciais | quais V1 | Antes de Skill V1 |
 | Sprint 3 (email/cal/TTS) | volta? | Pós Alexa V1 |
-| `import-from-drive.yml` 5min vs 15min | aval real | — |
+| ~~`import-from-drive.yml` 5min vs 15min~~ | superado | Apps Script roda 15min, suficiente |
 | Auto-execução de demandas (Nível 3) | — | Pós Nível 2 maduro |
 
 ---

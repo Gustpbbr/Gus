@@ -1,0 +1,538 @@
+user: blz? pode chamar o Gus pra gente começar a mexer no projeto neurogus?
+assistant: opa, blz. neurogus tem roadmap em `projetos/gus/gus-30-neurogus-roadmap.md` e três briefings na inbox-tiogu. deixa eu ler tudo antes de falar besteira.
+assistant: bom, peguei a essência. agora o roadmap (28k tokens, leio em partes — começo do início e do fim, que costuma ter "estado atual").
+assistant: Já tenho briefing, arquitetura, mock-spec e roadmap completo. Antes de propor passo concreto, deixa eu conferir branch atual.
+assistant: opa, branch `claude/start-neurogus-project-NZAoF` ja criada, working tree limpo. tudo lido. resumo do estado:
+
+## o que é o neurogus
+PWA com grafo 3D que mostra a memória do Hub Qdrant viva em tempo real — cada fragmento é uma esfera, conexão por afinidade semântica (cosine top-K), nasce branco quando o curador salva e migra pra cor do tipo. Roda no mesmo Railway do bot, sem custo extra.
+
+## status hoje
+- backend (Hub, curador, embeddings, FastAPI, Bearer): **pronto**
+- código novo do NeuroGus: **0 linhas escritas** (só mock visual da Claude Chat, perdido no Drive dela)
+- roadmap canônico: `projetos/gus/gus-30-neurogus-roadmap.md` (1513 linhas, Fase 1 = backend SSE)
+
+## o que precisa de você antes de eu começar (decisões abertas, seção 11)
+3 dessas bloqueiam Fase 1:
+
+1. **Top-K e threshold de afinidade.** Default proposto: K=3, threshold=0.6 (cosine). Aceita?
+2. **Apagar fragmento é hard ou soft delete?** Hard = `store.deletar()` direto. Soft = marcar `estado: "esquecido"` (já existe no schema). Recuperabilidade vs minimalismo.
+3. **Coleção mostrada: só `user_id=gustavo` ou também `gus` (auto-observações)?** Default: só `gustavo` no v0.
+
+As outras 4 (mock HTML, token na URL, auto-orbit, reconnect SSE) só importam na Fase 2 (frontend) — dá pra decidir depois.
+
+## se você confirmar os defaults, primeiro passo concreto é
+1. criar `hub/events.py` (fila SSE, ~50 linhas)
+2. adicionar `_calcular_vizinhos()` + `broadcast()` em `hub/store.py:ingestar()`
+3. adicionar `GET /hub/recent` e `GET /hub/stream` em `hub/routes.py`
+4. smoke test local com `curl --no-buffer` antes de subir
+
+vou nessa? confirma (ou ajusta) os 3 defaults e eu começo pela Fase 1.
+user: Continue from where you left off.
+assistant: No response requested.
+user: mas antes, leia sobre todo o projeto. pra ter um panorama geral. busque em todo repo
+user: Você é um agente de exploração mapeando o repositório Gus (`/home/user/Gus`) pra dar contexto a outra sessão Claude Code que vai trabalhar no projeto NeuroGus.
+
+Objetivo: produzir um panorama geral do repo. Não detalhe demais — seja específico onde há decisão arquitetural ou estado em transição, e seja conciso onde for óbvio.
+
+Cobre estes pontos (em ordem):
+
+## 1. Estrutura de pastas top-level
+Liste o que tem em `/home/user/Gus` (raiz). Pra cada pasta principal (`gus/`, `hub/`, `api/`, `.claude/`, `.github/`, `projetos/`, `dialogos/`, `pessoal/`, `dimagem/`, `_log/`, `_indices/`, etc.) diga em 1 linha o que ela é. Foca no que é código vs conteúdo (.md).
+
+## 2. Código-fonte ativo (Python)
+- `gus/`: liste os módulos principais (main, bot, llm, memory, tools, media) e quantas linhas tem cada um
+- `hub/`: liste os módulos (store, curador, routes, schemas, mcp_server, events?) e estado de cada
+- `api/`: liste o que tem dentro (server, dashboard, camera, neurogus?, etc.) 
+- `.claude/mcp/`: MCP servers existentes
+- `.github/scripts/` e `.github/workflows/`: lista breve de scripts e workflows ativos
+
+Pra cada arquivo importante, diga 1 linha sobre o que faz. Marque com ❌ os arquivos referenciados em docs mas que não existem ainda (tipo `hub/events.py`, `api/neurogus.py`).
+
+## 3. Documentos canônicos `projetos/gus/gus-NN-*.md`
+Liste todos os docs com prefixo `gus-NN-` em `projetos/gus/`. Pra cada um, leia o frontmatter + primeiras 30 linhas e resuma em 1-2 linhas: tema + status (planejamento/implementado/abandonado).
+
+## 4. Estado da migração ADR-001 (Mem0 → Hub Qdrant)
+Procura referências a "ADR-001", "Fase X", "Hub", "Mem0" em arquivos de status. Tem `projetos/gus/_estado-atual.md`? Leia ele inteiro se existir. Resuma em qual fase a migração está.
+
+## 5. Demandas pendentes
+- Liste arquivos em `dialogos/inbox-claude-code/`, `dialogos/inbox-tiogu/` (com 1 linha cada sobre o tema)
+- Liste arquivos em `dialogos/streams/semana-*.md` mais recentes (só o nome)
+- Aponta quais são relacionadas ao NeuroGus
+
+## 6. Workflows ativos (.github/workflows)
+Lista nome + 1 linha do que faz. Marca os que são relevantes pro Hub/curador/NeuroGus.
+
+## 7. Sinais de "tá rodando em produção" vs "rascunho"
+Pasta `historico/` tem o quê (legado)? Tem TODOs marcados em código? Tem arquivos `.draft` ou similares? Quais arquivos tem "TODO"/"FIXME"/"XXX" em comentários de código?
+
+## 8. Tamanho e idiomas
+- Total de linhas Python no repo
+- Total de arquivos .md
+- Última semana de commits (resumo via `git log --oneline --since='7 days ago'`)
+
+## Formato do relatório
+- Markdown estruturado, seções como acima
+- Caminhos relativos a `/home/user/Gus`
+- ~600-900 linhas (use as palavras com economia, mas cubra tudo)
+- Não duplique info do CLAUDE.md (eu já tenho ele); foque no que CLAUDE.md NÃO diz ou onde ele está desatualizado vs realidade
+- Termina com seção "## Inconsistências/dúvidas" listando 3-5 coisas que parecem contraditórias entre docs e código
+
+Não precisa rodar nada — só ler arquivos e listar diretórios. Sem WebFetch/WebSearch. Sem git fetch — só git log local se útil.
+assistant: beleza, faz sentido. vou mapear o repo inteiro com um agente de exploração antes de continuar.
+assistant: Vou explorar o repositório Gus sistematicamente. Começarei com uma visão geral da estrutura.
+assistant: Agora vou estruturar a exploração. Vou fazer múltiplas buscas em paralelo:
+assistant: Vou explorar a estrutura de código Python em paralelo:
+assistant: Agora vou contar linhas de código e explorar documentação:
+assistant: Agora vou examinar conteúdo das demandas pendentes e status do NeuroGus:
+assistant: Vou verificar MCP servers e workflows mais detalhadamente:
+assistant: Agora vou ler alguns docs importantes do NeuroGus e ADR-001:
+assistant: Agora vou verificar arquivos de APIs e rotas do Hub:
+assistant: Agora vou verificar alguns workflows e ver padrão de referências:
+assistant: Vou mapear o repositório Gus de forma completa. Começarei pela estrutura geral e depois dos pontos específicos.
+assistant: agente de exploração rodando em background. te aviso assim que ele terminar com o panorama. enquanto isso fico parado pra não pisar no que ele tá lendo.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Agora vou explorar os principais diretórios em paralelo:
+assistant: Agora vou contar linhas de código e verificar documentos:
+assistant: São só appends automáticos do hook Stop (retro-engine). Commit e push.
+assistant: commitado e pushado pra `claude/start-neurogus-project-NZAoF` (commit `b28e75d`). Agente de exploração ainda mapeando o repo — te aviso quando ele terminar.
+assistant: Perfeito! Agora tenho informação suficiente para o relatório. Deixe-me compilar tudo:
+
+---
+
+# Panorama do Repositório Gus — Mapa para NeuroGus
+
+## 1. Estrutura de pastas top-level
+
+| Pasta | Tipo | Descrição |
+|-------|------|-----------|
+| **gus/** | Código | Bot TioGu (Telegram). Módulos: main, bot, llm, memory, tools, media, roteador, logger, patterns_sensiveis, integrations/ |
+| **hub/** | Código | Hub Qdrant direto (ADR-001 Fase 2+). Módulos: store, curador, routes, schemas, mcp_server |
+| **api/** | Código | FastAPI (Railway). Rotas REST, auth, dashboard, camera, server principal |
+| **.claude/** | Config | MCP servers (mem0_server, gus_server) + settings |
+| **.github/** | Config | Workflows (19 cron + manual), scripts deploy, diagnostics |
+| **projetos/** | Conteúdo | Documentação projeto: gus-NN-*.md (30 docs), auditorias, decisões arquiteturais (ADRs) |
+| **dialogos/** | Conteúdo | Inbox (claude-code, tiogu, gustavo), streams semana, bootstrap (identidade, prompts) |
+| **pessoal/** | Conteúdo | Saúde, financeiro, relacionamentos, histórico pessoal |
+| **dimagem/** | Conteúdo | Clínica (obras, pacientes, sistema OCR em produção) |
+| **capturado/** | Conteúdo | Captura rápida via bot (não estruturada) |
+| **historico/** | Arquivo | Legacy: textos-antigos (v1), scripts one-shot, docs setup. Seguro deletar. |
+| **_indices/** | Gerado | Índices automáticos (auditoria-mem0.md, etc.) |
+| **_log/** | Gerado | Logs resumidos, histórico de execuções |
+| **acoes/, agenda/, familia/, receitas/, contatos/, esportes/, leituras/** | Conteúdo | Dados pessoais do Gustavo (fora de escopo técnico) |
+
+---
+
+## 2. Código-fonte ativo (Python)
+
+### `gus/` — Bot Telegram (579-675 LOC principais)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `main.py` | ~50 | Boot: registra handlers Telegram (foto, doc, voz, texto, comandos) |
+| `bot.py` | 579 | Lógica de handlers: captura foto/PDF/voz → OCR/Whisper + Hub |
+| `llm.py` | 675 | Chamadas Claude (Haiku 4.5, Sonnet 4.6): retry, streaming, tools |
+| `memory.py` | 279 | Leitura/escrita Hub Qdrant via `hub/store.py` + fallback Mem0 (morto em escrita) |
+| `tools.py` | ~700 | ~21 tools: buscar_memoria, salvar_memoria, diagnostico, wikilinks, pesquisa, etc. |
+| `media.py` | ~150 | Whisper (voz → texto), Haiku Vision (foto → OCR), ffmpeg placeholder vídeo |
+| `integrations/` | 4 files | Railway logs, diagnostico, wikilinks, pesquisa (Tavily/DDG) |
+| `roteador.py`, `logger.py`, `patterns_sensiveis.py` | ~200 | Roteamento entre modelos, logging estruturado, patterns de segurança |
+
+**Estado:** Em produção. Handlers completos exceto VIDEO (TODO mencionado em main.py).
+
+### `hub/` — Hub Qdrant (297-434 LOC principais)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `store.py` | 297 | Qdrant direto com sentence-transformers. CRUD + busca semântica. Schema gus-18. |
+| `curador.py` | 434 | Híbrido Haiku × GPT-4o-mini (paralelo). Fragmentos com `hash_janela` + `via` metadata. |
+| `routes.py` | ~50 | Endpoints REST: `/hub/ingestar`, `/hub/lembrar`, `/hub/ego-cache`, `/hub/stats` |
+| `schemas.py` | ~80 | Pydantic: IngestarReq/Resp, LembrarReq/Resp, Payload (16 campos) |
+| `mcp_server.py` | ~200 | MCP wrapper pro Claude Code. Expõe 8-9 tools (buscar_memoria, deletar_memoria, etc.) |
+| ❌ `events.py` | — | **Não existe**. Pré-requisito NeuroGus (asyncio.Queue p/ SSE) |
+
+**Estado:** Produção desde 27/04. Migração Mem0 → Hub completa (Fase 4 concluída). Mem0 SaaS em fallback-only (morte programada pós-14 dias coleta dual = ~12/05).
+
+### `api/` — FastAPI server (Railway)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `server.py` | ~100 | Starlette + FastAPI. Registra routers: bot routes, Hub routes, dashboard |
+| `routes.py` | ~200 | Routes do bot: `/memo` (POST memória), `/mirror` (log), etc. |
+| `auth.py` | ~50 | Bearer token validation pra Hub + MCP |
+| `dashboard.py` | ~80 | Minimal dashboard (status página) |
+| `camera.py` | ~100 | IP webcam (futuro: camera Echo Show via S8 Termux) |
+| `schemas.py` | ~50 | Pydantic: requisições/respostas |
+| ❌ `neurogus.py` | — | **Não existe**. Frontend SSE + grafo 3D (pré-requisito NeuroGus Fase 1) |
+
+**Estado:** Em produção. Últimos 4 PRs (27-30/04) fixaram issues MCP auth pro claude.ai (Bearer header → OAuth adaptação). PR #60 mergeado 30/04.
+
+### `.claude/mcp/` — MCP servers
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `mem0_server.py` | ~300 | ⚠️ Legado. Conecta MCP à Mem0 SaaS. Será aposentado pós-14 dias. |
+| `gus_server.py` | ~250 | Expõe tools do bot: auto_diagnostico, sugerir_wikilinks, perguntar_gpt (GPT-5) |
+
+### `.github/scripts/` — Utilitários
+
+Principais:
+- `export_mem0.py` — exporta Mem0 SaaS pra JSON (cron diário)
+- `enrich_mem0_export.py` — enriquece export com embeddings (script existe, sem cron)
+- `audit_mem0.py` — auditoria Mem0 (será migrado pra Hub)
+
+**Total Python:** 13,459 linhas entre `gus/`, `hub/`, `api/`, `.claude/mcp/`, `.github/scripts/`
+
+---
+
+## 3. Documentos canônicos `projetos/gus/gus-NN-*.md` (30 docs)
+
+| ID | Título | Status | Resumo |
+|----|--------|--------|--------|
+| 01 | visao-geral | ✅ Implementado | Arquitetura multi-portal: Telegram, Claude Code, Claude Chat, ChatGPT |
+| 02 | implementado | ✅ Implementado | Feature checklist v1 (OCR, memória, tools) |
+| 03 | configuracao-manual | ✅ Implementado | Passo-a-passo setup bot Telegram + Railway |
+| 04 | seguranca-protecao | ✅ Implementado | Patterns sensíveis, gate confiança OCR, fallbacks |
+| 05 | portas-capacidades | ✅ Implementado | Feature matrix por porta (Telegram, Claude, etc.) |
+| 06 | autonomia-acoes | ✅ Implementado | Ações automáticas pendentes (vídeo, Google SA, Alexa) |
+| 07 | decisoes-descartadas | ✅ Implementado | Por que NOT Ollama, NOT llama.cpp, etc. |
+| 08 | plano-proximos-passos | ✅ Implementado | Roadmap até Alexa (descontinuado, vide gus-10) |
+| 09 | guia-uso-diario | ✅ Implementado | Como usar o Gus no dia-a-dia |
+| 10 | caminho-alexa | ✅ Implementado | Roadmap revisado: Alexa V1 (Dot 3) → Custom GPT → Termux |
+| 11 | tools-roadmap | ✅ Implementado | Roadmap de 21 tools (maioria pronto) |
+| 12 | portas-futuras | ✅ Implementado | Portas planejadas (Alexa, mobile voz, webcam) |
+| 13 | tags-canonicas | ✅ Implementado | Nomenclatura tags de origem (via) e tipos memória |
+| 14 | custom-gpt-setup | ✅ Implementado | Passo-a-passo Custom GPT com Actions |
+| 15 | decisao-migracao | ✅ Implementado | Por que migrar de Mem0 (SaaS lento) para Hub Qdrant |
+| 16 | canal-unificado | ✅ Implementado | Arquitetura pasta `dialogos/` por destinatário |
+| 17 | setup-ambiente | ✅ Implementado | Vars env, secrets, Railway, Qdrant Cloud |
+| 18 | schema-indexacao | ✅ Implementado | Schema payload Hub (16 campos: tipo, camada_temporal, area, confiança, via, etc.) |
+| 19 | etapa1-mem0-selfhost | ✅ Implementado | Fase 1 ADR-001 (Qdrant via wrapper Mem0) |
+| 20 | etapa2-hub-qdrant | ✅ Implementado | Fase 2 ADR-001 (Hub direto com payload rico) |
+| 21 | etapa3-curador | ✅ Implementado | Fase 3: curador híbrido Haiku × Sonnet (depois GPT) |
+| 22 | etapas4-5-ego-autorelato | 🔄 Parcial | Fase 4-5: ego_cache + auto-relatório (Fase 4 concluída, Fase 5 pendente) |
+| 23 | logica-qdrant-mem0 | ✅ Implementado | Explicação convivência dual até aposentadoria Mem0 |
+| 24 | hub-pre-agi-visao | ✅ Implementado | Visão de longo prazo: Hub como infraestrutura pré-AGI |
+| 25 | roadmap-ativacao | ✅ Implementado | Sequência: Hub → Curador → Portas customizadas |
+| 26 | status-consolidado | ✅ Implementado | Status Q1 2026 (completo até 26/04) |
+| 27 | protocolo-portas-tools | ✅ Implementado | Padronização: como portas acessam tools via MCP |
+| 28 | acesso-hub-claude-chat | ✅ Implementado | Como Claude Chat lê Hub (início, precisa OAuth fix) |
+| 28-passo2 | mcp-server | ✅ Implementado | Setup MCP server gus-hub em claude.ai |
+| 29 | roteamento-multimodelo-tiogu | ✅ Implementado | Decisão: Son
+
+[…transcript truncado…]
+
+**5 técnicas (C1-C5)**.
+
+A mais consequente é **A1 (mock HTML)** — define se a Fase 2 leva 4h ou 7h.
+
+quer que eu te explique qualquer uma a fundo, ou já manda as respostas?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`380565c`).
+quero q explique cada uma a fundo, e depois te mando o codigo q tenho
+user: Continue from where you left off.
+assistant: No response requested.
+user: quero q explique cada uma a fundo, e depois te mando o codigo q tenho
+assistant: beleza, vou explicar cada uma a fundo. divididas em 3 blocos pra não inundar. obs: se o código que você vai mandar já resolve várias dessas (A1, C1, C3, C4), ajusto rápido depois — então leia agora pra ter contexto, mas pode pular pro código se preferir.
+
+---
+
+## A — Decisões abertas do gus-30 §11
+
+### A1 — Mock HTML do Drive: localizar ou recriar?
+
+**Contexto:** em 28/04 a Claude Chat criou um HTML mock no Drive privado dela. Tem rotação orbital, ~30 fragmentos simulados, painel lateral, filtros. Foi descrito no `dialogos/inbox-tiogu/2026-04-28T14-02__neurogus-codigo-v1.md` mas o arquivo em si não foi commitado — só uma referência ao Drive.
+
+**Trade-off real:**
+
+| Localizar | Recriar |
+|---|---|
+| ✅ economiza ~2-3h | ❌ ~3-4h pra refazer UI |
+| ✅ continuidade visual com o que ela desenhou | ✅ código nasce alinhado com decisões pós-28/04 (linha temporal, soft delete, anel orbital) |
+| ⚠️ pode estar com inconsistências de versão | ⚠️ "luva sob medida" mas mais trabalho |
+| ⚠️ vai precisar adaptar mesmo (SSE real, brain dual, etc) | ✅ menos retrabalho de adaptação |
+
+**Implicação:**
+- Se você localizar: eu adapto (substituo `setInterval(addFrag, 9000)` por `EventSource('/hub/stream?token=...')`, troco dados simulados por `fetch('/hub/recent')`, adiciono brain dual e linha temporal). Provavelmente ~150 LoC delta sobre o mock.
+- Se recriar: começo do zero seguindo §8 do gus-30 (specs visuais).
+
+**Como localizar:** abre uma sessão Claude Chat de novo e pede "lê o arquivo HTML que você criou em 28/04 sobre o NeuroGus, manda o conteúdo aqui ou salva em `dialogos/inbox-claude-code/`". Se ela tiver memória da sessão anterior, acha. Se não, recria é o caminho.
+
+**Recomendação:** **tentar localizar primeiro** (5min de investimento), se não rolar, recriar.
+
+---
+
+### A2 — Token na URL aceitável?
+
+**Contexto:** o `/hub/stream` precisa de auth, mas EventSource (browser API pra SSE) não suporta header customizado. Caminhos:
+
+| Opção | Como funciona | Risco |
+|---|---|---|
+| **`?token=...` na query** | URL fica `/hub/stream?token=ABC123` no histórico do browser, em logs proxy, em referrer headers | Token vaza pra qualquer página linkada. Médio. |
+| **Cookie HttpOnly** | POST `/hub/auth` seta cookie com token, EventSource manda automático | Token nunca aparece em URL. Mas requer endpoint de auth + lógica de logout. ~30 LoC extras. |
+| **Token específico curto** | `NEUROGUS_TOKEN` separado do principal, TTL 24h, renovado a cada acesso | Mais código, mas se vazar, expira sozinho. |
+
+**Implicação prática:**
+- Você é único usuário. URL não é compartilhada. Tokens em logs Railway é o risco real, mas Railway logs já são privados.
+- **A diferença real:** se você abrir DevTools → Network e copiar a URL, o token tá lá. Acidentalmente compartilhar print do DevTools = vaza. Cookie evita isso.
+
+**Recomendação v0:** **`?token=` aceitável.** Pra v1.1, migra pra cookie HttpOnly se você for compartilhar prints com terceiros. **Mas:** vale rotacionar `CUSTOM_GPT_TOKEN` periodicamente (mensal) pra reduzir blast radius.
+
+---
+
+### A3 — Auto-orbit ON ou OFF default?
+
+**Contexto:** a câmera fica orbitando lentamente o grafo automaticamente, dando sensação de "sistema vivo". Quando você toca/clica, pausa. 3d-force-graph tem `controls().autoRotate = true; controls().autoRotateSpeed = 0.5`.
+
+**Trade-off:**
+
+| ON default | OFF default |
+|---|---|
+| ✅ "uau" no boot — sistema parece vivo | ✅ você abre e tem controle imediato |
+| ✅ você só observa contemplativo | ❌ menos cinematográfico |
+| ❌ se quiser clicar logo, precisa segurar | ✅ não atrapalha workflow |
+| ❌ em mobile, pause-on-touch é necessário (já incluso) | ✅ mais "ferramenta", menos "demo" |
+
+**Velocidade típica:** `autoRotateSpeed = 0.5` é "lento contemplativo". `2.0` já enjoa. `0.3` é quase imperceptível.
+
+**Recomendação:** **ON com velocidade 0.4** + pause-on-interaction (já incluso). Se enjoar, troca em 1 linha. O ganho de "estranheza fascinante" no primeiro boot vale.
+
+---
+
+### A4 — Reconnect SSE: retoma ou reload?
+
+**Contexto:** SSE pode cair (rede instável, tela do celular bloqueada >5min, deploy do Railway, etc). Ao reconectar, duas estratégias:
+
+| Opção | Como funciona | Custo |
+|---|---|---|
+| **Retomar de event-id** | Backend mantém cache dos últimos N eventos com IDs. Cliente reconecta com `Last-Event-ID` header, backend manda só os que perdeu. | +~40 LoC backend (cache em memória) + complexidade. |
+| **Reload completo** | Após reconnect, cliente re-chama `GET /hub/recent` e re-renderiza grafo do zero. Eventos intermediários perdidos sem animação. | ~5 LoC cliente, zero backend. Mais simples. |
+
+**Quando importa:**
+- Se você fica olhando o NeuroGus enquanto conversa no Telegram, e a rede oscila → retomar preserva a animação de cada fragmento nascendo.
+- Se você abre o NeuroGus pontualmente pra olhar o estado → reload é o que você faria mesmo.
+
+**Outro ponto:** "perder animação intermediária" significa que o nó vai aparecer já na cor do tipo (sem pulso branco). O fragmento existe, só não foi visto nascendo.
+
+**Recomendação:** **reload completo no v0.** Complexidade do retomar não compensa. Se sentir falta, v1.1 adiciona cache de eventos no backend.
+
+---
+
+## B — Decisões UX que decorrem das tomadas
+
+### B1 — Visual do anel orbital pro brain `gus`
+
+**Contexto:** decidimos que nós do brain `gus` (auto-observações do agente) ganham anel orbital pra distinguir do brain `gustavo`. Falta definir: como exatamente.
+
+**Opções:**
+
+| Variação | Look |
+|---|---|
+| **Saturno fino** | Ring 1.3× raio da esfera, 0.05 unidades de espessura, branco opacity 0.7. Distintivo, discreto. |
+| **Halo intenso** | Ring 1.1× raio (quase colado), 0.15 espessura, branco opacity 1.0. Mais visível. |
+| **Anel duplo** | 2 rings concêntricos (1.2× e 1.5×). Marca "orbital", sci-fi. Bonito mas pode poluir. |
+| **Anel rotacionando** | Ring 1.3× + animação `rotation.y += 0.01`. Mais vivo, mais complexo (precisa render loop custom). |
+
+**Implicação:** o `nodeThreeObject` do 3d-force-graph aceita um Three.js Group. Daí coloco esfera + ring no mesmo grupo. ~15 LoC.
+
+**Recomendação:** **Saturno fino estático** (1.3×, 0.05 esp, branco 0.7). Distintivo, não rouba a cena. Se quiser rotação depois, é 1 linha.
+
+---
+
+### B2 — Posição do cluster de controles temporais
+
+**Contexto:** 3 controles temporais (toggle ver linha + dropdown modo + toggle esticar) precisam morar em algum lugar.
+
+**Opções:**
+
+| Posição | Vantagem | Desvantagem |
+|---|---|---|
+| **Canto inferior esquerdo, recolhível** | Não atrapalha grafo | Precisa expandir pra usar |
+| **Topo, barra horizontal** | Sempre visível | Compete com header/logo |
+| **Painel lateral direito (junto com filtros)** | Centraliza controles | Painel fica muito longo |
+| **Floating overlay no centro inferior** | Acessível, "tipo player de vídeo" | Cobre área central do grafo |
+
+**Recomendação:** **canto inferior esquerdo, recolhível com chevron**. Em mobile, expande pra full width temporariamente. Padrão de apps de visualização (Cosmograph, Gephi web).
+
+---
+
+### B3 — Toggle "ver esquecidos" — onde fica
+
+**Contexto:** o backend já aceita `incluir_esquecidos=true` no `/hub/recent`. Falta UI.
+
+**Opções:**
+
+| Posição | Vantagem |
+|---|---|
+| **Painel lateral de filtros** (junto com filtros de tipo) | Agrupado com outros toggles |
+| **Menu kebab (⋮) no header** | Mais escondido, menos uso casual |
+| **Atalho de teclado** (E pra esquecidos) | Rápido pra power user |
+
+**Comportamento ao ativar:** fragmentos esquecidos aparecem **fantasmas** (opacity 0.15, sem brilho, sem partículas nas arestas). Continuam clicáveis pro painel lateral mostrar metadados. Botão "lembrar" no painel ressuscita.
+
+**Recomendação:** **painel lateral de filtros**, com label "ver esquecidos" + contagem entre parênteses (`ver esquecidos (12)`). E atalho de teclado **E** como bonus.
+
+---
+
+### B4 — Confirmação do "Apagar de vez"
+
+**Contexto:** hard delete é irreversível. Soft delete não precisa confirmar (reversível). Mas o hard precisa.
+
+**Opções:**
+
+| Tipo | UX | Pega |
+|---|---|---|
+| **`window.confirm()` nativo** | "Deletar fragmento? OK / Cancelar" | feio mas funcional |
+| **Modal custom (vidro fume)** | Combina com estética NeuroGus | +~30 LoC HTML/CSS |
+| **Hold-to-delete** (botão segura 2s pra confirmar) | Mais "tátil", sem modal | unusual em web, pode confundir |
+| **Type-to-confirm** ("digite APAGAR") | Quase impossível erro | excessivo pra v0 |
+
+**Recomendação:** **modal custom em vidro fume**, mostrando preview do conteúdo do fragmento + 2 botões "esquecer (reversível)" e "apagar de vez (irreversível, vermelho)". A modal serve pra ambos os casos — você decide ali, com contexto.
+
+Isso muda o painel lateral: o botão único "remover" abre modal, modal apresenta as 2 opções. Mais limpo do que 2 botões soltos no painel.
+
+---
+
+### B5 — Cor das arestas cronológicas quando visíveis
+
+**Contexto:** decidi default `#ff6b35` opacity 0.4 (laranja-âmbar). Vale revalidar com você.
+
+**Critérios:**
+- Tem que **contrastar** com arestas semânticas (que serão branco/cinza claro opacity 0.3)
+- Tem que **não competir** com cores dos nós (que cobrem espectro inteiro via HSL golden-ratio)
+- Tem que **sugerir tempo** (calor = passado, frio = presente? ou ao contrário?)
+
+**Alternativas:**
+
+| Cor | Sensação |
+|---|---|
+| `#ff6b35` âmbar | "rastro quente", clássico em UI temporal |
+| `#a78bfa` lavanda | mais sci-fi, calmo |
+| `#fbbf24` ouro | "memórias preciosas" (talvez óbvio demais) |
+| `#fb7185` rosa | quente mas mais distintivo |
+| **gradiente** roxo→âmbar | passado roxo, recente âmbar — comunica direção |
+
+**Recomendação:** **gradiente roxo→âmbar** ao longo da linha (`#6366f1` → `#ff6b35`). Comunica direção do tempo sem precisar de seta. Three.js suporta vertex colors.
+
+---
+
+## C — Decisões técnicas novas
+
+### C1 — Onde servir o HTML?
+
+**Opções:**
+
+| Opção | Estrutura |
+|---|---|
+| **`api/neurogus.py` separado** (novo arquivo) | Segue padrão `api/dashboard.py` e `api/camera.py`. HTML como string `NEUROGUS_HTML`. Importado em `api/server.py` no handler. |
+| **Rota direto em `api/server.py`** | HTML inline no `server.py`. Menos arquivo, mais clutter. |
+| **Servir via `hub/routes.py`** | HTML estaria no router do Hub. Anti-padrão (mistura camadas). |
+
+**Implicação:** o HTML do NeuroGus é grande (~600-800 linhas com inline JS+CSS). Isso pesa muito o `server.py`. **Padrão claro do projeto é arquivo separado.**
+
+**Recomendação:** **`api/neurogus.py` separado**, idêntico ao padrão do dashboard/camera. Em `server.py` adiciona handler `/neurogus` igual aos outros 2.
+
+---
+
+### C2 — PWA manifest
+
+**Contexto:** PWA permite instalar como ícone na home do celular (sem barra de URL, fullscreen). Precisa de:
+- `manifest.json`
+- service worker (mínimo: cache da página + ícone)
+- meta tags
+
+**Decisões:**
+
+| Campo | Sugestão |
+|---|---|
+| `name` | "NeuroGus" |
+| `short_name` | "NeuroGus" |
+| `theme_color` | `#030312` (preto-azul do fundo) |
+| `background_color` | `#030312` |
+| `display` | `standalone` (sem barra de URL) |
+| `orientation` | `any` (celular gira, vamos suportar) |
+| `icon` | **preciso gerar ou você tem?** |
+
+**Opções de ícone:**
+- **Gerar via Canva/Figma** — esfera com brilho cyan sobre preto, 192px e 512px PNG
+- **Você fornece** — você tinha alguma identidade visual em mente?
+- **Pular ícone v0** — tecnicamente PWA aceita sem ícone, mas vai ficar feio na home
+- **Usar emoji renderizado** — 🧠 ou ✦ renderizado em canvas → PNG. Quick e dirty.
+
+**Recomendação:** **gerar SVG simples** (uma esfera cyan glowing num círculo preto), converter pra PNG 192px e 512px, salvar em `api/static/neurogus-icon-{192,512}.png`. Posso fazer isso ou você prefere desenhar?
+
+---
+
+### C3 — 3d-force-graph: CDN ou bundle local?
+
+**Trade-off:**
+
+| CDN (`unpkg.com/3d-force-graph@1.73`) | Bundle local |
+|---|---|
+| ✅ 1 linha `<script src="...">` | ❌ precisa setup de bundler (Vite, esbuild) |
+| ✅ cache compartilhado entre sites | ❌ self-hosting |
+| ❌ depende de internet pra carregar | ✅ funciona offline (com service worker) |
+| ❌ vulnerável se CDN comprometida | ✅ sob seu controle |
+| ❌ mudança de versão upstream pode quebrar | ✅ versão fixa |
+
+**Tamanhos:** 3d-force-graph (~60KB gzip) + Three.js (~300KB gzip) = ~360KB. CDN download em 3G demora ~3s.
+
+**Recomendação v0:** **CDN com versão fixada** (`@1.73.3` exato, não `@1`). Pra v1.1, se você quiser offline real, migra pra bundle. Mas v0 não faz sentido perder tempo com bundler.
+
+---
+
+### C4 — Tipografia: CDN ou local?
+
+**Mesmo trade-off do C3, mas com Google Fonts.**
+
+**Tamanhos:** Syne 800 + Space Mono = ~50KB total.
+
+**Recomendação:** **Google Fonts CDN** com `display=swap` (texto fallback enquanto carrega — usuário não vê tela em branco). Igual padrão da web 99% dos sites.
+
+---
+
+### C5 — Scope da PWA: standalone ou browser?
+
+**Opções:**
+
+| `display` | Comportamento |
+|---|---|
+| `standalone` | Vira "app". Sem barra URL, ícone na home, fullscreen. **Padrão pra PWA.** |
+| `fullscreen` | Sem nem barra de status. Mais imersivo mas pode confundir (cadê o relógio?) |
+| `minimal-ui` | Mantém barra de URL fina. Híbrido. |
+| `browser` | Comporta como tab normal. Sem benefício PWA real. |
+
+**Recomendação:** **`standalone`** — padrão. Você instala uma vez, abre depois como app. Se precisar fullscreen pontual, usa o gesto nativo.
+
+---
+
+## resumo executivo
+
+| ID | Recomendação default | Alta consequência? |
+|---|---|---|
+| A1 | tentar localizar mock primeiro | **sim** (define escopo da Fase 2) |
+| A2 | `?token=` aceitável v0 | médio |
+| A3 | auto-orbit ON, speed 0.4 | baixa (1 linha mudar depois) |
+| A4 | reload completo no reconnect | baixa |
+| B1 | Saturno fino estático | baixa |
+| B2 | canto inferior esquerdo recolhível | baixa |
+| B3 | painel lateral + atalho E | baixa |
+| B4 | modal custom com 2 botões | **média** (muda design do painel lateral) |
+| B5 | gradiente roxo→âmbar | baixa |
+| C1 | `api/neurogus.py` separado | **alta** (estrutura do código) |
+| C2 | gerar ícone SVG, PNG 192/512 | média |
+| C3 | CDN com versão fixa | baixa |
+| C4 | Google Fonts CDN | baixa |
+| C5 | `display: standalone` | baixa |
+
+---
+
+manda o código que você tem. dependendo do que vier, várias dessas decisões já são respondidas pelo o que ele já implementou.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`4170334`).

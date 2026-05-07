@@ -31,6 +31,8 @@ from qdrant_client.models import (
     PayloadSchemaType, PointStruct,
 )
 
+from hub.events import broadcast_sync
+
 logger = logging.getLogger(__name__)
 
 BRT = timezone(timedelta(hours=-3))
@@ -161,7 +163,76 @@ def ingestar(conteudo: str, metadata: dict) -> str:
         collection_name=COLLECTION,
         points=[PointStruct(id=frag_id, vector=vetor, payload=payload)],
     )
+
+    # Pós-ingest: calcula top-K vizinhos por afinidade semântica e popula
+    # 'relacionados' no payload. Usado pelo NeuroGus pra desenhar arestas
+    # (gus-30.1 §1, K=3, threshold=0.6).
+    try:
+        vizinhos = _calcular_vizinhos(
+            vetor, k=3, threshold=0.6,
+            exclude_id=frag_id, user_id=payload["user_id"],
+        )
+        if vizinhos:
+            client.set_payload(
+                collection_name=COLLECTION,
+                payload={"relacionados": vizinhos},
+                points=[frag_id],
+            )
+            payload["relacionados"] = vizinhos
+    except Exception:
+        logger.exception("ingestar: cálculo de vizinhos falhou (não-fatal)")
+
+    # Broadcast SSE pro NeuroGus. No-op se ninguém estiver conectado.
+    try:
+        broadcast_sync({
+            "id": frag_id,
+            "conteudo": conteudo,
+            "tipo": payload["tipo"],
+            "estado": payload["estado"],
+            "confianca": payload["confianca"],
+            "user_id": payload["user_id"],
+            "via": payload["via"],
+            "area": payload["area"],
+            "criado_em": payload["criado_em"],
+            "relacionados": payload.get("relacionados", []),
+            "curador": payload.get("curador"),
+        })
+    except Exception:
+        logger.exception("ingestar: broadcast SSE falhou (não-fatal)")
+
     return frag_id
+
+
+def _calcular_vizinhos(vetor: list[float], k: int = 3, threshold: float = 0.6,
+                       exclude_id: Optional[str] = None,
+                       user_id: str = "gustavo") -> list[str]:
+    """Top-K vizinhos por cosine similarity, filtrando o próprio nó.
+
+    Usado pelo ingestar() pra popular 'relacionados' no payload — o NeuroGus
+    desenha arestas entre fragmentos com afinidade semântica >= threshold
+    (gus-30.1 §1).
+
+    Retorna lista de IDs (strings). Vazia se não houver vizinhos acima
+    do threshold ou se a coleção ainda for muito pequena.
+    """
+    client = _get_client()
+    # Busca k+1 pra excluir o próprio depois (sem usar id_filter, mais
+    # robusto que assumir que o próprio sempre é o top-1)
+    pontos = client.query_points(
+        collection_name=COLLECTION,
+        query=vetor,
+        query_filter=Filter(must=[
+            FieldCondition(key="user_id", match=MatchValue(value=user_id)),
+        ]),
+        limit=k + 1,
+        with_payload=False,
+    ).points
+
+    return [
+        str(p.id) for p in pontos
+        if p.score is not None and p.score >= threshold
+        and (exclude_id is None or str(p.id) != exclude_id)
+    ][:k]
 
 
 def lembrar(query: str, user_id: str = "gustavo", limit: int = 10,
@@ -241,6 +312,15 @@ def listar(user_id: str = "gustavo", limit: int = 50) -> list[dict]:
 
     Usado pelo MCP `mem0-gus` em listar_memorias / listar_memorias_gus
     quando o usuário quer ver tudo (não fazer query específica).
+
+    Retorna o **payload completo** mais um campo `id` derivado do point ID.
+    Antes do fix de 2026-05-04, esta função filtrava só 7 campos
+    (conteudo, tipo, estado, via, area, criado_em, curador) — o que
+    deixava `meta_relatorio_hub` e `auditoria_hub` cegos pra
+    `camada_temporal`, `prompt_version`, `confianca`,
+    `tipo_esquecimento`, `hash_janela` e outros campos que o curador
+    grava normalmente. Resultado: 100% dos relatórios mostravam esses
+    campos como `(sem)` mesmo quando o Hub estava populando direito.
     """
     client = _get_client()
     pontos, _ = client.scroll(
@@ -250,19 +330,12 @@ def listar(user_id: str = "gustavo", limit: int = 50) -> list[dict]:
         with_payload=True,
         with_vectors=False,
     )
-    return [
-        {
-            "id": str(p.id),
-            "conteudo": (p.payload or {}).get("conteudo", ""),
-            "tipo": (p.payload or {}).get("tipo"),
-            "estado": (p.payload or {}).get("estado"),
-            "via": (p.payload or {}).get("via"),
-            "area": (p.payload or {}).get("area"),
-            "criado_em": (p.payload or {}).get("criado_em"),
-            "curador": (p.payload or {}).get("curador"),
-        }
-        for p in pontos
-    ]
+    out: list[dict] = []
+    for p in pontos:
+        payload = dict(p.payload or {})
+        payload["id"] = str(p.id)
+        out.append(payload)
+    return out
 
 
 def deletar(memory_id: str, motivo: Optional[str] = None) -> bool:
@@ -323,6 +396,94 @@ def deletar(memory_id: str, motivo: Optional[str] = None) -> bool:
     return True
 
 
+def esquecer(memory_id: str, tipo_esquecimento: str = "deliberado") -> bool:
+    """Soft delete: marca estado='esquecido' + tipo_esquecimento.
+
+    Reversível via re_lembrar(). Fragmento some das buscas semânticas
+    (lembrar() filtra estado='ativo' por default) mas continua no Qdrant
+    como substrato de retro-aprendizado (gus-30.1 §3).
+
+    Default tipo_esquecimento='deliberado' = ação consciente do usuário
+    via NeuroGus painel.
+    """
+    if not memory_id or not memory_id.strip():
+        raise ValueError("memory_id vazio")
+    if tipo_esquecimento not in ("funcional", "deliberado", "superado", "protegido"):
+        raise ValueError(f"tipo_esquecimento inválido: '{tipo_esquecimento}'")
+    client = _get_client()
+    client.set_payload(
+        collection_name=COLLECTION,
+        payload={"estado": "esquecido", "tipo_esquecimento": tipo_esquecimento},
+        points=[memory_id.strip()],
+    )
+    return True
+
+
+def re_lembrar(memory_id: str) -> bool:
+    """Reverte soft delete: estado='ativo', limpa tipo_esquecimento.
+
+    Permite resgatar fragmento esquecido por engano (gus-30.1 §4.3).
+    """
+    if not memory_id or not memory_id.strip():
+        raise ValueError("memory_id vazio")
+    client = _get_client()
+    client.set_payload(
+        collection_name=COLLECTION,
+        payload={"estado": "ativo", "tipo_esquecimento": None},
+        points=[memory_id.strip()],
+    )
+    return True
+
+
+def recentes(user_id: str = "gustavo", limit: int = 50,
+             incluir_esquecidos: bool = False) -> list[dict]:
+    """Lista fragmentos ordenados por criado_em desc (mais recentes primeiro).
+
+    Usado pelo /hub/recent pra boot do grafo do NeuroGus. Por default
+    omite fragmentos com estado='esquecido' (substrato de aprendizado,
+    não pertence ao grafo ativo). incluir_esquecidos=True traz tudo
+    pra modo "ver esquecidos" do NeuroGus (gus-30.1 §3.2).
+
+    Retorna fragmentos com payload reduzido pro frontend, incluindo
+    'relacionados' (IDs dos vizinhos por afinidade semântica).
+    """
+    client = _get_client()
+
+    must = [FieldCondition(key="user_id", match=MatchValue(value=user_id))]
+    must_not = []
+    if not incluir_esquecidos:
+        must_not.append(FieldCondition(key="estado", match=MatchValue(value="esquecido")))
+
+    pontos, _ = client.scroll(
+        collection_name=COLLECTION,
+        scroll_filter=Filter(must=must, must_not=must_not),
+        limit=limit,
+        with_payload=True,
+        with_vectors=False,
+    )
+
+    fragmentos = [
+        {
+            "id": str(p.id),
+            "conteudo": (p.payload or {}).get("conteudo", ""),
+            "tipo": (p.payload or {}).get("tipo"),
+            "estado": (p.payload or {}).get("estado"),
+            "confianca": (p.payload or {}).get("confianca", 0.7),
+            "user_id": (p.payload or {}).get("user_id"),
+            "via": (p.payload or {}).get("via"),
+            "area": (p.payload or {}).get("area"),
+            "criado_em": (p.payload or {}).get("criado_em"),
+            "relacionados": (p.payload or {}).get("relacionados", []),
+            "curador": (p.payload or {}).get("curador"),
+        }
+        for p in pontos
+    ]
+
+    # Ordena descendente por criado_em (Qdrant scroll não garante ordem)
+    fragmentos.sort(key=lambda f: f.get("criado_em") or "", reverse=True)
+    return fragmentos[:limit]
+
+
 def stats() -> dict:
     """Stats agregados da coleção. Útil pra dashboard / debug."""
     client = _get_client()
@@ -336,4 +497,109 @@ def stats() -> dict:
         "status": info.status,
         "user_id_gustavo": total_gustavo,
         "user_id_gus": total_gus,
+    }
+
+
+def _filtros_ext(
+    user_id: str,
+    tipo: Optional[str] = None,
+    via: Optional[str] = None,
+    area: Optional[str] = None,
+    camada_temporal: Optional[str] = None,
+    curador: Optional[str] = None,
+) -> Filter:
+    must = [FieldCondition(key="user_id", match=MatchValue(value=user_id))]
+    for key, val in (
+        ("tipo", tipo),
+        ("via", via),
+        ("area", area),
+        ("camada_temporal", camada_temporal),
+        ("curador", curador),
+    ):
+        if val:
+            must.append(FieldCondition(key=key, match=MatchValue(value=val)))
+    return Filter(must=must)
+
+
+def listar_filtrado(
+    user_id: str = "gustavo",
+    tipo: Optional[str] = None,
+    via: Optional[str] = None,
+    area: Optional[str] = None,
+    camada_temporal: Optional[str] = None,
+    curador: Optional[str] = None,
+    limit: int = 50,
+) -> list[dict]:
+    """Lista com filtros avançados, sem embedding. Para operações de inspeção."""
+    client = _get_client()
+    pontos, _ = client.scroll(
+        collection_name=COLLECTION,
+        scroll_filter=_filtros_ext(user_id, tipo, via, area, camada_temporal, curador),
+        limit=limit,
+        with_payload=True,
+        with_vectors=False,
+    )
+    return [
+        {
+            "id": str(p.id),
+            "conteudo": (p.payload or {}).get("conteudo", ""),
+            "tipo": (p.payload or {}).get("tipo"),
+            "estado": (p.payload or {}).get("estado"),
+            "via": (p.payload or {}).get("via"),
+            "area": (p.payload or {}).get("area"),
+            "camada_temporal": (p.payload or {}).get("camada_temporal"),
+            "curador": (p.payload or {}).get("curador"),
+            "confianca": (p.payload or {}).get("confianca"),
+            "criado_em": (p.payload or {}).get("criado_em"),
+        }
+        for p in pontos
+    ]
+
+
+def auditar() -> dict:
+    """Verifica qualidade da coleção. Retorna problemas e distribuições."""
+    client = _get_client()
+
+    def _contar_campo(campo: str, valor: str) -> int:
+        return client.count(
+            collection_name=COLLECTION,
+            count_filter=Filter(must=[FieldCondition(key=campo, match=MatchValue(value=valor))]),
+            exact=True,
+        ).count
+
+    curadores = {}
+    for c in ("haiku", "sonnet", "telegram", "claude-code", "mgx", "api"):
+        n = _contar_campo("curador", c)
+        if n:
+            curadores[c] = n
+
+    vias = {}
+    for v in ("telegram", "claude-code", "api", "github-action"):
+        n = _contar_campo("via", v)
+        if n:
+            vias[v] = n
+
+    todos, _ = client.scroll(
+        collection_name=COLLECTION,
+        limit=500,
+        with_payload=True,
+        with_vectors=False,
+    )
+    curtos = [
+        {"id": str(p.id), "conteudo": (p.payload or {}).get("conteudo", "")[:80]}
+        for p in todos
+        if len((p.payload or {}).get("conteudo", "")) < 30
+    ]
+    sem_tipo = [
+        {"id": str(p.id), "conteudo": (p.payload or {}).get("conteudo", "")[:80]}
+        for p in todos
+        if not (p.payload or {}).get("tipo")
+    ]
+
+    return {
+        "total": len(todos),
+        "por_curador": curadores,
+        "por_via": vias,
+        "fragmentos_curtos_lt30": curtos,
+        "fragmentos_sem_tipo": sem_tipo,
     }

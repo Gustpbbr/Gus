@@ -106,6 +106,16 @@ hub/
 └── hooks/
     └── scan_sensivel.py ← PreToolUse, importa patterns de gus.patterns_sensiveis
 
+apps-script/  ← Sync Drive ⇄ GitHub bidirecional (desde 07/05/2026)
+├── Code.gs           ← entry points (safeSync*, setupCheck, resetState)
+├── GitHubAPI.gs      ← wrappers Contents/Compare/Trees + fallback Blob
+├── DriveSync.gs      ← DriveApp helpers + lógica inbox/mirror
+├── Notifications.gs  ← Telegram via form-encoded
+└── README.md         ← setup completo (Properties, triggers, casos edge)
+# Fonte da verdade roda no projeto Apps Script "Gus Sync (GitHub ⇄ Drive)"
+# em script.google.com (conta gustavo.pratti@gmail.com). Esses .gs são
+# cópia versionada — pra editar, muda aqui, cola no Editor, salva.
+
 .github/
 ├── scripts/
 │   ├── _hub_compat.py ← layer de compat Hub→formato Mem0 pros scripts cron
@@ -235,7 +245,7 @@ historico/                    ← legacy / uso único (deletável sem impacto)
 - [x] Scripts cron migrados pra Hub (R2)
 - [x] MCP Claude Code lendo Hub (R6)
 - [x] OCR Dimagem com gate de confiança (#4 inbox)
-- [x] Sync GitHub → Google Drive via GitHub Action
+- [x] Sync GitHub ⇄ Google Drive via Google Apps Script (bidirecional, desde 07/05/2026 — código em `apps-script/`, fonte da verdade roda no projeto Apps Script `Gus Sync (GitHub ⇄ Drive)`)
 - [x] Validators Pydantic schema gus-18
 - [x] Bootstrap-v5
 - [x] Tagueamento `via` em toda escrita Hub

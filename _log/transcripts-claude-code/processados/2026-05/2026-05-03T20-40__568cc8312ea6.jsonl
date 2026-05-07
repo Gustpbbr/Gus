@@ -1,0 +1,585 @@
+user: oi, blz Gus?  podemos falar do projeto?
+assistant: opa, blz. bora.
+
+vi que tem 3 demandas paradas em `dialogos/inbox-claude-code/`:
+- `2026-05-01-captura-multiporta-curador.md`
+- `2026-05-01-drive-sync-oauth-fix.md`
+- `_frontmatter-referencia.md` (esse é template, não é demanda)
+
+quer atacar alguma dessas ou tem outra coisa na cabeça? se quiser eu leio o `_estado-atual.md` primeiro pra pegar handoff da última sessão, é só falar.
+user: primeiro tenha um panorama geral do projeto. segue um guia para vc ver. depois vamos focar em um assunto específico, mas te falo apos vc ler tudo necessário do projeto. segue uma dica de outra aba do code. analise tudo, e busque tbm as últimas atualizações do projeto q nao estao nos documentos citados
+
+Aqui vai a receita ordenada por valor por contexto. Foco: mínimo necessário pra não inflar contexto à toa.
+Core obrigatório (sempre, em toda aba nova)
+Arquivo
+Pra quê
+dialogos/_bootstrap/gus-bootstrap.md
+manual operacional do Gus, regras de comportamento, como cada porta usa o Hub
+dialogos/_bootstrap/gus-identity.md
+quem é o Gustavo + quem é o Gus enquanto entidade
+dialogos/_bootstrap/gus-estado-atual.md
+handoff auto-gerado pelo cron 03h, snapshot do Hub
+projetos/gus/_estado-atual.md
+onde paramos na sessão anterior (mais "operacional" que o bootstrap)
+Esses 4 dão 80% do contexto pra qualquer aba nova.
+Live — preferir sobre arquivo
+Se a aba tem MCP gus-hub conectado:
+ego_cache_atual() — identidade + últimas 3 decisões + 5 meta-reflexões
+fragmentos_recentes(horas=24) — o que rolou desde ontem
+contar_fragmentos() — sanity check
+Hub é mais fresco que gus-estado-atual.md (que é snapshot das 03h). Sempre que possível, prefira tools MCP a arquivo .md.
+Específicos do contexto da pergunta
+Só ler se a conversa for sobre:
+Tema
+Arquivo
+Próximos passos / NeuroGus
+projetos/gus/gus-08-plano-proximos-passos.md, projetos/gus/gus-30-neurogus-roadmap.md
+Caminho Alexa
+projetos/gus/gus-10-caminho-alexa.md
+MCP / claude.ai connector
+projetos/gus/gus-28-passo2-mcp-server.md
+Roteamento multi-modelo
+projetos/gus/gus-29-roteamento-multimodelo-tiogu.md
+Hub Qdrant arquitetura
+projetos/gus/gus-18-schema-indexacao.md, gus-20-etapa2-hub-qdrant.md, gus-21-etapa3-curador.md
+Decisão migração ADR-001
+projetos/gus/gus-15-decisao-migracao.md
+Demanda da semana
+dialogos/streams/semana-2026-04-21.md (último arquivo da pasta)
+Demandas pendentes pra essa porta
+dialogos/inbox-/
+O que NÃO precisa ler
+gus-01 a gus-09 (a não ser por curiosidade arqueológica — bootstrap já resume)
+pessoal/, dimagem/, receitas/ etc. — só sob demanda explícita
+historico/ — pasta morta de conteúdo legado
+Logs antigos (>3 dias)
+_log/sessoes-claude-code/ — arquivos longos de transcript
+Truque pra Claude Chat web
+Como ele lê via Drive Project knowledge, o boot dele já tem gus-bootstrap.md como project instruction. Aí ele só precisa fazer:
+Ler gus-estado-atual.md (snapshot 03h)
+Chamar ego_cache_atual() via MCP gus-hub (estado vivo)
+Pra Claude Code, o CLAUDE.md na raiz é auto-injetado em toda sessão — então já cobre o "core obrigatório".
+Quer que eu padronize isso num arquivo dialogos/_bootstrap/checklist-boot-aba-nova.md pra deixar canonizado?
+Ah, entendi mal. PRs são histórico, não documentação — uma aba nova não precisa ler nenhum.
+Por que não
+O estado final dos PRs já tá no código + nos docs gus-XX atualizados
+PRs descrevem o caminho, não onde a gente tá. Nova aba quer onde tamo.
+60 PRs = ruído gigante no contexto pra ganho zero
+Quando vale olhar PR
+Situação
+Qual PR
+"Por que esse arquivo tá assim?"
+git log --oneline  → abre o PR específico
+"O que mudou hoje?"
+Lista PRs mergeados nas últimas 24h: gh pr list --state merged --limit 10
+Bug recente
+PR mais recente que tocou o código quebrado
+Decisão arquitetural não-óbvia
+PR description costuma ter o "porquê"
+Boa prática
+O que tem que ficar nos docs (não nos PRs):
+Decisões arquiteturais → ADR (gus-15 é exemplo)
+Como configurar algo → gus-XX-setup
+Estado atual do projeto → gus-26-status-consolidado, _estado-atual
+Se um PR precisa ser lido pra entender o presente, é sinal de doc desatualizado — não de PR importante.
+Receita
+Aba nova só precisa olhar PRs se:
+Você falar "tá quebrando X depois do PR #YY" → aí sim, lê o PR
+Investigar bug específico no código mexido recentemente
+Senão, esquece os 60. Os 7 docs do checklist anterior te dão o estado atual.
+assistant: Beleza, vou ler os 4 core em paralelo + checar git recente e inbox.
+assistant: O `_estado-atual.md` (27/04) está bem desatualizado — git log mostra muita coisa depois (PRs #57, #60, #63, #64, #67, captura multiporta). Vou ler stream da semana, as 2 demandas pendentes, e os PRs recentes pra ter o estado real.
+assistant: Vou ler as 2 demandas pendentes + docs de próximos passos + PRs recentes em paralelo.
+assistant: Faltam o status consolidado, próximos passos, NeuroGus, e os PRs recentes pra fechar o panorama.
+assistant: Vou olhar gus-30 (NeuroGus) por partes + PRs recentes mais relevantes pra fechar o gap pós-27/04.
+assistant: Pronto, panorama montado. Vou resumir o que vi e o gap entre os docs e o estado real (já que o `_estado-atual.md` parou em 27/04).
+
+## Panorama do projeto Gus (02/05/2026, 00h25)
+
+### Identidade e arquitetura
+Sistema multi-porta (Telegram, Claude Code, Claude Chat, futuros: Custom GPT, Alexa) com Hub Qdrant (`gus_hub`) como memória central + GitHub `Gustpbbr/Gus` como conhecimento + Drive como espelho. Você (Gustavo) não programa, IA implementa, validação manual.
+
+### O que está sólido
+- **Bot Telegram (TioGu)** ~21 tools, multimídia, prompt caching, em produção Railway
+- **Custom GPT API** (FastAPI Railway) — 14 endpoints, falta só configurar Action no Builder desktop
+- **Claude Chat** — bootstrap funcional, lê Drive
+- **Canal `dialogos/`** — bidirecional, cron 15min Drive→GitHub, validado
+- **Hub Qdrant** + curador híbrido (Haiku × Sonnet/GPT em paralelo) — coleta dual rola até 12/05
+- **MCP server público** no Railway com URL secret no path (PRs #57/58/60) — Claude Chat web acessa Hub
+- **Captura Claude Code via cron** (PR #64, 01/05) — hook Stop salva transcript redatado, cron */30min processa via curador 2x (gustavo + gus)
+- **Curador-chat bidirecional + top-tier** (PR #67, 01/05) — Chat usa Sonnet 4.6 + GPT-4o, bug `resultado["sonnet"]` que virou `["gpt"]` corrigido (logs estavam mentindo havia semanas)
+
+### Em aberto (pelo que vi nos docs + git + inbox)
+1. **Drive sync parado** — demanda `2026-05-01-drive-sync-oauth-fix.md` ativa. Hipótese: refresh token OAuth expirou (apps Testing expiram 7 dias). 3 opções: reset OAuth (paliativo) / Service Account (definitivo) / aposentar Drive sync (radical). **Aguarda decisão tua.**
+
+2. **Captura multiporta Claude Chat** — demanda `2026-05-01-captura-multiporta-curador.md` parcialmente resolvida pelo PR #67 (curador bidirecional), mas falta o gatilho proativo no Chat (Opção A: prompt no bootstrap ensinando ele a chamar `ingestar_fragmento` quando detecta decisão/preferência). **Aguarda decisão tua.**
+
+3. **NeuroGus** (gus-30, 29/04) — PWA com grafo 3D do Hub. Planejamento 100% pronto, ~145 linhas pra implementar (`hub/events.py`, `broadcast()`, 2 endpoints SSE, frontend). 3 demandas em `inbox-tiogu/` de 28/04 (briefing, arquitetura, código-v1). **Aguarda tu confirmar itens 11.1-11.7 das decisões abertas.**
+
+4. **Decisão final modelo curador** (Fase 5 ADR-001) — após 12/05/2026, comparar pares Haiku × Sonnet/GPT da coleta dual.
+
+5. **Aposentar Mem0 SaaS** — depende da #4.
+
+### Observações
+- `_estado-atual.md` (27/04) e `gus-26-status-consolidado.md` (26/04) estão desatualizados — não refletem PRs #57, #60, #63, #64, #67. Vale atualizar em algum momento.
+- `gus-estado-atual.md` (gerado pelo cron 15min) registra Hub ocioso há 6h+ na janela "fragmentos últimas 6h". Pode ser só horário (00h, sem conversa) ou curador parado — não dá pra distinguir daqui sem checar.
+- Branch atual: `claude/project-discussion-fkfA8` (limpa, só um arquivo `_log/retro-engine` novo desta sessão).
+
+Sobre o que tu quer focar?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are untracked files in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Só o log do retro-engine desta sessão (no-op pq sem `ANTHROPIC_API_KEY` no ambiente, como o CLAUDE.md documenta). Quer que eu commite esse arquivo na branch `claude/project-discussion-fkfA8` antes de continuar? É log automático, baixíssimo risco.
+user: Continue from where you left off.
+assistant: No response requested.
+user: nao entendi  - Só o log do retro-engine desta sessão (no-op pq sem ANTHROPIC_API_KEY no ambiente, como o CLAUDE.md documenta).
+assistant: Desculpa, fui telegráfico. Explicando:
+
+O **retro-engine** é um hook que roda quando uma sessão Claude Code termina (`Stop` hook). Ele deveria:
+1. Pegar o transcript da sessão
+2. Chamar a API da Anthropic pra extrair fragmentos do que rolou
+3. Salvar no Hub Qdrant (brain `user_id="gus"`, auto-observações)
+4. Logar o resultado num MD diário em `_log/retro-engine-claude-code/`
+
+**O que tá acontecendo neste ambiente Claude Code on the web:** falta a variável `ANTHROPIC_API_KEY` (ela viria de `~/.claude/gus.env`, que não existe aqui). Sem essa key, o passo 2 não roda. O hook então registra "no-op: anthropic_missing" e segue.
+
+O arquivo untracked é só esse log honesto:
+```
+00:26:07 BRT — sessão encerrada
+Fragmentos extraídos: 0
+Salvos no Hub: 0
+Erros: anthropic_missing
+Resumo: (no-op: anthropic_missing — transcript salvo, push=ok)
+```
+
+Isso já tá documentado no `CLAUDE.md` (a seção "AVISO IMPORTANTE — Captura de memória da porta Code quebrada"). O caminho real pra resolver isso é o **PR #64** que tu mergeou ontem (01/05) — cron GitHub Actions processa transcripts commitados via curador, usando secrets do Actions. Esse cron já tá rodando, então a captura acontece, só que assíncrona, não no Stop hook.
+
+Resumindo: **arquivo é log inofensivo, comportamento esperado.** Pergunta foi se queres que eu commite ele agora ou se prefere deixar pra um commit futuro junto com outras mudanças.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are untracked files in the repository. Please commit and push these changes to the remote branch.
+
+assistant: O hook vai continuar reclamando a cada turno enquanto o arquivo estiver untracked. Duas opções:
+
+1. **Commitar agora** (eu faço, ~5s) — `chore(log): retro-engine no-op 2026-05-02` na branch `claude/project-discussion-fkfA8`
+2. **Ignorar até o fim da conversa** — aceitamos o aviso aparecer toda resposta minha
+
+Qual preferes?
+user: pode comitar. mas nesse aba vamos falar do tiogu, bot do telegram
+assistant: Commitado e pushado.
+
+Bora falar do TioGu. Já tenho o panorama geral (gus/main.py, bot.py, llm.py, memory.py, tools.py, ~21 tools, multimídia, prompt caching, Hub-first). Mas pra te ajudar bem, qual é o ângulo?
+
+- **Bug ou comportamento estranho** que tá te incomodando?
+- **Feature nova** que quer adicionar (ex: vídeo, novo tool)?
+- **Refator/manutenção** (ex: aposentar Mem0 fallback, limpar tool antiga)?
+- **Custo/performance** (cache, modelo, latência)?
+- **Personalidade/system_prompt**?
+- **Outra coisa** — me conta.
+user: faca uma analise profissional e especializa e imparcial de tudo relacionado a ele e me passe um panorama 
+assistant: Vou ler o código real do bot (não só os docs) pra te dar análise honesta. Começo pelo coração.
+assistant: Vou ver o resto: tools, system_prompt, media, dimagem, logger, hub e dependências em paralelo.
+assistant: Faltam só uns componentes pra fechar. Vou ler mais 3 chave em paralelo.
+assistant: Pronto, li o suficiente pra dar análise séria. Vou organizar.
+
+---
+
+# Análise técnica do TioGu (bot Telegram)
+
+## 1. Arquitetura — em uma página
+
+```
+Telegram polling ──▶ bot.py (handlers + state) ──▶ llm.py
+                                                   ├─▶ Anthropic Sonnet (default + fallback Haiku)
+                                                   └─▶ OpenAI gpt-4o-mini (texto puro)
+                                  │
+                                  ▼
+                              tools.py (21 tools, dispatch por nome)
+                              memory.py ──▶ hub.store (Qdrant) [+ Mem0 fallback leitura]
+                              media.py ──▶ Claude Vision / PDF nativo / Whisper
+                              dimagem.py (fluxo OS, gate de confiança OCR)
+
+main.py: asyncio.gather(run_bot, run_api)  → bot Telegram + FastAPI Custom GPT no mesmo processo Railway
+hub/curador.py: a cada 3 turnos, Haiku × GPT-4o-mini em paralelo extraem fragmentos pro Hub (mesmo hash_janela permite parear)
+```
+
+**~5.800 LOC de aplicação** em `gus/` + `hub/` + `gus/integrations/`. Single user (chat_id allowlist), single tenant, Railway 24/7.
+
+## 2. Stack
+
+| Camada | Tech | Versão | Comentário |
+|---|---|---|---|
+| Bot framework | python-telegram-bot | 21.6 | Recente, ok |
+| LLM Anthropic | anthropic SDK | **0.40.0** | Set/2024 — atrasado ~6 meses |
+| LLM OpenAI | openai | 1.54.0 | Recente |
+| Memória | mem0ai + qdrant-client | 0.1.29 / 1.9-1.12 | mem0ai em aposentadoria (ADR-001) |
+| Mídia | Pillow / pypdf / docx / openpyxl | OK | |
+| API | FastAPI + uvicorn | 0.115 / 0.32 | Custom GPT endpoint |
+| Embeddings | sentence-transformers MiniLM-L6-v2 | local | Bom — sem dep externa |
+| MCP | mcp | 1.27.0 | Recente |
+| Testes | nenhum | — | **0 testes em produção** |
+
+## 3. Pontos fortes (genuínos)
+
+1. **Multi-provider com fallback cross-vendor** (`llm.py`) — se OpenAI cai, tenta Anthropic; se Anthropic 5xx/429, retry exponencial + fallback de modelo (Sonnet → Haiku). Resiliência rara em hobby projects.
+2. **Prompt caching bem-feito** — system + tools com `cache_control: ephemeral` no Anthropic, automático ≥1024 tok no OpenAI. Custo de input cai ~70% em janelas de 5min.
+3. **Retry, timeout e classificação de erros amigável** (`_mensagem_erro_amigavel`) — usuário vê "conta sem créditos" em vez de stack trace.
+4. **Lazy init OpenAI client** com comentário explicando o bug histórico (import explodia em workflows que só importavam Anthropic) — engenharia honesta.
+5. **State persistido com write atômico** (`tmp + replace`), auto-detecta volume Railway, sobrevive a redeploys. Bom design pra restrição de plataforma.
+6. **Curador híbrido com hash_janela pareável** (`hub/curador.py`) — A/B observável, decisão de modelo baseada em evidência. Sofisticação real.
+7. **Cache de mídia por SHA-256** evita reprocessar mesmo arquivo (Vision e Whisper). Transcrição de mesmo áudio = grátis na 2ª vez.
+8. **Bug postmortem inline no código** (system="" → 400 'temperature and top_p', `_chamar_claude_com_retry`) — só inclui `system` se truthy. Prove cuidado pós-incidente.
+9. **Gate de confiança OCR Dimagem** — risco clínico real (nome trocado em prontuário) tratado com bloqueio + reenvio em vez de alerta.
+10. **Patterns sensíveis em fonte única** (`patterns_sensiveis.py`) usado tanto pelo `save_to_github` quanto pelo PreToolUse hook do Claude Code. Sem drift.
+
+## 4. Problemas estruturais (importantes)
+
+### 🔴 Severos
+
+1. **Zero 
+
+[…transcript truncado…]
+
+K, mas C3 ajuda debug se M4 der ruim |
+| C3 + M4 numa sessão | 4h corridos. Se quebrar, qual foi? Misturar refator estrutural com mudança de API é confuso |
+| Tudo paralelo (3 branches) | Conflito merge alto — todos tocam `gus/llm.py` ou `gus/tools.py` |
+
+## Calendário sugerido
+
+| Sessão | Quando | Tarefa |
+|---|---|---|
+| Próxima | hoje à noite ou amanhã | **C3** (~2h) |
+| Seguinte | dia depois (após validar C3 24h) | **M4** (~2h) |
+| Seguinte | dia depois (após validar M4 24h) | **S3** (~2h) |
+
+Validação 24h entre cada porque tudo afeta produção. Acelerável se quiser, com risco maior.
+
+---
+
+**Posso começar C3 agora?** Mesmo padrão do M1 (split bot.py): testes em rede, refator puro, zero comportamento novo.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado. Aguardando tua aprovação pra começar **C3** (split `tools.py`).
+user: Continue from where you left off.
+assistant: No response requested.
+user: pode começar 
+assistant: Começando C3.
+assistant: Vou ler o resto e mapear usos externos antes de splittar.
+assistant: Plano claro. Vou criar pasta `gus/tools/` com módulos focados após remover o arquivo monolítico.
+assistant: Agora extraio o array `TOOLS` (schemas) — vou pegar do diff git pra ter cópia exata.
+assistant: **208 verdes.** Smoke test dos imports externos + inventário auto.
+assistant: **1140 linhas → maior arquivo agora 561 (schemas, array imutável). Implementações em módulos focados.** Inventário auto regenerou. Commit + push + PR.
+assistant: **PR #95 aberto.** 🔗 https://github.com/Gustpbbr/Gus/pull/95
+
+## Sessão entregue (C3)
+
+| Item | Resultado |
+|---|---|
+| `gus/tools.py` 1140 linhas | Splittado em 7 módulos focados |
+| Maior arquivo agora | 561 linhas (schemas — array imutável) |
+| Imports externos | 100% preservados via `__init__.py` |
+| Testes | 208 verdes em 5.83s |
+| Inventário auto | Regenera OK (21 tools confirmadas) |
+
+## Estrutura nova
+```
+gus/tools/
+├── __init__.py     ← re-exports (preserva API)
+├── _utils.py       ← validações
+├── schemas.py      ← TOOLS array
+├── github.py       ← 6 funções GitHub
+├── web.py          ← Tavily + DDG
+├── acoes.py        ← criar_acao
+└── dispatcher.py   ← executar_tool
+```
+
+## Pós-merge — sem ação operacional necessária
+- Refator puro, comportamento idêntico
+- Railway redeploya automático
+
+## Pendente Fase 4
+- **M4** upgrade `anthropic` SDK 0.40 → 0.50+ (sessão isolada por mudança de API)
+
+Aguardando tua revisão/merge do PR #95.
+user: mergeei,  foi? pode seguir
+assistant: ✅ Mergeado às 19:55. Bora **M4 — upgrade Anthropic SDK**.
+
+Setup branch + checar changelog real do SDK.
+assistant: Latest é 0.97.0 (jan/2025). Salto grande de 0.40 → 0.97. Vou ser cauteloso: instalar versão recente, rodar testes, ver o que quebra, adaptar.
+assistant: Direto verdes — surpreendente. Vou validar smoke real do SDK + warnings.
+assistant: API surface mantém compat — todos campos críticos preservados (`input_tokens`, `cache_*_input_tokens`, `content`, `stop_reason`, `usage`). Update simples.
+assistant: Vou adicionar teste de regressão pra campos do Usage (proteção contra updates futuros do SDK que mudem isso).
+assistant: **211 verdes** (+3 regressão SDK). Commit + PR.
+assistant: **PR #96 aberto.** 🔗 https://github.com/Gustpbbr/Gus/pull/96
+
+## Sessão entregue (M4)
+
+| Item | Resultado |
+|---|---|
+| `anthropic==0.40.0` | `anthropic>=0.50,<1.0` (resolve 0.97 atual) |
+| Surface API | 100% compat — zero adaptação de código |
+| Testes regressão SDK | +3 sentinelas (Usage, Message, exceptions) |
+| Suite | 211 verdes em 2.30s |
+
+## Surpresa positiva
+Esperava ter que adaptar `_gerar_resposta_anthropic` (cache fields renomeados, exceções movidas, etc). Não foi necessário — Anthropic tem semver disciplinado dentro da major.
+
+## **Fase 4 completa após merge**
+
+```
+✅ M2 promove chamar_claude_com_retry (PR #92)
+✅ M1 split bot.py (PR #92)
+✅ C3 split tools.py (PR #95)
+✅ M4 upgrade SDK (PR #96)
+```
+
+## Pós-merge — sem ação operacional necessária
+- Railway redeploya, pip resolve mais recente, bot reinicia
+- Cost tracking + cache_hit_ratio continuam exatos
+
+## Próxima sessão recomendada
+**Fase 2B — reescrever `system_prompt.md`** (~2h, alto risco, mostro diff antes de commitar). Ordem original do plano que tu pediu mantida.
+
+Aguardando tua revisão/merge do PR #96.
+user: mergeei, foi? e agora, fazemos o 2b? qual o passo a passo?
+assistant: # Fase 2B — passo a passo
+
+Antes de começar, importante decidir: **edição cirúrgica** ou **reescrita do zero**?
+
+## Recomendação: edição cirúrgica
+
+**Por quê:**
+- Bot lê em produção — comportamento documentado pelo prompt afeta cada conversa
+- 80% do conteúdo de `system_prompt.md` está correto e bem-escrito (princípios, tools, regras de salvamento por área, etc.)
+- Drift declarado é localizado: tool count, Dimagem 2x, seções pré-migração Mem0
+- Reescrita do zero = risco alto de "esquecer" instrução crítica que tava lá por motivo histórico
+
+**Cirúrgica = remove o que está obsoleto/drift, preserva o resto.**
+
+## Passo a passo
+
+### Passo 1 — Mapeamento (~15min)
+Ler `gus/system_prompt.md` (794 linhas) e identificar:
+
+- **Drift de tool count** (procurar "22 tools" → corrigir pra "21 tools" + link `_tools-inventario.md`)
+- **Fluxo Dimagem duplicado:**
+  - "Quando salvar no GitHub" → seção "Dimagem" (path schema)
+  - "Fluxo: foto de OS Dimagem" (procedimento detalhado)
+  - Decidir qual mantém canônica
+- **Seções pré-migração ADR-001 (obsoletas):**
+  - Menções "Mem0 silêncio X horas" 
+  - Instruções "fallback Mem0 ainda existe"
+  - Comentários "transição em curso"
+  - Path antigo `coleção gus`/`mem0.add` (Hub é primário agora)
+- **Referências a features removidas:**
+  - Tools que sumiram (`auditoria_mem0` virou `auditoria_hub`)
+  - Paths que mudaram (`gus/dimagem.py` → `gus/integrations/dimagem.py`)
+
+### Passo 2 — Fonte da verdade (~5min)
+Antes de editar, conferir o que é REAL:
+
+- `projetos/gus/_tools-inventario.md` (auto-gerado, 21 tools confirmadas)
+- `gus/tools/schemas.py` (descriptions reais)
+- `gus/integrations/dimagem.py` (comportamento real do fluxo)
+- `dimagem/dia/SCHEMA.md` (schema canônico do dia-a-dia)
+
+### Passo 3 — Edits cirúrgicos (~45min)
+
+Por categoria, em commits/diffs separados conceitualmente (mas no mesmo PR):
+
+| # | Edit | Tipo |
+|---|---|---|
+| A | Corrigir tool count + adicionar link inventário auto | 1 linha |
+| B | Unificar fluxo Dimagem (escolher 1 versão canônica) | ~50 linhas |
+| C | Remover seções pré-migração Mem0 explícitas | ~80 linhas |
+| D | Atualizar referências obsoletas (mem0 → Hub, paths) | pontual |
+| E | Limpar comentários "transição em curso" / "Fase X em andamento" | pontual |
+
+Meta: **794 → ~500-550 linhas**, mantendo:
+- Princípios fundamentais (não alucinar, verificar, etc.)
+- Como age o Gus (estilo, formato)
+- Lista de tools com quando usar cada uma
+- Regras de salvamento por área (saúde, finanças, dimagem, etc.)
+- Protocolo `dialogos/` 
+- Detecção de tópico, foco, recuperação de contexto
+
+### Passo 4 — Diff explícito pra revisão (~10min)
+
+**Antes de commitar**, mostro:
+
+```
+Resumo do diff:
+- Linhas removidas: ~270 (seções X, Y, Z)
+- Linhas alteradas: ~30 (correções de drift)
+- Linhas mantidas: 95% do conteúdo
+
+Categorias removidas:
+1. "Mem0 silêncio histórico" (linhas A-B)
+2. "Fallback Mem0 ainda existe" (linhas C-D)
+3. Fluxo Dimagem duplicado #2 (linhas E-F)
+...
+```
+
+E posso mostrar o **diff bruto** se tu quiser ler tudo antes do commit.
+
+### Passo 5 — Validação (~10min)
+
+- Suite de testes: 212 verdes (esperado — prompt é arquivo lido em runtime, não afeta imports)
+- Smoke: `python -c "from gus.llm import _load_system_prompt; print(len(_load_system_prompt()))"`
+- Lint: prompt continua sendo Markdown válido
+
+### Passo 6 — Commit + push + PR (~5min)
+
+PR com:
+- Título: `docs(fase2b): reescreve system_prompt.md (794→~500, drift fix)`
+- Body com tabela do que removi e por quê
+- Test plan com itens pra tu validar em produção (24h)
+
+## Riscos e mitigações
+
+| Risco | Mitigação |
+|---|---|
+| Eu remover instrução importante achando obsoleta | Mostro diff antes; tu pode pedir reverter trecho específico |
+| Comportamento sutil mudar em produção | Edits SÓ em drift identificado, sem reescrever instruções de comportamento |
+| Schema Dimagem documentado errado | Leio `gus/integrations/dimagem.py` antes; SCHEMA.md como referência |
+| Tool count auto vai dessincronizar de novo | Workflow `sync-docs.yml` + referência cruzada no prompt apontando `_tools-inventario.md` |
+
+## Estimativa total
+
+**~90min** trabalho efetivo + tempo da tua revisão do diff.
+
+## Posso começar?
+
+Se OK, procedo:
+1. Leio prompt atual completo
+2. Mapeio drift
+3. Faço edits e mostro diff resumido
+4. Tu aprova ou pede ajustes
+5. Aplico, valido, abro PR
+
+Confirma?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado. Aguardando tua confirmação pra começar Fase 2B (edição cirúrgica do `system_prompt.md`).
+user: pode iniciar
+assistant: Branch nova + leitura completa do prompt.
+assistant: Tenho o mapeamento. Vou conferir fontes da verdade antes de propor o diff.
+assistant: Drift confirmado. **21 tools, tool `auditoria_hub` (não `_mem0`), `auditoria-hub.yml`, `_indices/_auditoria-hub.md`.** Vou aplicar edits cirúrgicos e mostrar diff resumido.
+assistant: Vou conferir resultado e mostrar diff resumido.
+assistant: Última referência `auditoria_mem0` num exemplo. Trocando.
+assistant: Restantes são todas legítimas (referências históricas precisas). Validar.
+assistant: **211 testes verdes, prompt carrega OK, todos termos críticos preservados.**
+
+# Diff resumido pra tua aprovação
+
+## Tamanho
+- **Antes:** 796 linhas
+- **Depois:** 803 linhas (+0.9%, ~igual)
+- Saldo: removi ~40 linhas obsoletas (drift Mem0) + adicionei ~50 linhas de fidelidade real (estrutura nova pós-refator, PII output, etc.)
+
+## 14 mudanças cirúrgicas
+
+| # | Categoria | Mudança |
+|---|---|---|
+| 1 | Hub Qdrant | Bloco "memória persistente" — cortou 15 linhas transitórias, virou 7 linhas precisas (Mem0 aposentado, sem confusão sobre fallback) |
+| 2 | Curador | "Haiku × Sonnet" → "Haiku + GPT-4o-mini" (real desde gus-29 Fase 3) |
+| 3 | Tool count | "22 tools" → "21 tools" + link `_tools-inventario.md` (auto-gerado) |
+| 4 | Tool name | `auditoria_mem0()` → `auditoria_hub()` (4 lugares) |
+| 5 | Workflow | `auditoria-mem0.yml` → `auditoria-hub.yml` + adicionados `check-cost.yml` e `sync-docs.yml` |
+| 6 | Path | `gus/dimagem.py` → `gus/integrations/dimagem.py` (M1) |
+| 7 | Path | `gus/tools.py` → estrutura modular `gus/tools/{schemas,github,web,acoes,dispatcher,_utils}.py` (C3) |
+| 8 | Lista docs | Adicionado `gus-26-status-consolidado`, `gus-15-decisao-migracao`, `gus-29-roteamento-multimodelo`, `gus-30-neurogus-roadmap`, `_tools-inventario.md` |
+| 9 | PII output | Nova nota sobre `_redigir_resposta` (defesa em profundidade) |
+| 10 | auto_diagnostico | Nota sobre cache 5min (Fase 3 M5) |
+| 11 | deletar_memoria | Trilha de auditoria documentada (`_log/deletar-hub/`) |
+| 12 | Drive sync | "bloqueado hoje — falta Service Account" → "parado por OAuth expirado" (real) |
+| 13 | Projetos | Removida deadline antiga "16/abr/2026" do Phronesis |
+| 14 | "fallback Mem0" | Removido em todos os lugares (4+ ocorrências) |
+
+## O que NÃO mudei (preservado intacto)
+
+- Princípios fundamentais (não alucinar, buscar antes, citar fonte, verificar antes de afirmar ausência)
+- Detecção de tópico + recovery context
+- `/foco`, `/reset`, `/custo`, `/start`
+- Regras de salvamento por área (saúde, financeiro, esportes, leituras, contatos, dimagem, receitas, paty-dos-alferes, capturado)
+- Fluxo Dimagem (path fixo, schema 4 colunas, frontmatter)
+- Wikilinks
+- Como agir / estilo / dados sensíveis (`sensivel/`)
+- Protocolo `dialogos/`
+- Routing 3 brains (`search_memory` / `meta_memoria` / `buscar_memoria_gus`)
+- Quando usar cada tool
+
+## Validação local
+
+- 211 testes verdes em 2.14s
+- Prompt carrega via `_load_system_prompt()` sem erro
+- Smoke: termos críticos checados (`Hub Qdrant`, `21 tools ativas`, `auditoria_hub`, `Haiku + GPT-4o-mini`, etc.)
+
+## Próximo passo
+
+**Aprova as 14 mudanças?**
+- ✅ Aprovo → eu commito + abro PR
+- 🔧 Revisa item X → me diz qual e eu ajusto antes de commitar
+- 👀 Quero ver diff bruto → posso mostrar o git diff completo
+
+Aguardando.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Log commitado, **`gus/system_prompt.md` ainda em working tree (não commitado)** aguardando tua aprovação das 14 mudanças.
+user: pode seguir
+assistant: **PR #97 aberto.** 🔗 https://github.com/Gustpbbr/Gus/pull/97
+
+## Sessão entregue (Fase 2B — S3)
+
+| Item | Resultado |
+|---|---|
+| Mudanças cirúrgicas | 14 (drift Mem0, tool count, paths, workflows, PII output, etc.) |
+| Tamanho | 796 → 803 (+0.9%, ~igual) |
+| Conteúdo preservado | 95% (princípios, tools, regras, fluxo Dimagem, dialogos, recovery) |
+| Testes | 211 verdes em 2.14s |
+| Smoke checkpoints | 11 termos críticos validados |
+
+## Pós-merge — alto risco
+Bot lê o prompt em produção. Recomendo **24h de uso real** pra confirmar zero regressão de comportamento. Se notar mudança sutil indesejada:
+1. Reverter PR inteiro (1 commit)
+2. Ou PR follow-up só pra trecho específico
+
+## Status do plano de saneamento
+
+```
+✅ Fase 1 — testes + PII output + cache budget + cleanup (PR #73 + #74)
+✅ Fase 2A — docs estáticas (PR #73)
+✅ Fase 2B — system_prompt rewrite (PR #97 aguardando)
+✅ Fase 3 — quick wins (PR #90 + #91 vision fallback)
+✅ Fase 4 — refator estrutural completa (PR #92 + #95 + #96)
+⏳ Fase 5 — decisões Gustavo (paralelo)
+✅ Fase 6 — Mem0 aposentado (parcial por outras abas)
+⏳ Fase 7 — NeuroGus (decisões P3 bloqueadas)
+⏳ Fase 8 — features extras (sob demanda)
+```
+
+**Plano original 100% concluído pela porta Code.** Fica esperando decisões do Gustavo (Fase 5) e da outra aba (Fase 7).
+
+Aguardando tua revisão/merge do PR #97.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado. Aguardando tua revisão/merge do PR #97.
+ta dando conflito de merge
+user: Continue from where you left off.
+assistant: No response requested.
+user: ta dando conflito de merge
+assistant: PR `dirty`. Stash log + merge main pra resolver conflito.
+assistant: Conflito só em log retro-engine. Vou aceitar versão de main (autoritativa).
+assistant: **Conflito resolvido.** PR #97 agora `mergeable_state: "clean"`.
+
+| Item | Resultado |
+|---|---|
+| Conflito | Apenas `_log/retro-engine-claude-code/2026-05-03.md` (log automático, aceitei versão de main) |
+| `system_prompt.md` | Sem conflito — minhas mudanças preservadas |
+| Testes | 211 verdes em 8.60s |
+| PR status | `clean` (era `dirty`) |
+
+Pode mergear agora.
