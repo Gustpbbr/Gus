@@ -42,18 +42,30 @@ if str(_REPO_ROOT) not in sys.path:
 
 
 def _to_mem0_format(m: dict, include_score: bool = False) -> dict:
-    """Converte 1 fragmento do Hub pro formato Mem0 que os scripts esperam."""
+    """Converte 1 fragmento do Hub pro formato Mem0 que os scripts esperam.
+
+    Antes do fix de 2026-05-04, este conversor preservava só 5 campos no
+    `metadata` (tipo/estado/via/area/curador), o que deixava todos os
+    consumidores (`meta_relatorio_hub.py`, `auditoria_hub.py`, etc.) cegos
+    pra `camada_temporal`, `prompt_version`, `confianca`, `tipo_esquecimento`,
+    `hash_janela`, `janela_turnos`, `acessos`, `ultimo_acesso` — todos
+    campos que o curador e os ingest paths gravam normalmente. Resultado:
+    relatórios mostravam 100% `(sem)` em colunas que estavam corretamente
+    populadas no Hub.
+
+    Agora o `metadata` carrega TODO o payload exceto os campos top-level
+    do formato Mem0 (`memory`, `created_at`, `id`). Backward-compat: os 5
+    campos antigos continuam acessíveis por nome (estavam todos em
+    `metadata` antes, continuam estando agora).
+    """
+    # Campos que viram top-level no formato Mem0 (não duplicar no metadata)
+    promovidos = {"id", "conteudo", "criado_em", "score"}
+    metadata = {k: v for k, v in m.items() if k not in promovidos}
     out = {
         "id": m.get("id"),
         "memory": m.get("conteudo", ""),
         "created_at": m.get("criado_em", ""),
-        "metadata": {
-            "tipo": m.get("tipo"),
-            "estado": m.get("estado"),
-            "via": m.get("via"),
-            "area": m.get("area"),
-            "curador": m.get("curador"),
-        },
+        "metadata": metadata,
     }
     if include_score:
         out["score"] = m.get("score", 0)

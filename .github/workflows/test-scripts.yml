@@ -1,0 +1,107 @@
+name: Test scripts
+
+# Smoke test em PR que mexe em scripts cron ou módulo hub.
+# Pega ModuleNotFoundError, SyntaxError e ImportError ANTES do merge —
+# o cron quebrar em produção é o que esses 3 PRs (#24, #25, #26)
+# corrigiram retroativamente. Esse workflow previne pra próxima.
+
+on:
+  pull_request:
+    paths:
+      - '.github/scripts/**.py'
+      - 'hub/**.py'
+      - 'requirements.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r .github/scripts/requirements.txt
+
+      - name: Syntax check (ast.parse)
+        run: |
+          python <<'PYEOF'
+          import ast
+          import sys
+          from pathlib import Path
+
+          # Cobre scripts cron + módulo hub (importado pelos scripts e MCP server)
+          targets = list(Path(".github/scripts").glob("*.py")) + list(Path("hub").glob("*.py"))
+
+          erros = []
+          for py in sorted(targets):
+              try:
+                  ast.parse(py.read_text(encoding="utf-8"))
+                  print(f"OK syntax: {py}")
+              except SyntaxError as e:
+                  erros.append(f"{py}: {e}")
+
+          if erros:
+              for e in erros:
+                  print(f"FAIL {e}", file=sys.stderr)
+              sys.exit(1)
+          print(f"\n{len(targets)} arquivos com syntax OK")
+          PYEOF
+
+      - name: Import check (toplevel imports executam)
+        # Usa importlib pra carregar cada script como módulo. Imports e
+        # constantes toplevel rodam; main() não roda (gated por __main__).
+        # Isso pega o caso clássico do PR #26: from hub.curador falha porque
+        # sys.path não tem repo root.
+        env:
+          # Env vars fake pra scripts que checam no toplevel ou no init.
+          # OPENAI_API_KEY e ANTHROPIC_API_KEY: gus/llm.py instancia clients
+          # no top-level (linhas 45/50) — AsyncOpenAI valida key vazia no
+          # construtor e crasha o import. Refactor pra lazy fica em PR
+          # separado; aqui só destrava o smoke test.
+          QDRANT_URL: http://fake.local
+          QDRANT_API_KEY: fake
+          MCP_BEARER_TOKEN: fake
+          OPENAI_API_KEY: fake-test-key
+          ANTHROPIC_API_KEY: fake-test-key
+        run: |
+          python <<'PYEOF'
+          import importlib.util
+          import sys
+          from pathlib import Path
+
+          # PYTHONPATH = repo root pra scripts que importam de hub/
+          sys.path.insert(0, str(Path.cwd()))
+
+          targets = list(Path(".github/scripts").glob("*.py")) + list(Path("hub").glob("*.py"))
+
+          erros = []
+          for py in sorted(targets):
+              # Helpers tipo _hub_compat.py não são entrypoints, mas import deve passar
+              # routes.py / curador.py / store.py / mcp_server.py são todos importáveis
+              try:
+                  spec = importlib.util.spec_from_file_location(py.stem, py)
+                  module = importlib.util.module_from_spec(spec)
+                  spec.loader.exec_module(module)
+                  print(f"OK import: {py}")
+              except SystemExit:
+                  print(f"OK import (early exit, env-vars ausentes ok): {py}")
+              except Exception as e:
+                  erros.append(f"{py}: {type(e).__name__}: {e}")
+
+          if erros:
+              for e in erros:
+                  print(f"FAIL {e}", file=sys.stderr)
+              sys.exit(1)
+          PYEOF

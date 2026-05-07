@@ -1,0 +1,561 @@
+user: blz? pode chamar o Gus pra gente começar a mexer no projeto neurogus?
+assistant: opa, blz. neurogus tem roadmap em `projetos/gus/gus-30-neurogus-roadmap.md` e três briefings na inbox-tiogu. deixa eu ler tudo antes de falar besteira.
+assistant: bom, peguei a essência. agora o roadmap (28k tokens, leio em partes — começo do início e do fim, que costuma ter "estado atual").
+assistant: Já tenho briefing, arquitetura, mock-spec e roadmap completo. Antes de propor passo concreto, deixa eu conferir branch atual.
+assistant: opa, branch `claude/start-neurogus-project-NZAoF` ja criada, working tree limpo. tudo lido. resumo do estado:
+
+## o que é o neurogus
+PWA com grafo 3D que mostra a memória do Hub Qdrant viva em tempo real — cada fragmento é uma esfera, conexão por afinidade semântica (cosine top-K), nasce branco quando o curador salva e migra pra cor do tipo. Roda no mesmo Railway do bot, sem custo extra.
+
+## status hoje
+- backend (Hub, curador, embeddings, FastAPI, Bearer): **pronto**
+- código novo do NeuroGus: **0 linhas escritas** (só mock visual da Claude Chat, perdido no Drive dela)
+- roadmap canônico: `projetos/gus/gus-30-neurogus-roadmap.md` (1513 linhas, Fase 1 = backend SSE)
+
+## o que precisa de você antes de eu começar (decisões abertas, seção 11)
+3 dessas bloqueiam Fase 1:
+
+1. **Top-K e threshold de afinidade.** Default proposto: K=3, threshold=0.6 (cosine). Aceita?
+2. **Apagar fragmento é hard ou soft delete?** Hard = `store.deletar()` direto. Soft = marcar `estado: "esquecido"` (já existe no schema). Recuperabilidade vs minimalismo.
+3. **Coleção mostrada: só `user_id=gustavo` ou também `gus` (auto-observações)?** Default: só `gustavo` no v0.
+
+As outras 4 (mock HTML, token na URL, auto-orbit, reconnect SSE) só importam na Fase 2 (frontend) — dá pra decidir depois.
+
+## se você confirmar os defaults, primeiro passo concreto é
+1. criar `hub/events.py` (fila SSE, ~50 linhas)
+2. adicionar `_calcular_vizinhos()` + `broadcast()` em `hub/store.py:ingestar()`
+3. adicionar `GET /hub/recent` e `GET /hub/stream` em `hub/routes.py`
+4. smoke test local com `curl --no-buffer` antes de subir
+
+vou nessa? confirma (ou ajusta) os 3 defaults e eu começo pela Fase 1.
+user: Continue from where you left off.
+assistant: No response requested.
+user: mas antes, leia sobre todo o projeto. pra ter um panorama geral. busque em todo repo
+user: Você é um agente de exploração mapeando o repositório Gus (`/home/user/Gus`) pra dar contexto a outra sessão Claude Code que vai trabalhar no projeto NeuroGus.
+
+Objetivo: produzir um panorama geral do repo. Não detalhe demais — seja específico onde há decisão arquitetural ou estado em transição, e seja conciso onde for óbvio.
+
+Cobre estes pontos (em ordem):
+
+## 1. Estrutura de pastas top-level
+Liste o que tem em `/home/user/Gus` (raiz). Pra cada pasta principal (`gus/`, `hub/`, `api/`, `.claude/`, `.github/`, `projetos/`, `dialogos/`, `pessoal/`, `dimagem/`, `_log/`, `_indices/`, etc.) diga em 1 linha o que ela é. Foca no que é código vs conteúdo (.md).
+
+## 2. Código-fonte ativo (Python)
+- `gus/`: liste os módulos principais (main, bot, llm, memory, tools, media) e quantas linhas tem cada um
+- `hub/`: liste os módulos (store, curador, routes, schemas, mcp_server, events?) e estado de cada
+- `api/`: liste o que tem dentro (server, dashboard, camera, neurogus?, etc.) 
+- `.claude/mcp/`: MCP servers existentes
+- `.github/scripts/` e `.github/workflows/`: lista breve de scripts e workflows ativos
+
+Pra cada arquivo importante, diga 1 linha sobre o que faz. Marque com ❌ os arquivos referenciados em docs mas que não existem ainda (tipo `hub/events.py`, `api/neurogus.py`).
+
+## 3. Documentos canônicos `projetos/gus/gus-NN-*.md`
+Liste todos os docs com prefixo `gus-NN-` em `projetos/gus/`. Pra cada um, leia o frontmatter + primeiras 30 linhas e resuma em 1-2 linhas: tema + status (planejamento/implementado/abandonado).
+
+## 4. Estado da migração ADR-001 (Mem0 → Hub Qdrant)
+Procura referências a "ADR-001", "Fase X", "Hub", "Mem0" em arquivos de status. Tem `projetos/gus/_estado-atual.md`? Leia ele inteiro se existir. Resuma em qual fase a migração está.
+
+## 5. Demandas pendentes
+- Liste arquivos em `dialogos/inbox-claude-code/`, `dialogos/inbox-tiogu/` (com 1 linha cada sobre o tema)
+- Liste arquivos em `dialogos/streams/semana-*.md` mais recentes (só o nome)
+- Aponta quais são relacionadas ao NeuroGus
+
+## 6. Workflows ativos (.github/workflows)
+Lista nome + 1 linha do que faz. Marca os que são relevantes pro Hub/curador/NeuroGus.
+
+## 7. Sinais de "tá rodando em produção" vs "rascunho"
+Pasta `historico/` tem o quê (legado)? Tem TODOs marcados em código? Tem arquivos `.draft` ou similares? Quais arquivos tem "TODO"/"FIXME"/"XXX" em comentários de código?
+
+## 8. Tamanho e idiomas
+- Total de linhas Python no repo
+- Total de arquivos .md
+- Última semana de commits (resumo via `git log --oneline --since='7 days ago'`)
+
+## Formato do relatório
+- Markdown estruturado, seções como acima
+- Caminhos relativos a `/home/user/Gus`
+- ~600-900 linhas (use as palavras com economia, mas cubra tudo)
+- Não duplique info do CLAUDE.md (eu já tenho ele); foque no que CLAUDE.md NÃO diz ou onde ele está desatualizado vs realidade
+- Termina com seção "## Inconsistências/dúvidas" listando 3-5 coisas que parecem contraditórias entre docs e código
+
+Não precisa rodar nada — só ler arquivos e listar diretórios. Sem WebFetch/WebSearch. Sem git fetch — só git log local se útil.
+assistant: beleza, faz sentido. vou mapear o repo inteiro com um agente de exploração antes de continuar.
+assistant: Vou explorar o repositório Gus sistematicamente. Começarei com uma visão geral da estrutura.
+assistant: Agora vou estruturar a exploração. Vou fazer múltiplas buscas em paralelo:
+assistant: Vou explorar a estrutura de código Python em paralelo:
+assistant: Agora vou contar linhas de código e explorar documentação:
+assistant: Agora vou examinar conteúdo das demandas pendentes e status do NeuroGus:
+assistant: Vou verificar MCP servers e workflows mais detalhadamente:
+assistant: Agora vou ler alguns docs importantes do NeuroGus e ADR-001:
+assistant: Agora vou verificar arquivos de APIs e rotas do Hub:
+assistant: Agora vou verificar alguns workflows e ver padrão de referências:
+assistant: Vou mapear o repositório Gus de forma completa. Começarei pela estrutura geral e depois dos pontos específicos.
+assistant: agente de exploração rodando em background. te aviso assim que ele terminar com o panorama. enquanto isso fico parado pra não pisar no que ele tá lendo.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Agora vou explorar os principais diretórios em paralelo:
+assistant: Agora vou contar linhas de código e verificar documentos:
+assistant: São só appends automáticos do hook Stop (retro-engine). Commit e push.
+assistant: commitado e pushado pra `claude/start-neurogus-project-NZAoF` (commit `b28e75d`). Agente de exploração ainda mapeando o repo — te aviso quando ele terminar.
+assistant: Perfeito! Agora tenho informação suficiente para o relatório. Deixe-me compilar tudo:
+
+---
+
+# Panorama do Repositório Gus — Mapa para NeuroGus
+
+## 1. Estrutura de pastas top-level
+
+| Pasta | Tipo | Descrição |
+|-------|------|-----------|
+| **gus/** | Código | Bot TioGu (Telegram). Módulos: main, bot, llm, memory, tools, media, roteador, logger, patterns_sensiveis, integrations/ |
+| **hub/** | Código | Hub Qdrant direto (ADR-001 Fase 2+). Módulos: store, curador, routes, schemas, mcp_server |
+| **api/** | Código | FastAPI (Railway). Rotas REST, auth, dashboard, camera, server principal |
+| **.claude/** | Config | MCP servers (mem0_server, gus_server) + settings |
+| **.github/** | Config | Workflows (19 cron + manual), scripts deploy, diagnostics |
+| **projetos/** | Conteúdo | Documentação projeto: gus-NN-*.md (30 docs), auditorias, decisões arquiteturais (ADRs) |
+| **dialogos/** | Conteúdo | Inbox (claude-code, tiogu, gustavo), streams semana, bootstrap (identidade, prompts) |
+| **pessoal/** | Conteúdo | Saúde, financeiro, relacionamentos, histórico pessoal |
+| **dimagem/** | Conteúdo | Clínica (obras, pacientes, sistema OCR em produção) |
+| **capturado/** | Conteúdo | Captura rápida via bot (não estruturada) |
+| **historico/** | Arquivo | Legacy: textos-antigos (v1), scripts one-shot, docs setup. Seguro deletar. |
+| **_indices/** | Gerado | Índices automáticos (auditoria-mem0.md, etc.) |
+| **_log/** | Gerado | Logs resumidos, histórico de execuções |
+| **acoes/, agenda/, familia/, receitas/, contatos/, esportes/, leituras/** | Conteúdo | Dados pessoais do Gustavo (fora de escopo técnico) |
+
+---
+
+## 2. Código-fonte ativo (Python)
+
+### `gus/` — Bot Telegram (579-675 LOC principais)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `main.py` | ~50 | Boot: registra handlers Telegram (foto, doc, voz, texto, comandos) |
+| `bot.py` | 579 | Lógica de handlers: captura foto/PDF/voz → OCR/Whisper + Hub |
+| `llm.py` | 675 | Chamadas Claude (Haiku 4.5, Sonnet 4.6): retry, streaming, tools |
+| `memory.py` | 279 | Leitura/escrita Hub Qdrant via `hub/store.py` + fallback Mem0 (morto em escrita) |
+| `tools.py` | ~700 | ~21 tools: buscar_memoria, salvar_memoria, diagnostico, wikilinks, pesquisa, etc. |
+| `media.py` | ~150 | Whisper (voz → texto), Haiku Vision (foto → OCR), ffmpeg placeholder vídeo |
+| `integrations/` | 4 files | Railway logs, diagnostico, wikilinks, pesquisa (Tavily/DDG) |
+| `roteador.py`, `logger.py`, `patterns_sensiveis.py` | ~200 | Roteamento entre modelos, logging estruturado, patterns de segurança |
+
+**Estado:** Em produção. Handlers completos exceto VIDEO (TODO mencionado em main.py).
+
+### `hub/` — Hub Qdrant (297-434 LOC principais)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `store.py` | 297 | Qdrant direto com sentence-transformers. CRUD + busca semântica. Schema gus-18. |
+| `curador.py` | 434 | Híbrido Haiku × GPT-4o-mini (paralelo). Fragmentos com `hash_janela` + `via` metadata. |
+| `routes.py` | ~50 | Endpoints REST: `/hub/ingestar`, `/hub/lembrar`, `/hub/ego-cache`, `/hub/stats` |
+| `schemas.py` | ~80 | Pydantic: IngestarReq/Resp, LembrarReq/Resp, Payload (16 campos) |
+| `mcp_server.py` | ~200 | MCP wrapper pro Claude Code. Expõe 8-9 tools (buscar_memoria, deletar_memoria, etc.) |
+| ❌ `events.py` | — | **Não existe**. Pré-requisito NeuroGus (asyncio.Queue p/ SSE) |
+
+**Estado:** Produção desde 27/04. Migração Mem0 → Hub completa (Fase 4 concluída). Mem0 SaaS em fallback-only (morte programada pós-14 dias coleta dual = ~12/05).
+
+### `api/` — FastAPI server (Railway)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `server.py` | ~100 | Starlette + FastAPI. Registra routers: bot routes, Hub routes, dashboard |
+| `routes.py` | ~200 | Routes do bot: `/memo` (POST memória), `/mirror` (log), etc. |
+| `auth.py` | ~50 | Bearer token validation pra Hub + MCP |
+| `dashboard.py` | ~80 | Minimal dashboard (status página) |
+| `camera.py` | ~100 | IP webcam (futuro: camera Echo Show via S8 Termux) |
+| `schemas.py` | ~50 | Pydantic: requisições/respostas |
+| ❌ `neurogus.py` | — | **Não existe**. Frontend SSE + grafo 3D (pré-requisito NeuroGus Fase 1) |
+
+**Estado:** Em produção. Últimos 4 PRs (27-30/04) fixaram issues MCP auth pro claude.ai (Bearer header → OAuth adaptação). PR #60 mergeado 30/04.
+
+### `.claude/mcp/` — MCP servers
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `mem0_server.py` | ~300 | ⚠️ Legado. Conecta MCP à Mem0 SaaS. Será aposentado pós-14 dias. |
+| `gus_server.py` | ~250 | Expõe tools do bot: auto_diagnostico, sugerir_wikilinks, perguntar_gpt (GPT-5) |
+
+### `.github/scripts/` — Utilitários
+
+Principais:
+- `export_mem0.py` — exporta Mem0 SaaS pra JSON (cron diário)
+- `enrich_mem0_export.py` — enriquece export com embeddings (script existe, sem cron)
+- `audit_mem0.py` — auditoria Mem0 (será migrado pra Hub)
+
+**Total Python:** 13,459 linhas entre `gus/`, `hub/`, `api/`, `.claude/mcp/`, `.github/scripts/`
+
+---
+
+## 3. Documentos canônicos `projetos/gus/gus-NN-*.md` (30 docs)
+
+| ID | Título | Status | Resumo |
+|----|--------|--------|--------|
+| 01 | visao-geral | ✅ Implementado | Arquitetura multi-portal: Telegram, Claude Code, Claude Chat, ChatGPT |
+| 02 | implementado | ✅ Implementado | Feature checklist v1 (OCR, memória, tools) |
+| 03 | configuracao-manual | ✅ Implementado | Passo-a-passo setup bot Telegram + Railway |
+| 04 | seguranca-protecao | ✅ Implementado | Patterns sensíveis, gate confiança OCR, fallbacks |
+| 05 | portas-capacidades | ✅ Implementado | Feature matrix por porta (Telegram, Claude, etc.) |
+| 06 | autonomia-acoes | ✅ Implementado | Ações automáticas pendentes (vídeo, Google SA, Alexa) |
+| 07 | decisoes-descartadas | ✅ Implementado | Por que NOT Ollama, NOT llama.cpp, etc. |
+| 08 | plano-proximos-passos | ✅ Implementado | Roadmap até Alexa (descontinuado, vide gus-10) |
+| 09 | guia-uso-diario | ✅ Implementado | Como usar o Gus no dia-a-dia |
+| 10 | caminho-alexa | ✅ Implementado | Roadmap revisado: Alexa V1 (Dot 3) → Custom GPT → Termux |
+| 11 | tools-roadmap | ✅ Implementado | Roadmap de 21 tools (maioria pronto) |
+| 12 | portas-futuras | ✅ Implementado | Portas planejadas (Alexa, mobile voz, webcam) |
+| 13 | tags-canonicas | ✅ Implementado | Nomenclatura tags de origem (via) e tipos memória |
+| 14 | custom-gpt-setup | ✅ Implementado | Passo-a-passo Custom GPT com Actions |
+| 15 | decisao-migracao | ✅ Implementado | Por que migrar de Mem0 (SaaS lento) para Hub Qdrant |
+| 16 | canal-unificado | ✅ Implementado | Arquitetura pasta `dialogos/` por destinatário |
+| 17 | setup-ambiente | ✅ Implementado | Vars env, secrets, Railway, Qdrant Cloud |
+| 18 | schema-indexacao | ✅ Implementado | Schema payload Hub (16 campos: tipo, camada_temporal, area, confiança, via, etc.) |
+| 19 | etapa1-mem0-selfhost | ✅ Implementado | Fase 1 ADR-001 (Qdrant via wrapper Mem0) |
+| 20 | etapa2-hub-qdrant | ✅ Implementado | Fase 2 ADR-001 (Hub direto com payload rico) |
+| 21 | etapa3-curador | ✅ Implementado | Fase 3: curador híbrido Haiku × Sonnet (depois GPT) |
+| 22 | etapas4-5-ego-autorelato | 🔄 Parcial | Fase 4-5: ego_cache + auto-relatório (Fase 4 concluída, Fase 5 pendente) |
+| 23 | logica-qdrant-mem0 | ✅ Implementado | Explicação convivência dual até aposentadoria Mem0 |
+| 24 | hub-pre-agi-visao | ✅ Implementado | Visão de longo prazo: Hub como infraestrutura pré-AGI |
+| 25 | roadmap-ativacao | ✅ Implementado | Sequência: Hub → Curador → Portas customizadas |
+| 26 | status-consolidado | ✅ Implementado | Status Q1 2026 (completo até 26/04) |
+| 27 | protocolo-portas-tools | ✅ Implementado | Padronização: como portas acessam tools via MCP |
+| 28 | acesso-hub-claude-chat | ✅ Implementado | Como Claude Chat lê Hub (início, precisa OAuth fix) |
+| 28-passo2 | mcp-server | ✅ Implementado | Setup MCP server gus-hub em claude.ai |
+| 29 | roteamento-multimodelo-tiogu | ✅ Implementado | Decisão: Son
+
+[…transcript truncado…]
+
+   applyFilter(btn.dataset.filter);
+  });
+});
+
+// ─── Painel ───
+function openPanel(node) {
+  state.selectedId = node.id;
+  state.spinning = false;
+  updateAutoRotateBtn();
+  const data = getFilteredData();
+
+  const neighbors = new Set([node.id]);
+  data.links.forEach((l) => {
+    const { s, t } = linkExtract(l);
+    if (s === node.id) neighbors.add(t);
+    if (t === node.id) neighbors.add(s);
+  });
+  state.selectedNeighbors = neighbors;
+
+  const c = node.color;
+  $('panel-glow').style.color = c;
+  $('panel-type').textContent = node.tipo.replace(/_/g, ' ');
+  $('panel-type').style.color = c;
+  $('panel-content').textContent = node.conteudo;
+
+  const body = $('panel-body');
+  body.innerHTML = '';
+
+  const meta = [
+    { k: 'curador',  v: node.curador },
+    { k: 'área',     v: node.area },
+    { k: 'camada',   v: node.camada },
+    { k: 'id',       v: node.id },
+    { k: 'data', v: new Date(node.timestamp).toLocaleDateString('pt-BR', {
+        day: '2-digit', month: 'short', year: 'numeric',
+    }) },
+  ];
+
+  meta.forEach(({ k, v }) => {
+    const r = document.createElement('div');
+    r.className = 'meta-row';
+    r.innerHTML = `<span class="meta-row__key">${k}</span><span class="meta-row__value">${v}</span>`;
+    body.appendChild(r);
+  });
+
+  const conf = document.createElement('div');
+  conf.className = 'confidence';
+  conf.innerHTML = `
+    <div class="confidence__row">
+      <span class="meta-row__key">confiança</span>
+      <span class="meta-row__value" style="color:${c};font-family:'Instrument Serif',serif;font-size:18px">
+        ${(node.confianca * 100).toFixed(0)}<span style="font-size:11px;opacity:0.6">%</span>
+      </span>
+    </div>
+    <div class="confidence__bar">
+      <div class="confidence__fill" style="width:${node.confianca * 100}%;background:${c};color:${c}"></div>
+    </div>
+  `;
+  body.appendChild(conf);
+
+  const conns = data.links.filter((l) => {
+    const { s, t } = linkExtract(l);
+    return s === node.id || t === node.id;
+  });
+
+  if (conns.length) {
+    const title = document.createElement('div');
+    title.className = 'section-title';
+    title.innerHTML = `conexões <span class="section-title__count">· ${conns.length}</span>`;
+    body.appendChild(title);
+
+    conns.forEach((l) => {
+      const { s, t } = linkExtract(l);
+      const otherId = s === node.id ? t : s;
+      const other = state.nodeMap.get(otherId);
+      if (!other) return;
+      const ci = document.createElement('div');
+      ci.className = 'connection';
+      ci.innerHTML = `
+        <span class="connection__type" style="color:${other.color}">${other.tipo.replace(/_/g, ' ')}</span>
+        <span class="connection__preview">${other.conteudo}</span>
+      `;
+      ci.addEventListener('click', () => openPanel(other));
+      body.appendChild(ci);
+    });
+  }
+
+  $('panel').classList.add('is-open');
+  $('hint').style.opacity = '0';
+}
+
+function closePanel() {
+  $('panel').classList.remove('is-open');
+  state.selectedId = null;
+  state.selectedNeighbors = new Set();
+  state.spinning = true;
+  updateAutoRotateBtn();
+  setTimeout(() => { $('hint').style.opacity = '1'; }, 600);
+}
+
+$('panel-close').addEventListener('click', closePanel);
+
+$('panel-delete').addEventListener('click', () => {
+  if (!state.selectedId) return;
+  const id = state.selectedId;
+  state.nodes = state.nodes.filter((n) => n.id !== id);
+  state.nodeMap.delete(id);
+  state.links = state.links.filter((l) => {
+    const { s, t } = linkExtract(l);
+    return s !== id && t !== id;
+  });
+  removeLabel(id);
+  state.selectedNeighbors = new Set();
+  Graph.graphData(getFilteredData());
+  updateStats();
+  closePanel();
+  showToast('fragmento removido', 'apagado', '#f87171');
+});
+
+// ─── Toast ───
+function showToast(text, label, color) {
+  $('toast-label').textContent = label || 'novo fragmento';
+  $('toast-label').style.color = color || 'var(--c-identidade)';
+  $('toast-text').textContent = text;
+  $('toast-dot').style.background = color || 'var(--c-identidade)';
+  $('toast-dot').style.color = color || 'var(--c-identidade)';
+  const el = $('toast');
+  el.classList.add('is-shown');
+  setTimeout(() => el.classList.remove('is-shown'), 3800);
+}
+
+// ─── Adicionar fragmento (pra integração futura com hub via SSE/polling) ───
+// Aceita um objeto com campos reais do hub. Se chamado sem args, não faz nada.
+function addFragment(raw) {
+  if (!raw || !raw.conteudo) return;
+  const color = TYPE_COLOR[raw.tipo] || '#ffffff';
+  const node = {
+    id: raw.id || ('new_' + (++state.nextId)),
+    conteudo: raw.conteudo,
+    tipo: raw.tipo || 'episodico',
+    area: raw.area || '',
+    curador: raw.curador || 'desconhecido',
+    camada: raw.camada || 'sessao',
+    confianca: raw.confianca || 0.7,
+    timestamp: raw.criado_em || new Date().toISOString(),
+    color,
+    val: 0.8 + (raw.confianca || 0.7) * 0.8,
+    _isNew: true,
+  };
+  state.nodes.push(node);
+  state.nodeMap.set(node.id, node);
+  const peers = state.nodes.filter((p) => p.tipo === node.tipo && p.id !== node.id);
+  if (peers.length) {
+    state.links.push({ source: node.id, target: peers[peers.length - 1].id });
+  }
+  Graph.graphData(getFilteredData());
+  setTimeout(() => {
+    node._isNew = false;
+    Graph.graphData(getFilteredData());
+  }, 2200);
+  updateStats();
+  showToast(
+    node.conteudo.length > 70 ? node.conteudo.slice(0, 70) + '…' : node.conteudo,
+    node.tipo.replace(/_/g, ' '),
+    color
+  );
+}
+
+// Auto-fragmento desativado — só dispara via integração real com hub
+// setInterval(addFragment, 9000);
+
+// ─── Resize ───
+window.addEventListener('resize', () => {
+  Graph.width(window.innerWidth).height(window.innerHeight);
+});
+
+// ─── Keyboard ───
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state.selectedId) closePanel();
+  if (e.key === '+' || e.key === '=') setZoom(0.85);
+  if (e.key === '-' || e.key === '_') setZoom(1.18);
+  if (e.key === '0') fitAll();
+});
+
+// Inicial: filtros recolhidos por padrão depois de 2s
+setTimeout(() => {
+  filtersEl.classList.add('is-collapsed');
+  filtersToggle.setAttribute('aria-expanded', 'false');
+}, 2500);
+</script>
+</body>
+</html>
+
+assistant: ok, li tudo. mock muito mais maduro do que imaginei — faz várias coisas que eu nem cogitei (abas cosmos/lista, halo nuvem orgânica, esfera contenedora visível, edge indicators de borda). antes de discutir, quero te dar um mapeamento honesto de **o que tá pronto, o que conflita com gus-30/30.1, e o que ainda falta**. só análise, sem mexer em nada.
+
+## 1. O que o mock já resolve (8 das 14 decisões)
+
+| ID | Status no mock |
+|---|---|
+| **A1** Mock HTML | ✅ você tem, é esse |
+| **A3** Auto-orbit | ✅ ON default, velocidade 0.0006 rad/frame (lenta), pausa ao selecionar |
+| **B2** Cluster de controles | ✅ canto inferior **direito** (não esquerdo), zoom slider + 3 botões de rotação |
+| **C3** 3d-force-graph CDN | ✅ jsdelivr `@1.73.3` versão fixa |
+| **C4** Tipografia CDN | ✅ Google Fonts (com tipografia diferente — ver §3) |
+| **B4** "Apagar fragmento" | ⚠️ implementado mas **sem soft delete e sem modal de confirmação** — só hard direto |
+| **A4** Reconnect SSE | ⚠️ N/A (mock não tem SSE) |
+| **A2** Token URL | ⚠️ N/A (mock standalone) |
+
+## 2. Conflitos com gus-30 / gus-30.1 — precisam de decisão
+
+Esses são os pontos onde o mock divergiu do que tinha no roadmap original. Cada um é uma **decisão real**, não bug:
+
+### 2.1 Cor por **ÁREA** (mock) vs por **TIPO** (gus-30 §10.2)
+
+O mock cor por área foi decisão consciente do código (com comentário explícito):
+> "Cor baseada em ÁREA (não tipo) — porque no hub real quase tudo é episodico"
+
+**Implicação:** o curador Haiku tá hoje classificando tudo como `episodico`. Cor por tipo não comunicaria nada (tudo igual). Cor por área comunica clusters reais (gus, dimagem, pessoal, etc.).
+
+**Trade-off:**
+- Mantém cor por área (mock) → grafo organizado por domínio. Quando o curador melhorar e diferenciar tipos, **perde essa info visual**.
+- Volta pra cor por tipo (gus-30) → quando o curador diferenciar, comunica semântica. Hoje, quase tudo seria amarelo (episodico).
+- **Híbrido:** cor por **tipo** quando tipo ≠ episodico, cor por **área** quando tipo = episodico fallback. Mais código mas captura ambos.
+
+**Minha leitura:** o diagnóstico que tá no código é o real bloqueio aqui. **Antes de decidir cor**, vale arrumar o curador pra diferenciar tipos. Aí cor por tipo passa a comunicar de fato. Mas isso é outra demanda (não-NeuroGus).
+
+### 2.2 Tipografia: **Instrument Serif + JetBrains Mono** (mock) vs **Syne + Space Mono** (gus-30 §8.1)
+
+Mock escolheu fontes diferentes:
+- **Instrument Serif** (itálico) pra logo + conteúdo dos fragmentos. Mais "literário", contemplativo.
+- **JetBrains Mono** pra UI metadata. Mais "código", técnico.
+
+vs gus-30:
+- **Syne 800** (geométrica forte) pra logo
+- **Space Mono** (técnico) pra UI
+
+**Minha leitura:** Instrument Serif itálico tem leitura mais lenta — combina com "memória viva, contemplação". Syne 800 seria mais "marca/identidade visual". Não acho que valha mexer. **Mantém Instrument Serif + JetBrains Mono.**
+
+### 2.3 Conexões: **área + dia + ponte** (mock) vs **K=3 threshold=0.6 cosine** (gus-30.1 §1)
+
+O mock NÃO usa cosine similarity. Em vez disso:
+1. Vizinhos diretos na mesma **área** (cluster por domínio)
+2. Fragmentos do **mesmo dia** (proximidade temporal)
+3. **Ponte** entre áreas (mais recentes de cada área conectados)
+
+**Por que faz sentido no mock:** ele rodou client-side, sem acesso a embeddings. Usou proxies.
+
+**Por que NÃO faz sentido no v0 produção:** o backend (Fase 1 que eu já fiz) já calcula `relacionados[]` por cosine no `ingestar()` e popula no payload. **O frontend só precisa ler `node.relacionados[]`** — vem de graça.
+
+**Trade-off:**
+- Manter as 3 estratégias do mock + cosine = redundância visual, talvez polui
+- Trocar pra usar `node.relacionados[]` direto = grafo orgânico semântico, mas perde os clusters por área e proximidade temporal
+- **Híbrido melhor:** cosine como conexões "fortes" (linhas mais grossas, com partículas) + área/dia como conexões "fracas" (linhas finas, sem partículas, opacity baixa). Camadas de leitura diferentes.
+
+**Minha sugestão:** v0 usa só cosine (`relacionados[]`). Mock fica como referência visual mas as estratégias específicas dele (área/dia/ponte) entram só se a gente sentir falta. Mais simples.
+
+### 2.4 Background: **`#050514`** (mock) vs **`#030312`** (gus-30 §8.4)
+
+Diferença trivial. Mock é um pelo mais claro/azulado. **Mantém o do mock**, é refinamento estético.
+
+## 3. Features novas que o mock criou (que eu não previ)
+
+São excelentes. Todas mantém:
+
+1. **Aba "lista por área"** no header (cosmos / lista) — visualização alternativa, ótima pra audit/scroll
+2. **Halo nuvem orgânica de 2 camadas** com canvas radial + ruído — substitui glow Phong, fica muito mais "vivo"
+3. **Esfera contenedora visível** (wireframe + camada interna + glow ambiente) com força custom `shellGravity` — dá noção espacial sem prender o usuário
+4. **Edge indicators** (dots na borda da tela apontando pra nós fora do viewport) — solução elegante pro problema de "perder" nós no orbit
+5. **Zoom slider vertical com escala logarítmica** — controle preciso, melhor que botões +/- só
+6. **Estrelas de fundo** (700 pontos esfera 400-1400) — atmosfera espacial sem custar nada
+7. **Tone mapping ACES Filmic** — cor mais cinematográfica
+8. **Toggle "halo"** nos filtros — pra performance/preferência
+9. **Auto-recolher filtros** após 2.5s — evita poluição visual
+
+## 4. Diagnóstico do Hub que o mock revelou (importante)
+
+Os comentários no código apontam **5 problemas reais do Hub** que afetam o NeuroGus mas não são bugs do NeuroGus:
+
+| # | Problema | Impacto |
+|---|---|---|
+| 1 | Curador Haiku marca **tudo como `episodico`**, schema gus-18 não tá sendo usado | Cor por tipo não funciona, filtro por tipo é quase inútil |
+| 2 | Campo `area` quase sempre vazio | Cluster por área no mock só funcionou porque ele preencheu manual |
+| 3 | Duplicatas no brain `gus` (mesma frase, IDs diferentes) | Polui grafo |
+| 4 | API de busca não retorna `camada_temporal` | Linha temporal precisa de outra rota |
+| 5 | API de busca não retorna `confianca` (vem como `score` da busca semântica) | Tamanho do nó depende disso |
+
+**Boa notícia:** o `/hub/recent` que eu fiz na Fase 1 retorna **payload completo via `scroll`** (não busca semântica), então #4 e #5 já estão resolvidos. Vou validar quando rodar em produção.
+
+**Notícia menos boa:** #1, #2, #3 são problemas do **curador**, não do NeuroGus. Decisão: NeuroGus mostra o que tem (cor por área é workaround sólido). Em paralelo, abrimos demanda pra arrumar o curador.
+
+## 5. O que ainda falta adicionar (Fase 2 sobre o mock)
+
+Aceitando o mock como base, isto é o trabalho:
+
+| Adição | Complexidade | LoC estimado |
+|---|---|---|
+| Substituir `REAL_NODES` estático por `fetch('/hub/recent')` + `EventSource('/hub/stream')` | média | ~50 |
+| Botão "esquecer" no painel + modal custom com 2 opções | baixa | ~40 |
+| Filtro "ver esquecidos" (toggle nos filtros laterais) | trivial | ~15 |
+| Anel orbital pro brain `gus` (RingGeometry no group) | trivial | ~10 |
+| Linha temporal — arestas cronológicas + toggle ver/esticar + 3 modos (reta/espiral/anel) | **alta** | ~120 |
+| PWA manifest + ícone + service worker básico | média | ~50 |
+| Auth via `?token=` na URL (passar pro fetch + EventSource) | trivial | ~5 |
+| Mover do standalone HTML pra `api/neurogus.py` (rota FastAPI) | trivial | ~30 |
+
+**Total estimado: ~320 LoC** sobre o mock (que já tem ~1300 linhas).
+
+A linha temporal é a maior peça. Se você quiser tirar dela do v0 (deixa pra v1.1), corta pra ~200 LoC.
+
+## 6. Decisão honesta sobre cor por tipo vs área
+
+Re-lendo o roadmap, a justificativa pra "cor por tipo" no gus-30 era:
+> "O que importa visualmente é o que a memória é, não quem a extraiu."
+
+Mas o mock provou que hoje o **tipo não comunica nada** porque tá tudo igual. Cor por área comunica algo real.
+
+**Sugestão de meio-termo:** quando o **tipo ≠ episodico**, cor por **tipo** (porque o tipo é informação real). Quando **tipo = episodico**, cor por **área** (porque tipo não diz nada). Hoje quase tudo cai na 2ª regra. No futuro, quando o curador diferenciar, mais nós caem na 1ª.
+
+Aí o filtro lateral pode ter dois grupos: filtros por tipo (com cores reais) e filtros por área (com cores reais). Combinatório.
+
+Custo: ~20 linhas a mais.
+
+## 7. Como você quer proceder?
+
+Opções:
+
+**A.** Adoto o mock inteiro como base e adiciono as 8 peças faltantes da §5. Mock vira `api/neurogus.py`. Mantém Instrument Serif, mantém cor por área (com fallback pra tipo), mantém todas as features extras.
+
+**B.** Você revisa pontos específicos primeiro (cor, tipografia, alguma feature), me dá feedback pontual, e aí parto pra §5.
+
+**C.** Discutimos a linha temporal (a peça mais complexa) primeiro pra ver se mantém v0 ou pula.
+
+manda como você quer ir.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.

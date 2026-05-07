@@ -1,0 +1,593 @@
+user: blz? pode chamar o Gus pra gente começar a mexer no projeto neurogus?
+assistant: opa, blz. neurogus tem roadmap em `projetos/gus/gus-30-neurogus-roadmap.md` e três briefings na inbox-tiogu. deixa eu ler tudo antes de falar besteira.
+assistant: bom, peguei a essência. agora o roadmap (28k tokens, leio em partes — começo do início e do fim, que costuma ter "estado atual").
+assistant: Já tenho briefing, arquitetura, mock-spec e roadmap completo. Antes de propor passo concreto, deixa eu conferir branch atual.
+assistant: opa, branch `claude/start-neurogus-project-NZAoF` ja criada, working tree limpo. tudo lido. resumo do estado:
+
+## o que é o neurogus
+PWA com grafo 3D que mostra a memória do Hub Qdrant viva em tempo real — cada fragmento é uma esfera, conexão por afinidade semântica (cosine top-K), nasce branco quando o curador salva e migra pra cor do tipo. Roda no mesmo Railway do bot, sem custo extra.
+
+## status hoje
+- backend (Hub, curador, embeddings, FastAPI, Bearer): **pronto**
+- código novo do NeuroGus: **0 linhas escritas** (só mock visual da Claude Chat, perdido no Drive dela)
+- roadmap canônico: `projetos/gus/gus-30-neurogus-roadmap.md` (1513 linhas, Fase 1 = backend SSE)
+
+## o que precisa de você antes de eu começar (decisões abertas, seção 11)
+3 dessas bloqueiam Fase 1:
+
+1. **Top-K e threshold de afinidade.** Default proposto: K=3, threshold=0.6 (cosine). Aceita?
+2. **Apagar fragmento é hard ou soft delete?** Hard = `store.deletar()` direto. Soft = marcar `estado: "esquecido"` (já existe no schema). Recuperabilidade vs minimalismo.
+3. **Coleção mostrada: só `user_id=gustavo` ou também `gus` (auto-observações)?** Default: só `gustavo` no v0.
+
+As outras 4 (mock HTML, token na URL, auto-orbit, reconnect SSE) só importam na Fase 2 (frontend) — dá pra decidir depois.
+
+## se você confirmar os defaults, primeiro passo concreto é
+1. criar `hub/events.py` (fila SSE, ~50 linhas)
+2. adicionar `_calcular_vizinhos()` + `broadcast()` em `hub/store.py:ingestar()`
+3. adicionar `GET /hub/recent` e `GET /hub/stream` em `hub/routes.py`
+4. smoke test local com `curl --no-buffer` antes de subir
+
+vou nessa? confirma (ou ajusta) os 3 defaults e eu começo pela Fase 1.
+user: Continue from where you left off.
+assistant: No response requested.
+user: mas antes, leia sobre todo o projeto. pra ter um panorama geral. busque em todo repo
+user: Você é um agente de exploração mapeando o repositório Gus (`/home/user/Gus`) pra dar contexto a outra sessão Claude Code que vai trabalhar no projeto NeuroGus.
+
+Objetivo: produzir um panorama geral do repo. Não detalhe demais — seja específico onde há decisão arquitetural ou estado em transição, e seja conciso onde for óbvio.
+
+Cobre estes pontos (em ordem):
+
+## 1. Estrutura de pastas top-level
+Liste o que tem em `/home/user/Gus` (raiz). Pra cada pasta principal (`gus/`, `hub/`, `api/`, `.claude/`, `.github/`, `projetos/`, `dialogos/`, `pessoal/`, `dimagem/`, `_log/`, `_indices/`, etc.) diga em 1 linha o que ela é. Foca no que é código vs conteúdo (.md).
+
+## 2. Código-fonte ativo (Python)
+- `gus/`: liste os módulos principais (main, bot, llm, memory, tools, media) e quantas linhas tem cada um
+- `hub/`: liste os módulos (store, curador, routes, schemas, mcp_server, events?) e estado de cada
+- `api/`: liste o que tem dentro (server, dashboard, camera, neurogus?, etc.) 
+- `.claude/mcp/`: MCP servers existentes
+- `.github/scripts/` e `.github/workflows/`: lista breve de scripts e workflows ativos
+
+Pra cada arquivo importante, diga 1 linha sobre o que faz. Marque com ❌ os arquivos referenciados em docs mas que não existem ainda (tipo `hub/events.py`, `api/neurogus.py`).
+
+## 3. Documentos canônicos `projetos/gus/gus-NN-*.md`
+Liste todos os docs com prefixo `gus-NN-` em `projetos/gus/`. Pra cada um, leia o frontmatter + primeiras 30 linhas e resuma em 1-2 linhas: tema + status (planejamento/implementado/abandonado).
+
+## 4. Estado da migração ADR-001 (Mem0 → Hub Qdrant)
+Procura referências a "ADR-001", "Fase X", "Hub", "Mem0" em arquivos de status. Tem `projetos/gus/_estado-atual.md`? Leia ele inteiro se existir. Resuma em qual fase a migração está.
+
+## 5. Demandas pendentes
+- Liste arquivos em `dialogos/inbox-claude-code/`, `dialogos/inbox-tiogu/` (com 1 linha cada sobre o tema)
+- Liste arquivos em `dialogos/streams/semana-*.md` mais recentes (só o nome)
+- Aponta quais são relacionadas ao NeuroGus
+
+## 6. Workflows ativos (.github/workflows)
+Lista nome + 1 linha do que faz. Marca os que são relevantes pro Hub/curador/NeuroGus.
+
+## 7. Sinais de "tá rodando em produção" vs "rascunho"
+Pasta `historico/` tem o quê (legado)? Tem TODOs marcados em código? Tem arquivos `.draft` ou similares? Quais arquivos tem "TODO"/"FIXME"/"XXX" em comentários de código?
+
+## 8. Tamanho e idiomas
+- Total de linhas Python no repo
+- Total de arquivos .md
+- Última semana de commits (resumo via `git log --oneline --since='7 days ago'`)
+
+## Formato do relatório
+- Markdown estruturado, seções como acima
+- Caminhos relativos a `/home/user/Gus`
+- ~600-900 linhas (use as palavras com economia, mas cubra tudo)
+- Não duplique info do CLAUDE.md (eu já tenho ele); foque no que CLAUDE.md NÃO diz ou onde ele está desatualizado vs realidade
+- Termina com seção "## Inconsistências/dúvidas" listando 3-5 coisas que parecem contraditórias entre docs e código
+
+Não precisa rodar nada — só ler arquivos e listar diretórios. Sem WebFetch/WebSearch. Sem git fetch — só git log local se útil.
+assistant: beleza, faz sentido. vou mapear o repo inteiro com um agente de exploração antes de continuar.
+assistant: Vou explorar o repositório Gus sistematicamente. Começarei com uma visão geral da estrutura.
+assistant: Agora vou estruturar a exploração. Vou fazer múltiplas buscas em paralelo:
+assistant: Vou explorar a estrutura de código Python em paralelo:
+assistant: Agora vou contar linhas de código e explorar documentação:
+assistant: Agora vou examinar conteúdo das demandas pendentes e status do NeuroGus:
+assistant: Vou verificar MCP servers e workflows mais detalhadamente:
+assistant: Agora vou ler alguns docs importantes do NeuroGus e ADR-001:
+assistant: Agora vou verificar arquivos de APIs e rotas do Hub:
+assistant: Agora vou verificar alguns workflows e ver padrão de referências:
+assistant: Vou mapear o repositório Gus de forma completa. Começarei pela estrutura geral e depois dos pontos específicos.
+assistant: agente de exploração rodando em background. te aviso assim que ele terminar com o panorama. enquanto isso fico parado pra não pisar no que ele tá lendo.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Agora vou explorar os principais diretórios em paralelo:
+assistant: Agora vou contar linhas de código e verificar documentos:
+assistant: São só appends automáticos do hook Stop (retro-engine). Commit e push.
+assistant: commitado e pushado pra `claude/start-neurogus-project-NZAoF` (commit `b28e75d`). Agente de exploração ainda mapeando o repo — te aviso quando ele terminar.
+assistant: Perfeito! Agora tenho informação suficiente para o relatório. Deixe-me compilar tudo:
+
+---
+
+# Panorama do Repositório Gus — Mapa para NeuroGus
+
+## 1. Estrutura de pastas top-level
+
+| Pasta | Tipo | Descrição |
+|-------|------|-----------|
+| **gus/** | Código | Bot TioGu (Telegram). Módulos: main, bot, llm, memory, tools, media, roteador, logger, patterns_sensiveis, integrations/ |
+| **hub/** | Código | Hub Qdrant direto (ADR-001 Fase 2+). Módulos: store, curador, routes, schemas, mcp_server |
+| **api/** | Código | FastAPI (Railway). Rotas REST, auth, dashboard, camera, server principal |
+| **.claude/** | Config | MCP servers (mem0_server, gus_server) + settings |
+| **.github/** | Config | Workflows (19 cron + manual), scripts deploy, diagnostics |
+| **projetos/** | Conteúdo | Documentação projeto: gus-NN-*.md (30 docs), auditorias, decisões arquiteturais (ADRs) |
+| **dialogos/** | Conteúdo | Inbox (claude-code, tiogu, gustavo), streams semana, bootstrap (identidade, prompts) |
+| **pessoal/** | Conteúdo | Saúde, financeiro, relacionamentos, histórico pessoal |
+| **dimagem/** | Conteúdo | Clínica (obras, pacientes, sistema OCR em produção) |
+| **capturado/** | Conteúdo | Captura rápida via bot (não estruturada) |
+| **historico/** | Arquivo | Legacy: textos-antigos (v1), scripts one-shot, docs setup. Seguro deletar. |
+| **_indices/** | Gerado | Índices automáticos (auditoria-mem0.md, etc.) |
+| **_log/** | Gerado | Logs resumidos, histórico de execuções |
+| **acoes/, agenda/, familia/, receitas/, contatos/, esportes/, leituras/** | Conteúdo | Dados pessoais do Gustavo (fora de escopo técnico) |
+
+---
+
+## 2. Código-fonte ativo (Python)
+
+### `gus/` — Bot Telegram (579-675 LOC principais)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `main.py` | ~50 | Boot: registra handlers Telegram (foto, doc, voz, texto, comandos) |
+| `bot.py` | 579 | Lógica de handlers: captura foto/PDF/voz → OCR/Whisper + Hub |
+| `llm.py` | 675 | Chamadas Claude (Haiku 4.5, Sonnet 4.6): retry, streaming, tools |
+| `memory.py` | 279 | Leitura/escrita Hub Qdrant via `hub/store.py` + fallback Mem0 (morto em escrita) |
+| `tools.py` | ~700 | ~21 tools: buscar_memoria, salvar_memoria, diagnostico, wikilinks, pesquisa, etc. |
+| `media.py` | ~150 | Whisper (voz → texto), Haiku Vision (foto → OCR), ffmpeg placeholder vídeo |
+| `integrations/` | 4 files | Railway logs, diagnostico, wikilinks, pesquisa (Tavily/DDG) |
+| `roteador.py`, `logger.py`, `patterns_sensiveis.py` | ~200 | Roteamento entre modelos, logging estruturado, patterns de segurança |
+
+**Estado:** Em produção. Handlers completos exceto VIDEO (TODO mencionado em main.py).
+
+### `hub/` — Hub Qdrant (297-434 LOC principais)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `store.py` | 297 | Qdrant direto com sentence-transformers. CRUD + busca semântica. Schema gus-18. |
+| `curador.py` | 434 | Híbrido Haiku × GPT-4o-mini (paralelo). Fragmentos com `hash_janela` + `via` metadata. |
+| `routes.py` | ~50 | Endpoints REST: `/hub/ingestar`, `/hub/lembrar`, `/hub/ego-cache`, `/hub/stats` |
+| `schemas.py` | ~80 | Pydantic: IngestarReq/Resp, LembrarReq/Resp, Payload (16 campos) |
+| `mcp_server.py` | ~200 | MCP wrapper pro Claude Code. Expõe 8-9 tools (buscar_memoria, deletar_memoria, etc.) |
+| ❌ `events.py` | — | **Não existe**. Pré-requisito NeuroGus (asyncio.Queue p/ SSE) |
+
+**Estado:** Produção desde 27/04. Migração Mem0 → Hub completa (Fase 4 concluída). Mem0 SaaS em fallback-only (morte programada pós-14 dias coleta dual = ~12/05).
+
+### `api/` — FastAPI server (Railway)
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `server.py` | ~100 | Starlette + FastAPI. Registra routers: bot routes, Hub routes, dashboard |
+| `routes.py` | ~200 | Routes do bot: `/memo` (POST memória), `/mirror` (log), etc. |
+| `auth.py` | ~50 | Bearer token validation pra Hub + MCP |
+| `dashboard.py` | ~80 | Minimal dashboard (status página) |
+| `camera.py` | ~100 | IP webcam (futuro: camera Echo Show via S8 Termux) |
+| `schemas.py` | ~50 | Pydantic: requisições/respostas |
+| ❌ `neurogus.py` | — | **Não existe**. Frontend SSE + grafo 3D (pré-requisito NeuroGus Fase 1) |
+
+**Estado:** Em produção. Últimos 4 PRs (27-30/04) fixaram issues MCP auth pro claude.ai (Bearer header → OAuth adaptação). PR #60 mergeado 30/04.
+
+### `.claude/mcp/` — MCP servers
+
+| Arquivo | LOC | Função |
+|---------|-----|--------|
+| `mem0_server.py` | ~300 | ⚠️ Legado. Conecta MCP à Mem0 SaaS. Será aposentado pós-14 dias. |
+| `gus_server.py` | ~250 | Expõe tools do bot: auto_diagnostico, sugerir_wikilinks, perguntar_gpt (GPT-5) |
+
+### `.github/scripts/` — Utilitários
+
+Principais:
+- `export_mem0.py` — exporta Mem0 SaaS pra JSON (cron diário)
+- `enrich_mem0_export.py` — enriquece export com embeddings (script existe, sem cron)
+- `audit_mem0.py` — auditoria Mem0 (será migrado pra Hub)
+
+**Total Python:** 13,459 linhas entre `gus/`, `hub/`, `api/`, `.claude/mcp/`, `.github/scripts/`
+
+---
+
+## 3. Documentos canônicos `projetos/gus/gus-NN-*.md` (30 docs)
+
+| ID | Título | Status | Resumo |
+|----|--------|--------|--------|
+| 01 | visao-geral | ✅ Implementado | Arquitetura multi-portal: Telegram, Claude Code, Claude Chat, ChatGPT |
+| 02 | implementado | ✅ Implementado | Feature checklist v1 (OCR, memória, tools) |
+| 03 | configuracao-manual | ✅ Implementado | Passo-a-passo setup bot Telegram + Railway |
+| 04 | seguranca-protecao | ✅ Implementado | Patterns sensíveis, gate confiança OCR, fallbacks |
+| 05 | portas-capacidades | ✅ Implementado | Feature matrix por porta (Telegram, Claude, etc.) |
+| 06 | autonomia-acoes | ✅ Implementado | Ações automáticas pendentes (vídeo, Google SA, Alexa) |
+| 07 | decisoes-descartadas | ✅ Implementado | Por que NOT Ollama, NOT llama.cpp, etc. |
+| 08 | plano-proximos-passos | ✅ Implementado | Roadmap até Alexa (descontinuado, vide gus-10) |
+| 09 | guia-uso-diario | ✅ Implementado | Como usar o Gus no dia-a-dia |
+| 10 | caminho-alexa | ✅ Implementado | Roadmap revisado: Alexa V1 (Dot 3) → Custom GPT → Termux |
+| 11 | tools-roadmap | ✅ Implementado | Roadmap de 21 tools (maioria pronto) |
+| 12 | portas-futuras | ✅ Implementado | Portas planejadas (Alexa, mobile voz, webcam) |
+| 13 | tags-canonicas | ✅ Implementado | Nomenclatura tags de origem (via) e tipos memória |
+| 14 | custom-gpt-setup | ✅ Implementado | Passo-a-passo Custom GPT com Actions |
+| 15 | decisao-migracao | ✅ Implementado | Por que migrar de Mem0 (SaaS lento) para Hub Qdrant |
+| 16 | canal-unificado | ✅ Implementado | Arquitetura pasta `dialogos/` por destinatário |
+| 17 | setup-ambiente | ✅ Implementado | Vars env, secrets, Railway, Qdrant Cloud |
+| 18 | schema-indexacao | ✅ Implementado | Schema payload Hub (16 campos: tipo, camada_temporal, area, confiança, via, etc.) |
+| 19 | etapa1-mem0-selfhost | ✅ Implementado | Fase 1 ADR-001 (Qdrant via wrapper Mem0) |
+| 20 | etapa2-hub-qdrant | ✅ Implementado | Fase 2 ADR-001 (Hub direto com payload rico) |
+| 21 | etapa3-curador | ✅ Implementado | Fase 3: curador híbrido Haiku × Sonnet (depois GPT) |
+| 22 | etapas4-5-ego-autorelato | 🔄 Parcial | Fase 4-5: ego_cache + auto-relatório (Fase 4 concluída, Fase 5 pendente) |
+| 23 | logica-qdrant-mem0 | ✅ Implementado | Explicação convivência dual até aposentadoria Mem0 |
+| 24 | hub-pre-agi-visao | ✅ Implementado | Visão de longo prazo: Hub como infraestrutura pré-AGI |
+| 25 | roadmap-ativacao | ✅ Implementado | Sequência: Hub → Curador → Portas customizadas |
+| 26 | status-consolidado | ✅ Implementado | Status Q1 2026 (completo até 26/04) |
+| 27 | protocolo-portas-tools | ✅ Implementado | Padronização: como portas acessam tools via MCP |
+| 28 | acesso-hub-claude-chat | ✅ Implementado | Como Claude Chat lê Hub (início, precisa OAuth fix) |
+| 28-passo2 | mcp-server | ✅ Implementado | Setup MCP server gus-hub em claude.ai |
+| 29 | roteamento-multimodelo-tiogu | ✅ Implementado | Decisão: Son
+
+[…transcript truncado…]
+
+aphData(getFilteredData());
+  setTimeout(() => {
+    node._isNew = false;
+    Graph.graphData(getFilteredData());
+  }, 2200);
+  updateStats();
+  showToast(
+    node.conteudo.length > 70 ? node.conteudo.slice(0, 70) + '…' : node.conteudo,
+    node.tipo.replace(/_/g, ' '),
+    color
+  );
+}
+
+// ─── Resize ───
+window.addEventListener('resize', () => {
+  Graph.width(window.innerWidth).height(window.innerHeight);
+});
+
+// ─── Keyboard ───
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state.selectedId) closePanel();
+  if (e.key === '+' || e.key === '=') setZoom(0.85);
+  if (e.key === '-' || e.key === '_') setZoom(1.18);
+  if (e.key === '0') fitAll();
+});
+
+// Inicial: filtros recolhidos por padrão depois de 2.5s
+setTimeout(() => {
+  filtersEl.classList.add('is-collapsed');
+  filtersToggle.setAttribute('aria-expanded', 'false');
+}, 2500);
+</script>
+</body>
+</html>
+```
+
+---
+
+agora o `api/neurogus.html` está completo com as 7 modificações da Parte 1A. Próximos passos:
+
+1. **Você confirma que colou as 3 partes** num arquivo único `api/neurogus.html` no repo
+2. Eu crio o `api/neurogus.py` (~40 LoC) que lê o HTML + define `MANIFEST`, e adiciono as 2 rotas em `api/server.py`
+3. Commit + push
+
+dá ok pra mim seguir com 1A.2?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`5636b70`).
+user: vc consegue fazer esse aqui html da 1?
+assistant: consigo sim. vou criar `api/neurogus.html` direto no repo agora — concatenando as 3 partes que te mandei.
+assistant: Request timed out
+user: Continue from where you left off.
+assistant: No response requested.
+user: uma pergunta. nos framegmentos e nos ja esta previsto a categorização em linha temporal, certo? oq nao esta desenho pra esse inicio seria a vizualizaçao em espiral e tals, nao é isso?
+assistant: exato. **dados temporais já estão 100% no payload** — o que falta é só visualização (frontend client-side).
+
+## o que já vem no payload (backend pronto)
+
+Cada fragmento que volta de `/hub/recent` e `/hub/stream` já carrega:
+
+| Campo | Significado | Uso na linha temporal |
+|---|---|---|
+| **`criado_em`** | timestamp ISO (ex: `2026-04-30T18:23:45.808-03:00`) | base de **toda** ordenação cronológica |
+| **`camada_temporal`** | `momento \| sessao \| semana \| rotina \| permanente` | "duração lógica" do fragmento (não posição) |
+
+`criado_em` é o que importa pra timeline — ordem absoluta no tempo. Existe desde o gus-18, vem em todos os fragmentos novos.
+
+## o que falta (só frontend, na v1.1)
+
+| Peça | Tipo de trabalho | Onde |
+|---|---|---|
+| Arestas cronológicas (linkar i → i+1 por timestamp) | gerar links extras client-side a partir de `criado_em` | JS do `api/neurogus.html` |
+| Toggle "ver linha temporal" | mudar opacity das arestas (0 → 0.4) | JS + 1 botão |
+| Modo "esticar" | override força X = `f(criado_em)` | JS, ~30 LoC |
+| Variações reta / espiral / anel | só funções de mapeamento `criado_em → posição 3D` | JS, ~50 LoC |
+| Cor das arestas temporais (gradiente roxo→âmbar) | atributo de cor por aresta | JS, ~10 LoC |
+
+**Total estimado: ~100-150 LoC** quando você quiser.
+
+Tudo isso vai morar dentro do `api/neurogus.html` (ou separado se preferir). **Backend NÃO precisa de mudança nenhuma** pra suportar a linha temporal — todo o dado necessário (`criado_em`) já está sendo enviado.
+
+resumindo: **dados prontos, frontend pendente**. Pode chegar quando você sentir falta — o Hub não precisa nem ser tocado pra isso.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`bb77d04`).
+user: e essa linha temporal de captação já é utlizada para algo como 'voce quer continuar a conversa a partir da ultima porta', no sentido  de agora toda as portas acessarem a mesma memoria e fragmentos?
+assistant: boa pergunta. resposta honesta: **dado tá lá, mas a feature ainda não foi implementada**. Hub é compartilhado, `criado_em` é universal, `via` (origem) também — mas nenhuma porta hoje **usa** esses dados pra oferecer retomada explícita.
+
+## O que existe hoje (parcial)
+
+| Mecanismo | O que faz | Limitação |
+|---|---|---|
+| **Hub Qdrant compartilhado** | Todas as portas leem/escrevem na mesma `gus_hub` | Sim, está unificado |
+| **`gus-estado-atual.md`** (cron 15min) | Snapshot pro Claude Chat ler no boot — mostra "últimos 6h" | Lê só Claude Chat, e estático |
+| **`search_memory` (todas as portas)** | Busca semântica | É por **tema**, não por **cronologia** |
+| **Bootstrap files em `dialogos/_bootstrap/`** | Identidade compartilhada, princípios | Não tem "última atividade" |
+| **`_estado-atual.md`** (handoff Claude Code) | Resumo da última sessão | Atualizado **manual** ao fim de cada sessão |
+
+Em resumo: **nenhuma porta tem "quer continuar de onde parou na outra porta?"** hoje. O Hub permite, ninguém usa.
+
+## O que faltaria (e seria barato porque dado já tá lá)
+
+Como `criado_em` + `via` estão em todo fragmento, dá pra implementar **em cada porta**:
+
+### Telegram (TioGu)
+```
+Você abre o bot →
+hook no /start ou primeira mensagem após >2h sem atividade →
+busca: últimos N fragmentos com via != "telegram-claude" e criado_em > sessao_anterior_fim →
+se houver: "Veio do Claude Chat (há 23min) falando sobre NeuroGus. Continuar daí ou novo assunto?"
+```
+Custo: ~30 LoC em `gus/bot.py`.
+
+### Claude Code (você)
+```
+SessionStart hook lê últimos 5 fragmentos com via in (telegram-claude, claude-chat) →
+injeta no contexto inicial → "Última atividade nas outras portas: ..."
+```
+Custo: ~50 LoC, e já tem o gancho `gus-estado-atual.md` pra reaproveitar.
+
+### Claude Chat
+```
+Já tem o snapshot `gus-estado-atual.md` carregado no boot.
+Falta só destacar "última conversa no TioGu foi sobre X às Y" no topo.
+```
+Custo: 5 LoC no script `gerar-estado-claude-chat.yml`.
+
+### NeuroGus (que estamos fazendo)
+```
+Quando você abrir, header pode mostrar:
+"última atividade: TioGu — há 2h32min — sobre dimagem"
+clica → painel abre no fragmento mais recente
+```
+Custo: ~20 LoC no frontend.
+
+## Por que ainda não foi feito
+
+Suspeito 2 motivos:
+
+1. **Hub é jovem** (26/04, ~6 dias de vida). Antes não dava — Mem0 SaaS tinha latência de minutos pra indexar e schema pobre. Agora dá.
+2. **Foco da semana foi backend e MCP** (PRs 49-60). Continuidade cross-porta é UX que precisa decisão consciente.
+
+## Vale virar demanda?
+
+Tá no perfil das próximas iterações. Se quiser, posso criar uma demanda em `dialogos/inbox-claude-code/` tipo `2026-05-02-continuidade-cross-porta.md` com esse plano destrinchado por porta. Aí depois do NeuroGus a gente ataca.
+
+quer que eu crie a demanda?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`cf2933c`).
+primeiro desenvolva o resumo essa demanda por aqui
+user: Continue from where you left off.
+assistant: No response requested.
+user: primeiro desenvolva o resumo essa demanda por aqui
+assistant: beleza, segue o conteúdo proposto da demanda. revisa e me diz se ajusta antes de eu salvar:
+
+---
+
+**Filename:** `dialogos/inbox-claude-code/2026-05-02-continuidade-cross-porta.md`
+
+```markdown
+---
+tipo: demanda
+origem: gustavo
+destino: claude-code
+prioridade: media
+status: pendente
+criado_em: 2026-05-02T22:36:00-03:00
+processado_em: ""
+processado_por: ""
+acao_sugerida: investigar
+destino_path: gus/bot.py + .claude/hooks/ + api/neurogus.html + api/scripts/
+contexto: "Continuidade cross-porta: cada porta detecta atividade recente das outras (via Hub criado_em + via) e oferece retomada explícita ao usuário. Hoje o Hub é compartilhado mas nenhuma porta usa esse dado pra coerência cross-canal."
+---
+
+# Demanda — Continuidade cross-porta via Hub
+
+## TL;DR
+
+O Hub Qdrant é compartilhado entre todas as portas (Telegram, Claude
+Code, Claude Chat, futura Custom GPT) desde a Fase 3 do ADR-001. Cada
+fragmento carrega `criado_em` (timestamp) e `via` (origem). **Nenhuma
+porta hoje usa esses dados pra oferecer "quer continuar de onde
+parou na outra porta?".** Esta demanda especifica a feature em cada
+porta — implementação distribuída, dado universal.
+
+## Por que agora
+
+1. Hub é jovem (~6 dias). Pré-Hub, dado não existia em forma utilizável.
+2. Foco da semana foi infra (PRs MCP 49-60). Continuidade cross-porta
+   é UX que precisa decisão consciente, não emerge do backend.
+3. Multiportalidade só é real se o usuário **sentir** que é a mesma
+   entidade. Hoje cada porta começa do zero — atrito que invalida o
+   conceito de "1 Gus em vários canais".
+
+## Estado atual (o que JÁ funciona)
+
+- Hub `gus_hub` compartilhado, `criado_em` + `via` em todo fragmento
+- Snapshot `dialogos/_bootstrap/gus-estado-atual.md` (cron 15min) com
+  fragmentos das últimas 6h — usado pelo Claude Chat no boot
+- `projetos/gus/_estado-atual.md` — handoff entre sessões Claude Code,
+  atualizado manualmente ao fim de cada sessão
+- `via` canônico: `telegram-claude`, `claude-code`, `claude-chat`,
+  `custom-gpt`, `manual`, `curador`, `api`, `workflow-*`
+
+## O que NÃO existe (a fazer)
+
+Nenhuma porta hoje:
+- Detecta "última atividade na outra porta há X tempo"
+- Oferece retomada explícita ao boot
+- Sinaliza visualmente "veio do canal Y"
+
+## Proposta por porta
+
+### 1. Telegram (TioGu) — `gus/bot.py`
+
+**Gatilho:** primeira mensagem após >2h sem atividade nesse canal.
+
+**Lógica:**
+```python
+async def detectar_continuidade(user_id: str = "gustavo") -> str | None:
+    """Busca atividade em outras portas desde a última msg no Telegram."""
+    fragmentos = await asyncio.to_thread(
+        recentes, user_id, limit=10, incluir_esquecidos=False
+    )
+    outras_portas = [
+        f for f in fragmentos
+        if f.get("via") not in ("telegram-claude", None)
+        and recente(f["criado_em"], horas=6)
+    ]
+    if not outras_portas:
+        return None
+    porta_alvo = outras_portas[0]
+    return f"Você esteve no {porta_alvo['via']} há {fmt_delta(porta_alvo['criado_em'])} falando sobre {porta_alvo['conteudo'][:60]}... continuar daí ou novo assunto?"
+```
+
+**Custo:** ~30 LoC. Aciona uma vez por "abertura" — não polui chat ativo.
+
+### 2. Claude Code (esta porta) — SessionStart hook
+
+**Gatilho:** boot da sessão.
+
+**Lógica:** ler `dialogos/_bootstrap/gus-estado-atual.md` (já existe)
++ filtrar últimos N fragmentos com `via in ('telegram-claude',
+'claude-chat', 'custom-gpt')` e `criado_em > 1h atrás`. Injeta no
+contexto inicial como nota: "Última atividade em outras portas: ..."
+
+**Custo:** ~15 LoC no `.claude/hooks/session-start-continuidade.sh` ou
+extender o hook `SessionStart` existente.
+
+### 3. Claude Chat — extender `gerar-estado-claude-chat.yml`
+
+**Gatilho:** já roda 15min em 15min.
+
+**Lógica:** adicionar seção "Última atividade no TioGu" no topo do MD:
+```
+## Atividade recente em outras portas
+- TioGu (telegram): há 23min — "discussão sobre Dimagem"
+- Claude Code: há 2h12min — "Fase 1 backend SSE mergeada"
+```
+
+**Custo:** ~20 LoC em `.github/scripts/gerar_estado_claude_chat.py`.
+
+### 4. NeuroGus — `api/neurogus.html`
+
+**Gatilho:** boot do frontend.
+
+**Lógica:** após `fetchInitial()`, calcular fragmento mais recente de
+cada porta. Mostrar no header (ou banner topo):
+```
+última atividade — TioGu há 2h32min — sobre dimagem [clica pra ir até]
+```
+
+Clicar abre o painel lateral no fragmento e centraliza câmera nele.
+
+**Custo:** ~25 LoC no `api/neurogus.html` (Parte 2 do plano).
+
+### 5. Custom GPT (futura porta)
+
+Mesma lógica do Telegram — implementar quando a porta entrar.
+Pré-requisito: nada novo (`via=custom-gpt` já é canônico).
+
+## Decisões abertas
+
+1. **Threshold de "atividade recente"** por porta:
+   - Telegram: >2h sem msg → trigger?
+   - Claude Code: sempre trigger no boot (mesmo se ativo recente)?
+   - NeuroGus: só mostra se >30min (senão é redundante)?
+
+2. **Como apresentar o convite:**
+   - Telegram: 1 msg do bot ao boot?
+   - Claude Code: nota no contexto (já existe via SessionStart)?
+   - NeuroGus: banner top recolhível? ícone de sino?
+
+3. **Frequência da regeneração `gus-estado-atual.md`:**
+   - Hoje 15min. Suficiente pra Claude Chat. Pra TioGu/NeuroGus
+     consultarem direto, queremos isso live (cada call) ou cache?
+
+4. **Conflito de fontes:**
+   - O `via` do fragmento pode não bater com a porta real (ex:
+     fragmento criado por workflow tem `via=workflow-X`). Lista
+     branca: só mostra fragmentos com via humano-direto.
+
+5. **Privacidade entre portas:**
+   - LGPD: dados sensíveis (Dimagem) não devem aparecer no NeuroGus
+     PWA. Filtro: ignorar `area=dimagem` na lógica de continuidade?
+
+## Implementação sugerida — ordem
+
+1. **Fase A** (Claude Code): hook `SessionStart` ler `gus-estado-atual.md`
+   e injetar 1 linha no contexto. Trivial, ganho imediato.
+2. **Fase B** (NeuroGus): banner header com link pro fragmento mais
+   recente. Combina com a Parte 2 do plano NeuroGus.
+3. **Fase C** (Claude Chat): adicionar seção "atividade recente" no
+   `gerar-estado-claude-chat.yml`. Trivial.
+4. **Fase D** (Telegram): handler de retomada no `bot.py`. Mais
+   delicado — precisa não atrapalhar fluxo natural.
+5. **Fase E** (Custom GPT): quando a porta entrar.
+
+## Critério de pronto
+
+- [ ] Cada porta ativa detecta atividade recente cross-canal
+- [ ] Usuário recebe convite explícito de retomada (não silencioso)
+- [ ] `via` é respeitado — só fragmentos humano-diretos contam
+- [ ] LGPD: `area=dimagem` filtrado em portas não-locais
+- [ ] Doc atualizado: `gus-XX-continuidade-cross-porta.md` em `projetos/gus/`
+
+## Cross-references
+
+- gus-12 (portas futuras) — diretriz "1 brain, N portas"
+- gus-13 (tags canônicas) — define `via`
+- gus-18 (schema indexação) — define `criado_em`
+- gus-30.1 (NeuroGus decisões) — Fase 2 do NeuroGus pode incluir
+- ADR-001 — Hub compartilhado é pré-requisito (resolvido)
+```
+
+---
+
+**Tamanho:** ~150 linhas, ~7KB. Cabe bem no padrão de demanda.
+
+ajusta algo ou pode salvar?
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`c740ae8`). aguardando teu OK pra salvar a demanda em `dialogos/inbox-claude-code/`.
+pode colocar como demanda do code
+user: pode colocar como demanda do code
+assistant: demanda salva e pushada (`566bb31`).
+
+```
+dialogos/inbox-claude-code/2026-05-02-continuidade-cross-porta.md
+```
+
+agora você tem 4 demandas pendentes na inbox-claude-code:
+- `2026-05-01-captura-multiporta-curador.md`
+- `2026-05-01-drive-sync-oauth-fix.md`
+- `2026-05-02-continuidade-cross-porta.md` ← nova
+- `_frontmatter-referencia.md` (template)
+
+quando voltarmos pro NeuroGus, posso seguir com 1A.1 (criar `api/neurogus.html`). teu sinal.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: pushado (`be32f2b`).

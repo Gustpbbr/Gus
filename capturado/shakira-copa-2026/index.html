@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Shakira em Copacabana — show histórico na praia mais famosa do Rio de Janeiro">
+  <title>Shakira em Copacabana</title>
+
+  <!-- ESTRUTURA-V1 — criada por Claude Code 03/05/2026
+       Pendente Claude Chat: completar info real (data, setlist, tickets), polir estética,
+       trocar placeholders, adicionar imagens, validar acessibilidade.
+       Demanda: dialogos/inbox-claude-chat/2026-05-03T14-15__shakira-copa-html-finalizar.md -->
+
+  <style>
+    /* ============================================================
+       Reset + base — mantém leve, sem framework
+       ============================================================ */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background: #0a0a0a;
+    }
+    img { max-width: 100%; height: auto; display: block; }
+    a { color: inherit; text-decoration: none; }
+
+    /* ============================================================
+       Layout — mobile-first
+       ============================================================ */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* ============================================================
+       HERO — placeholder gradient
+       Chat: trocar por imagem de Shakira em palco grande.
+       ============================================================ */
+    .hero {
+      min-height: 70vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #fff;
+      background:
+        linear-gradient(135deg, rgba(255, 50, 100, 0.85) 0%, rgba(80, 0, 120, 0.85) 100%),
+        url("placeholder-hero.jpg") center/cover;
+      padding: 4rem 1.5rem;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 6vw, 4.5rem);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+    }
+    .hero .subtitle {
+      font-size: clamp(1rem, 2vw, 1.5rem);
+      margin-top: 1rem;
+      opacity: 0.95;
+    }
+    .hero .cta {
+      display: inline-block;
+      margin-top: 2.5rem;
+      padding: 1rem 2.5rem;
+      background: #fff;
+      color: #1a1a1a;
+      font-weight: 700;
+      border-radius: 9999px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .hero .cta:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+
+    /* ============================================================
+       Sections
+       ============================================================ */
+    section {
+      padding: 4rem 0;
+      background: #fff;
+    }
+    section.alt { background: #f5f5f5; }
+    section h2 {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      margin-bottom: 2rem;
+      font-weight: 700;
+    }
+
+    /* ============================================================
+       Cards de informação (data, local, ingressos)
+       ============================================================ */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .info-card {
+      padding: 2rem;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+      border-left: 4px solid #ff3264;
+    }
+    .info-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; color: #ff3264; }
+    .info-card p { font-size: 1.5rem; font-weight: 600; }
+    .info-card small { color: #666; font-size: 0.85rem; }
+
+    /* ============================================================
+       Setlist — lista numerada estilizada
+       ============================================================ */
+    .setlist {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .setlist ol {
+      list-style: none;
+      counter-reset: setlist-counter;
+    }
+    .setlist li {
+      counter-increment: setlist-counter;
+      padding: 1rem 0;
+      border-bottom: 1px solid #e5e5e5;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .setlist li::before {
+      content: counter(setlist-counter, decimal-leading-zero);
+      font-weight: 700;
+      color: #ff3264;
+      font-size: 1.2rem;
+      min-width: 2.5rem;
+    }
+    .setlist li:last-child { border: none; }
+
+    /* ============================================================
+       FAQ — accordion simples (details/summary nativos)
+       ============================================================ */
+    .faq details {
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .faq summary {
+      font-weight: 600;
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .faq summary::after {
+      content: "+";
+      font-size: 1.5rem;
+      transition: transform 0.2s;
+    }
+    .faq details[open] summary::after { transform: rotate(45deg); }
+    .faq details p { margin-top: 1rem; color: #555; }
+
+    /* ============================================================
+       Footer
+       ============================================================ */
+    footer {
+      background: #0a0a0a;
+      color: #888;
+      text-align: center;
+      padding: 3rem 1.5rem;
+      font-size: 0.9rem;
+    }
+    footer a { color: #fff; }
+  </style>
+</head>
+<body>
+
+  <!-- ===========================================================
+       HERO
+       Chat: confirmar nome oficial do tour, data exata, hashtag.
+       Validar com web search se há show confirmado em Copacabana 2026.
+       =========================================================== -->
+  <header class="hero">
+    <div>
+      <h1>SHAKIRA<br>EM COPACABANA</h1>
+      <p class="subtitle">[DATA A CONFIRMAR] · Praia de Copacabana · Rio de Janeiro</p>
+      <a href="#info" class="cta">Saiba mais</a>
+    </div>
+  </header>
+
+  <!-- ===========================================================
+       INFO PRÁTICA
+       Chat: preencher dados reais. Se show ainda não foi anunciado
+       oficialmente (até a data desta criação), usar tom "speculative"
+       e marcar como "rumor / aguardando confirmação".
+       =========================================================== -->
+  <section id="info" class="container">
+    <h2>Informações do evento</h2>
+    <div class="info-grid">
+      <div class="info-card">
+        <h3>Data</h3>
+        <p>[DD/MM/AAAA]</p>
+        <small>Horário do show: [HH:MM]</small>
+      </div>
+      <div class="info-card">
+        <h3>Local</h3>
+        <p>Praia de Copacabana</p>
+        <small>Posto [N], Rio de Janeiro</small>
+      </div>
+      <div class="info-card">
+        <h3>Ingressos</h3>
+        <p>[Gratuito / Pago]</p>
+        <small>[Plataforma de venda]</small>
+      </div>
+      <div class="info-card">
+        <h3>Capacidade</h3>
+        <p>[N] mil pessoas</p>
+        <small>Estimativa</small>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===========================================================
+       SOBRE
+       Chat: bio curta da Shakira focada no momento atual da carreira
+       (last album, tour name, conquistas recentes). Evitar texto genérico.
+       =========================================================== -->
+  <section class="alt">
+    <div class="container">
+      <h2>Sobre</h2>
+      <p>
+        [TEXTO PLACEHOLDER — Chat substituir por bio curta com foco no
+        momento atual da carreira da Shakira: turnê atual, último álbum,
+        conquistas recentes. Não usar texto genérico tipo "uma das maiores
+        artistas do mundo". Mostrar dado concreto.]
+      </p>
+    </div>
+  </section>
+
+  <!-- ===========================================================
+       SETLIST ESPERADO
+       Chat: pesquisar setlist de shows recentes da turnê atual.
+       Marcar claramente como "setlist baseado em shows anteriores —
+       pode variar". Lista 8-12 músicas mais frequentes.
+       =========================================================== -->
+  <section class="container">
+    <h2>Setlist esperado</h2>
+    <div class="setlist">
+      <ol>
+        <li>[Música 1]</li>
+        <li>[Música 2]</li>
+        <li>[Música 3]</li>
+        <li>[Música 4]</li>
+        <li>[Música 5]</li>
+        <li>[Música 6]</li>
+        <li>[Música 7]</li>
+        <li>[Música 8]</li>
+      </ol>
+      <p style="text-align:center; color:#888; margin-top:1.5rem; font-size:0.9rem;">
+        Setlist baseado em shows anteriores — pode variar.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===========================================================
+       FAQ
+       Chat: 5-7 perguntas reais que pessoas teriam:
+       transporte (metrô, ônibus), segurança, levar criança,
+       horário ideal de chegar, comida e bebida, banheiros químicos,
+       acessibilidade.
+       =========================================================== -->
+  <section class="alt">
+    <div class="container faq">
+      <h2>Perguntas frequentes</h2>
+
+      <details>
+        <summary>Como chegar na Praia de Copacabana?</summary>
+        <p>[PLACEHOLDER — Chat: preencher com transporte público real:
+        linhas de metrô (Cardeal Arcoverde, Siqueira Campos, Cantagalo),
+        ônibus, estacionamento (provavelmente impossível no dia).]</p>
+      </details>
+
+      <details>
+        <summary>Que horas devo chegar?</summary>
+        <p>[PLACEHOLDER]</p>
+      </details>
+
+      <details>
+        <summary>É seguro? Posso levar criança?</summary>
+        <p>[PLACEHOLDER — Chat: dicas reais de segurança em show grande
+        em Copacabana, lições do Réveillon e shows anteriores.]</p>
+      </details>
+
+      <details>
+        <summary>Posso levar comida e bebida?</summary>
+        <p>[PLACEHOLDER]</p>
+      </details>
+
+      <details>
+        <summary>Tem banheiro público? Acessibilidade?</summary>
+        <p>[PLACEHOLDER]</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- ===========================================================
+       FOOTER
+       Chat: links pra fontes oficiais (site do tour, Instagram da
+       Shakira, site da Prefeitura/Riotur com info do evento).
+       =========================================================== -->
+  <footer>
+    <p>
+      Página criada em 03/05/2026.<br>
+      Fontes: <a href="#">[adicionar links oficiais]</a>.<br>
+      Não-oficial — informações sujeitas a confirmação.
+    </p>
+  </footer>
+
+</body>
+</html>

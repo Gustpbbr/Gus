@@ -122,7 +122,12 @@ async def list_tools():
                 "Salva fato/observação sobre o Gustavo no Hub brain `gustavo`. "
                 "Use quando aprender algo novo sobre preferências, decisões, "
                 "contexto pessoal que deveria persistir entre sessões. Tag "
-                "automática: via='claude-code'."
+                "automática: via='claude-code'.\n\n"
+                "Classifique adequadamente via params opcionais: `tipo` "
+                "(decisao | preferencia | biografico | fato | meta_reflexao | "
+                "etc, default 'fato') e `camada_temporal` (permanente | rotina | "
+                "semana | sessao | momento, default 'rotina'). Sem essa "
+                "classificação, busca semântica e ego_cache perdem sinal."
             ),
             inputSchema={
                 "type": "object",
@@ -130,7 +135,19 @@ async def list_tools():
                     "conteudo": {
                         "type": "string",
                         "description": "Texto auto-suficiente do fragmento (ex: 'Gustavo prefere crítica direta, não suaviza problemas')",
-                    }
+                    },
+                    "tipo": {
+                        "type": "string",
+                        "description": "Tipo do fragmento (gus-18). Aceita: identidade_operacional, biografico, emocional, decisao, procedural, rotina, meta_reflexao, conexao_emergente, episodico, cronologico, fato, preferencia, lacuna, projeto. Default: 'fato'.",
+                    },
+                    "camada_temporal": {
+                        "type": "string",
+                        "description": "Permanência esperada. Aceita: momento, sessao, semana, rotina, permanente. Default: 'rotina'.",
+                    },
+                    "area": {
+                        "type": "string",
+                        "description": "Área canônica: gus, saude, financeiro, projetos, pessoal, dimagem, pesquisa, receitas, esportes. Vazio se não se aplica.",
+                    },
                 },
                 "required": ["conteudo"],
             },
@@ -185,7 +202,12 @@ async def list_tools():
                 "moderação: padrões operacionais, aprendizados sobre tools, "
                 "princípios emergidos, decisões arquiteturais. NÃO usar pra fatos "
                 "sobre o Gustavo (esses vão em `salvar_memoria`). Tag automática: "
-                "via='claude-code'."
+                "via='claude-code', area='gus'.\n\n"
+                "Classifique via params opcionais: `tipo` "
+                "(decisao | meta_reflexao | procedural | identidade_operacional, "
+                "default 'meta_reflexao') e `camada_temporal` (permanente para "
+                "princípios duros, rotina para padrões observados, default "
+                "'rotina')."
             ),
             inputSchema={
                 "type": "object",
@@ -193,7 +215,15 @@ async def list_tools():
                     "observacao": {
                         "type": "string",
                         "description": "Observação operacional auto-suficiente (ex: 'tool X tem caveat Y', 'Gustavo descarta superlativos')",
-                    }
+                    },
+                    "tipo": {
+                        "type": "string",
+                        "description": "Default 'meta_reflexao'. Aceita também: decisao, procedural, identidade_operacional, conexao_emergente, lacuna.",
+                    },
+                    "camada_temporal": {
+                        "type": "string",
+                        "description": "Default 'rotina'. Use 'permanente' pra princípios estruturais.",
+                    },
                 },
                 "required": ["observacao"],
             },
@@ -322,19 +352,27 @@ async def call_tool(name: str, arguments: dict):
 
     if name == "salvar_memoria":
         conteudo = arguments["conteudo"]
+        # Params opcionais (item 1.4) — caller classifica em vez de hardcode
+        tipo = arguments.get("tipo") or "fato"
+        camada = arguments.get("camada_temporal") or "rotina"
+        area = arguments.get("area") or ""
         try:
             frag_id = await asyncio.to_thread(
                 ingestar,
                 conteudo,
                 {
-                    "tipo": "fato",  # tipo default — sem curador classificando aqui
-                    "camada_temporal": "rotina",
+                    "tipo": tipo,
+                    "camada_temporal": camada,
+                    "area": area,
                     "via": VIA_TAG,
                     "user_id": USER_GUSTAVO,
                     "confianca": 0.8,
                 },
             )
-            return [TextContent(type="text", text=f"Salvo no Hub `gustavo` (via={VIA_TAG}, id={frag_id[:8]}): {conteudo[:120]}")]
+            tag_info = f"tipo={tipo}/camada={camada}"
+            if area:
+                tag_info += f"/area={area}"
+            return [TextContent(type="text", text=f"Salvo no Hub `gustavo` ({tag_info}, id={frag_id[:8]}): {conteudo[:120]}")]
         except Exception as e:
             return [TextContent(type="text", text=f"Erro ao salvar no Hub: {e}")]
 
@@ -358,20 +396,23 @@ async def call_tool(name: str, arguments: dict):
 
     if name == "salvar_memoria_gus":
         observacao = arguments["observacao"]
+        # Params opcionais (item 1.4) — brain gus default 'meta_reflexao'
+        tipo = arguments.get("tipo") or "meta_reflexao"
+        camada = arguments.get("camada_temporal") or "rotina"
         try:
             frag_id = await asyncio.to_thread(
                 ingestar,
                 observacao,
                 {
-                    "tipo": "meta_reflexao",  # default pra brain gus (auto-observação)
-                    "camada_temporal": "rotina",
+                    "tipo": tipo,
+                    "camada_temporal": camada,
                     "area": "gus",
                     "via": VIA_TAG,
                     "user_id": USER_GUS,
                     "confianca": 0.8,
                 },
             )
-            return [TextContent(type="text", text=f"Salvo no Hub `gus` (via={VIA_TAG}, id={frag_id[:8]}): {observacao[:120]}")]
+            return [TextContent(type="text", text=f"Salvo no Hub `gus` (tipo={tipo}/camada={camada}, id={frag_id[:8]}): {observacao[:120]}")]
         except Exception as e:
             return [TextContent(type="text", text=f"Erro ao salvar no Hub: {e}")]
 
@@ -390,7 +431,9 @@ async def call_tool(name: str, arguments: dict):
         if not memory_id:
             return [TextContent(type="text", text="memory_id vazio.")]
         try:
-            await asyncio.to_thread(deletar, memory_id)
+            # Motivo automático pra trilha de auditoria (item 1.3)
+            motivo = f"mcp:{VIA_TAG} user_id={user_id}"
+            await asyncio.to_thread(deletar, memory_id, motivo)
             return [TextContent(type="text", text=f"Deletado do Hub: `{memory_id}` (brain `{user_id}`)")]
         except Exception as e:
             return [TextContent(type="text", text=f"Erro ao deletar `{memory_id}`: {e}")]

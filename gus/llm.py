@@ -1,8 +1,10 @@
 import os
+import json
 import asyncio
 import logging
 import functools
 import anthropic
+from openai import AsyncOpenAI
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from gus.tools import TOOLS, executar_tool
@@ -16,17 +18,25 @@ DIAS_SEMANA = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", 
 _STATUS_RETRY = {500, 502, 503, 504, 529}
 
 # Preços por família de modelo (USD por token) — atualizado abr/2026
+# Anthropic: por família (substring match no nome do modelo)
+# OpenAI:    chave exata pra evitar match parcial (gpt-4o-mini é mais barato que gpt-4o)
 MODEL_PRICING = {
-    "opus":   {"input":  5.0 / 1_000_000, "output": 25.0 / 1_000_000},
-    "sonnet": {"input":  3.0 / 1_000_000, "output": 15.0 / 1_000_000},
-    "haiku":  {"input":  0.8 / 1_000_000, "output":  4.0 / 1_000_000},
+    "opus":         {"input":  5.0  / 1_000_000, "output": 25.0 / 1_000_000},
+    "sonnet":       {"input":  3.0  / 1_000_000, "output": 15.0 / 1_000_000},
+    "haiku":        {"input":  0.8  / 1_000_000, "output":  4.0 / 1_000_000},
+    "gpt-4o-mini":  {"input":  0.15 / 1_000_000, "output":  0.60 / 1_000_000},
+    "gpt-4o":       {"input":  2.5  / 1_000_000, "output": 10.0 / 1_000_000},
 }
 FALLBACK_PRICING = MODEL_PRICING["sonnet"]
 
 
 def _get_pricing(model: str) -> dict:
-    """Retorna pricing baseado no nome do modelo."""
+    """Retorna pricing baseado no nome do modelo. Match exato pra gpt-* (mini
+    vs full diferem 16x) e substring pras famílias Anthropic."""
     model_lower = model.lower()
+    # OpenAI: prefer exact match (gpt-4o-mini antes de gpt-4o)
+    if model_lower in MODEL_PRICING:
+        return MODEL_PRICING[model_lower]
     for family, pricing in MODEL_PRICING.items():
         if family in model_lower:
             return pricing
@@ -37,8 +47,30 @@ client = anthropic.AsyncAnthropic(
     timeout=120.0,  # 2 minutos — evita ficar pendurado se a API travar
 )
 
+# OpenAI client é lazy: AsyncOpenAI explode em __init__ se OPENAI_API_KEY
+# ausente, o que quebrava import de hub.curador (transitivamente importa
+# gus.llm) em workflows que não usam OpenAI mas ainda assim importam o módulo.
+# Inicialização sob demanda mantém imports seguros.
+_openai_client: AsyncOpenAI | None = None
+_openai_client_lock = asyncio.Lock()
 
-async def _chamar_claude_com_retry(
+
+async def _get_openai_client() -> AsyncOpenAI:
+    """Inicializa AsyncOpenAI sob demanda. Lock previne race em
+    concorrência alta (2 corotinas chamando antes da primeira terminar)."""
+    global _openai_client
+    if _openai_client is not None:
+        return _openai_client
+    async with _openai_client_lock:
+        if _openai_client is None:
+            _openai_client = AsyncOpenAI(
+                api_key=os.getenv("OPENAI_API_KEY"),
+                timeout=120.0,
+            )
+        return _openai_client
+
+
+async def chamar_claude_com_retry(
     model: str,
     max_tokens: int,
     system_prompt,  # str OU lista de blocos (pra prompt caching)
@@ -67,9 +99,15 @@ async def _chamar_claude_com_retry(
                 kwargs: dict = {
                     "model": modelo_atual,
                     "max_tokens": max_tokens,
-                    "system": system_prompt,
                     "messages": messages,
                 }
+                # Só inclui `system` se tiver conteúdo. system="" disparou bug
+                # 400 'temperature and top_p cannot both be specified' em
+                # chamadas Sonnet 4.6 sem tools (curador errava 100% do dia
+                # 27/04/2026). Defesa em profundidade — chamadas com system
+                # bem-formado seguem normais.
+                if system_prompt:
+                    kwargs["system"] = system_prompt
                 # Beta header token-efficient-tools: comprime os schemas das tools
                 # no contexto enviado ao modelo. Reduz ~30-40% dos tokens dos tools.
                 # Só faz sentido quando há tools — em chamadas sem tools (resumo de
@@ -101,6 +139,13 @@ async def _chamar_claude_com_retry(
         logger.warning(f"Desistindo de {modelo_atual} após {max_tentativas} tentativas")
 
     raise ultima_excecao if ultima_excecao else RuntimeError("Claude indisponível")
+
+
+# Alias retrocompatível — código que importa o nome privado continua
+# funcionando. Removível após próxima auditoria confirmar zero usos
+# externos. Hoje: hub.curador, tests/test_llm.py (sendo migrados
+# nesta mesma PR).
+_chamar_claude_com_retry = chamar_claude_com_retry
 
 
 def _mensagem_erro_amigavel(e: Exception) -> str:
@@ -154,50 +199,14 @@ def _mensagem_erro_amigavel(e: Exception) -> str:
 
     return f"Problema inesperado com a API Anthropic: {str(e)[:200]}"
 
-RESUMO_SYSTEM_PROMPT = """Você analisa um trecho de conversa entre Gustavo e o Gus (seu agente pessoal) e extrai o que vale ser gravado no Mem0 como memória de longo prazo.
-
-Extraia APENAS:
-- Decisões tomadas e o porquê
-- Preferências reveladas (comunicação, hábitos, gostos)
-- Fatos novos sobre Gustavo (saúde, projetos, pessoas, rotina, compromissos)
-- Ações prometidas ou combinadas
-- Contexto técnico relevante pra futuras conversas (arquitetura, bugs resolvidos, caminhos)
-
-Ignore:
-- Saudações e confirmações curtas
-- Conversa pequena sem conteúdo
-- Informação genérica que qualquer um saberia
-- Repetição do que já é óbvio pelo system prompt
-
-Formato: lista numerada. Cada item um fato curto e direto, em português. Se não houver nada relevante, responde exatamente: sem conteúdo relevante.
-"""
-
-
-async def gerar_resumo_turnos(messages: list[dict]) -> str:
-    """Gera resumo extrativo dos turnos pra salvar no Mem0."""
-    linhas = []
-    for msg in messages:
-        role = "Gustavo" if msg["role"] == "user" else "Gus"
-        content = msg["content"]
-        if isinstance(content, list):
-            partes = [c.get("text", "") for c in content if isinstance(c, dict) and c.get("type") == "text"]
-            content = " ".join(p for p in partes if p).strip() or "[mídia]"
-        linhas.append(f"{role}: {content}")
-
-    conversa = "\n\n".join(linhas)
-    model = os.getenv("MODEL_RESUMO", "claude-haiku-4-5")
-
-    response = await _chamar_claude_com_retry(
-        model=model,
-        max_tokens=1024,
-        system_prompt=RESUMO_SYSTEM_PROMPT,
-        messages=[{
-            "role": "user",
-            "content": f"Trecho de conversa pra analisar:\n\n{conversa}\n\nExtraia o que vale gravar como memória:"
-        }],
-    )
-    texto = next((b.text for b in response.content if hasattr(b, "text")), "")
-    return texto.strip()
+# NOTA: gerar_resumo_turnos + RESUMO_SYSTEM_PROMPT removidos no item 1.6 do
+# plano de saneamento (02/05/2026). Eram usados pelo `_fallback_mem0` legado
+# em gus/bot.py — quando o curador híbrido falhava totalmente, gerava resumo
+# bruto sem schema gus-18 e gravava no Hub. Decisão: preferir perder a janela
+# (alta visibilidade via status=erro_curador_total) a poluir Hub com fragmentos
+# não-classificados. Curador híbrido cross-vendor (Anthropic + OpenAI) já é
+# resiliente — ambos caírem simultaneamente é cenário extremo que merece
+# alerta, não fallback silencioso.
 
 
 @functools.lru_cache(maxsize=1)
@@ -228,21 +237,320 @@ def _build_system_blocks(system_estavel: str, suffix_var: str) -> list[dict]:
     return blocks
 
 
+# Tool âncora pra cache_control. Anthropic cacheia toda a lista de tools até
+# o ponto marcado — pra cachear TODAS, marcamos a última. Mas "última por
+# posição" é frágil se alguém reordenar TOOLS sem perceber. Buscar por nome
+# estável (anchor) é mais robusto: se anchor sumir, cai no último por fallback.
+_CACHE_ANCHOR_NAME = "rotear_arquivo"
+
+
 def _build_tools_cached(tools: list[dict]) -> list[dict]:
-    """Marca o último tool com cache_control — Anthropic cacheia toda a lista
-    de tools até o ponto do cache_control. Tools são estáticas no projeto,
-    então cache hit é praticamente garantido entre calls."""
+    """Marca a tool âncora (ou último por fallback) com cache_control.
+
+    Anthropic cacheia toda a lista até a posição marcada. Como queremos
+    cachear todas, marcamos a anchor que por convenção é a última. Se
+    alguém reordenar e a anchor virar do meio, log warn (cache hit cai)
+    e cacheia até ela — melhor que cacheamento errado silencioso.
+    """
     if not tools:
         return tools
     cached = list(tools)
-    cached[-1] = {**cached[-1], "cache_control": {"type": "ephemeral"}}
+    anchor_idx = next(
+        (i for i, t in enumerate(cached) if t.get("name") == _CACHE_ANCHOR_NAME),
+        len(cached) - 1,
+    )
+    if anchor_idx != len(cached) - 1:
+        logger.warning(
+            f"_CACHE_ANCHOR '{_CACHE_ANCHOR_NAME}' não está no final da lista "
+            f"(idx={anchor_idx}/{len(cached)-1}). Cache hit pode estar reduzido."
+        )
+    cached[anchor_idx] = {**cached[anchor_idx], "cache_control": {"type": "ephemeral"}}
     return cached
 
 
 _TOOLS_CACHED = _build_tools_cached(TOOLS)
 
 
-async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tuple[str, dict]:
+# ---------------------------------------------------------------------------
+# Vision fallback Anthropic → OpenAI
+# ---------------------------------------------------------------------------
+#
+# Quando Anthropic falha (sem créditos, 5xx persistente) e o user mandou
+# imagem, hoje o bot só responde "API sobrecarregada". Gustavo fica cego —
+# não consegue analisar foto, OS Dimagem, etc.
+#
+# Fallback: converte content multimodal Anthropic → OpenAI Vision format e
+# tenta gpt-4o. PDF não tem fallback (OpenAI não tem PDF nativo) — retorna
+# mensagem específica orientando user a mandar print das páginas.
+
+
+def _detectar_tipos_midia(messages: list[dict]) -> set[str]:
+    """Detecta tipos de bloco multimodal no último user message.
+
+    Retorna set com 'image', 'document' ou ambos. Vazio se for só texto.
+    """
+    tipos: set[str] = set()
+    for msg in reversed(messages):
+        if msg.get("role") != "user":
+            continue
+        content = msg.get("content")
+        if isinstance(content, list):
+            for block in content:
+                if isinstance(block, dict):
+                    btype = block.get("type")
+                    if btype in ("image", "document"):
+                        tipos.add(btype)
+        break  # só o último user message
+    return tipos
+
+
+def _converter_anthropic_para_openai_vision(messages: list[dict]) -> list[dict]:
+    """Converte messages Anthropic multimodal pro formato OpenAI Vision.
+
+    Anthropic:  {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": "..."}}
+    OpenAI:     {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,..."}}
+
+    Blocos `document` (PDF) NÃO são convertidos — OpenAI não tem PDF nativo.
+    Caller deve usar `_detectar_tipos_midia` antes pra recusar PDF.
+
+    Texto e outros blocos passam intactos. Mensagens com role assistant
+    viram string (OpenAI persiste só texto final entre turnos).
+    """
+    out: list[dict] = []
+    for msg in messages:
+        role = msg.get("role", "user")
+        content = msg.get("content")
+
+        if isinstance(content, str):
+            out.append({"role": role, "content": content})
+            continue
+
+        if not isinstance(content, list):
+            out.append({"role": role, "content": str(content) if content is not None else ""})
+            continue
+
+        # Lista multimodal — converte block por block
+        novos_blocos: list[dict] = []
+        for block in content:
+            if not isinstance(block, dict):
+                continue
+            btype = block.get("type")
+            if btype == "text":
+                novos_blocos.append({"type": "text", "text": block.get("text", "")})
+            elif btype == "image":
+                source = block.get("source") or {}
+                media_type = source.get("media_type", "image/jpeg")
+                data = source.get("data", "")
+                if data:
+                    novos_blocos.append({
+                        "type": "image_url",
+                        "image_url": {"url": f"data:{media_type};base64,{data}"},
+                    })
+            elif btype == "document":
+                # PDF não tem fallback — placeholder de texto pra contexto
+                novos_blocos.append({
+                    "type": "text",
+                    "text": "[documento PDF anexado — não convertido pra OpenAI]",
+                })
+
+        if not novos_blocos:
+            out.append({"role": role, "content": ""})
+        elif len(novos_blocos) == 1 and novos_blocos[0]["type"] == "text":
+            # Bloco único de texto vira string simples
+            out.append({"role": role, "content": novos_blocos[0]["text"]})
+        else:
+            out.append({"role": role, "content": novos_blocos})
+
+    return out
+
+
+async def _gerar_resposta_openai_vision(
+    messages: list[dict], memory_context: str = ""
+) -> tuple[str, dict]:
+    """Variante de _gerar_resposta_openai pra fallback de Vision.
+
+    Diferenças vs _gerar_resposta_openai:
+      - Usa MODEL_OPENAI_VISION_FALLBACK (default gpt-4o, NÃO mini —
+        qualidade de vision importa mais que custo no caso de fallback)
+      - Mantém content multimodal (não achata pra string)
+      - Marca metadata provider="openai-vision-fallback"
+      - Sem fallback recursivo pra Anthropic (caller já saiu de Anthropic)
+    """
+    model = os.getenv("MODEL_OPENAI_VISION_FALLBACK", "gpt-4o")
+    max_tokens = int(os.getenv("MAX_TOKENS_RESPONSE", "2048"))
+
+    system_estavel = _load_system_prompt()
+    agora = datetime.now(BRT)
+    dia_semana = DIAS_SEMANA[agora.weekday()]
+    suffix_var = (
+        f"\n\n## Modelo atual\n"
+        f"Esta resposta está sendo gerada por **{model}** (OpenAI Vision, fallback). "
+        f"Anthropic falhou — usei OpenAI como reserva pra você ver a imagem.\n\n"
+        f"## Data e hora atuais\n"
+        f"Hoje é {dia_semana}, {agora.strftime('%d/%m/%Y')}, {agora.strftime('%H:%M')} (horário de Brasília)."
+    )
+    if memory_context:
+        suffix_var += f"\n\n## Memórias relevantes\n{memory_context}"
+    system_prompt = system_estavel + suffix_var
+
+    msgs_convertidas = _converter_anthropic_para_openai_vision(messages)
+    current_messages = [{"role": "system", "content": system_prompt}] + msgs_convertidas
+
+    total_in = 0
+    total_out = 0
+    cached_tokens = 0
+    max_tool_rounds = 10
+
+    for _ in range(max_tool_rounds):
+        try:
+            oai = await _get_openai_client()
+            response = await oai.chat.completions.create(
+                model=model,
+                max_tokens=max_tokens,
+                messages=current_messages,
+                tools=_TOOLS_OPENAI,
+                tool_choice="auto",
+            )
+        except Exception as e:
+            logger.error(f"OpenAI Vision fallback erro: {e}")
+            pricing = _get_pricing(model)
+            cost_usd = round(total_in * pricing["input"] + total_out * pricing["output"], 6)
+            texto_err = _mensagem_erro_amigavel_openai(e)
+            return texto_err, {
+                "model": model, "tokens_in": total_in,
+                "tokens_out": total_out, "cost_usd": cost_usd,
+                "error": "vision_fallback_failed",
+                "provider": "openai-vision-fallback",
+            }
+
+        usage = response.usage
+        total_in += usage.prompt_tokens or 0
+        total_out += usage.completion_tokens or 0
+        details = getattr(usage, "prompt_tokens_details", None)
+        if details:
+            cached_tokens += getattr(details, "cached_tokens", 0) or 0
+
+        choice = response.choices[0]
+        msg = choice.message
+
+        if choice.finish_reason == "tool_calls" and msg.tool_calls:
+            current_messages.append({
+                "role": "assistant",
+                "content": msg.content or "",
+                "tool_calls": [
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {"name": tc.function.name, "arguments": tc.function.arguments},
+                    }
+                    for tc in msg.tool_calls
+                ],
+            })
+            for tc in msg.tool_calls:
+                try:
+                    inputs = json.loads(tc.function.arguments) if tc.function.arguments else {}
+                except json.JSONDecodeError:
+                    inputs = {}
+                result = await executar_tool(tc.function.name, inputs)
+                current_messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": result if isinstance(result, str) else str(result),
+                })
+            continue
+
+        text = msg.content or ""
+        pricing = _get_pricing(model)
+        fresh_in = total_in - cached_tokens
+        cost_input = fresh_in * pricing["input"] + cached_tokens * pricing["input"] * 0.5
+        cost_usd = round(cost_input + total_out * pricing["output"], 6)
+        return text, {
+            "model": model,
+            "tokens_in": total_in,
+            "tokens_out": total_out,
+            "cache_creation": 0,
+            "cache_read": cached_tokens,
+            "cost_usd": cost_usd,
+            "provider": "openai-vision-fallback",
+        }
+
+    pricing = _get_pricing(model)
+    fresh_in = total_in - cached_tokens
+    cost_input = fresh_in * pricing["input"] + cached_tokens * pricing["input"] * 0.5
+    cost_usd = round(cost_input + total_out * pricing["output"], 6)
+    return "Desculpa, entrei em loop interno (vision fallback). Tenta reformular.", {
+        "model": model, "tokens_in": total_in,
+        "tokens_out": total_out,
+        "cache_creation": 0,
+        "cache_read": cached_tokens,
+        "cost_usd": cost_usd,
+        "provider": "openai-vision-fallback",
+    }
+
+
+async def _tentar_vision_fallback(
+    messages: list[dict], memory_context: str, exc_anthropic: Exception
+) -> tuple[str, dict] | None:
+    """Decide se vale tentar fallback de Vision quando Anthropic falhou.
+
+    Retorna (text, metadata) se conseguiu fallback, ou None pra caller
+    usar mensagem de erro original.
+
+    Critérios pra ativar:
+      1. MULTIMODEL_ENABLED não está em rollback (false)
+      2. OPENAI_API_KEY configurada
+      3. Último user message tem imagem
+      4. NÃO tem PDF (OpenAI não suporta — retorna msg específica)
+    """
+    if os.getenv("MULTIMODEL_ENABLED", "true").lower() != "true":
+        return None  # rollback ativo, respeita
+
+    if not os.getenv("OPENAI_API_KEY"):
+        return None  # sem key, sem fallback
+
+    tipos = _detectar_tipos_midia(messages)
+    if not tipos:
+        return None  # texto puro nem chega aqui (já vai pro openai), mas defesa
+
+    if "document" in tipos:
+        # PDF sem fallback — mensagem específica explicando
+        texto = (
+            "A Anthropic API tá indisponível e o PDF não tem fallback "
+            "automático no OpenAI (sem suporte nativo a PDF). Manda um "
+            "print das páginas relevantes ou tenta de novo em alguns "
+            "minutos."
+        )
+        return texto, {
+            "model": "n/a",
+            "tokens_in": 0, "tokens_out": 0, "cost_usd": 0.0,
+            "error": "pdf_sem_fallback",
+            "provider": "anthropic-failed-pdf",
+        }
+
+    if "image" not in tipos:
+        return None  # outros tipos não tratados aqui
+
+    # Tem imagem (sem PDF) → tenta gpt-4o
+    logger.info(f"Vision fallback OpenAI ativado (Anthropic falhou: {exc_anthropic})")
+    try:
+        text, metadata = await _gerar_resposta_openai_vision(messages, memory_context)
+    except Exception as e:
+        logger.error(f"Vision fallback explodiu: {e}")
+        return None  # caller usa erro original
+
+    # Prefixa nota visível pro Gustavo saber que foi fallback
+    text_com_nota = (
+        "_(Anthropic indisponível — usei OpenAI Vision como fallback)_\n\n"
+        + text
+    )
+    return text_com_nota, metadata
+
+
+async def _gerar_resposta_anthropic(messages: list[dict], memory_context: str = "") -> tuple[str, dict]:
+    """Implementação Anthropic da geração de resposta — loop tool-calling com
+    prompt caching e retry/fallback. Comportamento legado pré-gus-29; agora
+    chamada via dispatcher quando content tem image/document ou
+    MULTIMODEL_ENABLED=false."""
     model = os.getenv("MODEL_DEFAULT", "claude-sonnet-4-6")
     max_tokens = int(os.getenv("MAX_TOKENS_RESPONSE", "2048"))
 
@@ -250,7 +558,11 @@ async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tupl
     agora = datetime.now(BRT)
     dia_semana = DIAS_SEMANA[agora.weekday()]
     suffix_var = (
-        f"\n\n## Data e hora atuais\n"
+        f"\n\n## Modelo atual\n"
+        f"Esta resposta está sendo gerada por **{model}** (Anthropic). "
+        f"Quando perguntado qual modelo, diga isso — não invente. "
+        f"O sistema rotea automaticamente entre Anthropic e OpenAI conforme o tipo de mensagem.\n\n"
+        f"## Data e hora atuais\n"
         f"Hoje é {dia_semana}, {agora.strftime('%d/%m/%Y')}, {agora.strftime('%H:%M')} (horário de Brasília)."
     )
     if memory_context:
@@ -268,7 +580,7 @@ async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tupl
     # Loop de tool calling — continua até Claude retornar texto final
     for _ in range(max_tool_rounds):
         try:
-            response = await _chamar_claude_com_retry(
+            response = await chamar_claude_com_retry(
                 model=model,
                 max_tokens=max_tokens,
                 system_prompt=system_blocks,
@@ -277,6 +589,14 @@ async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tupl
             )
         except (anthropic.APIStatusError, anthropic.APIConnectionError, anthropic.APITimeoutError) as e:
             status = getattr(e, "status_code", None)
+
+            # ANTES de retornar erro pro Gustavo, tenta fallback Vision se
+            # o user mandou imagem. Sem isso, Anthropic offline = bot cego
+            # pra fotos. PDF não tem fallback (msg específica).
+            fallback = await _tentar_vision_fallback(messages, memory_context, e)
+            if fallback is not None:
+                return fallback
+
             pricing = _get_pricing(model)
             cost_input = (
                 total_in * pricing["input"]
@@ -366,3 +686,292 @@ async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tupl
         "cache_read": cache_read,
         "cost_usd": cost_usd
     }
+
+
+# ---------------------------------------------------------------------------
+# OpenAI path (gus-29 Fase 1) — texto/áudio via gpt-4o-mini
+# ---------------------------------------------------------------------------
+
+
+def _anthropic_to_openai_tools(tools: list[dict]) -> list[dict]:
+    """Converte tools do formato Anthropic (`{name, description, input_schema}`)
+    pro formato OpenAI (`{type: function, function: {name, description, parameters}}`).
+    JSON Schema do `parameters` é o mesmo `input_schema`."""
+    return [
+        {
+            "type": "function",
+            "function": {
+                "name": t["name"],
+                "description": t.get("description", ""),
+                "parameters": t.get("input_schema", {"type": "object", "properties": {}}),
+            },
+        }
+        for t in tools
+    ]
+
+
+_TOOLS_OPENAI = _anthropic_to_openai_tools(TOOLS)
+
+
+def _history_to_openai(messages: list[dict]) -> list[dict]:
+    """Converte history do formato bot.py (Anthropic-style) pra OpenAI.
+
+    bot.py mantém:
+      - user: content é lista de blocos `[{type: "text", text: "..."}]` ou string
+      - assistant: content é string (resposta final do turno anterior)
+
+    OpenAI espera content como string simples nas mensagens persistidas.
+    Tool calls do turno corrente NUNCA persistem em history (só o texto
+    final), então não precisamos converter tool_use/tool_result aqui.
+    """
+    out = []
+    for msg in messages:
+        role = msg.get("role", "user")
+        content = msg.get("content", "")
+        if isinstance(content, list):
+            partes = []
+            for block in content:
+                if isinstance(block, dict):
+                    if block.get("type") == "text":
+                        partes.append(block.get("text", ""))
+                    # blocos image/document deveriam mandar pra Anthropic via
+                    # dispatcher — mas se chegou aqui, ignora (descreve)
+                    elif block.get("type") == "image":
+                        partes.append("[imagem anexada]")
+                    elif block.get("type") == "document":
+                        partes.append("[documento anexado]")
+            content_str = " ".join(p for p in partes if p).strip() or "[mídia sem texto]"
+        else:
+            content_str = str(content) if content is not None else ""
+        out.append({"role": role, "content": content_str})
+    return out
+
+
+def _mensagem_erro_amigavel_openai(e: Exception) -> str:
+    """Converte erro da API OpenAI em mensagem clara em português pro Gustavo."""
+    status = getattr(e, "status_code", None) or getattr(e, "code", None)
+    msg = str(e).lower()
+
+    if "insufficient_quota" in msg or "quota" in msg or "billing" in msg:
+        return (
+            "A conta OpenAI tá sem créditos ou com problema de billing. "
+            "Pra voltar, o Gustavo precisa adicionar saldo em platform.openai.com/account/billing."
+        )
+    if status == 401 or "authentication" in msg or "invalid_api_key" in msg:
+        return "Chave OpenAI inválida ou expirada. Checa OPENAI_API_KEY no Railway."
+    if status == 403 or "permission" in msg:
+        return f"Sem permissão na API OpenAI: {str(e)[:200]}"
+    if status == 429:
+        return "Bati limite de rate na OpenAI. Aguenta ~30s e tenta de novo."
+    if status and isinstance(status, int) and status >= 500:
+        return f"Erro de servidor OpenAI (status {status}). Tenta de novo em 1 min."
+    return f"Problema inesperado com a API OpenAI: {str(e)[:200]}"
+
+
+async def _gerar_resposta_openai(messages: list[dict], memory_context: str = "") -> tuple[str, dict]:
+    """Implementação OpenAI da geração de resposta — loop tool-calling
+    espelhando o caminho Anthropic.
+
+    Comportamento:
+      - System prompt: concatena system_prompt.md + data/hora + memórias
+        em string única (OpenAI faz prompt caching automático em ≥1024 tokens).
+      - Tools: schema convertido pra formato OpenAI, mesma execução via
+        `executar_tool(name, inputs)`.
+      - Fallback: se OpenAI falhar (rate, billing, 5xx), tenta Anthropic
+        Sonnet pra manter bot respondendo.
+
+    Custo: gpt-4o-mini é ~20x mais barato que Sonnet em texto.
+    """
+    model = os.getenv("MODEL_OPENAI_DEFAULT", "gpt-4o-mini")
+    max_tokens = int(os.getenv("MAX_TOKENS_RESPONSE", "2048"))
+
+    # Monta system prompt como string única (OpenAI cacheia auto em ≥1024 tok)
+    system_estavel = _load_system_prompt()
+    agora = datetime.now(BRT)
+    dia_semana = DIAS_SEMANA[agora.weekday()]
+    suffix_var = (
+        f"\n\n## Modelo atual\n"
+        f"Esta resposta está sendo gerada por **{model}** (OpenAI). "
+        f"Quando perguntado qual modelo, diga isso — não invente. "
+        f"O sistema rotea automaticamente entre Anthropic e OpenAI conforme o tipo de mensagem.\n\n"
+        f"## Data e hora atuais\n"
+        f"Hoje é {dia_semana}, {agora.strftime('%d/%m/%Y')}, {agora.strftime('%H:%M')} (horário de Brasília)."
+    )
+    if memory_context:
+        suffix_var += f"\n\n## Memórias relevantes\n{memory_context}"
+    system_prompt = system_estavel + suffix_var
+
+    # History em formato OpenAI
+    current_messages = [{"role": "system", "content": system_prompt}] + _history_to_openai(messages)
+
+    total_in = 0
+    total_out = 0
+    cached_tokens = 0
+    max_tool_rounds = 10
+
+    for _ in range(max_tool_rounds):
+        try:
+            oai = await _get_openai_client()
+            response = await oai.chat.completions.create(
+                model=model,
+                max_tokens=max_tokens,
+                messages=current_messages,
+                tools=_TOOLS_OPENAI,
+                tool_choice="auto",
+            )
+        except Exception as e:
+            logger.error(f"OpenAI erro: {e}")
+            # Fallback pra Anthropic se OpenAI falhar — mantém bot respondendo
+            try:
+                logger.info("Fallback OpenAI → Anthropic")
+                return await _gerar_resposta_anthropic(messages, memory_context)
+            except Exception as e2:
+                logger.error(f"Fallback Anthropic também falhou: {e2}")
+                pricing = _get_pricing(model)
+                cost_usd = round(total_in * pricing["input"] + total_out * pricing["output"], 6)
+                # Mensagem combina origem + fallback pro Gustavo entender que
+                # ambos os providers falharam (não só um).
+                texto_openai = _mensagem_erro_amigavel_openai(e)
+                texto_anthropic = _mensagem_erro_amigavel(e2) if isinstance(
+                    e2, (anthropic.APIStatusError, anthropic.APIConnectionError, anthropic.APITimeoutError)
+                ) else f"Anthropic também falhou: {str(e2)[:200]}"
+                texto = (
+                    f"Os dois providers falharam.\n\n"
+                    f"OpenAI (primeiro): {texto_openai}\n\n"
+                    f"Anthropic (fallback): {texto_anthropic}"
+                )
+                return texto, {
+                    "model": model, "tokens_in": total_in,
+                    "tokens_out": total_out, "cost_usd": cost_usd,
+                    "error": "openai_failed_anthropic_failed",
+                }
+
+        usage = response.usage
+        total_in += usage.prompt_tokens or 0
+        total_out += usage.completion_tokens or 0
+        # OpenAI prompt caching automático (≥1024 tokens) — exposto em
+        # usage.prompt_tokens_details.cached_tokens. Conta separado pra
+        # cost tracking (cached é 50% do preço de input fresh).
+        details = getattr(usage, "prompt_tokens_details", None)
+        if details:
+            cached_tokens += getattr(details, "cached_tokens", 0) or 0
+
+        choice = response.choices[0]
+        msg = choice.message
+
+        if choice.finish_reason == "tool_calls" and msg.tool_calls:
+            # Adiciona assistant turn com tool_calls
+            current_messages.append({
+                "role": "assistant",
+                "content": msg.content or "",
+                "tool_calls": [
+                    {
+                        "id": tc.id,
+                        "type": "function",
+                        "function": {
+                            "name": tc.function.name,
+                            "arguments": tc.function.arguments,
+                        },
+                    }
+                    for tc in msg.tool_calls
+                ],
+            })
+            # Executa tools
+            for tc in msg.tool_calls:
+                try:
+                    inputs = json.loads(tc.function.arguments) if tc.function.arguments else {}
+                except json.JSONDecodeError:
+                    inputs = {}
+                result = await executar_tool(tc.function.name, inputs)
+                current_messages.append({
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": result if isinstance(result, str) else str(result),
+                })
+            continue
+
+        # Resposta final em texto
+        text = msg.content or ""
+        pricing = _get_pricing(model)
+        # Cached tokens pagam ~50% (gpt-4o-mini): $0.075/M vs $0.15/M
+        fresh_in = total_in - cached_tokens
+        cost_input = fresh_in * pricing["input"] + cached_tokens * pricing["input"] * 0.5
+        cost_usd = round(cost_input + total_out * pricing["output"], 6)
+        metadata = {
+            "model": model,
+            "tokens_in": total_in,
+            "tokens_out": total_out,
+            "cache_creation": 0,  # OpenAI não distingue cache_creation
+            "cache_read": cached_tokens,
+            "cost_usd": cost_usd,
+            "provider": "openai",
+        }
+        return text, metadata
+
+    # Loop esgotou
+    pricing = _get_pricing(model)
+    fresh_in = total_in - cached_tokens
+    cost_input = fresh_in * pricing["input"] + cached_tokens * pricing["input"] * 0.5
+    cost_usd = round(cost_input + total_out * pricing["output"], 6)
+    return "Desculpa, entrei em loop interno. Tenta reformular.", {
+        "model": model, "tokens_in": total_in,
+        "tokens_out": total_out,
+        "cache_creation": 0,
+        "cache_read": cached_tokens,
+        "cost_usd": cost_usd,
+        "provider": "openai",
+    }
+
+
+# ---------------------------------------------------------------------------
+# Dispatcher (gus-29) — escolhe provider baseado no content type
+# ---------------------------------------------------------------------------
+
+
+def _escolher_provider(messages: list[dict]) -> tuple[str, str]:
+    """Escolhe provider baseado no último user message.
+
+    - texto puro             → openai (gpt-4o-mini, ~20x mais barato)
+    - imagem ou document     → anthropic (Sonnet, mantém qualidade Vision/PDF)
+    - MULTIMODEL_ENABLED=false → anthropic (rollback flag)
+
+    Retorna (provider, motivo) onde provider ∈ {'openai', 'anthropic'}
+    e motivo é descrição curta pra log.
+    """
+    if os.getenv("MULTIMODEL_ENABLED", "true").lower() != "true":
+        return "anthropic", "MULTIMODEL_ENABLED=false (rollback flag)"
+
+    # Procura último user message no history
+    for msg in reversed(messages):
+        if msg.get("role") != "user":
+            continue
+        content = msg.get("content", "")
+        if isinstance(content, list):
+            for block in content:
+                if isinstance(block, dict):
+                    btype = block.get("type")
+                    if btype == "image":
+                        return "anthropic", "content: image"
+                    if btype == "document":
+                        return "anthropic", "content: document"
+        # Achou user message text-only — para a busca
+        break
+    return "openai", "content: text"
+
+
+async def gerar_resposta(messages: list[dict], memory_context: str = "") -> tuple[str, dict]:
+    """Dispatcher do gus-29: escolhe provider conforme content type do último
+    turno do user e delega pra implementação Anthropic ou OpenAI.
+
+    Retorno é compatível entre os dois caminhos: `(text, metadata)` onde
+    metadata sempre contém model/tokens_in/tokens_out/cost_usd. O campo
+    `provider` é adicionado no path OpenAI (omitido no Anthropic).
+    """
+    provider, motivo = _escolher_provider(messages)
+    if provider == "openai":
+        modelo = os.getenv("MODEL_OPENAI_DEFAULT", "gpt-4o-mini")
+        logger.info(f"Routing → openai ({modelo}) | {motivo}")
+        return await _gerar_resposta_openai(messages, memory_context)
+    modelo = os.getenv("MODEL_DEFAULT", "claude-sonnet-4-6")
+    logger.info(f"Routing → anthropic ({modelo}) | {motivo}")
+    return await _gerar_resposta_anthropic(messages, memory_context)

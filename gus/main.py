@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 async def run_bot() -> None:
+    logger.info("=== Bot boot — build 2026-04-29T19:45 ===")
     token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not token:
         raise ValueError("TELEGRAM_BOT_TOKEN não definido.")
@@ -44,8 +45,40 @@ async def run_bot() -> None:
 
     await app.initialize()
     await app.start()
+
+    # Detecta updates pendentes ANTES de droppar (drop_pending_updates=True
+    # descarta msgs em flight durante deploy sem deixar trace). Se houver,
+    # avisa o Gustavo que algo pode ter sido perdido (D3=C decisão).
+    pending_count = 0
+    try:
+        # peek no fim da fila — não confirma, só verifica se há algo
+        peek = await app.bot.get_updates(offset=-1, limit=1, timeout=0)
+        if peek:
+            pending_count = peek[0].update_id  # heurística: ID alto = backlog real
+            # Recolhe todas pendentes pra contar (até 100)
+            todas = await app.bot.get_updates(offset=0, limit=100, timeout=0)
+            pending_count = len(todas)
+    except Exception as e:
+        logger.warning(f"Não foi possível checar updates pendentes: {e}")
+
     await app.updater.start_polling(drop_pending_updates=True)
-    logger.info("Bot Telegram iniciado.")
+    logger.info(f"Bot Telegram iniciado. Pending dropped: {pending_count}")
+
+    # Avisa o Gustavo que voltou online (e quantas msgs foram dropadas)
+    chat_id_gustavo = os.getenv("TELEGRAM_CHAT_ID")
+    if pending_count > 0 and chat_id_gustavo:
+        try:
+            plural = "msg" if pending_count == 1 else "msgs"
+            await app.bot.send_message(
+                chat_id=chat_id_gustavo,
+                text=(
+                    f"🔄 Voltei online após redeploy. "
+                    f"{pending_count} {plural} durante o downtime "
+                    f"foram descartadas — reenvia se foi importante."
+                ),
+            )
+        except Exception as e:
+            logger.warning(f"Falha ao avisar Gustavo do redeploy: {e}")
 
     # Mantém vivo até cancelamento externo (uvicorn ou SIGTERM).
     try:

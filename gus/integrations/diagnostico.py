@@ -6,7 +6,7 @@ Tudo roda em paralelo via asyncio.gather pra latência total ~ check mais lento.
 
 CHECKS ATIVOS (6):
   1. GitHub PAT          — GET /user, valida escopo
-  2. Mem0                — get_all + calcula frescor da memória mais recente
+  2. Hub Qdrant          — listar(user_id=gustavo) + frescor do mais recente
   3. Anthropic           — Haiku ping (1 token, ~$0.000004)
   4. Tavily              — search com max_results=1
   5. Volume Railway      — /app/data writable?
@@ -15,7 +15,7 @@ CHECKS ATIVOS (6):
 CHECKS NÃO INCLUÍDOS (decisão pendente):
   - Whisper: precisaria arquivo dummy
   - DuckDuckGo: só fallback do Tavily
-  - Mem0 write real: indexação assíncrona (latência minutos), o frescor já cobre
+  - Hub write real: indexação assíncrona (latência segundos), o frescor já cobre
 
 USO:
   await auto_diagnostico()  → tabela markdown pro Telegram
@@ -88,7 +88,7 @@ async def _check_github_pat() -> dict:
         return {"name": "GitHub Token", "status": "error", "detail": str(e)[:80]}
 
 
-async def _check_mem0() -> dict:
+async def _check_hub() -> dict:
     """Lê memórias do brain `gustavo` e calcula frescor da mais recente.
 
     Migrado em 2026-04-27: agora lê do Hub Qdrant (gus_hub) em vez do Mem0
@@ -292,12 +292,34 @@ async def _check_workflows() -> dict:
 # ORQUESTRAÇÃO
 # ---------------------------------------------------------------------------
 
-async def auto_diagnostico() -> str:
-    """Roda todos os checks em paralelo e retorna tabela markdown."""
+# Cache do último resultado — evita queimar 6 chamadas externas + 1 Anthropic
+# (~$0.000004) toda vez que Gustavo pede /check em sequência. TTL conservador
+# de 5min: tempo curto suficiente pra detectar incidente novo, longo o
+# bastante pra economizar em rajadas. Bypass com auto_diagnostico(force=True).
+_DIAG_CACHE_TTL_SEC = 300  # 5 minutos
+_diag_cache: dict | None = None  # {"timestamp": float, "result": str}
+
+
+async def auto_diagnostico(force: bool = False) -> str:
+    """Roda todos os checks em paralelo e retorna tabela markdown.
+
+    Cache TTL 5min — chamadas repetidas em rajada retornam o último resultado
+    com nota explícita. Use `force=True` pra ignorar cache.
+    """
+    global _diag_cache
+
+    if not force and _diag_cache is not None:
+        idade = time.time() - _diag_cache["timestamp"]
+        if idade < _DIAG_CACHE_TTL_SEC:
+            return (
+                f"_(cache de {idade:.0f}s atrás — use auto_diagnostico(force=True) "
+                f"pra rodar fresh)_\n\n" + _diag_cache["result"]
+            )
+
     inicio = time.time()
     resultados = await asyncio.gather(
         _check_github_pat(),
-        _check_mem0(),
+        _check_hub(),
         _check_anthropic(),
         _check_tavily(),
         _check_volume(),
@@ -330,4 +352,6 @@ async def auto_diagnostico() -> str:
     else:
         cabecalho = f"✅ Diagnóstico — tudo ok em {elapsed}s"
 
-    return f"{cabecalho}\n\n" + "\n".join(linhas)
+    resultado = f"{cabecalho}\n\n" + "\n".join(linhas)
+    _diag_cache = {"timestamp": time.time(), "result": resultado}
+    return resultado

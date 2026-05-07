@@ -51,6 +51,20 @@ PATTERNS_SENSIVEIS: dict[str, re.Pattern] = {
     "Railway token (env line)": re.compile(
         r"RAILWAY[_A-Z]*TOKEN\s*[:=]\s*['\"]?[\w-]{20,}", re.IGNORECASE
     ),
+
+    # === MCP URL secret ===
+    # Hex puro 32-128 chars não tem prefixo distintivo (colide com hashes git,
+    # UUIDs, etc.). Pra evitar falsos positivos, capturamos só os 2 contextos
+    # onde ele aparece de fato:
+    #   1. linha env: MCP_URL_SECRET=<hex>
+    #   2. path do log Railway: /<32-128 hex>/mcp (formato do mount path)
+    # Cobre o caso real do vazamento de 02/05/2026 sem afetar SHAs.
+    "MCP URL secret (env line)": re.compile(
+        r"MCP_URL_SECRET\s*[:=]\s*['\"]?[a-fA-F0-9]{32,}", re.IGNORECASE
+    ),
+    "MCP URL secret (path)": re.compile(
+        r"/[a-fA-F0-9]{32,128}/mcp\b"
+    ),
 }
 
 
@@ -72,4 +86,25 @@ def escanear(content: str) -> list[str]:
     return encontrados
 
 
-__all__ = ["PATTERNS_SENSIVEIS", "escanear"]
+def redact(content: str) -> tuple[str, list[str]]:
+    """Substitui matches por marcador `[REDACTED-<tipo>]`.
+
+    Args:
+        content: texto a redatar
+
+    Returns:
+        (texto_redatado, lista_de_tipos_redatados). Lista vazia = nada
+        sensível encontrado.
+    """
+    redatados: list[str] = []
+    texto = content
+    for nome, padrao in PATTERNS_SENSIVEIS.items():
+        marcador = f"[REDACTED-{nome.replace(' ', '-')}]"
+        novo, n = padrao.subn(marcador, texto)
+        if n > 0:
+            redatados.extend([nome] * n)
+            texto = novo
+    return texto, redatados
+
+
+__all__ = ["PATTERNS_SENSIVEIS", "escanear", "redact"]

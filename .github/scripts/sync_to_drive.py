@@ -10,12 +10,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
+# Helper compartilhado de auth Drive (WIF preferred, SA JSON e OAuth fallback)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _drive_auth import get_drive_service
 
-SCOPES = ["https://www.googleapis.com/auth/drive"]
+from googleapiclient.http import MediaFileUpload
 
 EXCLUDE_PATHS = {
     "CLAUDE.md",
@@ -35,21 +34,7 @@ EXCLUDE_PREFIXES = (
 INCLUDE_OVERRIDES = {
     "gus/gus-bootstrap.md",   # stub de redirecionamento
     "gus/gus-identity.md",    # stub de redirecionamento
-    "gus/meta-memoria.md",    # identidade narrativa do Gus como sistema
 }
-
-
-def get_drive_service():
-    creds = Credentials(
-        token=None,
-        refresh_token=os.environ["GOOGLE_REFRESH_TOKEN"],
-        client_id=os.environ["GOOGLE_CLIENT_ID"],
-        client_secret=os.environ["GOOGLE_CLIENT_SECRET"],
-        token_uri="https://oauth2.googleapis.com/token",
-        scopes=SCOPES,
-    )
-    creds.refresh(Request())
-    return build("drive", "v3", credentials=creds)
 
 
 def _is_excluded(filepath):

@@ -1,0 +1,36 @@
+name: Check cost alert
+
+# Cron 1h. Lê /health/cost da API e alerta no Telegram se passar do
+# threshold (default 80% do HARD_LIMIT_USD_MONTH).
+#
+# Resolve S4 do plano de saneamento — antes HARD_LIMIT era silent fail
+# (bot mudo até alguém mandar msg e ver "limite atingido"). Agora sinal
+# externo proativo.
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # toda hora cheia
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run cost check
+        env:
+          API_PUBLIC_URL: ${{ secrets.API_PUBLIC_URL }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          COST_ALERT_THRESHOLD: ${{ vars.COST_ALERT_THRESHOLD || '80' }}
+        run: |
+          python .github/scripts/check_cost_alert.py

@@ -63,6 +63,11 @@ status: pendente | processando | concluido
 criado_em: 2026-04-25T23:50:00-03:00
 processado_em: ""
 processado_por: ""
+
+# CAMPOS OPCIONAIS — roteamento (lidos pelo TioGu / agente, ignorados se ausentes)
+acao_sugerida: criar_novo | append | mover | manter
+destino_path: pessoal/diario/2026-04.md
+contexto: "Resumo de 1 linha sobre o que é e por que vai pra esse path"
 ---
 
 # Título curto da demanda
@@ -72,6 +77,21 @@ Corpo descritivo: o que precisa ser feito, contexto, critério de sucesso.
 ## Resultado (preenche depois de processar)
 [O destino preenche aqui o que fez + memory_id, commit hash, etc. pra rastreabilidade]
 ```
+
+### Quando usar os campos de roteamento (opcionais)
+
+`acao_sugerida` + `destino_path` ajudam o TioGu (ou agente automático) a decidir o que fazer com o conteúdo:
+
+| `acao_sugerida` | Comportamento esperado | Exemplo |
+|---|---|---|
+| `criar_novo` | Cria novo arquivo no `destino_path` (move do inbox) | Ideia nova → `capturado/ideias/<tema>.md` |
+| `append` | Lê `destino_path`, anexa o corpo no fim, apaga do inbox | Resumo de chat → `pessoal/diario/2026-04.md` |
+| `mover` | Move arquivo do inbox pra `destino_path` (mantém nome) | Caso clínico didático → `dimagem/casos/<arquivo>.md` |
+| `manter` | Permanece em `inbox-tiogu/` esperando ação manual | Demanda que precisa de discussão antes |
+
+`contexto` é uma frase curta (≤200 chars) que aparece na notificação Telegram pra Gustavo entender de relance se aprova o roteamento ou redireciona.
+
+**Origens que mais usam:** Claude Chat (resumos longos, ideias, código gerado em sessão de reflexão). Claude Code commita direto no path certo, então raramente cria demanda em inbox-tiogu/ pra rotear.
 
 ## Regras de validação (workflow rejeita se quebrar)
 
@@ -120,19 +140,81 @@ colisão entre demandas geradas em sessões paralelas.
 
 Hoje (V1, 25/04): leitura é **manual** — cada porta confere o seu inbox quando o Gustavo lembrar de pedir. Auto-leitura é Nível 3 (futuro).
 
-## Notificação Telegram
+## Notificação Telegram (Estágio 0 do roteamento — implementado 2026-04-27)
 
-Quando workflow `import-from-drive.yml` importar uma demanda em `inbox-tiogu/`,
-manda mensagem no Telegram chat do Gustavo:
+Workflow `notificar-inbox-tiogu.yml` triggera em **push de arquivo `.md` novo**
+em `dialogos/inbox-tiogu/**` (filtra `--diff-filter=A`, ou seja, só
+arquivos **adicionados**, não modificados).
+
+Pra cada arquivo novo, manda mensagem no Telegram chat do Gustavo:
 
 ```
-📥 Demanda nova em inbox-tiogu
-Origem: claude-chat | Prioridade: alta
-"<título>"
+Novo no inbox-tiogu (origem: claude-chat)
+
+"<título extraído do corpo>"
+
+tipo: <tipo> | prioridade: <p> | status: <s>
+
+Roteamento sugerido pelo origem:
+  ação: <acao_sugerida>
+  destino: <destino_path>
+
+Contexto: <primeiros 200 chars do campo contexto, se presente>
+
+Caminho no repo: dialogos/inbox-tiogu/<arquivo>.md
 ```
 
-Implementado se `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` estiverem como secrets do
-GitHub (precisa o Gustavo adicionar). Sem isso, import funciona mas sem notificação.
+Custo: zero. Só HTTP pra Telegram API. Não move o arquivo, não rotea, **só avisa**.
+
+Pré-requisitos:
+- Secrets `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` no GitHub Actions
+- Sem eles: workflow roda mas pula notificação com warning
+
+### Estágios do roteamento
+
+| Estágio | Status | O que faz | Onde |
+|---|---|---|---|
+| **0** | ✅ Implementado | Notifica Gustavo no Telegram quando demanda nova chega | `notificar-inbox-tiogu.yml` |
+| **1** | ✅ Implementado | TioGu ganha tool `rotear_arquivo(source, destino, acao)` — Gustavo aprova no Telegram, TioGu executa | `gus/tools.py` + `gus/roteador.py` |
+| **2** | ⏳ Não implementado | Agente automático lê demanda, decide destino, abre PR (não mergeia) | `auto-rotear-demanda.yml` |
+
+### Estágio 1 — Como usar `rotear_arquivo` (TioGu)
+
+Tool: `rotear_arquivo(source_path, destino_path, acao)`
+
+3 ações suportadas:
+
+| `acao` | Comportamento | Exemplo |
+|---|---|---|
+| `criar_novo` | Cria arquivo NOVO em `destino_path` (file `.md` completo). Falha se já existe | Ideia → `capturado/ideias/sintese-phronesis.md` |
+| `append` | Lê `destino_path`, anexa corpo do source no fim com separador `## AAAA-MM-DD HH:MM BRT — apêndice via tiogu`. Falha se destino não existe | Resumo chat → `pessoal/diario/2026-04.md` |
+| `mover` | Copia source completo (com frontmatter de demanda) pra `<destino_path>/<nome>`. `destino_path` é DIRETÓRIO sem `.md` | Caso clínico → `dimagem/casos` |
+
+Após qualquer ação a tool:
+- Marca source com `status: concluido`, `processado_em`, `processado_por: tiogu`
+- Adiciona seção `## Resultado` no source com ação, destino, commit hash
+- Workflow `archive-completed-demandas.yml` move source pra `archive/` em ≤15min
+
+**Recusa em:**
+- Source já `concluido` (idempotência)
+- Source sem frontmatter
+- Conteúdo com dados sensíveis fora de `sensivel/`
+- Path inválido (caracteres estranhos, traversal)
+- `destino_path` errado pra ação (ex: `acao=mover` com `.md` no destino)
+
+**TioGu nunca rotea sozinho** — precisa de aprovação explícita do Gustavo no Telegram. Fluxo:
+
+1. Notificação Estágio 0 chega (Telegram)
+2. Gustavo confere e responde "ok, rotea" / "não, manda pra X" / "deixa pendente"
+3. TioGu chama `rotear_arquivo(...)` com argumentos confirmados
+4. Reporta sucesso/erro
+
+### Critério pra avançar pro Estágio 2
+
+- Estágio 1 funcionando por 1-2 semanas
+- Padrões de roteamento estabilizados (5+ exemplos pra cada ação)
+- Confiança do Gustavo na decisão dele mesmo (alguns "não, manda pra X" pra calibrar)
+- Aí compensa investir no agente automático (PR aberto não-mergeado, ainda com Gustavo no loop pra revisar)
 
 ## Histórico (legado)
 

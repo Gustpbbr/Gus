@@ -30,7 +30,8 @@ from qdrant_client.models import (
     Distance, VectorParams, Filter, FieldCondition, MatchValue,
     PayloadSchemaType, PointStruct,
 )
-from sentence_transformers import SentenceTransformer
+
+from hub.events import broadcast_sync
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ EMBED_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 EMBED_DIM = 384
 
 _client: Optional[QdrantClient] = None
-_embedder: Optional[SentenceTransformer] = None
+_embedder = None  # type: Optional["SentenceTransformer"] — lazy import (boot leve)
 
 
 def _get_client() -> QdrantClient:
@@ -57,10 +58,14 @@ def _get_client() -> QdrantClient:
     return _client
 
 
-def _get_embedder() -> SentenceTransformer:
+def _get_embedder():
+    """Lazy import: sentence_transformers puxa torch (~500MB). Importar no
+    top-level estouraria RAM em containers pequenos no boot, mesmo sem chamar
+    nada. Importamos só quando a 1ª busca/ingest acontecer."""
     global _embedder
     if _embedder is None:
         logger.info(f"Carregando embedder {EMBED_MODEL_NAME} (primeira call do Hub)…")
+        from sentence_transformers import SentenceTransformer
         _embedder = SentenceTransformer(EMBED_MODEL_NAME)
     return _embedder
 
@@ -149,7 +154,7 @@ def ingestar(conteudo: str, metadata: dict) -> str:
     }
 
     # Campos extras do curador (preservados se vierem)
-    for k in ("curador", "hash_janela", "janela_turnos"):
+    for k in ("curador", "hash_janela", "janela_turnos", "prompt_version"):
         if k in metadata:
             payload[k] = metadata[k]
 
@@ -158,7 +163,76 @@ def ingestar(conteudo: str, metadata: dict) -> str:
         collection_name=COLLECTION,
         points=[PointStruct(id=frag_id, vector=vetor, payload=payload)],
     )
+
+    # Pós-ingest: calcula top-K vizinhos por afinidade semântica e popula
+    # 'relacionados' no payload. Usado pelo NeuroGus pra desenhar arestas
+    # (gus-30.1 §1, K=3, threshold=0.6).
+    try:
+        vizinhos = _calcular_vizinhos(
+            vetor, k=3, threshold=0.6,
+            exclude_id=frag_id, user_id=payload["user_id"],
+        )
+        if vizinhos:
+            client.set_payload(
+                collection_name=COLLECTION,
+                payload={"relacionados": vizinhos},
+                points=[frag_id],
+            )
+            payload["relacionados"] = vizinhos
+    except Exception:
+        logger.exception("ingestar: cálculo de vizinhos falhou (não-fatal)")
+
+    # Broadcast SSE pro NeuroGus. No-op se ninguém estiver conectado.
+    try:
+        broadcast_sync({
+            "id": frag_id,
+            "conteudo": conteudo,
+            "tipo": payload["tipo"],
+            "estado": payload["estado"],
+            "confianca": payload["confianca"],
+            "user_id": payload["user_id"],
+            "via": payload["via"],
+            "area": payload["area"],
+            "criado_em": payload["criado_em"],
+            "relacionados": payload.get("relacionados", []),
+            "curador": payload.get("curador"),
+        })
+    except Exception:
+        logger.exception("ingestar: broadcast SSE falhou (não-fatal)")
+
     return frag_id
+
+
+def _calcular_vizinhos(vetor: list[float], k: int = 3, threshold: float = 0.6,
+                       exclude_id: Optional[str] = None,
+                       user_id: str = "gustavo") -> list[str]:
+    """Top-K vizinhos por cosine similarity, filtrando o próprio nó.
+
+    Usado pelo ingestar() pra popular 'relacionados' no payload — o NeuroGus
+    desenha arestas entre fragmentos com afinidade semântica >= threshold
+    (gus-30.1 §1).
+
+    Retorna lista de IDs (strings). Vazia se não houver vizinhos acima
+    do threshold ou se a coleção ainda for muito pequena.
+    """
+    client = _get_client()
+    # Busca k+1 pra excluir o próprio depois (sem usar id_filter, mais
+    # robusto que assumir que o próprio sempre é o top-1)
+    pontos = client.query_points(
+        collection_name=COLLECTION,
+        query=vetor,
+        query_filter=Filter(must=[
+            FieldCondition(key="user_id", match=MatchValue(value=user_id)),
+        ]),
+        limit=k + 1,
+        with_payload=False,
+    ).points
+
+    return [
+        str(p.id) for p in pontos
+        if p.score is not None and p.score >= threshold
+        and (exclude_id is None or str(p.id) != exclude_id)
+    ][:k]
 
 
 def lembrar(query: str, user_id: str = "gustavo", limit: int = 10,
@@ -238,6 +312,15 @@ def listar(user_id: str = "gustavo", limit: int = 50) -> list[dict]:
 
     Usado pelo MCP `mem0-gus` em listar_memorias / listar_memorias_gus
     quando o usuário quer ver tudo (não fazer query específica).
+
+    Retorna o **payload completo** mais um campo `id` derivado do point ID.
+    Antes do fix de 2026-05-04, esta função filtrava só 7 campos
+    (conteudo, tipo, estado, via, area, criado_em, curador) — o que
+    deixava `meta_relatorio_hub` e `auditoria_hub` cegos pra
+    `camada_temporal`, `prompt_version`, `confianca`,
+    `tipo_esquecimento`, `hash_janela` e outros campos que o curador
+    grava normalmente. Resultado: 100% dos relatórios mostravam esses
+    campos como `(sem)` mesmo quando o Hub estava populando direito.
     """
     client = _get_client()
     pontos, _ = client.scroll(
@@ -247,35 +330,158 @@ def listar(user_id: str = "gustavo", limit: int = 50) -> list[dict]:
         with_payload=True,
         with_vectors=False,
     )
-    return [
+    out: list[dict] = []
+    for p in pontos:
+        payload = dict(p.payload or {})
+        payload["id"] = str(p.id)
+        out.append(payload)
+    return out
+
+
+def deletar(memory_id: str, motivo: Optional[str] = None) -> bool:
+    """Deleta um fragmento pelo ID. IRREVERSÍVEL.
+
+    Usado pelo MCP `mem0-gus` em deletar_memoria. O caller é responsável
+    por confirmar a intenção antes de chamar.
+
+    Antes de deletar, fetcha o payload e grava trilha em
+    `_log/deletar-hub/AAAA-MM-DD.jsonl` (item 1.3 do plano de saneamento).
+    Se o log falhar, o delete prossegue (fail-soft) — não bloquear delete
+    por problema de I/O.
+    """
+    import json as _json
+    from pathlib import Path as _Path
+
+    if not memory_id or not memory_id.strip():
+        raise ValueError("memory_id vazio")
+    mid = memory_id.strip()
+    client = _get_client()
+
+    # Fetch payload pré-delete pra trilha de auditoria
+    snapshot = None
+    try:
+        pontos = client.retrieve(
+            collection_name=COLLECTION,
+            ids=[mid],
+            with_payload=True,
+            with_vectors=False,
+        )
+        if pontos:
+            snapshot = dict(pontos[0].payload or {})
+    except Exception as e:
+        logger.warning(f"deletar: fetch pré-delete falhou (id={mid[:8]}): {e}")
+
+    # Trilha de auditoria — fail-soft
+    try:
+        log_dir = _Path("_log/deletar-hub")
+        log_dir.mkdir(parents=True, exist_ok=True)
+        hoje = datetime.now(BRT).strftime("%Y-%m-%d")
+        log_path = log_dir / f"{hoje}.jsonl"
+        registro = {
+            "timestamp": datetime.now(BRT).isoformat(),
+            "memory_id": mid,
+            "motivo": motivo or "(não informado)",
+            "snapshot": snapshot,
+        }
+        with log_path.open("a", encoding="utf-8") as f:
+            f.write(_json.dumps(registro, ensure_ascii=False, default=str) + "\n")
+    except Exception as e:
+        logger.warning(f"deletar: trilha de auditoria falhou (id={mid[:8]}): {e}")
+
+    # Delete propriamente dito
+    client.delete(
+        collection_name=COLLECTION,
+        points_selector=[mid],
+    )
+    return True
+
+
+def esquecer(memory_id: str, tipo_esquecimento: str = "deliberado") -> bool:
+    """Soft delete: marca estado='esquecido' + tipo_esquecimento.
+
+    Reversível via re_lembrar(). Fragmento some das buscas semânticas
+    (lembrar() filtra estado='ativo' por default) mas continua no Qdrant
+    como substrato de retro-aprendizado (gus-30.1 §3).
+
+    Default tipo_esquecimento='deliberado' = ação consciente do usuário
+    via NeuroGus painel.
+    """
+    if not memory_id or not memory_id.strip():
+        raise ValueError("memory_id vazio")
+    if tipo_esquecimento not in ("funcional", "deliberado", "superado", "protegido"):
+        raise ValueError(f"tipo_esquecimento inválido: '{tipo_esquecimento}'")
+    client = _get_client()
+    client.set_payload(
+        collection_name=COLLECTION,
+        payload={"estado": "esquecido", "tipo_esquecimento": tipo_esquecimento},
+        points=[memory_id.strip()],
+    )
+    return True
+
+
+def re_lembrar(memory_id: str) -> bool:
+    """Reverte soft delete: estado='ativo', limpa tipo_esquecimento.
+
+    Permite resgatar fragmento esquecido por engano (gus-30.1 §4.3).
+    """
+    if not memory_id or not memory_id.strip():
+        raise ValueError("memory_id vazio")
+    client = _get_client()
+    client.set_payload(
+        collection_name=COLLECTION,
+        payload={"estado": "ativo", "tipo_esquecimento": None},
+        points=[memory_id.strip()],
+    )
+    return True
+
+
+def recentes(user_id: str = "gustavo", limit: int = 50,
+             incluir_esquecidos: bool = False) -> list[dict]:
+    """Lista fragmentos ordenados por criado_em desc (mais recentes primeiro).
+
+    Usado pelo /hub/recent pra boot do grafo do NeuroGus. Por default
+    omite fragmentos com estado='esquecido' (substrato de aprendizado,
+    não pertence ao grafo ativo). incluir_esquecidos=True traz tudo
+    pra modo "ver esquecidos" do NeuroGus (gus-30.1 §3.2).
+
+    Retorna fragmentos com payload reduzido pro frontend, incluindo
+    'relacionados' (IDs dos vizinhos por afinidade semântica).
+    """
+    client = _get_client()
+
+    must = [FieldCondition(key="user_id", match=MatchValue(value=user_id))]
+    must_not = []
+    if not incluir_esquecidos:
+        must_not.append(FieldCondition(key="estado", match=MatchValue(value="esquecido")))
+
+    pontos, _ = client.scroll(
+        collection_name=COLLECTION,
+        scroll_filter=Filter(must=must, must_not=must_not),
+        limit=limit,
+        with_payload=True,
+        with_vectors=False,
+    )
+
+    fragmentos = [
         {
             "id": str(p.id),
             "conteudo": (p.payload or {}).get("conteudo", ""),
             "tipo": (p.payload or {}).get("tipo"),
             "estado": (p.payload or {}).get("estado"),
+            "confianca": (p.payload or {}).get("confianca", 0.7),
+            "user_id": (p.payload or {}).get("user_id"),
             "via": (p.payload or {}).get("via"),
             "area": (p.payload or {}).get("area"),
             "criado_em": (p.payload or {}).get("criado_em"),
+            "relacionados": (p.payload or {}).get("relacionados", []),
             "curador": (p.payload or {}).get("curador"),
         }
         for p in pontos
     ]
 
-
-def deletar(memory_id: str) -> bool:
-    """Deleta um fragmento pelo ID. IRREVERSÍVEL.
-
-    Usado pelo MCP `mem0-gus` em deletar_memoria. O caller é responsável
-    por confirmar a intenção antes de chamar.
-    """
-    if not memory_id or not memory_id.strip():
-        raise ValueError("memory_id vazio")
-    client = _get_client()
-    client.delete(
-        collection_name=COLLECTION,
-        points_selector=[memory_id.strip()],
-    )
-    return True
+    # Ordena descendente por criado_em (Qdrant scroll não garante ordem)
+    fragmentos.sort(key=lambda f: f.get("criado_em") or "", reverse=True)
+    return fragmentos[:limit]
 
 
 def stats() -> dict:
@@ -361,21 +567,18 @@ def auditar() -> dict:
             exact=True,
         ).count
 
-    # Distribuição por curador
     curadores = {}
     for c in ("haiku", "sonnet", "telegram", "claude-code", "mgx", "api"):
         n = _contar_campo("curador", c)
         if n:
             curadores[c] = n
 
-    # Distribuição por via
     vias = {}
     for v in ("telegram", "claude-code", "api", "github-action"):
         n = _contar_campo("via", v)
         if n:
             vias[v] = n
 
-    # Fragmentos suspeitos: conteúdo curto
     todos, _ = client.scroll(
         collection_name=COLLECTION,
         limit=500,

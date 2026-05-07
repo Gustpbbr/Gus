@@ -1,0 +1,491 @@
+user: oi Gus, blz?
+assistant: oi, blz. tô aqui na porta Code, branch `claude/initial-setup-iWTfL`.
+
+vi que tem 4 demandas pendentes no `dialogos/inbox-claude-code/`:
+- captura-multiporta-curador
+- drive-sync-oauth-fix
+- pendencias-claude-chat-consolidacao
+- (o `_frontmatter-referencia.md` é só template)
+
+quer que eu ataque alguma agora ou tem outra coisa em mente?
+user: primeiro tenha um panorama geral do projeto. segue um guia para vc ver. depois vamos focar em um assunto específico, mas te falo apos vc ler tudo necessário do projeto. segue uma dica de outra aba do code. analise tudo, e busque tbm as últimas atualizações do projeto q nao estao nos documentos citados
+Aqui vai a receita ordenada por valor por contexto. Foco: mínimo necessário pra não inflar contexto à toa.
+Core obrigatório (sempre, em toda aba nova)
+Arquivo
+Pra quê
+dialogos/_bootstrap/gus-bootstrap.md
+manual operacional do Gus, regras de comportamento, como cada porta usa o Hub
+dialogos/_bootstrap/gus-identity.md
+quem é o Gustavo + quem é o Gus enquanto entidade
+dialogos/_bootstrap/gus-estado-atual.md
+handoff auto-gerado pelo cron 03h, snapshot do Hub
+projetos/gus/_estado-atual.md
+onde paramos na sessão anterior (mais "operacional" que o bootstrap)
+Esses 4 dão 80% do contexto pra qualquer aba nova.
+Live — preferir sobre arquivo
+Se a aba tem MCP gus-hub conectado:
+ego_cache_atual() — identidade + últimas 3 decisões + 5 meta-reflexões
+fragmentos_recentes(horas=24) — o que rolou desde ontem
+contar_fragmentos() — sanity check
+Hub é mais fresco que gus-estado-atual.md (que é snapshot das 03h). Sempre que possível, prefira tools MCP a arquivo .md.
+Específicos do contexto da pergunta
+Só ler se a conversa for sobre:
+Tema
+Arquivo
+Próximos passos / NeuroGus
+projetos/gus/gus-08-plano-proximos-passos.md, projetos/gus/gus-30-neurogus-roadmap.md
+Caminho Alexa
+projetos/gus/gus-10-caminho-alexa.md
+MCP / claude.ai connector
+projetos/gus/gus-28-passo2-mcp-server.md
+Roteamento multi-modelo
+projetos/gus/gus-29-roteamento-multimodelo-tiogu.md
+Hub Qdrant arquitetura
+projetos/gus/gus-18-schema-indexacao.md, gus-20-etapa2-hub-qdrant.md, gus-21-etapa3-curador.md
+Decisão migração ADR-001
+projetos/gus/gus-15-decisao-migracao.md
+Demanda da semana
+dialogos/streams/semana-2026-04-21.md (último arquivo da pasta)
+Demandas pendentes pra essa porta
+dialogos/inbox-/
+O que NÃO precisa ler
+gus-01 a gus-09 (a não ser por curiosidade arqueológica — bootstrap já resume)
+pessoal/, dimagem/, receitas/ etc. — só sob demanda explícita
+historico/ — pasta morta de conteúdo legado
+Logs antigos (>3 dias)
+_log/sessoes-claude-code/ — arquivos longos de transcript
+Truque pra Claude Chat web
+Como ele lê via Drive Project knowledge, o boot dele já tem gus-bootstrap.md como project instruction. Aí ele só precisa fazer:
+Ler gus-estado-atual.md (snapshot 03h)
+Chamar ego_cache_atual() via MCP gus-hub (estado vivo)
+Pra Claude Code, o CLAUDE.md na raiz é auto-injetado em toda sessão — então já cobre o "core obrigatório".
+Quer que eu padronize isso num arquivo dialogos/_bootstrap/checklist-boot-aba-nova.md pra deixar canonizado?
+Ah, entendi mal. PRs são histórico, não documentação — uma aba nova não precisa ler nenhum.
+Por que não
+O estado final dos PRs já tá no código + nos docs gus-XX atualizados
+PRs descrevem o caminho, não onde a gente tá. Nova aba quer onde tamo.
+60 PRs = ruído gigante no contexto pra ganho zero
+Quando vale olhar PR
+Situação
+Qual PR
+"Por que esse arquivo tá assim?"
+git log --oneline  → abre o PR específico
+"O que mudou hoje?"
+Lista PRs mergeados nas últimas 24h: gh pr list --state merged --limit 10
+Bug recente
+PR mais recente que tocou o código quebrado
+Decisão arquitetural não-óbvia
+PR description costuma ter o "porquê"
+Boa prática
+O que tem que ficar nos docs (não nos PRs):
+Decisões arquiteturais → ADR (gus-15 é exemplo)
+Como configurar algo → gus-XX-setup
+Estado atual do projeto → gus-26-status-consolidado, _estado-atual
+Se um PR precisa ser lido pra entender o presente, é sinal de doc desatualizado — não de PR importante.
+Receita
+Aba nova só precisa olhar PRs se:
+Você falar "tá quebrando X depois do PR #YY" → aí sim, lê o PR
+Investigar bug específico no código mexido recentemente
+Senão, esquece os 60. Os 7 docs do checklist anterior te dão o estado atual.
+assistant: Beleza. Vou puxar o core obrigatório e o git recente em paralelo.
+assistant: Saquei o core. O `_estado-atual.md` tá de 27/04 — desatualizado. Os commits mostram bastante coisa nova: PR #67 (curador-chat bidirecional + GPT-4o), PR #64 (captura transcripts Code via cron), PR #60 (MCP URL secret), PR #70 (demanda consolidada). Vou puxar as demandas pendentes do inbox e o último stream da semana.
+assistant: Tenho o panorama. Resumo do que entendi:
+
+**Onde tamo (02/05/2026):**
+- Migração Mem0 → Hub Qdrant na **Fase 4** (ADR-001). Coleta dual Haiku × Sonnet roda até 12/05, aí decide modelo curador final.
+- Hub tem 19 fragmentos no brain `gustavo`, sistema ocioso nas últimas 6h.
+- `_estado-atual.md` da pasta projetos/gus tá de 27/04 — desatualizado, mas o `gus-estado-atual.md` do bootstrap tá fresco (cron 15min).
+
+**Frentes mais ativas (último ~5 dias, não estão no _estado-atual):**
+- **PR #67** — curador chat bidirecional (Sonnet 4.6 + GPT-4o, salva em `gustavo` + `gus`). Mas só processa .md uploadado manual.
+- **PR #64** — cron captura transcripts Claude Code (resolve "captura quebrada" mencionada no CLAUDE.md).
+- **PR #60** — `MCP_URL_SECRET` no path do MCP server (privacidade no claude.ai web). **Ainda não ativado no Railway.**
+- **NeuroGus** entrou em cena (gus-30) — Fase 1 backend SSE em branch separada, Fase 2 frontend bloqueada.
+
+**Demandas pendentes no inbox-claude-code (3 reais + template):**
+
+| # | Demanda | Bloqueio |
+|---|---|---|
+| 1 | Captura multiporta curador (A/B/C) | aprovação Gustavo |
+| 2 | Drive sync OAuth quebrado (1/2/3) | decisão Gustavo |
+| 3 | Pendências Claude Chat consolidadas (6 fronts) | mistura Gustavo/Code |
+
+A #3 é guarda-chuva e referencia #1 e #2 dentro dela. As 6 sub-pendências:
+1. Ativar `MCP_URL_SECRET` no Railway (Gustavo)
+2. Recadastrar Connector claude.ai (Gustavo)
+3. Localizar mock HTML NeuroGus 28/04 (Gustavo)
+4. Decisões §11.3-11.5 NeuroGus Fase 2 (Gustavo)
+5. Captura tempo real Chat — Opção A (Gustavo decide, Code faz)
+6. Drive sync → Service Account (Gustavo + Code)
+
+Pronto pra ouvir qual o assunto específico que tu quer focar. Se for sobre NeuroGus, MCP, captura ou Drive sync eu já tenho contexto base; se for outro lado (Alexa, Custom GPT, Phronesis), pode me dizer que eu puxo o doc certo.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are untracked files in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado e pushado. Log do retro-engine (no-op por falta de `ANTHROPIC_API_KEY` no ambiente, comportamento esperado) tá em `claude/greeting-checkin-94weM`.
+
+Pronto pra próxima.
+user: nessa aba vamos falar do chat. primeiro faca uma auditoria profissional imparcial multiespecialista completa em todos os aspectos do projeto relacionados ao chat
+assistant: Boa. Vou fazer auditoria completa em todas as superfícies do Chat. Lanço investigação paralela: código-fonte, workflows, docs estratégicos, e estado operacional.
+assistant: Tenho material suficiente. Consolidando a auditoria agora.
+
+# Auditoria do Chat — visão multi-especialista
+
+Escopo: tudo que envolve a porta **Claude Chat** (claude.ai) — entrada (bootstrap, estado dinâmico, MCP, Drive), saída (ingestar via MCP, upload .md via Drive, demandas) e curadoria.
+
+---
+
+## 1. Mapa real do sistema (estado em 02/05/2026)
+
+```
+                 ┌─────────────────── CLAUDE CHAT (claude.ai web) ──────────────────┐
+                 │  Project knowledge: Drive Gus-Sync (stale)                       │
+                 │  Tools nativas:     Drive, Gmail, Calendar, Spotify, Figma       │
+                 │  Custom Connector:  gus-hub MCP (Railway)                        │
+                 └──┬──────────────────────────────────────────────────────────┬────┘
+                    │                                                          │
+        IN (leitura)                                                  OUT (escrita)
+                    │                                                          │
+    ┌──────────────────────────────────┐         ┌──────────────────────────────────────┐
+    │ A. Drive Gus-Sync (sync stale)   │         │ X. MCP ingestar_fragmento (real-time)│
+    │    via project knowledge         │         │    BLOQUEADO hoje (read-only)        │
+    │ B. MCP read_repo_file (live)     │         │ Y. .md upload em Drive               │
+    │ C. MCP buscar_hub / ego_cache /  │         │    → import-from-drive (15min)       │
+    │    fragmentos_recentes (live)    │         │    → ingest-mem0-from-chat (30min)   │
+    │ D. dialogos/_bootstrap/          │         │    → curador híbrido (Sonnet+GPT-4o) │
+    │    gus-estado-atual.md (15min)   │         │    → Hub × 2 brains (gustavo+gus)    │
+    └──────────────────────────────────┘         │ Z. Demanda em inbox-claude-code/     │
+                                                 │    via Drive (mesma trilha do Y)     │
+                                                 └──────────────────────────────────────┘
+```
+
+3 canais de escrita coexistem **sem hierarquia documentada**.
+
+---
+
+## 2. Achados por especialista
+
+### 🔐 Segurança / Privacidade
+
+| ID | Severidade | Achado |
+|---|---|---|
+| **SEC-1** | 🔴 Crítico | **MCP Hub público sem `MCP_URL_SECRET`.** `hub/mcp_server.py:432` loga warning mas serve. Hoje o Railway está com `MCP_AUTH_DISABLED=true` e sem URL secret → qualquer scanner que descobrir o domínio `gus-mcp-server-production.up.railway.app/mcp` lê **todo o Hub**: Dimagem, saúde, financeiro, identidade. Escrita está bloqueada por `_has_access_control()`, mas leitura não. Isso é o que a demanda #1 da consolidação trata, mas o estado é **público total**. |
+| **SEC-2** | 🟠 Alto | **Bearer fail-open quando auth desabilitado.** `_create_app()` desliga `AuthMiddleware` inteiro com `MCP_AUTH_DISABLED=true` em vez de exigir o URL secret como fallback obrigatório. Devia ser fail-closed: sem nenhum dos dois, retornar 503 em tudo (exceto `/health`). Hoje o warning log vai pro vazio. |
+| **SEC-3** | 🟡 Médio | **`ingestar_fragmento` aceita `user_id` como parâmetro do cliente** (linha 239). Modelo do Chat pode salvar fragmento sobre Gustavo no brain `gus` (autobiografia do agente) sem validação. `via=claude-chat` é hardcoded — bom, mas `user_id` devia ter whitelist. |
+| **SEC-4** | 🟡 Médio | **`read_repo_file` sem cap de tamanho.** Tool retorna conteúdo inteiro do .md. Arquivo grande (gus-30 = 1513 linhas) consome ~6k tokens da janela do Chat sem aviso. Sem chunk/paginate. |
+| **SEC-5** | 🟡 Médio | **Drive Service Account ainda OAuth user.** `sync_to_drive.py:42-51` usa `Credentials` com `GOOGLE_REFRESH_TOKEN` — refresh token de app Testing expira em 7 dias. Se Gustavo sair da conta Google ou rodar com credenciais erradas, escopos full Drive ficam expostos. Demanda #6 cobre. |
+| **SEC-6** | 🟢 Baixo | `read_repo_file` faz `httpx.Client(timeout=15)` sem retry — falha de rede = chamada perdida. Não é segurança em si mas atrapalha confiabilidade da leitura. |
+
+### ⚙️ Confiabilidade / Operações
+
+| ID | Severidade | Achado |
+|---|---|---|
+| **OPS-1** | 🔴 Crítico | **Curador Telegram com erro 400 recorrente.** `_log/resumos-mem0/2026-04-30.md` e `2026-05-01.md` mostram **só uma entrada por dia, sempre `erro`**, com `curador-erro: '\n    "conteudo"'` + `Error code: 400`. Mesmo curador (`hub/curador.py`) é usado pelo upload do Chat — provável que **ingest do Chat também esteja falhando silenciosamente**. O curador está rodando em loop com 100% de erro há ≥3 dias. (Mesmo bug "system='' + temperature/top_p" do 27/04? Pode ter regredido após PR #67 mudou modelo pra Sonnet 4.6 no Chat — nunca foi testado em produção real). |
+| **OPS-2** | 🔴 Crítico | **Drive sync GitHub→Drive parece quebrado.** Commits `mirror: gus-estado-atual.md de Drive` (que indicam Drive ativo) param em 14:38Z 01/05. Depois só `auto: estado atual do Hub pra Claude Chat` (geração local pelo cron). Sintoma bate com a hipótese da demanda #6: refresh token Google OAuth expirou. Chat lê Drive **stale** desde então. |
+| **OPS-3** | 🟠 Alto | **Pipeline upload-from-Chat sem retry.** `ingest_mem0_from_chat.py:146` faz `subprocess.run(["git", "push"], check=True)` cru. Sem `-u origin`, sem retry/backoff exigido pelas próprias diretrizes do projeto (CLAUDE.md menciona retry exponencial 2/4/8/16s). Network blip = arquivo perdido. |
+| **OPS-4** | 🟠 Alto | **Não-idempotência parcial entre move + push.** Se o curador salva no Hub mas falha no `git push` final, próxima execução **não reentra** o arquivo (já moveu pra processados/) → fragmento entrou no Hub uma vez, mas sem marcação no log. Comentário do código (`linha 21`) reconhece o risco de duplicação inverso (move falhou, salvou no Hub, próxima rodada salva de novo). Sem dedup por hash do conteúdo no Hub. |
+| **OPS-5** | 🟠 Alto | **Headers de log desatualizados.** `_log/resumos-mem0/AAAA-MM-DD.md` continua escrevendo `fonte: bot Telegram (Hub Curador híbrido Haiku+Sonnet)` desde 29/04 quando virou Haiku+GPT. `ingest_mem0_from_chat.py:100` usa o mesmo template no log do Chat. Alguém olhando o log vai inferir errado o que rodou. |
+| **OPS-6** | 🟡 Médio | **`get_changed_md_files` usa `HEAD~1 HEAD`.** Quando merge de PR traz N commits, sync só pega o último — arquivos alterados em commits intermediários do PR podem não ir pro Drive. Workflow `sync-to-drive.yml:26` usa `fetch-depth: 2`, mesmo problema. |
+| **OPS-7** | 🟡 Médio | **`processados-erro/` definido mas nunca preenchido pra dialogos do Chat.** `_README.md:15` admite que **não há move automático** de arquivos com frontmatter inválido. `import_from_drive.py:286-292` só implementa pra demandas tradicionais — uploads em `inbox-mem0-from-chat/` que falham frontmatter ficam stuck no Drive. |
+| **OPS-8** | 🟡 Médio | **`MODEL_CURADOR_HAIKU=claude-sonnet-4-6` no workflow do Chat** (`ingest-mem0-from-chat.yml:37`). A var do nome diz Haiku mas o valor é Sonnet — mistura nome de slot com nome de modelo. Funciona, mas próximo dev olhando a config se confunde. |
+| **OPS-9** | 🟢 Baixo | Cron `gerar-estado-claude-chat` roda a cada 15min, mesmo quando Hub ocioso. ~96 jobs/dia, ~95 commits no-op (já fica no `git diff --staged --quiet`). OK, mas inflando histórico. |
+
+### 🏗️ Arquitetura / Integração
+
+| ID | Severidade | Achado |
+|---|---|---|
+| **ARCH-1** | 🟠 Alto | **Sem hierarquia clara entre os 3 canais de escrita do Chat.** Real-time MCP (instantâneo, sem revisão) vs upload curado (35min latência, dois LLMs revisam) vs demanda inbox-code (manual). Bootstrap só fala dos 2 primeiros e não diz quando preferir cada. Resultado: Chat decide ad-hoc, sem regra. |
+| **ARCH-2** | 🟠 Alto | **Bidirecional gustavo+gus = 2× custo + risco de duplicar.** Mesmo prompt roda sobre o mesmo body, troca só o `user_id
+
+[…transcript truncado…]
+
+nbox-claude-code/2026-05-01-drive-sync-oauth-fix.md`
+
+Escolhe uma:
+- **Opção 1:** reset OAuth (10min seu, expira em 7 dias — paliativo)
+- **Opção 2:** Service Account (recomendada — não expira, ~30min Code + 10min seu no Google Cloud Console)
+- **Opção 3:** aposentar Drive sync, Chat lê tudo via MCP `read_repo_file`
+
+**Me diz qual e eu implemento.** Pra Opção 2, eu te dou passo a passo de como criar Service Account no Google Cloud antes do código.
+
+### Passo 5 — Decidir captura tempo real Chat (Opção A)
+
+Demanda: `2026-05-01-captura-multiporta-curador.md`
+
+**Pergunta:** quer que o Chat chame `ingestar_fragmento` durante a conversa quando detectar decisão/preferência/fato relevante?
+
+- ✅ Sim: cobre buraco de UX-1 (latência 45min hoje). Eu implemento ~30 linhas no bootstrap.
+- ❌ Não: continua só upload .md (PR #67 já feito).
+
+**Tradeoff:** prós = real-time, sem upload manual. Contras = qualidade depende do prompt; pode salvar mais lixo (sem comparação Haiku × GPT como o curador post-hoc tem).
+
+### Passo 6 — Hierarquia dos 3 canais de escrita do Chat
+
+3 canais coexistem hoje (real-time MCP / upload .md / demanda inbox), sem regra de quando usar qual.
+
+**Sugestão minha** (bootstrap):
+- **Real-time MCP** (`ingestar_fragmento`): decisões/preferências curtas durante conversa
+- **Upload .md curado**: fim de sessão de reflexão profunda (>5 fatos novos juntos)
+- **Demanda inbox-claude-code**: quando precisa Code fazer algo
+
+**OK isso?** Aprovado, eu escrevo no bootstrap.
+
+### Passo 7 — Refinar bidirecional curador
+
+Hoje o curador roda 2× sobre o mesmo body (gustavo + gus) com mesmo prompt. Pode duplicar fragmento errado.
+
+**Pergunta:** quer prompts diferentes (um foca em fatos/decisões → gustavo, outro em padrões/auto-observação → gus)? Ou eliminar bidirecional pra arquivos do Chat (manter só `gustavo`)?
+
+---
+
+## 🎨 NEUROGUS (gus-30 Fase 2 bloqueado)
+
+### Passo 8 — Mock HTML 28/04 (10min)
+
+1. Abre claude.ai → procura conversa antiga de 28/04 sobre NeuroGus
+2. Pede pro Chat o HTML do mock que ele criou
+3. Baixa e me manda — eu commito em `projetos/gus/neurogus-mock-2604.html`
+
+**Cap:** 15 minutos. Se não achar, abandona — eu recrio do zero seguindo gus-30 §8 (custo: +2-3h trabalho).
+
+### Passo 9 — Confirmar 4 decisões abertas
+
+Responde rápido (1 frase cada):
+
+| Decisão | Recomendação minha |
+|---|---|
+| §11.1 K e threshold | K=3, threshold=0.6 |
+| §11.3 Token URL | `?token=X` v0 (você é único user) |
+| §11.4 Auto-orbit | ON com pause-on-interaction |
+| §11.5 Reconnect SSE | Reload completo (simplicidade) |
+
+**OK pros 4?** Aprovado, eu trato isso como decisão tomada.
+
+---
+
+## Resumo do que faço sem você depois
+
+Após Passos 1-3 (operacional) + Passo 4 (Drive) + Passos 5-9 (decisões), eu posso:
+- Implementar Opção A (Passo 5) — 30 linhas
+- Atualizar bootstrap com hierarquia (Passo 6) — 1h
+- Refatorar bidirecional curador (Passo 7) — 1-2h
+- NeuroGus Fase 1 backend SSE (após Passo 9) — 2-3h
+- NeuroGus Fase 2 frontend (após Passo 8) — 3h
+
+**Caminho mais rápido pra ter tudo funcionando:** Passo 1 → 2 → 3 → 4 (ou pelo menos Opção 1 pra destravar Drive a curto prazo) → 5/6/7 num único papo de 10 minutos.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado e pushado.
+user: Continue from where you left off.
+assistant: No response requested.
+user: ta dando erro pra mergear, veja o q é 
+assistant: Achei. **`mergeable_state: "dirty"`** = conflito de merge com main. CI passou (smoke-test ✅), mas a branch divergiu. PR cresceu de 2 → 9 commits, 5 → 16 arquivos. Vou investigar.
+assistant: Diagnóstico:
+- Branch tem 9 commits — só **2 são substanciais** (`e9d4046` curador fix + `5fa805f` audit). Os outros 7 são auto-commits dos hooks Stop (transcripts + retro-engine) que tive que commitar pra desbloquear sessões anteriores.
+- Main avançou ~30 commits desde que abri o PR (cron 15min escreve no `gus-estado-atual.md`, PR #73 mergeou, etc.).
+- Conflitos prováveis em `_log/retro-engine-claude-code/2026-05-02.md`, `gus-estado-atual.md`, `_log/transcripts-claude-code/` — todos arquivos auto-gerados.
+
+**Solução limpa:** resetar branch pra `origin/main` atual + cherry-pick só os 2 commits substanciais + force push. Ruído dos auto-commits já entrou no main via PR #73.
+
+Confirma que posso force-pushar `claude/audit-chat-fixes`? É a única branch tocada, sem risco de afetar outras pessoas (você é único contribuidor).
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Aguardando autorização do force-push pra resolver o conflito do PR #72.
+user: pode fazer
+assistant: Commits acessíveis. Executando o reset + cherry-pick:
+assistant: Conflito em `_estado-atual.md` — duas sessões diferentes do mesmo dia (Fase 1 TioGu via PR #73 + minha auditoria do Chat). Vou combinar manualmente:
+assistant: Vou reescrever o arquivo merged manualmente — combinando as 2 sessões sem perder nada:
+assistant: Cherry-pick concluído. Verificando + force-push:
+assistant: ✅ Resolvido. PR #72 agora:
+
+- **`mergeable_state: "clean"`** — sem conflitos
+- **2 commits** (só os substanciais — ruído dos auto-commits eliminado)
+- **10 arquivos / +720 / -130** (em vez dos 16 / +2877 / -177 inflados)
+
+Pode mergear pelo botão. Espera o `smoke-test` rodar em verde primeiro (~2min).
+
+Link: https://github.com/Gustpbbr/Gus/pull/72
+user: ve se foi
+assistant: ✅ **Mergeado.** PR #72 fechado com `merged: true` por você (15:39:58 UTC).
+
+Os check runs (pytest + smoke-test) estão **rodando depois do merge** — interessante: o PR #73 da Fase 1 TioGu adicionou suite pytest (163 testes) que agora roda em todo PR. Como mergeou ANTES de aguardar verde, se o pytest falhar não bloqueia (já entrou na main), mas vale conferir.
+
+Quer que eu monitore o pytest e te avise quando terminar? Se quebrar algo, ajusto.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commit do retro log na main. Tudo sincronizado.
+user: sim, por favor 
+assistant: ✅ **Os 2 checks passaram verde:**
+
+- `pytest` — **success** (rodou em 2m12s — 163 testes da suite que o PR #73 trouxe)
+- `smoke-test` — **success** (2m6s)
+
+PR mergeado, CI verde, código já em main. 
+
+**Próxima ação real é com você** (Passos 2, 3, 4 do passo a passo que mandei):
+1. Setar `MCP_URL_SECRET` no Railway
+2. Recadastrar Connector claude.ai
+3. Decidir Drive sync (1/2/3)
+
+Quando voltar, te ajudo no que precisar.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado.
+user: consegue me dizer o titulo da aba q vc mandou isso?
+
+Próxima ação real é com você (Passos 2, 3, 4 do passo a passo que mandei):
+Setar MCP_URL_SECRET no Railway
+Recadastrar Connector claude.ai
+Decidir Drive sync (1/2/3)
+assistant: Honestamente: **não sei o título exato da aba** — Claude Code on the web não me passa esse metadata.
+
+Pistas que tenho:
+- A branch dev original dessa sessão foi `claude/greeting-checkin-94weM` (a primeira que commitei nela)
+- Sua primeira mensagem foi "oi Gus, blz?"
+
+Esses dois indicam que o título auto-gerado pela aba provavelmente é algo como **"greeting checkin"** / **"Greeting Check-in"** / **"oi Gus, blz?"** — alguma variação disso. O sufixo `94weM` é o ID curto único da aba.
+
+Pra confirmar exato, abre a barra lateral do Claude Code on the web e me manda o nome — aí eu te confirmo se bate.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado.
+user: esses passos seriam relativos a q? tiogu? retro engine, chat? drive?
+assistant: Os 3 passos são todos da **porta Claude Chat** (auditoria do PR #72). Detalhe de cada:
+
+| Passo | Subsistema | Por quê |
+|---|---|---|
+| 1. `MCP_URL_SECRET` no Railway | **MCP server** (que serve o Chat) | Hoje o MCP tá público — qualquer scanner que descobrir a URL Railway lê todo o Hub. URL secret protege. Destrava também escrita real-time do Chat (`ingestar_fragmento`). |
+| 2. Recadastrar Connector claude.ai | **Chat** (UI web) | Depois do passo 1, a URL do MCP muda de `/mcp` pra `/<secret>/mcp`. Connector atual aponta pro path velho → 404. claude.ai web não permite editar URL, só remover e recriar. |
+| 3. Drive sync 1/2/3 | **Chat** (input) | Drive sync GitHub→Drive parou em 01/05 14:38Z (token OAuth Google expirou). Chat lê bootstrap e estado-atual do Drive — hoje stale há ~22h. Decisão: reset OAuth (paliativo, expira em 7d), Service Account (definitivo), ou aposentar Drive (Chat lê tudo via MCP `read_repo_file`). |
+
+**Não tocam:**
+- TioGu (Telegram) — independente, já recebeu o fix do curador no merge do PR #72 (Railway redeploya o bot automaticamente)
+- Retro engine (Code) — independente, hooks rodam local, não dependem de nenhum dos 3
+- NeuroGus — bloqueado por outras decisões (§11 do gus-30), não por esses 3
+
+O fio comum: **dar pro Chat acesso seguro e fresco ao Hub e ao repo**.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Commitado.
+vamos fazer esse
+
+1. MCP_URL_SECRET no Railway	MCP server (que serve o Chat)	Hoje o MCP tá público — qualquer scanner que descobrir a URL Railway lê todo o Hub. URL secret protege. Destrava também escrita real-time do Chat (ingestar_fragmento).
+user: Continue from where you left off.
+assistant: No response requested.
+user: vamos fazer esse
+
+1. MCP_URL_SECRET no Railway	MCP server (que serve o Chat)	Hoje o MCP tá público — qualquer scanner que descobrir a URL Railway lê todo o Hub. URL secret protege. Destrava também escrita real-time do Chat (ingestar_fragmento).
+assistant: Beleza. Vou te guiar passo a passo. **Eu não preciso ver o segredo — você guarda.**
+
+## Passo 1.1 — Gerar o segredo
+
+**Celular (sem terminal):**
+1. Abre https://www.uuidgenerator.net/
+2. Copia 2 UUIDs (botão "Generate UUID" duas vezes)
+3. Cola os dois juntos num bloco de texto (Notas/Keep)
+4. Apaga os hífens — vai ficar uma string de ~64 chars hex
+5. **Guarda esse valor.** Vai usar agora no Railway e depois no Connector
+
+Exemplo (não use esse, gera o seu):
+```
+5c8a3f2d4b1e9a7f6c0d8e3b2a5f1c7e
+4d9b2a6f8c1e3d5b7f0a4c8d2e6b9f1a
+                                 ↓
+5c8a3f2d4b1e9a7f6c0d8e3b2a5f1c7e4d9b2a6f8c1e3d5b7f0a4c8d2e6b9f1a
+```
+
+## Passo 1.2 — Setar no Railway
+
+1. Abre app **Railway** no celular (ou web em https://railway.app)
+2. Entra no projeto **Gus**
+3. Clica no serviço **gus-mcp-server** (não confunda com o serviço do bot Telegram)
+4. Vai em **Variables**
+5. Clica em **+ New Variable** (ou "Add Variable")
+6. Preenche:
+   - Nome: `MCP_URL_SECRET`
+   - Valor: cola o segredo que você guardou
+7. **Save**
+
+## Passo 1.3 — Confirmar variáveis críticas continuam ativas
+
+Ainda em **Variables**, verifica que existem (não mexe nelas):
+- ✅ `MCP_AUTH_DISABLED` = `true`  ← obrigatório, não tira
+- ✅ `QDRANT_URL` (qualquer valor não-vazio)
+- ✅ `QDRANT_API_KEY` (qualquer valor não-vazio)
+- ✅ `MCP_URL_SECRET` (que você acabou de criar)
+
+**Se faltar alguma:** me avisa antes de continuar.
+
+## Passo 1.4 — Aguardar redeploy
+
+Railway redeploya automaticamente em ~2-3 min. Você vai ver na aba **Deployments**:
+- Status `Building` → `Deploying` → `Active` (verde)
+
+## Passo 1.5 — Validar (sem precisar do segredo)
+
+No celular, abre no navegador:
+
+**Teste 1:** `https://gus-mcp-server-production.up.railway.app/health`
+- Esperado: `{"status":"ok","service":"gus-hub-mcp"}`
+- Se der erro: redeploy ainda rodando ou falhou — me manda screenshot dos logs Railway
+
+**Teste 2:** `https://gus-mcp-server-production.up.railway.app/mcp`
+- Esperado: `404 Not Found` ou JSON com erro
+- **Esse 404 é o sinal que tá funcionando** — significa que o path `/mcp` (sem secret) foi bloqueado, e agora só responde em `/<secret>/mcp`. ✅
+
+## Passo 1.6 — Me avisa
+
+Quando os 2 testes passarem (`/health` ok + `/mcp` dá 404), me dá um "ok". Aí passamos pro **Passo 2** (recadastrar Connector no claude.ai).
+
+---
+
+**Não preciso ver o segredo.** Você só usa ele em 2 lugares:
+1. Railway Variables (acabou de fazer)
+2. URL do Connector no Passo 2 (próximo)
+
+Pode começar.
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+tem coisas novas no projeto, analise elas e veja se alteram esse passo a passo
+assistant: Pushed. Agora respondendo à sua nova pergunta — **analisar coisas novas no projeto** e ver se alteram o passo MCP_URL_SECRET.
+assistant: Analisei. **3 PRs novos enquanto eu estava off** (entre 20:42 e 21:04 BRT — outras sessões Code):
+
+| PR | O que faz | Impacto no MCP_URL_SECRET? |
+|---|---|---|
+| **#76** | WIF/Workload Identity Federation pro Drive sync. **Resolve o Passo 4 da minha lista** (Drive sync OAuth → Service Account). Você já configurou SA, pool, provider, secrets WIF. | ❌ Nenhum — não toca em MCP |
+| **#77** | Renomeia legados `mem0 → curador/hub`. `_log/resumos-mem0/` → `_log/curador/`, `dialogos/inbox-mem0-from-chat/` → `dialogos/inbox-chat-raw/`, etc. | ❌ Nenhum — só rename |
+| **#79** | Novo canal `Gus-Sync/dialogos/inbox-gustavo/{chat,code,tiogu}/` no Drive — auto-injeta frontmatter. Você escreve direto pro destino sem digitar YAML. | ❌ Nenhum — só captura via Drive |
+
+## Consequências pro passo a passo
+
+### ✅ Passo 1 (`MCP_URL_SECRET`) — **igual, segue**
+
+Nenhuma mudança em `hub/mcp_server.py`. Faça normalmente os subpassos 1.1 a 1.6 que mandei.
+
+### ✅ Passo 2 (Recadastrar Connector) — **igual, segue após Passo 1**
+
+### ⚡ Passo 4 (Drive sync) — **JÁ RESOLVIDO automaticamente**
+
+PR #76 migrou pra WIF e você já configurou os secrets (SA, pool, provider). Não precisa mais decidir 1/2/3. **Pendente só:**
+- Verificar se `sync-to-drive.yml` está rodando verde (próxima vez que houver commit em main → workflow dispara)
+- **Se quiser ativar Chat → Drive → GitHub:** criar pasta `Gus-Sync/dialogos/inbox-chat-raw/` no Drive (PR #76 mencionou — usa o nome novo do PR #77)
+
+### 💡 Bonus do PR #79 — captura via celular ficou mais fácil
+
+Agora pra mandar demanda pelo celular você só:
+1. Abre Drive → `Gus-Sync/dialogos/inbox-gustavo/code/`
+2. Cria arquivo `meu-pedido.md` com texto livre (sem precisar de YAML)
+3. Em ≤15min cron pega, auto-injeta frontmatter, commita em `dialogos/inbox-claude-code/`
+
+Útil quando você lembrar de algo no celular sem querer abrir conversa Code.
+
+---
+
+**Resposta direta:** segue o `MCP_URL_SECRET` no Railway que mandei. Os 3 PRs novos não alteram esse passo. Quer que eu **valide o Drive sync** rodando enquanto você faz o Railway? Posso checar último run do workflow.

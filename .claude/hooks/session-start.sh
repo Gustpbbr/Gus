@@ -37,7 +37,7 @@ DIA_SEMANA=$(TZ="America/Sao_Paulo" LC_TIME=pt_BR.UTF-8 date '+%A' 2>/dev/null |
 INBOX_DIR="${CLAUDE_PROJECT_DIR:-.}/dialogos/inbox-claude-code"
 INBOX_BLOCO=""
 if [ -d "$INBOX_DIR" ]; then
-    DEMANDAS=$(find "$INBOX_DIR" -maxdepth 1 -type f -name "*.md" ! -name "_README.md" 2>/dev/null | sort)
+    DEMANDAS=$(find "$INBOX_DIR" -maxdepth 1 -type f -name "*.md" ! -name "_*.md" 2>/dev/null | sort)
     if [ -n "$DEMANDAS" ]; then
         TOTAL=$(echo "$DEMANDAS" | wc -l | tr -d ' ')
         LISTA=$(echo "$DEMANDAS" | xargs -n1 basename | sed 's/^/- /')

@@ -1,0 +1,2313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#050514">
+<title>NeuroGus · memória viva</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/3d-force-graph@1.73.3/dist/3d-force-graph.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+
+:root {
+  --c-identidade:  #00f5ff;
+  --c-decisao:     #c084fc;
+  --c-episodico:   #fbbf24;
+  --c-procedural:  #34d399;
+  --c-meta:        #f9a8d4;
+  --c-biografico:  #818cf8;
+  --c-preferencia: #fb923c;
+  --c-rotina:      #86efac;
+
+  --bg-deep:    #050514;
+  --panel:      rgba(8, 8, 28, 0.82);
+  --panel-edge: rgba(255, 255, 255, 0.06);
+  --glass:      rgba(255, 255, 255, 0.025);
+  --hairline:   rgba(255, 255, 255, 0.08);
+
+  --text:       rgba(255, 255, 255, 0.92);
+  --text-soft:  rgba(255, 255, 255, 0.62);
+  --text-mute:  rgba(255, 255, 255, 0.36);
+  --text-faint: rgba(255, 255, 255, 0.18);
+
+  --danger:     #f87171;
+
+  --fs-eyebrow: 10px;
+  --fs-micro:   11px;
+  --fs-small:   12px;
+  --fs-body:    14px;
+  --fs-stat:    28px;
+  --fs-display: 32px;
+
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px;  --s-4: 16px;
+  --s-5: 20px; --s-6: 24px; --s-8: 32px;  --s-10: 40px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg-deep);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  font-feature-settings: 'ss01', 'cv02', 'cv11';
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 30% 20%, rgba(0, 245, 255, 0.04), transparent 60%),
+    radial-gradient(ellipse 70% 50% at 70% 80%, rgba(192, 132, 252, 0.035), transparent 60%);
+  pointer-events: none; z-index: 1;
+}
+
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+  background-size: 56px 56px;
+  pointer-events: none; z-index: 1;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+}
+
+#graph { position: fixed; inset: 0; z-index: 2; }
+
+/* ─── Header ─── */
+.header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: var(--s-6) var(--s-8);
+  background: linear-gradient(to bottom, rgba(5,5,20,0.85) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.brand { display: flex; flex-direction: column; gap: 2px; }
+.brand__name {
+  font-family: 'Instrument Serif', serif;
+  font-size: var(--fs-display); font-weight: 400; font-style: italic;
+  letter-spacing: -0.02em; line-height: 1;
+  background: linear-gradient(135deg, #fff 0%, var(--c-identidade) 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.brand__sub {
+  display: flex; align-items: center; gap: var(--s-2);
+  font-size: var(--fs-eyebrow); letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--text-mute); margin-top: var(--s-1);
+}
+.brand__pulse {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--c-identidade);
+  box-shadow: 0 0 8px var(--c-identidade);
+  animation: pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.85); }
+  50%      { opacity: 1;   transform: scale(1.15); }
+}
+
+.stats { display: flex; gap: var(--s-8); pointer-events: auto; }
+.stat { display: flex; flex-direction: column; align-items: flex-end; }
+.stat__value {
+  font-family: 'Instrument Serif', serif;
+  font-size: var(--fs-stat); font-weight: 400; line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.stat__value--accent { color: var(--c-identidade); }
+.stat__label {
+  font-size: var(--fs-eyebrow); letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--text-mute); margin-top: var(--s-1);
+}
+
+/* ─── Filtros recolhíveis ─── */
+.filters {
+  position: fixed; top: 96px; left: var(--s-8); z-index: 50;
+  display: flex; flex-direction: column; gap: 2px;
+  pointer-events: auto;
+}
+
+.filters__header {
+  display: flex; align-items: center; gap: var(--s-2);
+  background: var(--panel);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 8px 10px 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  color: var(--text-soft);
+  font-size: var(--fs-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  width: 160px;
+}
+
+.filters__header:hover { color: var(--text); border-color: rgba(255,255,255,0.16); }
+
+.filters__chevron {
+  margin-left: auto;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 10px; height: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.filters__chevron svg { width: 100%; height: 100%; }
+.filters.is-collapsed .filters__chevron { transform: rotate(-90deg); }
+
+.filters__active-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #fff;
+  transition: background 0.3s;
+}
+
+.filters__list {
+  display: flex; flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  max-height: 65vh;
+  overflow-y: auto;
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.3s ease,
+              margin-top 0.3s ease;
+  opacity: 1;
+}
+
+.filters.is-collapsed .filters__list {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+}
+
+.chip {
+  appearance: none; background: transparent; border: 1px solid transparent;
+  color: var(--text-mute); font-family: inherit;
+  font-size: var(--fs-micro); letter-spacing: 0.06em;
+  padding: 6px 12px 6px 8px; cursor: pointer;
+  display: flex; align-items: center; gap: var(--s-2);
+  border-radius: 999px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+}
+
+.chip__dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  transition: box-shadow 0.25s ease;
+}
+
+.chip:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.chip:hover .chip__dot { box-shadow: 0 0 8px currentColor; }
+
+.chip.is-active {
+  color: var(--text);
+  background: rgba(255,255,255,0.05);
+  border-color: var(--hairline);
+}
+.chip.is-active .chip__dot { box-shadow: 0 0 10px currentColor; }
+
+.chip--none {
+  color: var(--text-faint);
+  font-style: italic;
+}
+.chip--none .chip__dot {
+  background: transparent;
+  border: 1px dashed var(--text-faint);
+  width: 6px; height: 6px;
+}
+
+/* ─── Controles 3D ─── */
+.controls {
+  position: fixed;
+  bottom: var(--s-8);
+  right: var(--s-8);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  pointer-events: auto;
+}
+
+.ctrl-group {
+  background: var(--panel);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ctrl-group--horizontal {
+  flex-direction: row;
+}
+
+.ctrl-btn {
+  appearance: none;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-soft);
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  font-family: inherit;
+  position: relative;
+}
+
+.ctrl-btn:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.05);
+}
+
+.ctrl-btn:active {
+  background: rgba(255,255,255,0.1);
+  transform: scale(0.94);
+}
+
+.ctrl-btn.is-active {
+  color: var(--c-identidade);
+  background: rgba(0, 245, 255, 0.08);
+}
+
+.ctrl-btn svg {
+  width: 16px; height: 16px;
+  pointer-events: none;
+}
+
+.ctrl-btn__tooltip {
+  position: absolute;
+  right: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+  background: var(--panel);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-soft);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s;
+}
+
+.ctrl-btn:hover .ctrl-btn__tooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+.ctrl-btn--small {
+  width: 32px;
+  height: 26px;
+}
+
+.ctrl-divider {
+  height: 1px;
+  background: var(--hairline);
+  margin: 4px 6px;
+}
+
+/* ─── Slider vertical de zoom ─── */
+.ctrl-group--zoom {
+  align-items: center;
+  padding: 8px 6px;
+  gap: 4px;
+}
+
+.zoom-slider {
+  position: relative;
+  width: 32px;
+  height: 120px;
+  margin: 4px 0;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.zoom-slider__track {
+  position: absolute;
+  width: 2px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.zoom-slider__fill {
+  position: absolute;
+  width: 2px;
+  bottom: 0;
+  background: linear-gradient(to top, var(--c-identidade), rgba(0, 245, 255, 0.4));
+  border-radius: 2px;
+  height: 50%;
+  pointer-events: none;
+  box-shadow: 0 0 6px rgba(0, 245, 255, 0.5);
+  transition: height 0.15s ease;
+}
+
+.zoom-slider__thumb {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: var(--text);
+  border: 2px solid var(--c-identidade);
+  border-radius: 50%;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  box-shadow: 0 0 8px rgba(0, 245, 255, 0.6),
+              0 2px 4px rgba(0, 0, 0, 0.3);
+  transition: top 0.15s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.zoom-slider:hover .zoom-slider__thumb {
+  transform: translateY(-50%) scale(1.15);
+  box-shadow: 0 0 12px rgba(0, 245, 255, 0.8),
+              0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.zoom-slider.is-dragging .zoom-slider__thumb {
+  transform: translateY(-50%) scale(1.25);
+  transition: transform 0.1s ease;
+}
+
+.zoom-slider.is-dragging .zoom-slider__fill,
+.zoom-slider.is-dragging .zoom-slider__thumb {
+  transition: none;
+}
+
+/* ─── Indicadores de borda (radar) ─── */
+.edge-indicators {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.edge-dot {
+  position: absolute;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.15s ease-out;
+  transform: translate(-50%, -50%);
+}
+
+.edge-dot.is-visible { opacity: 0.7; }
+
+/* ─── Painel lateral ─── */
+.panel {
+  position: fixed; top: 0; right: 0;
+  width: 380px; height: 100vh;
+  background: var(--panel);
+  backdrop-filter: blur(32px) saturate(140%);
+  -webkit-backdrop-filter: blur(32px) saturate(140%);
+  border-left: 1px solid var(--panel-edge);
+  z-index: 100;
+  transform: translateX(100%);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.panel.is-open { transform: translateX(0); }
+.panel__glow {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  opacity: 0.6;
+}
+.panel__head {
+  padding: var(--s-8) var(--s-6) var(--s-5);
+  border-bottom: 1px solid var(--hairline);
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: var(--s-4);
+}
+.panel__type {
+  font-size: var(--fs-eyebrow); letter-spacing: 0.22em;
+  text-transform: uppercase; margin-bottom: var(--s-2);
+}
+.panel__content {
+  font-family: 'Instrument Serif', serif;
+  font-size: 18px; line-height: 1.4;
+  color: var(--text); word-break: break-word;
+  letter-spacing: -0.005em;
+}
+.panel__close {
+  appearance: none; background: transparent;
+  border: 1px solid var(--hairline);
+  color: var(--text-mute);
+  width: 32px; height: 32px; border-radius: 8px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.2s; font-family: inherit;
+}
+.panel__close:hover { border-color: var(--c-meta); color: var(--c-meta); background: rgba(249,168,212,0.06); }
+.panel__close svg { width: 12px; height: 12px; }
+.panel__body {
+  flex: 1; overflow-y: auto;
+  padding: var(--s-5) var(--s-6) var(--s-6);
+  display: flex; flex-direction: column; gap: var(--s-2);
+}
+.panel__body::-webkit-scrollbar { width: 3px; }
+.panel__body::-webkit-scrollbar-thumb { background: var(--hairline); border-radius: 2px; }
+
+.meta-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 14px; background: var(--glass);
+  border: 1px solid var(--hairline); border-radius: 8px;
+  transition: border-color 0.2s;
+}
+.meta-row:hover { border-color: rgba(255,255,255,0.14); }
+.meta-row__key {
+  font-size: var(--fs-eyebrow); letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--text-mute);
+}
+.meta-row__value {
+  font-size: var(--fs-small); color: var(--text);
+  text-align: right; max-width: 60%; word-break: break-word;
+  font-variant-numeric: tabular-nums;
+}
+
+.confidence {
+  display: flex; flex-direction: column; gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  background: var(--glass); border: 1px solid var(--hairline); border-radius: 8px;
+}
+.confidence__row { display: flex; justify-content: space-between; align-items: center; }
+.confidence__bar {
+  width: 100%; height: 2px;
+  background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden;
+}
+.confidence__fill {
+  height: 100%; border-radius: 2px;
+  transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+  box-shadow: 0 0 8px currentColor;
+}
+
+.section-title {
+  font-size: var(--fs-eyebrow); letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--text-mute);
+  margin: var(--s-5) 0 var(--s-3);
+  padding-left: var(--s-2);
+  display: flex; align-items: center; gap: var(--s-2);
+}
+.section-title__count { color: var(--text-faint); font-variant-numeric: tabular-nums; }
+
+.connection {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 10px 14px; background: var(--glass);
+  border: 1px solid var(--hairline); border-radius: 8px;
+  cursor: pointer; transition: all 0.2s; margin-bottom: 4px;
+}
+.connection:hover { border-color: rgba(255,255,255,0.18); transform: translateX(2px); }
+.connection__type {
+  font-size: var(--fs-eyebrow); letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.connection__preview {
+  font-size: var(--fs-small); color: var(--text-soft); line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.panel__delete {
+  margin: 0 var(--s-6) var(--s-6);
+  padding: 12px;
+  background: rgba(248,113,113,0.05);
+  border: 1px solid rgba(248,113,113,0.2);
+  border-radius: 8px; color: var(--danger);
+  font-family: inherit; font-size: var(--fs-micro);
+  letter-spacing: 0.12em; text-transform: uppercase;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: var(--s-2);
+}
+.panel__delete:hover { background: rgba(248,113,113,0.12); border-color: var(--danger); }
+
+/* ─── Labels ─── */
+.label-canvas { position: fixed; inset: 0; pointer-events: none; z-index: 30; }
+
+.node-label {
+  position: absolute;
+  transform: translate(-50%, -120%);
+  pointer-events: none; opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.16,1,0.3,1),
+              transform 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+.node-label.is-visible  { opacity: 1; transform: translate(-50%, -132%); }
+.node-label.is-selected { opacity: 1; transform: translate(-50%, -138%); }
+
+.label-card {
+  position: relative;
+  background: rgba(8,8,28,0.88);
+  border: 1px solid var(--hairline); border-radius: 10px;
+  padding: 9px 13px; max-width: 220px;
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+}
+.label-card::after {
+  content: ''; position: absolute;
+  bottom: -16px; left: 50%; transform: translateX(-50%);
+  width: 1px; height: 16px;
+  background: linear-gradient(to bottom, currentColor, transparent);
+  opacity: 0.4;
+}
+.label-card__type {
+  font-size: 9px; letter-spacing: 0.22em;
+  text-transform: uppercase; margin-bottom: 4px; line-height: 1;
+}
+.label-card__text {
+  font-family: 'Instrument Serif', serif;
+  font-size: 13px; color: var(--text); line-height: 1.35;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ─── Toast ─── */
+.toast {
+  position: fixed; bottom: var(--s-8); right: 110px;
+  z-index: 200; max-width: 280px;
+  background: var(--panel); border: 1px solid var(--hairline);
+  border-radius: 12px; padding: var(--s-3) var(--s-4);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  opacity: 0; transform: translateY(16px);
+  transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+  pointer-events: none;
+  display: flex; gap: var(--s-3); align-items: flex-start;
+}
+.toast.is-shown { opacity: 1; transform: translateY(0); }
+.toast__indicator {
+  width: 8px; height: 8px; border-radius: 50%;
+  margin-top: 5px; flex-shrink: 0;
+  box-shadow: 0 0 10px currentColor;
+}
+.toast__body { flex: 1; min-width: 0; }
+.toast__label {
+  font-size: var(--fs-eyebrow); letter-spacing: 0.18em;
+  text-transform: uppercase; margin-bottom: 3px;
+}
+.toast__text { font-size: var(--fs-small); color: var(--text); line-height: 1.4; word-break: break-word; }
+
+/* ─── Hint ─── */
+.hint {
+  position: fixed; bottom: var(--s-8); left: 50%;
+  transform: translateX(-50%);
+  font-size: var(--fs-eyebrow); letter-spacing: 0.22em;
+  text-transform: uppercase; color: var(--text-faint);
+  pointer-events: none; transition: opacity 0.5s; z-index: 40;
+}
+
+/* ─── Abas de navegação ─── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: rgba(8, 8, 28, 0.6);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 4px;
+  pointer-events: auto;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.tab {
+  appearance: none;
+  background: transparent;
+  border: none;
+  color: var(--text-mute);
+  font-family: inherit;
+  font-size: var(--fs-eyebrow);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  cursor: pointer;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tab svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.tab:hover {
+  color: var(--text-soft);
+}
+.tab:hover svg { opacity: 1; }
+
+.tab.is-active {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
+}
+.tab.is-active svg {
+  opacity: 1;
+  color: var(--c-identidade);
+}
+
+/* ─── View Lista ─── */
+.list-view {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  background: var(--bg-deep);
+  display: none;
+  flex-direction: column;
+  padding-top: 110px;
+}
+
+.list-view.is-active {
+  display: flex;
+}
+
+.list-view::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 30% 30%, rgba(0, 245, 255, 0.025), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 80% 70%, rgba(192, 132, 252, 0.02), transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.list-view__header {
+  padding: 0 var(--s-8) var(--s-5);
+  flex-shrink: 0;
+}
+
+.list-view__title {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic;
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.list-view__sub {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-mute);
+}
+
+.list-view__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--s-4) var(--s-8) var(--s-10);
+}
+
+.list-view__body::-webkit-scrollbar { width: 4px; }
+.list-view__body::-webkit-scrollbar-track { background: transparent; }
+.list-view__body::-webkit-scrollbar-thumb {
+  background: var(--hairline);
+  border-radius: 2px;
+}
+
+.area-group {
+  margin-bottom: var(--s-8);
+}
+
+.area-group__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding-bottom: var(--s-3);
+  margin-bottom: var(--s-3);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.area-group__name {
+  font-family: 'Instrument Serif', serif;
+  font-size: 20px;
+  font-style: italic;
+  color: var(--text);
+  text-transform: lowercase;
+  letter-spacing: -0.005em;
+}
+
+.area-group__count {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.area-group__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+}
+
+.list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  background: var(--glass);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.list-item:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateX(2px);
+}
+
+.list-item__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-top: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.list-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.list-item__top {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.list-item__type {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.list-item__meta {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: 0.12em;
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+
+.list-item__content {
+  font-family: 'Instrument Serif', serif;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text-soft);
+  letter-spacing: -0.005em;
+}
+
+.list-item__conf {
+  font-size: var(--fs-eyebrow);
+  letter-spacing: 0.12em;
+  color: var(--text-mute);
+  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.list-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-faint);
+  font-size: var(--fs-small);
+  letter-spacing: 0.1em;
+}
+
+/* Quando lista está ativa, esconder elementos da view cosmos */
+body.view-list #graph,
+body.view-list .filters,
+body.view-list .controls,
+body.view-list .label-canvas,
+body.view-list .edge-indicators,
+body.view-list .hint {
+  display: none;
+}
+
+/* ─── Responsivo ─── */
+@media (max-width: 768px) {
+  .header { padding: var(--s-4) var(--s-5); }
+  .brand__name { font-size: 26px; }
+  .stats { gap: var(--s-5); }
+  .stat__value { font-size: 22px; }
+  .filters { top: 88px; left: var(--s-5); }
+  .filters__header { width: 140px; }
+  .panel { width: 100vw; }
+  .controls { bottom: var(--s-4); right: var(--s-4); }
+  .zoom-slider { height: 90px; }
+  .toast { bottom: 110px; right: var(--s-5); left: var(--s-5); max-width: none; }
+
+  .tab { padding: 8px 10px; }
+  .tab span { display: none; }
+  .tab svg { width: 16px; height: 16px; }
+
+  .list-view { padding-top: 90px; }
+  .list-view__header { padding: 0 var(--s-5) var(--s-4); }
+  .list-view__title { font-size: 22px; }
+  .list-view__body { padding: var(--s-3) var(--s-5) var(--s-10); }
+  .area-group { margin-bottom: var(--s-6); }
+  .area-group__name { font-size: 17px; }
+}
+
+@media (max-width: 480px) {
+  .stats { display: none; }
+}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="brand">
+    <span class="brand__name">NeuroGus</span>
+    <span class="brand__sub">
+      <span class="brand__pulse"></span>
+      memória viva
+    </span>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab is-active" data-view="cosmos" id="tab-cosmos">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <circle cx="8" cy="8" r="5.5"/>
+        <ellipse cx="8" cy="8" rx="5.5" ry="2"/>
+      </svg>
+      <span>cosmos</span>
+    </button>
+    <button class="tab" data-view="list" id="tab-list">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M3 4 H13 M3 8 H13 M3 12 H13"/>
+        <circle cx="3" cy="4" r="0.8" fill="currentColor"/>
+        <circle cx="3" cy="8" r="0.8" fill="currentColor"/>
+        <circle cx="3" cy="12" r="0.8" fill="currentColor"/>
+      </svg>
+      <span>lista</span>
+    </button>
+  </nav>
+
+  <div class="stats">
+    <div class="stat">
+      <span class="stat__value" id="stat-frags">0</span>
+      <span class="stat__label">fragmentos</span>
+    </div>
+    <div class="stat">
+      <span class="stat__value" id="stat-conns">0</span>
+      <span class="stat__label">conexões</span>
+    </div>
+    <div class="stat">
+      <span class="stat__value stat__value--accent" id="stat-today">0</span>
+      <span class="stat__label">hoje</span>
+    </div>
+  </div>
+</header>
+
+<nav class="filters" id="filters">
+  <button class="filters__header" id="filters-toggle" aria-expanded="true">
+    <span class="filters__active-dot" id="filters-dot" style="background:#fff"></span>
+    <span id="filters-label">todos</span>
+    <span class="filters__chevron">
+      <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 4 L5 7 L8 4"/>
+      </svg>
+    </span>
+  </button>
+  <div class="filters__list" id="filters-list">
+    <button class="chip is-active" data-filter="all">
+      <span class="chip__dot" style="background:#fff"></span>
+      <span>todos</span>
+    </button>
+    <button class="chip chip--none" data-filter="none">
+      <span class="chip__dot"></span>
+      <span>sem labels</span>
+    </button>
+    <button class="chip" data-filter="identidade_operacional" style="color:var(--c-identidade)">
+      <span class="chip__dot" style="background:var(--c-identidade)"></span>
+      <span>identidade</span>
+    </button>
+    <button class="chip" data-filter="decisao" style="color:var(--c-decisao)">
+      <span class="chip__dot" style="background:var(--c-decisao)"></span>
+      <span>decisão</span>
+    </button>
+    <button class="chip" data-filter="episodico" style="color:var(--c-episodico)">
+      <span class="chip__dot" style="background:var(--c-episodico)"></span>
+      <span>episódico</span>
+    </button>
+    <button class="chip" data-filter="procedural" style="color:var(--c-procedural)">
+      <span class="chip__dot" style="background:var(--c-procedural)"></span>
+      <span>procedural</span>
+    </button>
+    <button class="chip" data-filter="meta_reflexao" style="color:var(--c-meta)">
+      <span class="chip__dot" style="background:var(--c-meta)"></span>
+      <span>meta-reflexão</span>
+    </button>
+    <button class="chip" data-filter="biografico" style="color:var(--c-biografico)">
+      <span class="chip__dot" style="background:var(--c-biografico)"></span>
+      <span>biográfico</span>
+    </button>
+    <button class="chip" data-filter="preferencia" style="color:var(--c-preferencia)">
+      <span class="chip__dot" style="background:var(--c-preferencia)"></span>
+      <span>preferência</span>
+    </button>
+    <button class="chip" data-filter="rotina" style="color:var(--c-rotina)">
+      <span class="chip__dot" style="background:var(--c-rotina)"></span>
+      <span>rotina</span>
+    </button>
+
+    <button class="chip" data-filter="emocional" style="color:#fb7185">
+      <span class="chip__dot" style="background:#fb7185"></span>
+      <span>emocional</span>
+    </button>
+    <button class="chip" data-filter="fato" style="color:#94a3b8">
+      <span class="chip__dot" style="background:#94a3b8"></span>
+      <span>fato</span>
+    </button>
+    <button class="chip" data-filter="cronologico" style="color:#a78bfa">
+      <span class="chip__dot" style="background:#a78bfa"></span>
+      <span>cronológico</span>
+    </button>
+    <button class="chip" data-filter="conexao_emergente" style="color:#fcd34d">
+      <span class="chip__dot" style="background:#fcd34d"></span>
+      <span>conexão</span>
+    </button>
+    <button class="chip" data-filter="projeto" style="color:#22d3ee">
+      <span class="chip__dot" style="background:#22d3ee"></span>
+      <span>projeto</span>
+    </button>
+    <button class="chip" data-filter="lacuna" style="color:#fda4af">
+      <span class="chip__dot" style="background:#fda4af"></span>
+      <span>lacuna</span>
+    </button>
+
+    <div style="height:1px;background:var(--hairline);margin:6px 4px"></div>
+
+    <button class="chip chip--toggle is-active" id="halo-toggle" data-filter="__halo">
+      <span class="chip__dot" style="background:var(--text-soft);box-shadow:0 0 6px var(--text-soft)"></span>
+      <span>halo</span>
+    </button>
+  </div>
+</nav>
+
+<div class="edge-indicators" id="edge-indicators"></div>
+<div class="label-canvas" id="label-canvas"></div>
+<div id="graph"></div>
+
+<!-- View: Lista por área -->
+<div class="list-view" id="list-view">
+  <div class="list-view__header">
+    <h2 class="list-view__title">fragmentos por área</h2>
+    <div class="list-view__sub">toque num fragmento pra ver detalhes</div>
+  </div>
+  <div class="list-view__body" id="list-view-body"></div>
+</div>
+
+<!-- Controles 3D -->
+<div class="controls">
+  <div class="ctrl-group ctrl-group--zoom">
+    <button class="ctrl-btn ctrl-btn--small" id="zoom-in" aria-label="Aproximar">
+      <span class="ctrl-btn__tooltip">aproximar</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 8 H12 M8 4 V12"/>
+      </svg>
+    </button>
+    <div class="zoom-slider" id="zoom-slider">
+      <div class="zoom-slider__track"></div>
+      <div class="zoom-slider__fill" id="zoom-slider-fill"></div>
+      <div class="zoom-slider__thumb" id="zoom-slider-thumb"></div>
+    </div>
+    <button class="ctrl-btn ctrl-btn--small" id="zoom-out" aria-label="Afastar">
+      <span class="ctrl-btn__tooltip">afastar</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 8 H12"/>
+      </svg>
+    </button>
+    <div class="ctrl-divider"></div>
+    <button class="ctrl-btn ctrl-btn--small" id="zoom-fit" aria-label="Enquadrar tudo">
+      <span class="ctrl-btn__tooltip">enquadrar tudo</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 5 V2 H5 M11 2 H14 V5 M14 11 V14 H11 M5 14 H2 V11"/>
+        <circle cx="8" cy="8" r="2.5"/>
+      </svg>
+    </button>
+  </div>
+  <div class="ctrl-group">
+    <button class="ctrl-btn" id="rotate-left" aria-label="Rotacionar esquerda">
+      <span class="ctrl-btn__tooltip">girar ←</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M3 8 A5 5 0 1 1 8 13"/>
+        <path d="M3 5 V8 H6"/>
+      </svg>
+    </button>
+    <button class="ctrl-btn" id="rotate-right" aria-label="Rotacionar direita">
+      <span class="ctrl-btn__tooltip">girar →</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M13 8 A5 5 0 1 0 8 13"/>
+        <path d="M13 5 V8 H10"/>
+      </svg>
+    </button>
+    <button class="ctrl-btn is-active" id="auto-rotate" aria-label="Auto-rotação">
+      <span class="ctrl-btn__tooltip">auto-rotação</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <ellipse cx="8" cy="8" rx="6" ry="2.5"/>
+        <ellipse cx="8" cy="8" rx="2.5" ry="6"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<aside class="panel" id="panel">
+  <div class="panel__glow" id="panel-glow"></div>
+  <div class="panel__head">
+    <div style="flex:1;min-width:0">
+      <div class="panel__type" id="panel-type"></div>
+      <div class="panel__content" id="panel-content">—</div>
+    </div>
+    <button class="panel__close" id="panel-close" aria-label="Fechar">
+      <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 2 L10 10 M10 2 L2 10"/>
+      </svg>
+    </button>
+  </div>
+  <div class="panel__body" id="panel-body"></div>
+  <button class="panel__delete" id="panel-delete">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3">
+      <path d="M2 3h8 M4 3v-1.5h4V3 M3 3l0.6 7.5h4.8L9 3"/>
+    </svg>
+    apagar fragmento
+  </button>
+</aside>
+
+<div class="toast" id="toast">
+  <div class="toast__indicator" id="toast-dot"></div>
+  <div class="toast__body">
+    <div class="toast__label" id="toast-label"></div>
+    <div class="toast__text" id="toast-text"></div>
+  </div>
+</div>
+
+<div class="hint" id="hint">arraste pra girar · scroll pra zoom</div>
+<script>
+// ─── Configuração ───
+const TYPE_COLOR = {
+  identidade_operacional: '#00f5ff', decisao: '#c084fc',
+  episodico: '#fbbf24',              procedural: '#34d399',
+  meta_reflexao: '#f9a8d4',          biografico: '#818cf8',
+  preferencia: '#fb923c',            rotina: '#86efac',
+  // Tipos adicionados na Parte 1A (schema gus-18 completo: 14 tipos)
+  emocional: '#fb7185',              fato: '#94a3b8',
+  cronologico: '#a78bfa',            conexao_emergente: '#fcd34d',
+  projeto: '#22d3ee',                lacuna: '#fda4af',
+};
+const TYPE_LABEL = {
+  all: 'todos', none: 'sem labels',
+  identidade_operacional: 'identidade', decisao: 'decisão',
+  episodico: 'episódico', procedural: 'procedural',
+  meta_reflexao: 'meta-reflexão', biografico: 'biográfico',
+  preferencia: 'preferência', rotina: 'rotina',
+  emocional: 'emocional', fato: 'fato',
+  cronologico: 'cronológico', conexao_emergente: 'conexão',
+  projeto: 'projeto', lacuna: 'lacuna',
+};
+const TYPES = Object.keys(TYPE_COLOR);
+
+// ─── DADOS REAIS DO HUB (snapshot 01/05/2026, hardcoded pra Parte 1A) ───
+// Etapa 1B substitui isso por fetch /hub/recent + EventSource /hub/stream.
+// user_id=gustavo: 19 fragmentos (todos episodico via telegram-claude)
+// user_id=gus: 14 fragmentos (brain do agente)
+const REAL_NODES = [
+  // ── user_id: gustavo ──
+  {
+    id: 'cb860bdb', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'semana', confianca: 0.82, criado_em: '2026-04-27T22:42:58.905671-03:00',
+    conteudo: 'Hub Qdrant + curador híbrido Haiku×Sonnet operacionais. 16 workflows ativos. Experimento 14 dias encerra ~12/05.',
+  },
+  {
+    id: '06caf6bb', tipo: 'episodico', area: 'dimagem', curador: 'telegram-claude',
+    camada: 'rotina', confianca: 0.90, criado_em: '2026-04-28T16:52:13.259826-03:00',
+    conteudo: 'Gustavo é anestesiologista no Dimagem. Gus descreve OS com dados factuais apenas — sem análise clínica.',
+  },
+  {
+    id: 'f6dc75c7', tipo: 'episodico', area: 'dimagem', curador: 'telegram-claude',
+    camada: 'rotina', confianca: 0.85, criado_em: '2026-04-27T21:13:20.235049-03:00',
+    conteudo: 'Pacientes organizados por plano: Assim Taquara vs Intermédica + Leve Saúde. Arquivos .md separados por data e plano.',
+  },
+  {
+    id: 'bf6e32f3', tipo: 'episodico', area: 'dimagem', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.78, criado_em: '2026-04-28T16:54:42.753593-03:00',
+    conteudo: 'Padrão de resposta OS: detecta imagem, lista pacientes do dia, solicita confirmação. Roberta Xavier Lins — RM Coluna Dorsal+Lombar 15h-19h30, Intermédica.',
+  },
+  {
+    id: '0ccf0b81', tipo: 'episodico', area: 'dimagem', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.75, criado_em: '2026-04-28T17:11:16.171835-03:00',
+    conteudo: 'Protocolo de análise de fotos de OS estabelecido. Analete da Silva Pinto — RM Crânio+Espectroscopia+Fluxo Liquórico, Assim São Gonçalo. Questão aberta: arquivar OS com datas históricas.',
+  },
+  {
+    id: '474e334c', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'rotina', confianca: 0.88, criado_em: '2026-04-28T14:14:00.787655-03:00',
+    conteudo: 'Gus pode disparar os 8 workflows manualmente. Auto-diagnóstico com health check completo (GitHub, Qdrant, Anthropic, Tavily, Railway).',
+  },
+  {
+    id: '9aabe8eb', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.72, criado_em: '2026-04-27T23:17:13.803912-03:00',
+    conteudo: 'Decisão: limpar backlog desatualizado. Migração Mem0→Qdrant pendente — grosso das 204 memórias ainda no Mem0.',
+  },
+  {
+    id: '3c58cbb8', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.80, criado_em: '2026-04-28T09:43:02.465881-03:00',
+    conteudo: 'Workflow migração Mem0→Qdrant rodando. Infra estável: GitHub PAT, Qdrant, Haiku, Tavily, Railway todos OK.',
+  },
+  {
+    id: '11b98c82', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.82, criado_em: '2026-04-28T10:43:06.928236-03:00',
+    conteudo: 'Pasta demandas: Gustpbbr/Gus/dialogos/inbox-tiogu/. PR #14 mergeado (protocolo portas e tools). Auditoria automática e export diário funcionando.',
+  },
+  {
+    id: '6855c44f', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.76, criado_em: '2026-04-28T12:39:42.427990-03:00',
+    conteudo: 'Gus dispara workflows sem justificar execução recente. Ciclo de importação: 15min. 7 arquivos processados (4 antigas dia 26 + 3 do NeuroGus).',
+  },
+  {
+    id: 'c95ad8c6', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'rotina', confianca: 0.85, criado_em: '2026-04-28T12:14:07.555970-03:00',
+    conteudo: 'Gus = identidade unificada. Tiogu = bot no Telegram. Mesma entidade em múltiplas plataformas: Claude Chat, Claude Code, futuro Alexa e Custom GPT.',
+  },
+  {
+    id: '772f611d', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'rotina', confianca: 0.90, criado_em: '2026-04-28T11:16:00.100735-03:00',
+    conteudo: 'Drive inbox: Gus-Sync/dialogos/inbox-tiogu/. Arquivos .md com frontmatter obrigatório. Convenção: <timestamp>__<descricao>.md.',
+  },
+  {
+    id: '2b68d542', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.65, criado_em: '2026-04-27T21:03:00.110331-03:00',
+    conteudo: 'Post-merge: auto_diagnóstico acessa Hub Qdrant. Problema: 0 fragmentos para user_id=gustavo. Workflow "Ingest Mem0" falhando pós-merge.',
+  },
+  {
+    id: '0f7a70ea', tipo: 'episodico', area: 'projetos', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.78, criado_em: '2026-04-28T12:33:29.493521-03:00',
+    conteudo: 'Projeto NeuroGus: 3 demandas chegaram (briefing, arquitetura, código v1). Sistema de múltiplos canais com o Gus.',
+  },
+  {
+    id: 'e414b653', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.80, criado_em: '2026-04-28T14:46:41.619831-03:00',
+    conteudo: 'Schema gus-18 não tem campo "origem". Melhorias documentadas como sugestões. Demandas de código em inbox-claude-code/.',
+  },
+  {
+    id: '6b589952', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.82, criado_em: '2026-04-28T14:40:03.833598-03:00',
+    conteudo: 'Bug resolvido: UnicodeDecodeError fallback UTF-8→Latin-1. Gus Chat salva em UTF-8 sem BOM. Gaps de memória: áreas financeira e receitas sem fragmentos.',
+  },
+  {
+    id: '9608b85a', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.78, criado_em: '2026-04-28T13:19:58.940137-03:00',
+    conteudo: 'Bug download_content linha 150: byte 0xB6 inválido. Solução: fallback UTF-8→Latin-1 ou errors="replace". Gustavo autorizou correção.',
+  },
+  {
+    id: '7ef3b811', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'rotina', confianca: 0.83, criado_em: '2026-04-28T14:07:55.607223-03:00',
+    conteudo: 'Workflows sync-to-drive-full e sync-to-drive executados regularmente. Pasta sensivel/ excluída da sync. Drive = espelho do GitHub.',
+  },
+  {
+    id: '809ba3f9', tipo: 'episodico', area: 'gus', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.76, criado_em: '2026-04-28T12:42:16.364256-03:00',
+    conteudo: 'Script import_from_drive.py linha 150: implementar fallback encoding UTF-8→Latin-1. Arquivo 2026-04-28T14-30__frontmatter-referencia.md com byte 0xB6 inválido.',
+  },
+
+  // ── user_id: gus (brain do agente) ──
+  {
+    id: '863b1659', tipo: 'procedural', area: 'dimagem', curador: 'telegram-claude',
+    camada: 'rotina', confianca: 0.95, criado_em: '2026-04-28T16:53:13.683158-03:00',
+    conteudo: 'Padrão OS Dimagem obrigatório: detecta data, lista pacientes em tabela, pede confirmação. Nunca expandir análise clínica.',
+  },
+  {
+    id: '0571de21', tipo: 'episodico', area: 'pessoal', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.60, criado_em: '2026-04-30T19:24:36.695117-03:00',
+    conteudo: 'Memórias pessoais de Gustavo sobre filmes, gostos e experiências de vida registradas.',
+  },
+  {
+    id: 'a0211b7b', tipo: 'preferencia', area: 'pessoal', curador: 'telegram-claude',
+    camada: 'permanente', confianca: 0.92, criado_em: '2026-04-30T18:23:45.808851-03:00',
+    conteudo: 'Filme preferido: Moulin Rouge.',
+  },
+  {
+    id: '9ce9a144', tipo: 'episodico', area: 'pessoal', curador: 'telegram-claude',
+    camada: 'sessao', confianca: 0.75, criado_em: '2026-04-30T18:19:03.474238-03:00',
+    conteudo: 'Gostou muito do filme do Michael Jackson.',
+  },
+  {
+    id: 'c8d68c55', tipo: 'biografico', area: 'pessoal', curador: 'telegram-claude',
+    camada: 'permanente', confianca: 0.98, criado_em: '2026-04-30T18:23:45.858415-03:00',
+    conteudo: 'Nasceu em Vitória.',
+  },
+  {
+    id: 'f53183d9', tipo: 'biografico', area: 'pessoal', curador: 'telegram-claude',
+    camada: 'permanente', confianca: 0.95, criado_em: '2026-04-30T18:23:45.947064-03:00',
+    conteudo: 'Já teve um cachorro chamado Ralph.',
+  },
+];
+
+// ─── Cor por área (expandido na Parte 1A — 9 áreas canônicas gus-18 + fallback) ───
+const AREA_COLOR = {
+  gus:        '#00f5ff',
+  dimagem:    '#c084fc',
+  projetos:   '#fbbf24',
+  pessoal:    '#f9a8d4',
+  pesquisa:   '#818cf8',
+  saude:      '#34d399',
+  // Áreas adicionadas na Parte 1A
+  financeiro: '#a3e635',
+  receitas:   '#f97316',
+  esportes:   '#67e8f9',
+  '':         '#94a3b8',  // sem área (cinza neutro)
+};
+
+// ─── Cor por tipo (≠ episodico) com fallback pra área (gus-30.1 §1, regra meio-termo) ───
+// Tipo é mais informativo que área, mas hoje quase tudo vem do curador como
+// 'episodico' — então sem fallback o grafo fica monocromático. Quando o curador
+// melhorar e diferenciar tipos, mais nós caem na primeira regra.
+function getNodeColor(node) {
+  const tipo = node.tipo;
+  if (tipo && tipo !== 'episodico' && TYPE_COLOR[tipo]) {
+    return TYPE_COLOR[tipo];
+  }
+  return AREA_COLOR[node.area || ''] || AREA_COLOR[''] || '#94a3b8';
+}
+
+// ─── Estado ───
+const state = {
+  nodes: [], links: [],
+  nextId: 1, selectedId: null,
+  filter: 'all',
+  showLabels: true,
+  showHalo: true,
+  spinning: true,
+  selectedNeighbors: new Set(),
+  labelEls: new Map(),
+  nodeMap: new Map(),
+  edgeDots: new Map(),
+};
+
+const rand = (a) => a[Math.floor(Math.random() * a.length)];
+const randF = (a, b) => a + Math.random() * (b - a);
+const $ = (id) => document.getElementById(id);
+
+// Construir nós a partir dos dados reais — COR via getNodeColor (regra meio-termo)
+REAL_NODES.forEach((raw, i) => {
+  const color = getNodeColor(raw);
+  const node = {
+    id: raw.id,
+    conteudo: raw.conteudo,
+    tipo: raw.tipo,
+    area: raw.area,
+    curador: raw.curador,
+    camada: raw.camada,
+    confianca: raw.confianca,
+    timestamp: raw.criado_em,
+    color,
+    val: 0.8 + raw.confianca * 0.8,
+    _isNew: false,
+  };
+  state.nodes.push(node);
+  state.nodeMap.set(node.id, node);
+  state.nextId = i + 2;
+});
+
+// ─── CONEXÕES baseadas em afinidade real (3 estratégias — Etapa 1B substitui por relacionados[] cosine) ───
+const linkSet = new Set();
+function addLink(a, b) {
+  const key = [a, b].sort().join('||');
+  if (!linkSet.has(key)) {
+    linkSet.add(key);
+    state.links.push({ source: a, target: b });
+  }
+}
+
+// 1. Conectar vizinhos na MESMA ÁREA
+const byArea = {};
+state.nodes.forEach(n => {
+  if (!byArea[n.area]) byArea[n.area] = [];
+  byArea[n.area].push(n);
+});
+Object.values(byArea).forEach(group => {
+  for (let i = 0; i < group.length - 1; i++) {
+    addLink(group[i].id, group[i+1].id);
+  }
+});
+
+// 2. Conectar fragmentos do MESMO DIA
+const byDay = {};
+state.nodes.forEach(n => {
+  const day = (n.timestamp || '').slice(0, 10);
+  if (!day) return;
+  if (!byDay[day]) byDay[day] = [];
+  byDay[day].push(n);
+});
+Object.values(byDay).forEach(group => {
+  if (group.length <= 4) {
+    for (let i = 0; i < group.length - 1; i++) {
+      addLink(group[i].id, group[i+1].id);
+    }
+  } else {
+    for (let i = 0; i < group.length - 1; i += 2) {
+      addLink(group[i].id, group[i+1].id);
+    }
+  }
+});
+
+// 3. Ponte entre áreas: mais recentes de cada área (hub backbone)
+const areaLatest = {};
+state.nodes.forEach(n => {
+  if (!areaLatest[n.area] || n.timestamp > areaLatest[n.area].timestamp) {
+    areaLatest[n.area] = n;
+  }
+});
+const latestNodes = Object.values(areaLatest);
+for (let i = 0; i < latestNodes.length - 1; i++) {
+  addLink(latestNodes[i].id, latestNodes[i+1].id);
+}
+
+function getFilteredData() {
+  const ns = (state.filter === 'all' || state.filter === 'none')
+    ? state.nodes
+    : state.nodes.filter((n) => n.tipo === state.filter);
+  const ids = new Set(ns.map((n) => n.id));
+  const ls = state.links.filter((l) => {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    return ids.has(s) && ids.has(t);
+  });
+  return { nodes: ns, links: ls };
+}
+
+function linkExtract(l) {
+  const s = typeof l.source === 'object' ? l.source.id : l.source;
+  const t = typeof l.target === 'object' ? l.target.id : l.target;
+  return { s, t };
+}
+
+// ─── Textura de halo (nuvem radial) ───
+const haloTextures = {};
+function makeHaloTexture(color) {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+  grad.addColorStop(0,    color + 'cc');
+  grad.addColorStop(0.2,  color + '80');
+  grad.addColorStop(0.5,  color + '30');
+  grad.addColorStop(0.8,  color + '10');
+  grad.addColorStop(1,    color + '00');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  const imgData = ctx.getImageData(0, 0, size, size);
+  const d = imgData.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const noise = (Math.random() - 0.5) * 18;
+    d[i+3] = Math.max(0, Math.min(255, d[i+3] + noise));
+  }
+  ctx.putImageData(imgData, 0, 0);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  return tex;
+}
+TYPES.forEach((t) => { haloTextures[t] = makeHaloTexture(TYPE_COLOR[t]); });
+
+// ─── Construir nó: esfera + halo nuvem ───
+function buildNodeObject(node) {
+  const group = new THREE.Group();
+  const radius = node.confianca * 4 + (node._isNew ? 5 : 0);
+
+  const sphereGeo = new THREE.SphereGeometry(radius, 20, 20);
+  const sphereMat = new THREE.MeshBasicMaterial({
+    color: node._isNew ? '#ffffff' : node.color,
+    transparent: true,
+    opacity: 0.95,
+  });
+  const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+  group.add(sphere);
+
+  if (state.showHalo) {
+    const tex = haloTextures[node.tipo] || haloTextures['episodico'];
+    const haloMat = new THREE.SpriteMaterial({
+      map: tex,
+      transparent: true,
+      opacity: 0.45,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const halo = new THREE.Sprite(haloMat);
+    const haloSize = radius * 15;
+    halo.scale.set(haloSize, haloSize, 1);
+    halo.renderOrder = -1;
+    group.add(halo);
+
+    const innerHaloMat = new THREE.SpriteMaterial({
+      map: tex,
+      transparent: true,
+      opacity: 0.6,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const innerHalo = new THREE.Sprite(innerHaloMat);
+    const innerSize = radius * 7.5;
+    innerHalo.scale.set(innerSize, innerSize, 1);
+    group.add(innerHalo);
+  }
+
+  group.userData = { node };
+  return group;
+}
+
+// ─── 3D Force Graph ───
+const Graph = ForceGraph3D({ controlType: 'orbit' })(document.getElementById('graph'))
+  .backgroundColor('#050514')
+  .nodeThreeObject(buildNodeObject)
+  .nodeThreeObjectExtend(false)
+  .linkColor((l) => {
+    const sId = typeof l.source === 'object' ? l.source.id : l.source;
+    const s = state.nodeMap.get(sId);
+    return s ? s.color + '55' : '#ffffff33';
+  })
+  .linkOpacity(0.45)
+  .linkWidth(0.6)
+  .linkDirectionalParticles(3)
+  .linkDirectionalParticleWidth(1.6)
+  .linkDirectionalParticleSpeed(0.005)
+  .linkDirectionalParticleColor((l) => {
+    const sId = typeof l.source === 'object' ? l.source.id : l.source;
+    const s = state.nodeMap.get(sId);
+    return s ? s.color : '#fff';
+  })
+  .onNodeClick((n) => { openPanel(n); state.spinning = false; updateAutoRotateBtn(); })
+  .onBackgroundClick(() => closePanel())
+  .graphData(getFilteredData());
+
+// ─── Contenção esférica ───
+const CONTAINER_RADIUS = 100;
+const SOFT_RADIUS = 75;
+
+const chargeForce = Graph.d3Force('charge');
+if (chargeForce) chargeForce.strength(-50);
+
+const linkForce = Graph.d3Force('link');
+if (linkForce && linkForce.distance) linkForce.distance(28);
+if (linkForce && linkForce.strength) linkForce.strength(0.7);
+
+const centerForce = Graph.d3Force('center');
+if (centerForce) centerForce.strength(0.02);
+
+Graph.d3Force('shellGravity', function() {
+  for (let i = 0; i < state.nodes.length; i++) {
+    const n = state.nodes[i];
+    if (n.x === undefined || n.x === null) continue;
+    const dist = Math.sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
+    if (dist < 0.001) continue;
+
+    if (dist > SOFT_RADIUS) {
+      const ux = -n.x / dist;
+      const uy = -n.y / dist;
+      const uz = -n.z / dist;
+      const overshoot = (dist - SOFT_RADIUS) / (CONTAINER_RADIUS - SOFT_RADIUS);
+      const force = Math.min(overshoot * overshoot * 0.6, 2.0);
+      n.vx = (n.vx || 0) + ux * force;
+      n.vy = (n.vy || 0) + uy * force;
+      n.vz = (n.vz || 0) + uz * force;
+    }
+
+    if (dist > CONTAINER_RADIUS) {
+      const factor = CONTAINER_RADIUS / dist;
+      n.x *= factor; n.y *= factor; n.z *= factor;
+      if (n.vx !== undefined && n.vy !== undefined && n.vz !== undefined) {
+        const dot = n.vx*n.x + n.vy*n.y + n.vz*n.z;
+        if (dot > 0) {
+          const f = 1.5 * dot / (CONTAINER_RADIUS * CONTAINER_RADIUS);
+          n.vx -= f * n.x;
+          n.vy -= f * n.y;
+          n.vz -= f * n.z;
+        }
+      }
+    }
+  }
+});
+
+const renderer = Graph.renderer();
+if (renderer) {
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
+}
+
+Graph.cameraPosition({ x: 0, y: 0, z: 280 });
+
+// ─── Esfera contenedora visível ───
+const scene = Graph.scene();
+
+const sphereGeo = new THREE.SphereGeometry(CONTAINER_RADIUS, 8, 5);
+const wireframe = new THREE.Mesh(sphereGeo, new THREE.MeshBasicMaterial({
+  color: 0x00f5ff, wireframe: true, transparent: true, opacity: 0.06,
+}));
+scene.add(wireframe);
+
+const innerGeo = new THREE.SphereGeometry(CONTAINER_RADIUS * 0.99, 48, 32);
+const innerSurface = new THREE.Mesh(innerGeo, new THREE.MeshBasicMaterial({
+  color: 0x00f5ff,
+  transparent: true,
+  opacity: 0.018,
+  side: THREE.BackSide,
+  depthWrite: false,
+}));
+scene.add(innerSurface);
+
+const containerGlowTex = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(64,64,0,64,64,64);
+  g.addColorStop(0, '#00f5ffcc'); g.addColorStop(0.2, '#00f5ff80');
+  g.addColorStop(0.5, '#00f5ff30'); g.addColorStop(1, '#00f5ff00');
+  ctx.fillStyle = g; ctx.fillRect(0,0,128,128);
+  return new THREE.CanvasTexture(c);
+})();
+const containerGlow = new THREE.Sprite(new THREE.SpriteMaterial({
+  map: containerGlowTex, transparent: true, opacity: 0.13,
+  blending: THREE.AdditiveBlending, depthWrite: false,
+}));
+containerGlow.scale.set(CONTAINER_RADIUS*3.4, CONTAINER_RADIUS*3.4, 1);
+scene.add(containerGlow);
+
+// Estrelas de fundo
+const starGeo = new THREE.BufferGeometry();
+const starPositions = [];
+for (let i = 0; i < 700; i++) {
+  const r = 400 + Math.random() * 1000;
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.acos(2 * Math.random() - 1);
+  starPositions.push(
+    r*Math.sin(phi)*Math.cos(theta),
+    r*Math.sin(phi)*Math.sin(theta),
+    r*Math.cos(phi)
+  );
+}
+starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPositions, 3));
+scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({
+  color: 0xffffff, size: 1.2, transparent: true, opacity: 0.55, depthWrite: false,
+})));
+
+// ─── Rotação automática ───
+let cameraAngle = 0;
+let cameraRadius = 280;
+(function spin() {
+  if (state.spinning && !state.selectedId) {
+    cameraAngle += 0.0006;
+    Graph.cameraPosition({
+      x: cameraRadius * Math.sin(cameraAngle),
+      z: cameraRadius * Math.cos(cameraAngle),
+    });
+  }
+  requestAnimationFrame(spin);
+})();
+
+// ─── Controles 3D ───
+function getCameraDistance() {
+  const cam = Graph.camera();
+  return Math.sqrt(cam.position.x ** 2 + cam.position.y ** 2 + cam.position.z ** 2);
+}
+
+function rotateCamera(direction) {
+  state.spinning = false;
+  updateAutoRotateBtn();
+  cameraAngle += direction * 0.3;
+  const cam = Graph.camera();
+  const r = Math.sqrt(cam.position.x ** 2 + cam.position.z ** 2);
+  Graph.cameraPosition({
+    x: r * Math.sin(cameraAngle),
+    y: cam.position.y,
+    z: r * Math.cos(cameraAngle),
+  }, undefined, 500);
+}
+
+function fitAll() {
+  state.spinning = false;
+  updateAutoRotateBtn();
+  const newDist = ZOOM_MAX;
+  cameraRadius = newDist;
+  cameraAngle = 0;
+  Graph.cameraPosition({ x: 0, y: 0, z: newDist }, { x: 0, y: 0, z: 0 }, 700);
+  updateSliderPosition(newDist);
+}
+
+function updateAutoRotateBtn() {
+  $('auto-rotate').classList.toggle('is-active', state.spinning);
+}
+
+const ZOOM_MIN = 130;
+const ZOOM_MAX = 700;
+
+function clampZoom(d) {
+  return Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, d));
+}
+
+function distToSliderPos(dist) {
+  const logMin = Math.log(ZOOM_MIN);
+  const logMax = Math.log(ZOOM_MAX);
+  const t = (Math.log(dist) - logMin) / (logMax - logMin);
+  return Math.max(0, Math.min(1, t));
+}
+
+function sliderPosToDist(t) {
+  const logMin = Math.log(ZOOM_MIN);
+  const logMax = Math.log(ZOOM_MAX);
+  return Math.exp(logMin + t * (logMax - logMin));
+}
+
+function setZoomDistance(newDist, animate = true) {
+  newDist = clampZoom(newDist);
+  const cam = Graph.camera();
+  const dist = getCameraDistance() || 1;
+  const scale = newDist / dist;
+  Graph.cameraPosition({
+    x: cam.position.x * scale,
+    y: cam.position.y * scale,
+    z: cam.position.z * scale,
+  }, undefined, animate ? 250 : 0);
+  cameraRadius = newDist;
+  updateSliderPosition(newDist);
+}
+
+function setZoom(factor) {
+  setZoomDistance(getCameraDistance() * factor);
+}
+
+function updateSliderPosition(dist) {
+  const t = distToSliderPos(dist);
+  const trackEl = $('zoom-slider');
+  if (!trackEl) return;
+  const h = trackEl.clientHeight;
+  const thumbH = 14;
+  const range = h - thumbH;
+  const topPx = thumbH/2 + t * range;
+  const fillPct = (1 - t) * 100;
+
+  $('zoom-slider-thumb').style.top = topPx + 'px';
+  $('zoom-slider-thumb').style.transform = 'translateY(-50%)';
+  $('zoom-slider-fill').style.height = fillPct + '%';
+}
+
+$('zoom-in').addEventListener('click', () => setZoom(0.78));
+$('zoom-out').addEventListener('click', () => setZoom(1.28));
+$('zoom-fit').addEventListener('click', fitAll);
+$('rotate-left').addEventListener('click', () => rotateCamera(-1));
+$('rotate-right').addEventListener('click', () => rotateCamera(1));
+$('auto-rotate').addEventListener('click', () => {
+  state.spinning = !state.spinning;
+  if (state.spinning) {
+    const cam = Graph.camera();
+    cameraAngle = Math.atan2(cam.position.x, cam.position.z);
+    cameraRadius = Math.sqrt(cam.position.x ** 2 + cam.position.z ** 2) || 280;
+  }
+  updateAutoRotateBtn();
+});
+
+// ─── Zoom slider: drag/click/touch ───
+const sliderEl = $('zoom-slider');
+let sliderDragging = false;
+
+function handleSliderInteraction(clientY) {
+  const rect = sliderEl.getBoundingClientRect();
+  const thumbH = 14;
+  const range = rect.height - thumbH;
+  const localY = Math.max(thumbH/2, Math.min(rect.height - thumbH/2, clientY - rect.top));
+  const t = (localY - thumbH/2) / range;
+  const newDist = sliderPosToDist(t);
+  setZoomDistance(newDist, false);
+}
+
+sliderEl.addEventListener('mousedown', (e) => {
+  sliderDragging = true;
+  sliderEl.classList.add('is-dragging');
+  handleSliderInteraction(e.clientY);
+  e.preventDefault();
+});
+
+window.addEventListener('mousemove', (e) => {
+  if (!sliderDragging) return;
+  handleSliderInteraction(e.clientY);
+});
+
+window.addEventListener('mouseup', () => {
+  if (sliderDragging) {
+    sliderDragging = false;
+    sliderEl.classList.remove('is-dragging');
+  }
+});
+
+sliderEl.addEventListener('touchstart', (e) => {
+  sliderDragging = true;
+  sliderEl.classList.add('is-dragging');
+  if (e.touches.length) handleSliderInteraction(e.touches[0].clientY);
+  e.preventDefault();
+}, { passive: false });
+
+window.addEventListener('touchmove', (e) => {
+  if (!sliderDragging) return;
+  if (e.touches.length) handleSliderInteraction(e.touches[0].clientY);
+}, { passive: false });
+
+window.addEventListener('touchend', () => {
+  if (sliderDragging) {
+    sliderDragging = false;
+    sliderEl.classList.remove('is-dragging');
+  }
+});
+
+setInterval(() => {
+  if (sliderDragging) return;
+  updateSliderPosition(getCameraDistance());
+}, 200);
+
+setTimeout(() => updateSliderPosition(getCameraDistance()), 100);
+
+// ─── Edge indicators ───
+const edgeContainer = $('edge-indicators');
+
+function getOrCreateEdgeDot(id, color) {
+  let dot = state.edgeDots.get(id);
+  if (!dot) {
+    dot = document.createElement('div');
+    dot.className = 'edge-dot';
+    dot.style.color = color;
+    dot.style.background = color;
+    edgeContainer.appendChild(dot);
+    state.edgeDots.set(id, dot);
+  }
+  return dot;
+}
+
+function removeEdgeDot(id) {
+  const dot = state.edgeDots.get(id);
+  if (dot) {
+    dot.remove();
+    state.edgeDots.delete(id);
+  }
+}
+
+// ─── Labels com throttle ───
+const labelCanvas = $('label-canvas');
+let lastLabelUpdate = 0;
+const LABEL_THROTTLE = 80;
+
+function makeLabel(node) {
+  if (state.labelEls.has(node.id)) return;
+  const el = document.createElement('div');
+  el.className = 'node-label';
+  el.id = `label-${node.id}`;
+  el.style.color = node.color;
+  el.innerHTML = `
+    <div class="label-card" style="border-color:${node.color}33">
+      <div class="label-card__type" style="color:${node.color}">
+        ${node.tipo.replace(/_/g, ' ')}
+      </div>
+      <div class="label-card__text">${node.conteudo}</div>
+    </div>
+  `;
+  labelCanvas.appendChild(el);
+  state.labelEls.set(node.id, el);
+}
+
+function removeLabel(id) {
+  const el = state.labelEls.get(id);
+  if (el) { el.remove(); state.labelEls.delete(id); }
+}
+
+function clearAllLabels() {
+  for (const id of [...state.labelEls.keys()]) removeLabel(id);
+}
+
+function updateLabelsAndIndicators() {
+  const now = performance.now();
+  if (now - lastLabelUpdate < LABEL_THROTTLE) return;
+  lastLabelUpdate = now;
+
+  const cam = Graph.camera();
+  const r = Graph.renderer();
+  if (!cam || !r) return;
+
+  const W = r.domElement.clientWidth;
+  const H = r.domElement.clientHeight;
+  const data = getFilteredData();
+
+  const projected = data.nodes.map((n) => {
+    const pos = n.__threeObj
+      ? n.__threeObj.position.clone()
+      : new THREE.Vector3(n.x || 0, n.y || 0, n.z || 0);
+    const worldPos = pos.clone();
+    pos.project(cam);
+    const x = (pos.x * 0.5 + 0.5) * W;
+    const y = (pos.y * -0.5 + 0.5) * H;
+    const dx = worldPos.x - cam.position.x;
+    const dy = worldPos.y - cam.position.y;
+    const dz = worldPos.z - cam.position.z;
+    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const onScreen = pos.z < 1 && x > 0 && x < W && y > 0 && y < H;
+    return { node: n, x, y, dist, onScreen, worldPos };
+  });
+
+  const visibleEdgeIds = new Set();
+  const MARGIN = 28;
+  projected.forEach((p) => {
+    if (p.onScreen) return;
+    visibleEdgeIds.add(p.node.id);
+    const dot = getOrCreateEdgeDot(p.node.id, p.node.color);
+
+    let dx = p.x - W / 2;
+    let dy = p.y - H / 2;
+    if (p.worldPos && p.worldPos.distanceTo(cam.position) > 0) {
+      const cameraForward = new THREE.Vector3();
+      cam.getWorldDirection(cameraForward);
+      const toNode = p.worldPos.clone().sub(cam.position);
+      if (toNode.dot(cameraForward) < 0) {
+        dx = -dx; dy = -dy;
+      }
+    }
+    const angle = Math.atan2(dy, dx);
+    const halfW = W / 2 - MARGIN;
+    const halfH = H / 2 - MARGIN;
+    let edgeX, edgeY;
+    const tanA = Math.tan(angle);
+    if (Math.abs(halfW * tanA) <= halfH) {
+      edgeX = (dx > 0 ? halfW : -halfW);
+      edgeY = edgeX * tanA;
+    } else {
+      edgeY = (dy > 0 ? halfH : -halfH);
+      edgeX = edgeY / tanA;
+    }
+    dot.style.left = (W / 2 + edgeX) + 'px';
+    dot.style.top  = (H / 2 + edgeY) + 'px';
+    dot.classList.add('is-visible');
+  });
+  for (const id of state.edgeDots.keys()) {
+    if (!visibleEdgeIds.has(id)) {
+      const d = state.edgeDots.get(id);
+      d.classList.remove('is-visible');
+      setTimeout(() => {
+        if (!visibleEdgeIds.has(id)) removeEdgeDot(id);
+      }, 350);
+    }
+  }
+
+  if (!state.showLabels) {
+    clearAllLabels();
+    return;
+  }
+
+  const onScreenSorted = projected.filter(p => p.onScreen).sort((a, b) => a.dist - b.dist);
+  const topN = new Set(onScreenSorted.slice(0, 5).map(p => p.node.id));
+  const visibleSet = new Set([...topN, ...state.selectedNeighbors]);
+
+  for (const [id, el] of state.labelEls) {
+    if (!visibleSet.has(id)) {
+      el.classList.remove('is-visible', 'is-selected');
+      setTimeout(() => {
+        if (!visibleSet.has(id) && state.labelEls.has(id)) removeLabel(id);
+      }, 450);
+    }
+  }
+
+  visibleSet.forEach((id) => {
+    const node = state.nodeMap.get(id);
+    if (!node) return;
+    makeLabel(node);
+    const el = state.labelEls.get(id);
+    const p = projected.find(pp => pp.node.id === id);
+    if (!p || !p.onScreen) {
+      el.classList.remove('is-visible', 'is-selected');
+      return;
+    }
+    el.style.left = p.x + 'px';
+    el.style.top = p.y + 'px';
+    if (state.selectedNeighbors.has(id)) {
+      el.classList.remove('is-visible');
+      el.classList.add('is-selected');
+    } else {
+      el.classList.remove('is-selected');
+      el.classList.add('is-visible');
+    }
+  });
+}
+
+Graph.onEngineTick(updateLabelsAndIndicators);
+
+// ─── Stats ───
+function updateStats() {
+  $('stat-frags').textContent = state.nodes.length;
+  $('stat-conns').textContent = state.links.length;
+  const today = new Date().toISOString().slice(0, 10);
+  $('stat-today').textContent = state.nodes.filter((n) => n.timestamp.startsWith(today)).length;
+}
+updateStats();
+
+// ─── Abas: alternância Cosmos / Lista ───
+state.view = 'cosmos';
+
+const tabCosmosBtn = $('tab-cosmos');
+const tabListBtn = $('tab-list');
+const listViewEl = $('list-view');
+
+function setView(view) {
+  state.view = view;
+  tabCosmosBtn.classList.toggle('is-active', view === 'cosmos');
+  tabListBtn.classList.toggle('is-active', view === 'list');
+  listViewEl.classList.toggle('is-active', view === 'list');
+  document.body.classList.toggle('view-list', view === 'list');
+
+  if (view === 'list') {
+    renderList();
+    state.spinning = false;
+    if (typeof updateAutoRotateBtn === 'function') updateAutoRotateBtn();
+  } else {
+    if (!state.selectedId) {
+      state.spinning = true;
+      if (typeof updateAutoRotateBtn === 'function') updateAutoRotateBtn();
+    }
+  }
+}
+
+tabCosmosBtn.addEventListener('click', () => setView('cosmos'));
+tabListBtn.addEventListener('click', () => setView('list'));
+
+// ─── Renderização da Lista por área ───
+function renderList() {
+  const body = $('list-view-body');
+  body.innerHTML = '';
+
+  if (!state.nodes.length) {
+    body.innerHTML = '<div class="list-empty">nenhum fragmento</div>';
+    return;
+  }
+
+  const byArea = {};
+  for (const n of state.nodes) {
+    const area = n.area || 'sem área';
+    if (!byArea[area]) byArea[area] = [];
+    byArea[area].push(n);
+  }
+
+  const sortedAreas = Object.keys(byArea).sort((a, b) =>
+    byArea[b].length - byArea[a].length
+  );
+
+  const connCount = new Map();
+  state.links.forEach(l => {
+    const s = typeof l.source === 'object' ? l.source.id : l.source;
+    const t = typeof l.target === 'object' ? l.target.id : l.target;
+    connCount.set(s, (connCount.get(s) || 0) + 1);
+    connCount.set(t, (connCount.get(t) || 0) + 1);
+  });
+
+  for (const area of sortedAreas) {
+    const items = byArea[area];
+
+    const groupEl = document.createElement('section');
+    groupEl.className = 'area-group';
+
+    const head = document.createElement('div');
+    head.className = 'area-group__head';
+    head.innerHTML = `
+      <span class="area-group__name">${area}</span>
+      <span class="area-group__count">${items.length} ${items.length === 1 ? 'fragmento' : 'fragmentos'}</span>
+    `;
+    groupEl.appendChild(head);
+
+    const itemsList = document.createElement('div');
+    itemsList.className = 'area-group__items';
+
+    items.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+
+    for (const node of items) {
+      const item = document.createElement('button');
+      item.className = 'list-item';
+      const dataFmt = node.timestamp
+        ? new Date(node.timestamp).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+        : '—';
+      const conns = connCount.get(node.id) || 0;
+      item.innerHTML = `
+        <span class="list-item__dot" style="background:${node.color};color:${node.color}"></span>
+        <div class="list-item__body">
+          <div class="list-item__top">
+            <span class="list-item__type" style="color:${node.color}">${node.tipo.replace(/_/g, ' ')}</span>
+            <span class="list-item__meta">${dataFmt} · ${node.curador}</span>
+            ${conns ? `<span class="list-item__meta">${conns} ${conns === 1 ? 'conexão' : 'conexões'}</span>` : ''}
+          </div>
+          <div class="list-item__content">${node.conteudo}</div>
+          <div class="list-item__conf">confiança ${(node.confianca * 100).toFixed(0)}%</div>
+        </div>
+      `;
+      item.addEventListener('click', () => {
+        setView('cosmos');
+        setTimeout(() => openPanel(node), 50);
+      });
+      itemsList.appendChild(item);
+    }
+
+    groupEl.appendChild(itemsList);
+    body.appendChild(groupEl);
+  }
+}
+
+// ─── Filtros ───
+const filtersEl = $('filters');
+const filtersToggle = $('filters-toggle');
+const filtersList = $('filters-list');
+
+filtersToggle.addEventListener('click', () => {
+  const collapsed = filtersEl.classList.toggle('is-collapsed');
+  filtersToggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+});
+
+function applyFilter(f) {
+  state.filter = f;
+  state.showLabels = f !== 'none';
+
+  document.querySelectorAll('.chip').forEach((b) => {
+    if (b.dataset.filter === '__halo') return;
+    b.classList.toggle('is-active', b.dataset.filter === f);
+  });
+
+  $('filters-label').textContent = TYPE_LABEL[f] || f;
+  const dotEl = $('filters-dot');
+  if (f === 'all') {
+    dotEl.style.background = '#fff';
+    dotEl.style.border = 'none';
+  } else if (f === 'none') {
+    dotEl.style.background = 'transparent';
+    dotEl.style.border = '1px dashed var(--text-faint)';
+  } else {
+    dotEl.style.background = TYPE_COLOR[f];
+    dotEl.style.border = 'none';
+    dotEl.style.boxShadow = `0 0 6px ${TYPE_COLOR[f]}`;
+  }
+
+  clearAllLabels();
+  state.selectedNeighbors = new Set();
+  Graph.graphData(getFilteredData());
+
+  setTimeout(() => {
+    filtersEl.classList.add('is-collapsed');
+    filtersToggle.setAttribute('aria-expanded', 'false');
+  }, 250);
+}
+
+document.querySelectorAll('.chip').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    if (btn.dataset.filter === '__halo') {
+      state.showHalo = !state.showHalo;
+      btn.classList.toggle('is-active', state.showHalo);
+      Graph.graphData(getFilteredData());
+      return;
+    }
+    applyFilter(btn.dataset.filter);
+  });
+});
+
+// ─── Painel ───
+function openPanel(node) {
+  state.selectedId = node.id;
+  state.spinning = false;
+  updateAutoRotateBtn();
+  const data = getFilteredData();
+
+  const neighbors = new Set([node.id]);
+  data.links.forEach((l) => {
+    const { s, t } = linkExtract(l);
+    if (s === node.id) neighbors.add(t);
+    if (t === node.id) neighbors.add(s);
+  });
+  state.selectedNeighbors = neighbors;
+
+  const c = node.color;
+  $('panel-glow').style.color = c;
+  $('panel-type').textContent = node.tipo.replace(/_/g, ' ');
+  $('panel-type').style.color = c;
+  $('panel-content').textContent = node.conteudo;
+
+  const body = $('panel-body');
+  body.innerHTML = '';
+
+  const meta = [
+    { k: 'curador',  v: node.curador },
+    { k: 'área',     v: node.area },
+    { k: 'camada',   v: node.camada },
+    { k: 'id',       v: node.id },
+    { k: 'data', v: new Date(node.timestamp).toLocaleDateString('pt-BR', {
+        day: '2-digit', month: 'short', year: 'numeric',
+    }) },
+  ];
+
+  meta.forEach(({ k, v }) => {
+    const r = document.createElement('div');
+    r.className = 'meta-row';
+    r.innerHTML = `<span class="meta-row__key">${k}</span><span class="meta-row__value">${v}</span>`;
+    body.appendChild(r);
+  });
+
+  const conf = document.createElement('div');
+  conf.className = 'confidence';
+  conf.innerHTML = `
+    <div class="confidence__row">
+      <span class="meta-row__key">confiança</span>
+      <span class="meta-row__value" style="color:${c};font-family:'Instrument Serif',serif;font-size:18px">
+        ${(node.confianca * 100).toFixed(0)}<span style="font-size:11px;opacity:0.6">%</span>
+      </span>
+    </div>
+    <div class="confidence__bar">
+      <div class="confidence__fill" style="width:${node.confianca * 100}%;background:${c};color:${c}"></div>
+    </div>
+  `;
+  body.appendChild(conf);
+
+  const conns = data.links.filter((l) => {
+    const { s, t } = linkExtract(l);
+    return s === node.id || t === node.id;
+  });
+
+  if (conns.length) {
+    const title = document.createElement('div');
+    title.className = 'section-title';
+    title.innerHTML = `conexões <span class="section-title__count">· ${conns.length}</span>`;
+    body.appendChild(title);
+
+    conns.forEach((l) => {
+      const { s, t } = linkExtract(l);
+      const otherId = s === node.id ? t : s;
+      const other = state.nodeMap.get(otherId);
+      if (!other) return;
+      const ci = document.createElement('div');
+      ci.className = 'connection';
+      ci.innerHTML = `
+        <span class="connection__type" style="color:${other.color}">${other.tipo.replace(/_/g, ' ')}</span>
+        <span class="connection__preview">${other.conteudo}</span>
+      `;
+      ci.addEventListener('click', () => openPanel(other));
+      body.appendChild(ci);
+    });
+  }
+
+  $('panel').classList.add('is-open');
+  $('hint').style.opacity = '0';
+}
+
+function closePanel() {
+  $('panel').classList.remove('is-open');
+  state.selectedId = null;
+  state.selectedNeighbors = new Set();
+  state.spinning = true;
+  updateAutoRotateBtn();
+  setTimeout(() => { $('hint').style.opacity = '1'; }, 600);
+}
+
+$('panel-close').addEventListener('click', closePanel);
+
+// Atual: hard delete só client-side. Etapa 1B conecta no DELETE /hub/fragmento/{id}
+// e Parte 2 troca por modal de soft+hard delete.
+$('panel-delete').addEventListener('click', () => {
+  if (!state.selectedId) return;
+  const id = state.selectedId;
+  state.nodes = state.nodes.filter((n) => n.id !== id);
+  state.nodeMap.delete(id);
+  state.links = state.links.filter((l) => {
+    const { s, t } = linkExtract(l);
+    return s !== id && t !== id;
+  });
+  removeLabel(id);
+  state.selectedNeighbors = new Set();
+  Graph.graphData(getFilteredData());
+  updateStats();
+  closePanel();
+  showToast('fragmento removido', 'apagado', '#f87171');
+});
+
+// ─── Toast ───
+function showToast(text, label, color) {
+  $('toast-label').textContent = label || 'novo fragmento';
+  $('toast-label').style.color = color || 'var(--c-identidade)';
+  $('toast-text').textContent = text;
+  $('toast-dot').style.background = color || 'var(--c-identidade)';
+  $('toast-dot').style.color = color || 'var(--c-identidade)';
+  const el = $('toast');
+  el.classList.add('is-shown');
+  setTimeout(() => el.classList.remove('is-shown'), 3800);
+}
+
+// ─── Adicionar fragmento (handler pra SSE ativado na Etapa 1B) ───
+function addFragment(raw) {
+  if (!raw || !raw.conteudo) return;
+  const color = getNodeColor(raw);
+  const node = {
+    id: raw.id || ('new_' + (++state.nextId)),
+    conteudo: raw.conteudo,
+    tipo: raw.tipo || 'episodico',
+    area: raw.area || '',
+    curador: raw.curador || 'desconhecido',
+    camada: raw.camada || 'sessao',
+    confianca: raw.confianca || 0.7,
+    timestamp: raw.criado_em || new Date().toISOString(),
+    color,
+    val: 0.8 + (raw.confianca || 0.7) * 0.8,
+    _isNew: true,
+  };
+  state.nodes.push(node);
+  state.nodeMap.set(node.id, node);
+  const peers = state.nodes.filter((p) => p.tipo === node.tipo && p.id !== node.id);
+  if (peers.length) {
+    state.links.push({ source: node.id, target: peers[peers.length - 1].id });
+  }
+  Graph.graphData(getFilteredData());
+  setTimeout(() => {
+    node._isNew = false;
+    Graph.graphData(getFilteredData());
+  }, 2200);
+  updateStats();
+  showToast(
+    node.conteudo.length > 70 ? node.conteudo.slice(0, 70) + '…' : node.conteudo,
+    node.tipo.replace(/_/g, ' '),
+    color
+  );
+}
+
+// ─── Resize ───
+window.addEventListener('resize', () => {
+  Graph.width(window.innerWidth).height(window.innerHeight);
+});
+
+// ─── Keyboard ───
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state.selectedId) closePanel();
+  if (e.key === '+' || e.key === '=') setZoom(0.85);
+  if (e.key === '-' || e.key === '_') setZoom(1.18);
+  if (e.key === '0') fitAll();
+});
+
+// Inicial: filtros recolhidos por padrão depois de 2.5s
+setTimeout(() => {
+  filtersEl.classList.add('is-collapsed');
+  filtersToggle.setAttribute('aria-expanded', 'false');
+}, 2500);
+</script>
+</body>
+</html>
