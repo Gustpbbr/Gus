@@ -1,0 +1,277 @@
+assistant: Commitado e pushado. O arquivo `arquitetura-gus.html` está na branch `visualizacao-arquitetura-gus` no GitHub.
+
+Para visualizar: baixa o arquivo do GitHub (Raw → Save As) e abre no browser. Funciona offline, sem servidor.
+
+Quer que eu processe agora as demandas do inbox, ou tem outra coisa em vista?
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pronto. O log do dia também foi commitado e pushado.
+
+user: qual o link do arquivo?
+
+assistant: O arquivo está no GitHub em:
+
+`https://github.com/Gustpbbr/Gus/blob/visualizacao-arquitetura-gus/arquitetura-gus.html`
+
+Mas o GitHub mostra o código-fonte, não renderiza o HTML. Para visualizar de verdade, duas opções:
+
+1. **Se o repo for público** — abre direto pelo htmlpreview:
+   `https://htmlpreview.github.io/?https://raw.githubusercontent.com/Gustpbbr/Gus/visualizacao-arquitetura-gus/arquitetura-gus.html`
+
+2. **Repo privado** — entra no GitHub pelo celular/computador, navega até o arquivo, clica em "Raw", salva o arquivo (`.html`) e abre no browser.
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pronto, log atualizado e pushado.
+
+user: ficou otimo, obrigado. mas deu isso
+
+Arquitetura de Memória
+
+
+
+Syntax error in text
+mermaid version 11.14.0
+
+assistant: Vou verificar o diagrama problemático no arquivo.
+
+assistant: Vou ler o diagram completo e identificar o que está quebrando o parser do Mermaid.
+
+assistant: O problema é a combinação de `<br/>` + aspas simples dentro de `["..."]` + `~` que o parser do Mermaid v11 engasga. Vou reescrever o diagrama de forma limpa.
+
+assistant: Agora commit e push:
+
+assistant: Pushado. O problema era o Mermaid v11 engasgando com `<br/>`, aspas simples e `~` dentro de labels de nós. Simplifiquei os labels para ASCII puro sem marcação HTML — o diagrama fica funcional, só perde as quebras de linha que eram cosméticas.
+
+Se tiver mais algum erro em outra aba, me manda o nome que corrijo.
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pronto.
+
+user: Continue from where you left off.
+
+assistant: No response requested.
+
+user: analisando o sistema de forma, como um consultor multiespecializado imparcial do sistema por completo
+
+assistant: Vou ler o estado atual antes de analisar.
+
+assistant: ---
+
+## Análise multi-especialista do sistema Gus — 07/05/2026
+
+---
+
+### 1. Arquiteto de sistemas
+
+**O que está bem:** A visão de multiportas com identidade compartilhada é tecnicamente coerente e não é trivial. Hub Qdrant como única fonte de verdade para memória é a decisão certa. Schema gus-18 com campos de metadados ricos (tipo, camada_temporal, confiança, via) está acima da média de sistemas pessoais.
+
+**O problema central:** O sistema está crescendo em infraestrutura mais rápido do que em valor entregue. Cada sessão adiciona mais peças (Apps Script, NeuroGus endpoints, curador híbrido, retro engine) mas o loop principal — *conversa → memória → contexto melhor na próxima conversa* — ainda não fecha de forma confiável.
+
+**Risco arquitetural alto:** Três pontos de falha silenciosa coexistem hoje:
+- Curador estava quebrado por 3 dias sem alarme (KeyError no format)
+- Captura da porta Code produz transcripts mas ninguém processa
+- MCP server rodando sem autenticação há semanas
+
+O sistema tolera falha silenciosa porque é de uma pessoa só. Isso mascara fragilidades reais.
+
+---
+
+### 2. Engenheiro de software
+
+**163 testes verdes** é uma mudança real de qualidade. Antes disso o sistema não tinha rede de segurança.
+
+**Tech debt acumulando:**
+- `bot.py` ainda monolítico (1000+ linhas), Fase 4 sempre postergada
+- `gus/tools.py` split planejado há semanas, não executado
+- System prompt com 794 linhas, seções obsoletas, conta de tools errada — isso vai degradar a qualidade do bot silenciosamente
+- 8 demandas abertas no inbox, algumas com meses. Sinal de que o backlog cresce mais rápido que a execução
+
+**O maior débito técnico não está no código — está no processo.** O protocolo de sessão (inbox → processar → arquivar → commitar entrada no stream) existe mas não é seguido consistentemente. Sessões encerram sem commitar no stream da semana. Isso quebra o handoff entre sessões.
+
+---
+
+### 3. Produto / uso real
+
+**Pergunta honesta:** qual é o valor que o Gustavo sente hoje vs. seis meses atrás?
+
+O que melhorou: bot Telegram está mais estável, tem mais tools, processa PDF/voz/foto. Apps Script resolve o Drive sync sem custo.
+
+O que não mudou: a memória ainda não fecha o loop. O bot sabe fatos sobre o Gustavo que estão no Hub, mas é difícil medir se as respostas ficaram melhores por causa da memória ou apesar dela.
+
+**Sintoma:** nenhuma sessão nos últimos 10 commits menciona "o bot lembrou X e foi útil porque...". Os commits são sobre infraestrutura, não sobre experiência.
+
+---
+
+### 4. ML / qualidade da memória
+
+**Curador híbrido Haiku × GPT** é um experimento bem desenhado (mesmo hash_janela, curador distinto, comparação par-a-par). Mas:
+
+- Não há validação do que foi extraído. Fragmentos entram no Hub com confiança gerada pelo próprio modelo, sem checagem externa
+- Sem métricas de recall: quando `lembrar()` é chamado, quantas vezes retorna o fragmento certo?
+- A coleção `gus` (204 mems históricas) nunca foi migrada. Tem memória do Gustavo perdida desde a criação do sistema
+- Sem decay: fragmentos obsoletos (estado=obsoleto) acumulam e envenenam retrieval
+
+**O curador hoje é um pipe de ingestão, não um sistema de memória.** Inserir ≠ lembrar.
+
+---
+
+### 5. DevOps / operações
+
+**Railway como único ponto de operação do bot** sem fallback, sem alertas de uptime configurados, sem runbook. O `auto_diagnostico` existe mas é reativo (Gustavo precisa pedir).
+
+**Apps Script:** elegante para o caso de uso, mas tem limites invisíveis: 6min de execução, 20k/dia de chamadas URL, sem retry nativo, sem log persistente além do Apps Script Logger. Se quebrar, o alerta é um silêncio — não um erro visível.
+
+**Cron GitHub Actions:** 16 workflows ativos, alguns obsoletos. `fix-qdrant-dims.yml` e `migrate-mem0-to-qdrant.yml` listados como legacy mas ainda ativos. Custo zero, mas ruído operacional alto.
+
+**O `check_saude.py` que roda às 7h30** alerta só em warn/erro. Se o Hub ficou mudo (como ficou por 3 dias com o bug do curador), o check de saúde não detecta porque checa conectividade, não qualidade de ingestão.
+
+---
+
+### 6. Segurança
+
+**Crítico:** MCP server está público. Qualquer pessoa com a URL consegue escrever fragmentos no Hub do Gustavo. A correção está documentada há semanas (MCP_URL_SECRET no Railway), mas não foi feita porque depende de ação manual do Gustavo.
+
+**Bom:** hook `scan_sensivel.py` na porta Code, exclusão de `sensivel/` do Drive, patterns de PII centralizados (`patterns_sensiveis.py`), redação de output no Telegram.
+
+**Gap:** whitelist de user_id no Hub (`gustavo` e `gus`) protege contra injeção de dados, mas não contra leitura não autorizada via MCP.
+
+---
+
+### 7. Financeiro / sustentabilidade
+
+**Custo atual estimado:** Railway ~$5-10/mês (bot 24/7), Qdrant Cloud tier gratuito, GitHub Actions gratuito, Apps Script gratuito, Anthropic/OpenAI por uso (~$10-30/mês dependendo de volume).
+
+**Sustentável.** Nada aqui é caro. O risco não é financeiro.
+
+---
+
+## Síntese executiva
+
+| Dimensão | Estado | Nota |
+|---|---|---|
+| Visão arquitetural | Coerente, diferenciada | ✅ |
+| Loop principal (memória útil) | Não fechado ainda | ⚠️ |
+| Qualidade de código | Melhorou muito (163 testes) | ✅ |
+| Tech debt estrutural | Crescendo (bot.py, system_prompt) | ⚠️ |
+| Segurança operacional | MCP público é gap crítico | 🔴 |
+| Monitoramento | Reativo, sem alertas de qualidade | ⚠️ |
+| Cadência de execução | Backlog cresce mais que entrega | ⚠️ |
+| Custo | Sustentável | ✅ |
+
+**O sistema tem fundação sólida e visão clara. O risco real é a dispersão:** cada sessão abre novas frentes antes de fechar as antigas. O inbox com 8 demandas, o PR #72 aberto, o Mem0 não aposentado, os 204 fragmentos não migrados, o system prompt desatualizado — todos são trabalho meio-feito que consome atenção sem entregar valor.
+
+**Recomendação de próxima sessão:** uma sessão inteira de fechamento, não de abertura. Zero features novas. Fechar PR #72, migrar os 204 mems, setar MCP_URL_SECRET, limpar os workflows obsoletos, atualizar o system prompt.
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.
+
+assistant: Pronto.
+
+user: Continue from where you left off.
+
+assistant: No response requested.
+
+user: como um profissional multiespecialista imparcial, qual a sua proposta de nova arquitetura, pra fazer igual ou mais do o Gus faz? oq existe e poderia fazer a mesma coisa? e oq deveria ser feito para fazer a mesma coisa e mais?
+
+assistant: Boa pergunta para pensar limpo. Vou estruturar em três blocos: o que existe hoje no mercado, uma arquitetura alternativa proposta, e o que precisaria ser construído para ir além.
+
+---
+
+## Bloco 1 — O que já existe e poderia substituir partes do Gus
+
+| Função atual do Gus | Alternativa SaaS/OSS existente | Qualidade do substituto |
+|---|---|---|
+| Memória vetorial (Qdrant) | Supabase pgvector | ✅ igual, gerenciado, SQL de graça |
+| Curador de fragmentos | Mem.ai, Personal.ai | ⚠️ parcial — sem PT, sem Dimagem |
+| Bot Telegram + tools | n8n + Telegram node | ⚠️ sem LLM loop nativo, sem media |
+| Knowledge base em MD | Notion + API | ⚠️ perde o versionamento git |
+| Sync Drive ⇄ GitHub | Zapier / Make | ✅ mas custa $15-30/mês |
+| Search web + PubMed | Perplexity Pro | ✅ melhor que Tavily |
+| Multi-porta com contexto | Dust.tt | ⚠️ sem Telegram, sem voz |
+| OCR + media processing | Google Document AI | ✅ mas sem lógica Dimagem |
+| MCP para Claude Code/Chat | Claude Projects (nativo) | ⚠️ sem escrita, sem Qdrant |
+
+**Conclusão honesta:** nenhum produto único faz o que o Gus faz. O Gus tem valor justamente na integração — Dimagem, PubMed, memória bidirecional Gustavo↔Gus, Telegram 24/7, português. Nenhum SaaS tem esse combo. Mas **várias peças internas poderiam ser trocadas por SaaS gerenciado sem perda funcional**.
+
+---
+
+## Bloco 2 — Arquitetura proposta (do zero, hoje)
+
+Se começasse do zero com os mesmos objetivos, sem o legado:
+
+```
+                    ┌─────────────────────────────────┐
+                    │     Service Layer (FastAPI)      │
+                    │  memory · tools · routing · LLM  │
+                    └──────────┬──────────────────────┘
+                               │
+          ┌────────────────────┼────────────────────┐
+          │                    │                    │
+    Telegram Bot         Claude MCP          Voice (futuro)
+    (python-telegram)    (auth Bearer)       (Alexa / GPT)
+```
+
+**Camada de memória:** Supabase (PostgreSQL + pgvector) em vez de Qdrant + Mem0. Uma tabela `fragments` com os mesmos campos do schema gus-18, busca semântica via `pgvector`, full-text search via `pg_trgm`, tudo no mesmo banco, SQL puro para auditorias. Custo: $0 no free tier.
+
+**Camada LLM:** LangGraph em vez do loop manual em `llm.py`. Já trata state machine, retry, tool routing, streaming. O curador vira um nó do grafo, não um processo separado.
+
+**Curador:** uma única chamada estruturada (não dual Haiku×GPT) com output tipado via Pydantic. Valida na extração, não depois. O experimento dual pode ser uma flag, não a arquitetura padrão.
+
+**Multi-porta:** cada porta (Telegram, MCP, voz) é só um adaptador de I/O. Toda lógica fica no Service Layer. Trocar ou adicionar uma porta não muda nada na lógica central.
+
+**Sync Drive:** Apps Script (já correto, manter).
+
+**O que cai fora:** Mem0 SaaS, coleção legada `gus`, `_hub_compat.py`, metade dos workflows obsoletos, `retro-engine` como hook separado (vira cron interno).
+
+---
+
+## Bloco 3 — O que falta para fazer mais do que o Gus faz hoje
+
+Estes são os gaps reais, não os de infra:
+
+### 3.1 — Memória proativa (hoje Gus é 100% reativo)
+O sistema só lembra quando perguntado. Poderia surfaçar contexto automaticamente: "Gustavo mencionou ontem que está com carga pesada de plantões — isso é relevante para a conversa de agora." Requer um mecanismo de *relevance injection* que rode no início de cada turn, não só quando o bot decide buscar.
+
+### 3.2 — Sinal de utilidade (hoje não existe)
+Nenhum fragmento tem feedback de uso. O curador extrai tudo com mesma prioridade. Com um campo simples (`ultimo_uso`, `frequencia_recuperado`), dá pra fazer decay de fragmentos obsoletos e promover os frequentemente úteis. Sem isso, o Hub vai inflar e degradar o recall.
+
+### 3.3 — Continuidade cross-porta (hoje cada porta recomeça)
+Quando Gustavo vai do Telegram pro Claude Chat, o contexto da conversa some. Não é só memória — é estado de sessão. Um objeto de sessão compartilhado (quem está falando, sobre o que, qual o nível de urgência) permitiria handoff real entre portas. Hoje a memória conecta identidade, não conversa.
+
+### 3.4 — Memória multimodal (hoje só texto)
+Gustavo manda fotos, PDFs, exames. Gus processa e responde, mas não *lembra* o conteúdo visual de forma semântica. Um fragmento poderia ser "exame de imagem de 03/04 mostrava X" com embedding do conteúdo extraído. Isso requer um pipeline de ingestão de mídia → extração de essência → fragmento.
+
+### 3.5 — Voz real (hoje não existe)
+A porta Alexa/Custom GPT está no roadmap há meses mas não começou. Voz muda fundamentalmente o padrão de uso — consultas curtas, contexto implícito, sem teclado. É o maior salto de superfície de uso que resta.
+
+### 3.6 — Auto-correção do curador
+Hoje o curador extrai e salva. Não tem mecanismo de "esse fragmento está errado" além de deletar manualmente. Um loop de revisão periódica (cron semanal, amostra aleatória de fragmentos, Claude julga se ainda são válidos) fecharia o ciclo de qualidade da memória.
+
+---
+
+## Resumo da proposta
+
+**Trocar agora (baixo risco, ganho real):**
+- Qdrant Cloud → Supabase pgvector (gerenciado, SQL, gratuito)
+- Loop manual `llm.py` → LangGraph (manutenção menor, mais robusto)
+- Curador dual experimental → curador único com validação Pydantic
+
+**Construir para ir além:**
+1. Relevance injection automático no início de cada turn
+2. Campo `frequencia_recuperado` + decay de fragmentos obsoletos
+3. Sessão compartilhada entre portas (objeto de handoff)
+4. Pipeline de mídia → fragmento semântico
+5. Porta voz (Alexa ou Custom GPT com WhisperAPI)
+
+**Não mudar:**
+- Apps Script sync (correto e gratuito)
+- GitHub como knowledge base estruturado
+- Telegram como porta principal
+- Schema gus-18 (bem desenhado)
+- Python como linguagem (Gustavo não programa — consistência importa mais que stack ideal)
