@@ -116,7 +116,7 @@ def commit_push(branch: str = "main") -> None:
             log.info("Nada pra commitar.")
             return
         subprocess.run(
-            ["git", "commit", "-m", "auto: processa transcripts Claude Code"],
+            ["git", "commit", "-m", "auto: processa transcripts Claude Code [railway skip]"],
             check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
         subprocess.run(

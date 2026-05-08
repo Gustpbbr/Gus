@@ -9,7 +9,7 @@ name: Check cost alert
 
 on:
   schedule:
-    - cron: '0 * * * *'   # toda hora cheia
+    - cron: '0 6,12,18,0 * * *'   # 4x/dia: 3h, 9h, 15h, 21h BRT (era toda hora)
   workflow_dispatch:
 
 permissions:

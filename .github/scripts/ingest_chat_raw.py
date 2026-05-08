@@ -303,7 +303,7 @@ def main() -> None:
 
     if salvos_total or vazios or erros:
         git_commit_push(
-            f"auto: ingest claude-chat → Hub ({salvos_total} fragmentos, {vazios} vazios, {erros} erros)"
+            f"auto: ingest claude-chat → Hub ({salvos_total} fragmentos, {vazios} vazios, {erros} erros) [railway skip]"
         )
 
 
