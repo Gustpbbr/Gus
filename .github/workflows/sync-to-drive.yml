@@ -1,17 +1,8 @@
 name: Sync MD to Google Drive
 
+# DESATIVADO 2026-05-07 — substituído por Apps Script bidirecional.
+# Manter como workflow_dispatch para uso manual emergencial.
 on:
-  push:
-    branches: [main]
-    paths:
-      - '**.md'
-      - '!.github/**'
-      - '!gus/**'
-      - 'gus/gus-bootstrap.md'
-      - 'gus/gus-identity.md'
-      - '!historico/**'
-      - '!CLAUDE.md'
-      - '!README.md'
   workflow_dispatch:
 
 permissions:

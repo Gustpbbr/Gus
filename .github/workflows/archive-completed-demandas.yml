@@ -1,8 +1,9 @@
 name: Archive completed demandas
 
+# DESATIVADO 2026-05-07 — Drive OAuth expirado. Apps Script não cobre ainda
+# a detecção de status:concluido em arquivos GitHub (só move inbox→processados).
+# Manter como workflow_dispatch; rever em 2026-05-14 (demanda validar-apps-script).
 on:
-  schedule:
-    - cron: '*/15 * * * *'   # a cada 15min
   workflow_dispatch:
 
 permissions:

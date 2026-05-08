@@ -1,9 +1,9 @@
 name: Export Mem0 diário
 
+# DESATIVADO 2026-05-07 — Mem0 SaaS aposentado (ADR-001). Hub Qdrant é a
+# fonte da verdade. Manter como workflow_dispatch para auditoria histórica.
 on:
-  schedule:
-    - cron: '0 6 * * *'  # 3h de Brasília (6h UTC)
-  workflow_dispatch:       # permite rodar manualmente
+  workflow_dispatch:
 
 permissions:
   contents: write

@@ -9,18 +9,24 @@ name: Auto-issue on cron failure
 # `workflows: ['*']` (não tem suporte oficial — workaround é não filtrar
 # o trigger e checar event.workflow.name no script).
 
+# Workflows desativados em 2026-05-07 removidos da lista:
+# - "Archive completed demandas" (Drive OAuth expirado)
+# - "Export Mem0 diário" (Mem0 SaaS aposentado)
+# - "Import demandas from Drive" (substituído por Apps Script)
+# - "Sync auto-generated docs" (referencia Mem0)
+# - "Sync MD to Google Drive" (substituído por Apps Script)
+# Falhas de cron agora reportadas pelo check_saude.py (7h30 BRT, 1 Telegram/dia).
 on:
   workflow_run:
     workflows:
-      - "Archive completed demandas"
-      - "Auditoria Mem0"
+      - "Auditoria Mem0 diária"
       - "Briefing matinal"
-      - "Check saúde"
-      - "Export Mem0"
-      - "Gerar estado Claude Chat"
-      - "Import demandas from Drive"
+      - "Check de saúde diário"
+      - "Curador Claude Code (cron)"
+      - "Gerar estado atual pro Claude Chat"
       - "Ingest Mem0 from Claude Chat"
-      - "Reflexão quinzenal"
+      - "Meta-relatório Hub (qualidade)"
+      - "Reflexão quinzenal (SELF-1)"
       - "Retrospectiva semanal"
     types: [completed]
 

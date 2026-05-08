@@ -1,8 +1,8 @@
 name: Import demandas from Drive
 
+# DESATIVADO 2026-05-07 — substituído por Apps Script bidirecional.
+# Manter como workflow_dispatch para uso manual emergencial.
 on:
-  schedule:
-    - cron: '*/15 * * * *'   # a cada 15min
   workflow_dispatch:
 
 permissions:

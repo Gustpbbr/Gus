@@ -4,17 +4,9 @@ name: Sync auto-generated docs
 # Roda em push em main quando muda código relevante OU diariamente
 # como guarda-redes (caso alguém esqueça de incluir nos paths).
 
+# DESATIVADO 2026-05-07 — script gerar_lista_tools.py referencia Mem0 SaaS
+# aposentado. Desativar cron e push para parar falhas. Manter manual.
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'gus/tools.py'
-      - '.github/scripts/gerar_lista_tools.py'
-      - '.github/workflows/sync-docs.yml'
-  schedule:
-    # 04:00 BRT = 07:00 UTC. Madrugada, fora dos horários de uso.
-    - cron: '0 7 * * *'
   workflow_dispatch:
 
 permissions:
