@@ -1,0 +1,80 @@
+user: oi, blz? consegue me passar um panorama da situação atual do projeto?
+
+user: Exibir painel de status do sistema Gus. Execute os seguintes passos em paralelo e apresente um resumo compacto:
+
+1. **Git log:** `git log --oneline -10` — últimos commits
+2. **Inbox Claude Code:** `ls dialogos/inbox-claude-code/` — demandas pendentes (exclua arquivos que começam com `_`)
+3. **Inbox TioGu:** `ls dialogos/inbox-tiogu/ 2>/dev/null` — demandas para o Telegram
+4. **Branch atual:** `git branch --show-current` e `git status --short`
+5. **Semana atual:** ler `dialogos/streams/semana-2026-05-05.md` se existir, senão listar `dialogos/streams/`
+
+Apresente o resultado neste formato:
+
+```
+=== STATUS GUS — <data/hora BRT> ===
+
+Branch: <branch> | <N> arquivo(s) modificado(s)
+
+INBOX CLAUDE CODE (<N> demandas):
+  - <arquivo1> [<prioridade se visível>]
+  - ...
+
+INBOX TIOGU (<N> demandas):
+  - <arquivo1>
+  - ...
+
+ÚLTIMOS COMMITS:
+  <hash> <mensagem>
+  ...
+
+STREAM DA SEMANA: <primeira linha do MD ou "não encontrado">
+```
+
+Se o Hub Qdrant não estiver acessível (HUB_READ_TOKEN ausente), indique "(Hub: sem acesso neste ambiente)" sem tentar as tools MCP.
+
+assistant: ```
+=== STATUS GUS — 2026-05-10 22:50 BRT ===
+
+Branch: claude/project-status-review-9ntUC | 0 arquivo(s) modificado(s)
+
+INBOX CLAUDE CODE (8 demandas):
+  - 2026-05-02-continuidade-cross-porta.md
+  - 2026-05-02-pendencias-claude-chat-consolidacao.md
+  - 2026-05-03T16-30__delete-fragmento-mgx-errado.md
+  - 2026-05-03T16-31__levantamento-fragmentos-curador-gpt.md
+  - 2026-05-06__curador-raciocinio-por-fragmento.md
+  - 2026-05-06__gpt-inbox-leitura-recursiva.md
+  - 2026-05-06__skills-customizadas-gus.md
+  - 2026-05-14__validar-apps-script-aposentar-workflows-drive.md
+
+INBOX TIOGU (9 demandas):
+  - 2026-04-26T18-55__resposta-status-migracao-qdrant.md
+  - 2026-04-28T14-00__neurogus-briefing.md
+  - 2026-04-28T14-01__neurogus-arquitetura.md
+  - 2026-04-28T14-02__neurogus-codigo-v1.md
+  - 2026-05-02T17-35__apagar-protocolo-exames-truncado.md
+  - 2026-05-02T22-30__ingestao-exames-fragmentos-hub.md
+  - 2026-05-02T22-45__ingestao-exames-fragmentos-hub-v2.md
+  - 2026-05-03T16-30__delete-fragmento-mgx-errado.md
+  - 2026-05-03T16-31__levantamento-fragmentos-curador-gpt.md
+
+ÚLTIMOS COMMITS:
+  4021473 capture: 2026-05-08 via Gus
+  b51008a chore: retro log + transcripts 2026-05-08
+  d2b3e99 fix: parar redeploys Railway + reduzir GitHub Actions minutes
+  e4d7ffd chore: retro log + transcripts 2026-05-07
+  623c5de fix: desativar workflows com falhas repetidas + digest diário no Telegram
+  c7ca787 chore: retro log + transcripts 2026-05-07
+  81fa256 chore: retro log + transcripts 2026-05-07
+  e136e14 chore: retro log + transcripts 2026-05-07
+  5f9ae84 Merge pull request #111 from Gustpbbr/claude/neurogus-fase1-backend-sse
+  2c36ced chore(transcripts): captura sessão 2026-05-07T18-54__561d167aa1fd
+
+STREAM DA SEMANA: # Stream da semana — 05/05/2026 (último update: 2026-05-07 Claude Code)
+
+(Hub: sem acesso neste ambiente)
+```
+
+Panorama curto: working tree limpo na branch de review. 8 demandas tuas paradas no `inbox-claude-code/` — as 3 mais antigas (continuidade cross-porta, consolidação Claude Chat, delete fragmento MGX) já passaram do prazo do stream. Última atividade efetiva foi 08/05 (commit `capture`); antes disso, semana dominada por fix do Railway redeploys + retro logs + merge do NeuroGus Fase 1 (PR #111).
+
+Quer que eu comece processando alguma demanda específica do inbox, ou prefere outra direção?
