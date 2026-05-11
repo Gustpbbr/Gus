@@ -1,0 +1,95 @@
+user: oi, blz? consegue me passar um panorama da situação atual do projeto?
+
+user: Exibir painel de status do sistema Gus. Execute os seguintes passos em paralelo e apresente um resumo compacto:
+
+1. **Git log:** `git log --oneline -10` — últimos commits
+2. **Inbox Claude Code:** `ls dialogos/inbox-claude-code/` — demandas pendentes (exclua arquivos que começam com `_`)
+3. **Inbox TioGu:** `ls dialogos/inbox-tiogu/ 2>/dev/null` — demandas para o Telegram
+4. **Branch atual:** `git branch --show-current` e `git status --short`
+5. **Semana atual:** ler `dialogos/streams/semana-2026-05-05.md` se existir, senão listar `dialogos/streams/`
+
+Apresente o resultado neste formato:
+
+```
+=== STATUS GUS — <data/hora BRT> ===
+
+Branch: <branch> | <N> arquivo(s) modificado(s)
+
+INBOX CLAUDE CODE (<N> demandas):
+  - <arquivo1> [<prioridade se visível>]
+  - ...
+
+INBOX TIOGU (<N> demandas):
+  - <arquivo1>
+  - ...
+
+ÚLTIMOS COMMITS:
+  <hash> <mensagem>
+  ...
+
+STREAM DA SEMANA: <primeira linha do MD ou "não encontrado">
+```
+
+Se o Hub Qdrant não estiver acessível (HUB_READ_TOKEN ausente), indique "(Hub: sem acesso neste ambiente)" sem tentar as tools MCP.
+
+assistant: ```
+=== STATUS GUS — 2026-05-10 22:50 BRT ===
+
+Branch: claude/project-status-review-9ntUC | 0 arquivo(s) modificado(s)
+
+INBOX CLAUDE CODE (8 demandas):
+  - 2026-05-02-continuidade-cross-porta.md
+  - 2026-05-02-pendencias-claude-chat-consolidacao.md
+  - 2026-05-03T16-30__delete-fragmento-mgx-errado.md
+  - 2026-05-03T16-31__levantamento-fragmentos-curador-gpt.md
+  - 2026-05-06__curador-raciocinio-por-fragmento.md
+  - 2026-05-06__gpt-inbox-leitura-recursiva.md
+  - 2026-05-06__skills-customizadas-gus.md
+  - 2026-05-14__validar-apps-script-aposentar-workflows-drive.md
+
+INBOX TIOGU (9 demandas):
+  - 2026-04-26T18-55__resposta-status-migracao-qdrant.md
+  - 2026-04-28T14-00__neurogus-briefing.md
+  - 2026-04-28T14-01__neurogus-arquitetura.md
+  - 2026-04-28T14-02__neurogus-codigo-v1.md
+  - 2026-05-02T17-35__apagar-protocolo-exames-truncado.md
+  - 2026-05-02T22-30__ingestao-exames-fragmentos-hub.md
+  - 2026-05-02T22-45__ingestao-exames-fragmentos-hub-v2.md
+  - 2026-05-03T16-30__delete-fragmento-mgx-errado.md
+  - 2026-05-03T16-31__levantamento-fragmentos-curador-gpt.md
+
+ÚLTIMOS COMMITS:
+  4021473 capture: 2026-05-08 via Gus
+  b51008a chore: retro log + transcripts 2026-05-08
+  d2b3e99 fix: parar redeploys Railway + reduzir GitHub Actions minutes
+  e4d7ffd chore: retro log + transcripts 2026-05-07
+  623c5de fix: desativar workflows com falhas repetidas + digest diário no Telegram
+  c7ca787 chore: retro log + transcripts 2026-05-07
+  81fa256 chore: retro log + transcripts 2026-05-07
+  e136e14 chore: retro log + transcripts 2026-05-07
+  5f9ae84 Merge pull request #111 from Gustpbbr/claude/neurogus-fase1-backend-sse
+  2c36ced chore(transcripts): captura sessão 2026-05-07T18-54__561d167aa1fd
+
+STREAM DA SEMANA: # Stream da semana — 05/05/2026 (último update: 2026-05-07 Claude Code)
+
+(Hub: sem acesso neste ambiente)
+```
+
+Panorama curto: working tree limpo na branch de review. 8 demandas tuas paradas no `inbox-claude-code/` — as 3 mais antigas (continuidade cross-porta, consolidação Claude Chat, delete fragmento MGX) já passaram do prazo do stream. Última atividade efetiva foi 08/05 (commit `capture`); antes disso, semana dominada por fix do Railway redeploys + retro logs + merge do NeuroGus Fase 1 (PR #111).
+
+Quer que eu comece processando alguma demanda específica do inbox, ou prefere outra direção?
+
+user: quero me faca um texto corrido, mostrando oq é o projeto e a situação dele, e oq falta fazer para acabar
+
+assistant: O **Gus** é o teu sistema de agente pessoal — uma única entidade que existe em múltiplas portas de acesso (Telegram via @Tiogubot, Claude Code aqui, Claude Chat no app, e no futuro Custom GPT por voz no celular e Alexa em casa). Todas as portas compartilham a mesma memória (Hub Qdrant na coleção `gus_hub`), o mesmo acervo de conhecimento (repositório GitHub `Gustpbbr/Gus` espelhado pro Drive), e a mesma identidade. O que muda entre elas é o canal: o Telegram tem voz/foto/PDF do teu dia-a-dia, o Claude Code (eu) faz a engenharia, o Claude Chat serve pra reflexão longa.
+
+A peça central hoje é o bot Telegram rodando no Railway 24/7, com cerca de 21 tools ativas — lê e escreve no GitHub, busca memória no Hub, faz pesquisa web (Tavily + DuckDuckGo), PubMed e arXiv, processa imagem (Vision Sonnet), PDF, Word, Excel e voz (Whisper), e tem o fluxo Dimagem com gate de confiança no OCR. Em paralelo roda o **curador híbrido** (`hub/curador.py`), que a cada 3 turnos de conversa do Telegram dispara Haiku 4.5 e Sonnet 4.6 em paralelo no mesmo trecho — ambos salvam fragmentos no Hub com `metadata.curador` distinta pra comparação par-a-par. Isso é a Fase 4 do ADR-001, fase de coleta dual, e termina por volta de 12/05 quando você decide qual modelo vira o curador definitivo.
+
+A situação do Hub: ele já é a fonte da verdade. Bot, MCP, scripts cron e curador escrevem nele direto. O Mem0 SaaS continua existindo só como fallback de leitura em algumas funções e vai ser aposentado completamente na Fase 5. A coleção antiga `gus` (Mem0 self-hosted) tem ~204 memórias históricas esperando o workflow `Migrar gus → gus_hub` ser disparado pra encher o Hub novo. O sync GitHub ⇄ Google Drive foi migrado em 07/05 de GitHub Actions pra Google Apps Script bidirecional (projeto "Gus Sync (GitHub ⇄ Drive)"), o que tirou a dor de OAuth expirando e Service Account. A estrutura de pastas foi reorganizada em 28/04 (saúde, esportes, leituras, contatos, família criadas; legacy movido pra `historico/`).
+
+**O que falta pra "acabar"** (entre aspas porque um agente pessoal é sempre obra aberta): primeiro, disparar o workflow de migração `gus → gus_hub` se ainda não rodou, e conferir os secrets `QDRANT_URL`/`QDRANT_API_KEY` no GitHub (os crons migrados dependem). Segundo, a decisão Haiku vs Sonnet do curador (Fase 5 do ADR-001, depois dos 14 dias de coleta dual). Terceiro, aposentar Mem0 SaaS completamente — remover fallbacks, requirements, secrets. Quarto, suporte a vídeo no Telegram (existe `filters.VIDEO` sem handler ainda). Quinto, a Service Account do Google Drive (pendência antiga, mas com o Apps Script no lugar deve dar pra validar e aposentar de vez os workflows velhos — tem uma demanda tua marcada pra 14/05 sobre isso). E ainda tem 8 demandas paradas no meu inbox, das quais as mais relevantes pro fechamento do ciclo atual são: curador raciocinando por fragmento, leitura recursiva no inbox do GPT, e validação do Apps Script pra aposentar os workflows Drive — as outras são limpezas e consolidações.
+
+Pendente também, mas mais estratégico que técnico: as portas futuras (Custom GPT por voz mobile, Alexa em casa) que dependem das fundações acima estarem fechadas.
+
+user: Stop hook feedback:
+[~/.claude/stop-hook-git-check.sh]: There are untracked files in the repository. Please commit and push these changes to the remote branch.
