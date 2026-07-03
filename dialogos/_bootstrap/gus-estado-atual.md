@@ -1,12 +1,12 @@
 ---
 tipo: estado-atual-vivo
-gerado_em: 2026-07-03T09:42:46-0300
+gerado_em: 2026-07-03T10:36:13-0300
 fonte: hub-qdrant (gus_hub, user_id=gustavo)
 janela_recentes_horas: 6
 atualizacao: cron 15min
 ---
 
-# Estado atual do Gus — 03/07/2026 às 09:42 BRT
+# Estado atual do Gus — 03/07/2026 às 10:36 BRT
 
 > Documento gerado automaticamente a cada 15 minutos lendo o Hub
 > Qdrant. Substitui o snapshot estático das 03h pra Claude Chat ter
