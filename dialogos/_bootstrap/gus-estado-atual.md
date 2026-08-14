@@ -1,12 +1,12 @@
 ---
 tipo: estado-atual-vivo
-gerado_em: 2026-08-14T03:13:24-0300
+gerado_em: 2026-08-14T05:15:17-0300
 fonte: hub-qdrant (gus_hub, user_id=gustavo)
 janela_recentes_horas: 6
 atualizacao: cron 15min
 ---
 
-# Estado atual do Gus — 14/08/2026 às 03:13 BRT
+# Estado atual do Gus — 14/08/2026 às 05:15 BRT
 
 > Documento gerado automaticamente a cada 15 minutos lendo o Hub
 > Qdrant. Substitui o snapshot estático das 03h pra Claude Chat ter
@@ -19,9 +19,15 @@ dinâmico. Sem este arquivo, Claude Chat opera com lag de 21h.
 
 ## ⚠️ Erros ao consultar Hub
 
-- `ego_cache`: [Errno 104] Connection reset by peer
-- `listar`: [Errno 104] Connection reset by peer
-- `contar`: [Errno 104] Connection reset by peer
+- `ego_cache`: Unexpected Response: 404 (Not Found)
+Raw response content:
+b'404 page not found\n'
+- `listar`: Unexpected Response: 404 (Not Found)
+Raw response content:
+b'404 page not found\n'
+- `contar`: Unexpected Response: 404 (Not Found)
+Raw response content:
+b'404 page not found\n'
 
 Conteúdo abaixo pode estar incompleto.
 
@@ -37,7 +43,9 @@ _(nenhum fragmento novo nesta janela — sistema ocioso ou curador parado)_
 ### Distribuição por tipo (na amostra)
 
 
-## ⚠️ Brain `gus`: erro ao consultar — [Errno 104] Connection reset by peer
+## ⚠️ Brain `gus`: erro ao consultar — Unexpected Response: 404 (Not Found)
+Raw response content:
+b'404 page not found\n'
 
 ---
 
