@@ -5,7 +5,7 @@
 
 > CUIDADO: repositório público. Não inserir endereço completo, números pessoais, fotos internas, comprovantes, contratos, propostas privadas, valores pessoais ou informações de segurança patrimonial. Guardar esses itens em local privado.
 
-**LISTA OFICIAL:** [16 serviços numerados e documentação individual](ORCAMENTOS-A-PESQUISAR.md). Serviços 01, 02, 05, 06, 07 e 15 possuem pesquisa arquivada; os demais aguardam detalhamento ou solicitação de pesquisa. A adequação elétrica da lavadora Brastemp convencional de 8 kg foi postergada.
+**LISTA OFICIAL:** [17 serviços numerados e documentação individual](ORCAMENTOS-A-PESQUISAR.md). Serviços 01, 02, 05, 06, 07 e 15 possuem pesquisa arquivada; os demais aguardam detalhamento ou solicitação de pesquisa. A adequação elétrica da lavadora Brastemp convencional de 8 kg foi postergada.
 
 **Fila de novos serviços:** [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md). Os novos MDs individuais serão criados conforme o usuário enviar a lista; por enquanto não pesquisar fornecedores. Ver [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENTOS.md).
 
@@ -19,6 +19,7 @@
 | [Remanejamento de aquecedor a gás](servicos/gas/ORCAMENTO-GAS-2026-11-09.md) | **7 contatos preparados para 09/11; nenhum envio confirmado** | Abrir WhatsApp com mensagens prontas e solicitar visitas de viabilidade/segurança | 0 confirmados neste arquivo | 2026-11-08 |
 | Janela acústica | Em pesquisa; nenhuma contratação registrada | Comparar janela sobreposta versus substituição | 0 confirmados neste arquivo | 2026-11-08 |
 | Restauração de tacos / sinteco (15) | Pesquisa concluída; 17 candidatos brutos, com possíveis nomes duplicados | Contatar fornecedores compatíveis com fosco base água, confirmar linha e marcar visita | 0 confirmados neste arquivo | 2026-11-08 |
+| [Nova bancada de pedra — serviço 17](servicos/17-bancada-pedra-cozinha/PEDIDO-ORCAMENTO.md) | MD inicial criado, material não escolhido | Detalhar medidas da bancada e orçamento de marmoraria separado do pedreiro | 0 confirmados | 2026-11-08 |
 | Demais serviços 03–04, 08–14 e 16 | MDs individuais criados; aguardam detalhamento e pedido de pesquisa | Atualizar o MD por número | 0 confirmados neste arquivo | 2026-11-08 |
 
 *Os serviços acima são apenas categorias de pesquisa discutidas; não significam que orçamentos foram recebidos ou empresas contratadas.*
