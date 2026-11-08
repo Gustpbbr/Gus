@@ -15,6 +15,7 @@ Qualquer conversa nova do ChatGPT precisa efetivamente buscar este arquivo pelo 
 
 | Gatilho e serviço | Arquivo preparado | Quantidade | Situação | Data da pesquisa |
 |---|---|---:|---|---|
+| Pintura das paredes / pintores / serviço 13 | [FORNECEDORES-PINTURA-ITEM-13-2026-11-08.md](grupos/FORNECEDORES-PINTURA-ITEM-13-2026-11-08.md) | 7 contatos | Mensagens iniciais curtas prontas para 09/11; banheiro por dentro e papel de parede excluídos; nenhum envio confirmado | 2026-11-08 |
 | Papel de parede / instaladores / serviço 16 | [FORNECEDORES-PAPEL-PAREDE-2026-11-08.md](servicos/16-papel-parede/FORNECEDORES-PAPEL-PAREDE-2026-11-08.md) | 11 candidatos | Links com mensagem genérica já preparada; sem envio, sem orçamento; confirmar aplicação avulsa e tipo de papel | 2026-11-08 |
 | Janela acústica / serviço 06 | [FORNECEDORES-JANELAS-2026-11-08.md](servicos/06-janela-acustica/FORNECEDORES-JANELAS-2026-11-08.md) | 8 | Avaliação presencial sem medidas; 2 alternativas; nenhum envio confirmado | 2026-11-08 |
 | Instalação de split / ar-condicionado / serviço 05 | [FORNECEDORES-INSTALACAO-SPLIT-2026-11-08.md](servicos/05-ar-split-18000/FORNECEDORES-INSTALACAO-SPLIT-2026-11-08.md) | 13 candidatos (11 contatos preparados, 2 em triagem) | Mensagens genéricas e links codificados; personalizar em chat; 0 envios confirmados | 2026-11-08 |
