@@ -13,6 +13,7 @@
 
 | Serviço | Estado | Próximo passo | Orçamentos recebidos | Revisão |
 |---|---|---|---:|---|
+| [Reforma elétrica — serviço 01](servicos/01-reforma-eletrica/PEDIDO-ORCAMENTO.md) | **8 contatos pesquisados; mensagem de abertura curta** | [Sites e WhatsApp preparados](servicos/01-reforma-eletrica/FORNECEDORES-ELETRICA-2026-11-08.md), aguardando envio manual | 0 confirmados | 2026-11-08 |
 | [Remanejamento de aquecedor a gás](servicos/gas/ORCAMENTO-GAS-2026-11-09.md) | **7 contatos preparados para 09/11; nenhum envio confirmado** | Abrir WhatsApp com mensagens prontas e solicitar visitas de viabilidade/segurança | 0 confirmados neste arquivo | 2026-11-08 |
 | Janela acústica | Em pesquisa; nenhuma contratação registrada | Comparar janela sobreposta versus substituição | 0 confirmados neste arquivo | 2026-11-08 |
 | Restauração de tacos / sinteco (15) | Pesquisa concluída; 17 candidatos brutos, com possíveis nomes duplicados | Contatar fornecedores compatíveis com fosco base água, confirmar linha e marcar visita | 0 confirmados neste arquivo | 2026-11-08 |
