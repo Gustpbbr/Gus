@@ -2,7 +2,7 @@
 
 **Identificador:** APTO-02  
 **Grupo:** A — Elétrica  
-**Estado:** `aguardando-pesquisa`  
+**Estado:** `links-prontos` — 7 fornecedores pesquisados; nenhum contato enviado  
 **Criado/atualizado em:** 2026-11-08  
 **Origem:** solicitação e correções explícitas do usuário; requisitos adicionais de planejamento são indicativos e devem ser confirmados.  
 **Localização:** Copacabana, Rio de Janeiro (sem endereço exato neste repositório público).
@@ -31,11 +31,13 @@
 
 ## 5. Pesquisa de fornecedores
 
-**Estado:** pesquisa NÃO INICIADA por pedido do usuário. Não cadastrar fornecedores, telefones, sites ou Instagram antes da próxima etapa.
+**Estado:** pesquisa CONCLUÍDA em 2026-11-08 com 7 fornecedores; informações de contato, sites, Instagram quando encontrado e links para mensagem inicial curta em [FORNECEDORES-VENTILADORES-2026-11-08.md](FORNECEDORES-VENTILADORES-2026-11-08.md). Instagram foi pesquisado, mas apenas um perfil pôde ser associado por cadastro externo; não foi possível examinar diretamente publicações.
+
+**Nenhum contato enviado e nenhum orçamento recebido.**
 
 ## 6. Preparação de contato e orçamento
 
-**Mensagem de WhatsApp:** ainda não preparada; redigir após detalhamento técnico e pesquisa de fornecedores. **Nenhuma mensagem enviada.**
+**Mensagem inicial curta:** pronta, com pedido de preço por unidade incluindo retirada e instalação, sem exigir modelo definido. Links no arquivo [FORNECEDORES-VENTILADORES-2026-11-08.md](FORNECEDORES-VENTILADORES-2026-11-08.md). **Nenhuma mensagem enviada.**
 
 ## 7. Possíveis pacotes / interdependências
 
@@ -43,6 +45,7 @@
 
 ## 8. Histórico
 
+- 2026-11-08 — Pesquisa autorizada: 7 empresas e profissionais, 7 links de WhatsApp preparados; modelos de ventiladores ainda serão escolhidos.
 - 2026-11-08 — Criado o MD inicial com numeração fixa. Sem nova pesquisa de fornecedores.
 
 ## Privacidade
