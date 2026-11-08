@@ -15,6 +15,7 @@ Qualquer conversa nova do ChatGPT precisa efetivamente buscar este arquivo pelo 
 
 | Gatilho e serviço | Arquivo preparado | Quantidade | Situação | Data da pesquisa |
 |---|---|---:|---|---|
+| Janela acústica / serviço 06 | [FORNECEDORES-JANELAS-2026-11-08.md](servicos/06-janela-acustica/FORNECEDORES-JANELAS-2026-11-08.md) | 8 | Avaliação presencial sem medidas; 2 alternativas; nenhum envio confirmado | 2026-11-08 |
 | Ventiladores de teto / serviço 02 | [FORNECEDORES-VENTILADORES-2026-11-08.md](servicos/02-ventiladores-teto/FORNECEDORES-VENTILADORES-2026-11-08.md) | 7 | Links prontos; modelos ainda não escolhidos; nenhum envio confirmado | 2026-11-08 |
 | Elétrica / serviço 01 / quadro / fiação / 220 V | [FORNECEDORES-ELETRICA-2026-11-08.md](servicos/01-reforma-eletrica/FORNECEDORES-ELETRICA-2026-11-08.md) | 8 | Pesquisa concluída, links com mensagem genérica curta; nenhum envio confirmado | 2026-11-08 |
 | Gás / gasista / aquecedor | [ORCAMENTO-GAS-2026-11-09.md](servicos/gas/ORCAMENTO-GAS-2026-11-09.md) | 7 | Pronto para abertura manual de WhatsApp; nenhum envio confirmado | 2026-11-08 |
