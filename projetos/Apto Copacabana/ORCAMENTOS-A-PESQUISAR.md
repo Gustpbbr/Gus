@@ -51,7 +51,7 @@ Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENT
 | 15 | Restauração do piso de madeira / sinteco | H — Piso de madeira | [MD inicial](servicos/15-sinteco-piso-madeira/PEDIDO-ORCAMENTO.md) | `pesquisa-concluida` | [17 candidatos identificados](servicos/15-sinteco-piso-madeira/PESQUISA-FORNECEDORES-2026-11-08.md); checar homônimos |
 | 16 | Instalação de papel de parede | I — Papel de parede | [MD inicial](servicos/16-papel-parede/PEDIDO-ORCAMENTO.md) | `links-prontos` | [11 candidatos e links de WhatsApp](servicos/16-papel-parede/FORNECEDORES-PAPEL-PAREDE-2026-11-08.md); nenhuma mensagem enviada |
 | 17 | Fornecimento e instalação de bancada de pedra na cozinha | J — Marmoraria | [MD inicial](servicos/17-bancada-pedra-cozinha/PEDIDO-ORCAMENTO.md) | `links-prontos` | [10 marmorarias com foco em quartzito](servicos/17-bancada-pedra-cozinha/FORNECEDORES-MARMORARIAS-QUARTZITO-2026-11-08.md); 150 × 70 cm, peça única; 0 envios |
-| 18 | Persiana rolô blackout com guias laterais e redução de frestas | K — Persianas sob medida | [MD inicial](servicos/18-persiana-rolo-blackout-guias-laterais/PEDIDO-ORCAMENTO.md) | `aguardando-detalhamento` | Pesquisa ainda não autorizada; referência visual do usuário |
+| 18 | Persiana rolô blackout com guias laterais e redução de frestas | K — Persianas sob medida | [MD inicial](servicos/18-persiana-rolo-blackout-guias-laterais/PEDIDO-ORCAMENTO.md) | `links-prontos` | [9 candidatos, 7 contatos com WhatsApp preparado](servicos/18-persiana-rolo-blackout-guias-laterais/FORNECEDORES-PERSIANA-BLACKOUT-2026-11-08.md); 2 telefones a confirmar; quarto, 0 envios |
 
 ## Grupos de contratação
 
@@ -65,7 +65,7 @@ Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENT
 - **H — Madeira/sinteco:** 15. Especialista em piso de madeira.
 - **I — Papel de parede:** 16. Pode ter sinergia com pintura, se profissional capacitado.
 - **J — Marmoraria / pedra:** 17. Bancada de **150 × 70 cm, peça inteira**; comparar granito e quartzito; pesquisa de 10 marmorarias em todo Rio/Grande Rio, com links preparados. Cotação separada da demolição (08).
-- **K — Persianas / cortinas:** 18. Persiana rolô blackout com **guias laterais**, avaliar cassete superior e vedação inferior; cômodo, medidas e fornecedores pendentes. Se coincidir com janela acústica (06), coordenar medidas.
+- **K — Persianas / cortinas:** 18. Persiana rolô blackout com **guias laterais para o quarto**, avaliar cassete superior e vedação inferior; medidas pendentes; [9 fornecedores pesquisados](servicos/18-persiana-rolo-blackout-guias-laterais/FORNECEDORES-PERSIANA-BLACKOUT-2026-11-08.md). Se coincidir com janela acústica (06), coordenar medidas.
 
 ## Atualização fundamental do serviço 11 — 2026-11-08
 
