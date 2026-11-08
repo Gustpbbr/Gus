@@ -24,7 +24,7 @@ Pintura das paredes (13) e pintura dos azulejos do banheiro (14), com orçamento
 
 **Identificador:** APTO-13  
 **Grupo:** G — Pintura  
-**Estado:** `aguardando-pesquisa`  
+**Estado:** `links-prontos` — 7 pintores pesquisados; nenhum envio confirmado  
 **Criado/atualizado em:** 2026-11-08  
 **Origem:** solicitação e correções explícitas do usuário; requisitos adicionais de planejamento são indicativos e devem ser confirmados.  
 **Localização:** Copacabana, Rio de Janeiro (sem endereço exato neste repositório público).
@@ -73,6 +73,10 @@ Pintura das paredes (13) e pintura dos azulejos do banheiro (14), com orçamento
 Este arquivo está em repositório **público**. Não adicionar endereço completo, número da unidade, fotos internas, dados pessoais, documentos, propostas privadas ou detalhes de segurança do imóvel.
 
 ---
+
+#### Contatos pesquisados para o item 13 — 2026-11-08
+
+Foram identificados **7 profissionais/empresas**; mensagem curta e links para contato manual em **9 de novembro de 2026**: [abrir fornecedores de pintura](FORNECEDORES-PINTURA-ITEM-13-2026-11-08.md). A contratação e os orçamentos não foram confirmados. Os **itens 14 e 16 não estão incluídos** nesta mensagem inicial.
 
 <a id="servico-14"></a>
 
