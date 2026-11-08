@@ -1,0 +1,88 @@
+# Continuidade entre conversas — Orçamentos do Apto Copacabana
+
+**Versão:** 1.0 · **Data:** 2026-11-08  
+**Objetivo:** permitir que outra conversa do ChatGPT retome este trabalho consultando arquivos concretos no GitHub, sem depender do histórico do chat original.
+
+## Intenção explícita do usuário em 2026-11-08
+
+O usuário vai **fornecer uma lista de serviços para os quais precisa de orçamento**, possivelmente em várias mensagens. **Nesta fase não deseja pesquisa de fornecedores.**
+
+A tarefa inicial é:
+1. Receber cada serviço da lista.
+2. Criar **um arquivo Markdown específico para cada serviço**, ainda sem fornecedores ou links fictícios.
+3. Registrar o escopo conhecido e as lacunas técnicas como "a confirmar".
+4. Manter um índice consolidado dos serviços ainda não pesquisados.
+5. Conforme o usuário fornecer informações adicionais, atualizar o Markdown do serviço correspondente, preservando decisões anteriores relevantes.
+6. **Somente quando o usuário pedir a pesquisa daquele serviço**, aplicar o protocolo completo de fornecedores (mínimo cinco verificáveis quando disponíveis, sites oficiais, Instagram público, WhatsApp pré-preenchido) e atualizar o registro.
+7. **Somente quando o usuário pedir para apresentar/enviar os orçamentos**, entregar links `wa.me` já preparados, sem afirmar que enviou mensagens.
+
+**Importante:** "preparar o Markdown" NÃO significa pesquisar fornecedores, gerar links `wa.me` reais, agendar envios, solicitar orçamentos ou marcar contato como realizado.
+
+## Ponto de entrada obrigatório em conversa nova
+
+Repositório: `Gustpbbr/Gus`  
+Pasta: `projetos/Apto Copacabana/`
+
+Ordem de leitura quando a conversa envolve orçamento do apartamento:
+1. `README.md` — visão e links;
+2. **`CONTINUIDADE-ORCAMENTOS.md`** — este procedimento;
+3. **`ORCAMENTOS-A-PESQUISAR.md`** — fila de pedidos e respectivos arquivos;
+4. `ORCAMENTOS-PREPARADOS.md` — pesquisas completas e links prontos;
+5. `PROTOCOLO-ORCAMENTOS.md` — pesquisa, validação e WhatsApp;
+6. `PAINEL-SERVICOS.md` — andamento transversal.
+
+Se o usuário disser:
+- **"Vou listar os serviços"**: receber itens e criar/atualizar arquivos `servicos/<slug>/PEDIDO-ORCAMENTO.md`; NÃO pesquisar empresas.
+- **"Acrescente esse detalhe ao orçamento da [categoria]"**: ler o arquivo específico, adicionar a informação na seção apropriada e atualizar a data; não alterar dados confirmados sem razão.
+- **"Pesquise fornecedores da [categoria]"**: pesquisar, verificar e registrar contatos no arquivo específico e em `ORCAMENTOS-PREPARADOS.md`.
+- **"Quero o orçamento pro gás"**: serviço de gás JÁ pesquisado; conferir o índice `ORCAMENTOS-PREPARADOS.md` e apresentar links guardados em `servicos/gas/ORCAMENTO-GAS-2026-11-09.md`.
+- **"Quero o orçamento da [categoria]"**: se constar como `links-prontos`, abrir e apresentar os links. Se constar como `aguardando-pesquisa`, informar isso e perguntar se deseja realizar a pesquisa agora, a menos que já tenha autorizado a pesquisa na mesma solicitação.
+- **"Atualize a lista"**: ler índices e registrar cada etapa que o usuário efetivamente confirmou.
+
+## Estados por serviço
+
+`a-detalhar` → `aguardando-pesquisa` → `pesquisa-em-andamento` → `links-prontos` → `mensagens-enviadas-pelo-usuario` → `aguardando-respostas` → `orcamentos-recebidos` → `comparacao` → `contratado` → `concluido`.
+
+Também podem existir `pausado`, `cancelado` ou `indisponivel`.
+
+**Nunca avançar estado com base em suposição.** A preparação dos links não significa mensagem enviada. A pesquisa não significa serviço contratado.
+
+## Padrão para novos arquivos
+
+Para cada serviço mencionado pela primeira vez:
+- Criar `servicos/<slug-curto>/PEDIDO-ORCAMENTO.md`, baseado em [MODELO-PEDIDO-ORCAMENTO.md](MODELO-PEDIDO-ORCAMENTO.md).
+- Nome do serviço, ambiente, descrição e exigências conhecidas.
+- Critérios que o fornecedor deverá responder.
+- Informações técnicas faltantes, se houver, explicitamente como `a confirmar`.
+- Texto de orçamento em **rascunho** (opcional, sempre revisável).
+- Não criar empresas, telefones, Instagram ou links WhatsApp por antecipação.
+- Incluir data da informação e a indicação `fonte: informado pelo usuário` sem copiar detalhes pessoais.
+- Adicionar a linha no índice `ORCAMENTOS-A-PESQUISAR.md` e, se útil, no painel central.
+
+**Deduplicação:** se já existir um arquivo do serviço, atualizá-lo, não criar outro sem necessidade. Se houver mais de uma contratação independente na mesma categoria, diferenciar por escopo.
+
+## Estrutura de documentação
+
+- `CONTINUIDADE-ORCAMENTOS.md`: regras de trabalho entre chats.
+- `ORCAMENTOS-A-PESQUISAR.md`: serviços levantados, ainda sem pesquisa completa.
+- `MODELO-PEDIDO-ORCAMENTO.md`: modelo para arquivo individual.
+- `servicos/<slug>/PEDIDO-ORCAMENTO.md`: pedido individual em construção.
+- `ORCAMENTOS-PREPARADOS.md`: pesquisas de fornecedores e links reais `wa.me`.
+- `PROTOCOLO-ORCAMENTOS.md`: método técnico de busca e envio manual.
+- `PAINEL-SERVICOS.md`: gestão de status e respostas.
+
+## Política de privacidade — ESSENCIAL
+
+O repositório `Gustpbbr/Gus` está **público**. Guardar **somente** procedimento e descrição genérica dos serviços. Não escrever aqui endereço exato, unidade, fotos internas, detalhes de segurança, dados pessoais, orçamentos privados, contratos, números pessoais ou chaves.
+
+Se os dados recebidos forem sensíveis, omitir/redigir do Markdown público, avisar o usuário e propor um repositório **privado** para o segundo cérebro completo. Não publicar dados sensíveis mesmo que tenham sido mencionados no chat.
+
+## Limitação real do ChatGPT
+
+**Nenhum arquivo do GitHub é carregado automaticamente em uma conversa nova.** É necessário que o conector esteja disponível e que o assistente de fato abra os arquivos. Não afirmar leitura sem ter consultado o GitHub.
+
+Comando robusto para começar em outra aba:
+
+> Consulte o GitHub `Gustpbbr/Gus`, pasta `projetos/Apto Copacabana`. Leia `CONTINUIDADE-ORCAMENTOS.md`, `ORCAMENTOS-A-PESQUISAR.md` e `ORCAMENTOS-PREPARADOS.md` antes de responder. Quero continuar a lista de orçamentos do apartamento.
+
+Se os arquivos não estiverem acessíveis, explicar a limitação e pedir o conteúdo necessário; **não reconstruir o projeto de memória ou suposições**.
