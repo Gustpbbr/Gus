@@ -17,6 +17,8 @@ Qualquer conversa nova do ChatGPT precisa efetivamente buscar este arquivo pelo 
 |---|---|---:|---|---|
 | Gás / gasista / aquecedor | [ORCAMENTO-GAS-2026-11-09.md](servicos/gas/ORCAMENTO-GAS-2026-11-09.md) | 7 | Pronto para abertura manual de WhatsApp; nenhum envio confirmado | 2026-11-08 |
 
+| Sinteco / tacos / piso madeira (serviço 15) | [PESQUISA-FORNECEDORES-2026-11-08.md](servicos/15-sinteco-piso-madeira/PESQUISA-FORNECEDORES-2026-11-08.md) | 17 candidatos | Pesquisa concluída; fontes públicas, contatos e modelos WhatsApp; personalização privada antes do envio; homônimos a conferir | 2026-11-08 |
+
 ## Como preparar os próximos
 
 1. Pesquisar e conferir fornecedores com pelo menos 5 opções reais, conforme [PROTOCOLO-ORCAMENTOS.md](PROTOCOLO-ORCAMENTOS.md).
