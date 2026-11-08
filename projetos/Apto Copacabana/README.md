@@ -38,6 +38,16 @@ Quando o usuário pedir **"preciso fazer orçamentos"** ou outro serviço para o
 | [DECISOES.md](DECISOES.md) | Registro de escolhas com data, motivo e estado. |
 | [PRIVACIDADE.md](PRIVACIDADE.md) | Regras de segurança para o segundo cérebro do apartamento. |
 
+## Padrão de comunicação dos pedidos de orçamento
+
+O usuário prefere mensagens de WhatsApp **cordiais, pessoais e naturais**, em vez de textos secos ou impessoais. Aplicar a **todos os serviços** desta pasta, inclusive aos futuros.
+
+- Iniciar com: **"Olá, tudo bem? Meu nome é [NOME]. Gostaria de solicitar um orçamento..."** e seguir com uma descrição breve e educada do trabalho.
+- No texto final preparado **para o usuário enviar privadamente ao fornecedor**, preencher o nome autorizado e indicar bairro e rua quando o usuário tiver autorizado explicitamente naquela conversa.
+- Evitar mensagens que pareçam uma lista de exigências; organizar perguntas essenciais em linguagem de conversa, com agradecimento final.
+- **Privacidade:** este repositório é público. Não registrar aqui nome pessoal preenchido, rua específica, número, unidade, fotos internas ou mensagem final com esses identificadores. Manter somente o modelo com marcadores genéricos; personalizar na conversa privada ao montar o link WhatsApp.
+- Links antigos já preparados precisam ter sua mensagem revisada para esse tom quando forem reutilizados; não declarar que uma mensagem foi enviada.
+
 ## Como iniciar em uma conversa NOVA
 
 Para obter execução mais confiável, usar uma instrução explícita:
