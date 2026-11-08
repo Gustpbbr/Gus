@@ -48,7 +48,7 @@ Adaptar conforme natureza do serviço, sem inserir questões irrelevantes.
 
 **Status:** rascunho, não enviada.
 
-> Olá! Gostaria de um orçamento para [serviço] em um apartamento em Copacabana, RJ. O serviço envolve [escopo genérico]. Vocês atendem a região? Fazem visita técnica? Gostaria de informações sobre preço, materiais, prazo e garantia. Obrigado!
+> Olá, tudo bem? Meu nome é [NOME]. Gostaria de solicitar um orçamento para [serviço] em um apartamento em Copacabana/RJ. O serviço envolve [escopo genérico]. Vocês atendem a região e poderiam fazer uma visita técnica? Também gostaria de saber mais sobre os materiais, o prazo, a garantia e o valor aproximado. Muito obrigado!
 
 **Atenção:** não gerar URL `wa.me` real até que o fornecedor e o número estejam verificados. Quando houver pesquisa, seguir `PROTOCOLO-ORCAMENTOS.md`.
 
