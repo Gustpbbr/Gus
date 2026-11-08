@@ -28,7 +28,7 @@ Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENT
 | 12 | Substituição da pia do banheiro | F — Hidráulica do banheiro | [MD inicial](servicos/12-pia-banheiro/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
 | 13 | Pintura das paredes do apartamento | G — Pintura | [MD inicial](servicos/13-pintura-paredes/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
 | 14 | Pintura dos azulejos do banheiro | G — Pintura | [MD inicial](servicos/14-pintura-azulejos-banheiro/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
-| 15 | Restauração do piso de madeira / sinteco | H — Piso de madeira | [MD inicial](servicos/15-sinteco-piso-madeira/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 15 | Restauração do piso de madeira / sinteco | H — Piso de madeira | [MD inicial](servicos/15-sinteco-piso-madeira/PEDIDO-ORCAMENTO.md) | `pesquisa-concluida` | [17 candidatos identificados](servicos/15-sinteco-piso-madeira/PESQUISA-FORNECEDORES-2026-11-08.md); checar homônimos |
 | 16 | Instalação de papel de parede | I — Papel de parede | [MD inicial](servicos/16-papel-parede/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
 
 ## Grupos de contratação
