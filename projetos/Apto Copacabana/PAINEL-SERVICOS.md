@@ -21,9 +21,10 @@
 | [Remanejamento de aquecedor a gás](servicos/gas/ORCAMENTO-GAS-2026-11-09.md) | **7 contatos preparados para 09/11; nenhum envio confirmado** | Abrir WhatsApp com mensagens prontas e solicitar visitas de viabilidade/segurança | 0 confirmados neste arquivo | 2026-11-08 |
 | Janela acústica | Em pesquisa; nenhuma contratação registrada | Comparar janela sobreposta versus substituição | 0 confirmados neste arquivo | 2026-11-08 |
 | Restauração de tacos / sinteco (15) | Pesquisa concluída; 17 candidatos brutos, com possíveis nomes duplicados | Contatar fornecedores compatíveis com fosco base água, confirmar linha e marcar visita | 0 confirmados neste arquivo | 2026-11-08 |
+| [Pintura de paredes — serviço 13](grupos/GRUPO-G-PINTURA.md#servico-13) | **7 pintores identificados, WhatsApps prontos** | [Abrir contatos preparados para 09/11](grupos/FORNECEDORES-PINTURA-ITEM-13-2026-11-08.md); nenhuma mensagem enviada | 0 confirmados | 2026-11-08 |
 | [Instalação de papel de parede — serviço 16](servicos/16-papel-parede/PEDIDO-ORCAMENTO.md) | **11 candidatos pesquisados; mensagens genéricas preparadas** | [Contatos e links para solicitação manual](servicos/16-papel-parede/FORNECEDORES-PAPEL-PAREDE-2026-11-08.md); confirmar modalidade de papel e metragem | 0 confirmados | 2026-11-08 |
 | [Nova bancada de pedra — serviço 17](servicos/17-bancada-pedra-cozinha/PEDIDO-ORCAMENTO.md) | MD inicial criado, material não escolhido | Detalhar medidas da bancada e orçamento de marmoraria separado do pedreiro | 0 confirmados | 2026-11-08 |
-| Demais serviços 03–04 e 08–14 | MDs individuais criados; aguardam detalhamento e pedido de pesquisa | Atualizar o MD por número | 0 confirmados neste arquivo | 2026-11-08 |
+| Demais serviços 03–04, 08–12 e 14 | MDs individuais criados; aguardam detalhamento e pedido de pesquisa | Atualizar o MD por número | 0 confirmados neste arquivo | 2026-11-08 |
 
 *Os serviços acima são apenas categorias de pesquisa discutidas; não significam que orçamentos foram recebidos ou empresas contratadas.*
 
