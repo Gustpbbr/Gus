@@ -11,6 +11,8 @@ O GitHub guarda a documentação; o ChatGPT ajuda a pesquisar, interpretar, comp
 
 ## Ponto de entrada
 
+**Continuidade entre conversas e captura da lista de novos serviços:** leia primeiro [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENTOS.md) e [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md). Quando o usuário estiver apenas listando necessidades, **crie arquivos individuais, mas não pesquise fornecedores**.
+
 Quando o usuário pedir **"preciso fazer orçamentos"** ou outro serviço para o apartamento:
 
 1. Ler **[PROTOCOLO-ORCAMENTOS.md](PROTOCOLO-ORCAMENTOS.md)** integralmente antes da pesquisa, se o GitHub estiver acessível.
@@ -25,6 +27,9 @@ Quando o usuário pedir **"preciso fazer orçamentos"** ou outro serviço para o
 
 | Arquivo | Finalidade |
 |---|---|
+| [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENTOS.md) | Como outra conversa continua a lista, cria MDs e decide quando pesquisar. |
+| [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md) | Índice de serviços ainda sem pesquisa, atualizado item a item. |
+| [MODELO-PEDIDO-ORCAMENTO.md](MODELO-PEDIDO-ORCAMENTO.md) | Estrutura de cada MD individual de serviço. |
 | [PROTOCOLO-ORCAMENTOS.md](PROTOCOLO-ORCAMENTOS.md) | Procedimento técnico completo de pesquisa, validação e links WhatsApp. |
 | [ORCAMENTOS-PREPARADOS.md](ORCAMENTOS-PREPARADOS.md) | Índice dos serviços já pesquisados, com links WhatsApp prontos para o dia de envio. |
 | [PAINEL-SERVICOS.md](PAINEL-SERVICOS.md) | Lista e andamento dos serviços, estrutura para orçamentos. |
@@ -36,6 +41,8 @@ Quando o usuário pedir **"preciso fazer orçamentos"** ou outro serviço para o
 Para obter execução mais confiável, usar uma instrução explícita:
 
 > Sobre o Apto Copacabana, consulte o repositório GitHub Gustpbbr/Gus, arquivo "projetos/Apto Copacabana/README.md", e siga o protocolo de orçamentos. Preciso fazer orçamentos de [serviço].
+
+**Gatilho para continuar a lista:** "Apto Copacabana: continue a lista de orçamentos consultando CONTINUIDADE-ORCAMENTOS.md e ORCAMENTOS-A-PESQUISAR.md". Não pesquisar fornecedores antes de um pedido específico.
 
 **Gatilho já preparado:** "quero o orçamento pro gás" → consultar ORCAMENTOS-PREPARADOS.md e servicos/gas/ORCAMENTO-GAS-2026-11-09.md, apresentar links prontos.
 
