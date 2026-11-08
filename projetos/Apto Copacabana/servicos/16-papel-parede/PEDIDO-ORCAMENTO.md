@@ -2,7 +2,7 @@
 
 **Identificador:** APTO-16  
 **Grupo:** I — Papel de parede  
-**Estado:** `aguardando-pesquisa`  
+**Estado:** `links-prontos`  
 **Criado/atualizado em:** 2026-11-08  
 **Origem:** solicitação e correções explícitas do usuário; requisitos adicionais de planejamento são indicativos e devem ser confirmados.  
 **Localização:** Copacabana, Rio de Janeiro (sem endereço exato neste repositório público).
@@ -32,11 +32,11 @@
 
 ## 5. Pesquisa de fornecedores
 
-**Estado:** pesquisa NÃO INICIADA por pedido do usuário. Não cadastrar fornecedores, telefones, sites ou Instagram antes da próxima etapa.
+**Estado:** pesquisa autorizada pelo usuário em 2026-11-08. [11 fornecedores e profissionais com links de contato preparados](FORNECEDORES-PAPEL-PAREDE-2026-11-08.md). A pesquisa está salva sob pedido expresso; nenhum profissional contatado.
 
 ## 6. Preparação de contato e orçamento
 
-**Mensagem de WhatsApp:** ainda não preparada; redigir após detalhamento técnico e pesquisa de fornecedores. **Nenhuma mensagem enviada.**
+**Mensagem de WhatsApp:** texto inicial cordial e links de abertura genéricos, com [NOME] preservado, disponíveis no arquivo de pesquisa. Personalizar o texto no chat antes de enviar manualmente. **Nenhuma mensagem enviada.**
 
 ## 7. Possíveis pacotes / interdependências
 
@@ -44,7 +44,8 @@
 
 ## 8. Histórico
 
-- 2026-11-08 — Criado o MD inicial com numeração fixa. Sem nova pesquisa de fornecedores.
+- 2026-11-08 — Criado o MD inicial com numeração fixa.
+- 2026-11-08 — Pesquisa de 11 candidatos apresentada ao usuário; salvamento no GitHub solicitado expressamente para envio de orçamentos em 09/11.
 
 ## Privacidade
 
