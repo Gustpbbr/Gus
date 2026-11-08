@@ -3,6 +3,14 @@
 **Versão:** 1.0 · **Data:** 2026-11-08  
 **Objetivo:** permitir que outra conversa do ChatGPT retome este trabalho consultando arquivos concretos no GitHub, sem depender do histórico do chat original.
 
+## Atualização operacional — lista inicial já recebida em 2026-11-08
+
+**O usuário enviou e autorizou a criação dos 16 MDs iniciais.** Eles estão indexados em [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md), numerados 01–16. Não criar itens duplicados ao reabrir a conversa. **Agora o próximo passo é enriquecer o detalhamento de cada item, um por vez, sem pesquisar fornecedores até ordem expressa.**
+
+**Correção mais recente:** serviço 11 prevê **máquina de lavar convencional Brastemp de 8 kg (não lava e seca)**. A adequação elétrica específica está postergada; esta etapa trata apenas de retirada do bidê e preparação hidráulica/esgoto. O serviço 01 também exclui a lavadora desta fase.
+
+**Exemplos de gatilhos:** "detalhar o 11", "vamos para o serviço 05", "altere a janela do 06" → abrir os MDs correspondentes. "Quero o orçamento pro gás" → serviço 07, links já preparados.
+
 ## Intenção explícita do usuário em 2026-11-08
 
 O usuário vai **fornecer uma lista de serviços para os quais precisa de orçamento**, possivelmente em várias mensagens. **Nesta fase não deseja pesquisa de fornecedores.**

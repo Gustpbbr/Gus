@@ -5,6 +5,8 @@
 
 > CUIDADO: repositório público. Não inserir endereço completo, números pessoais, fotos internas, comprovantes, contratos, propostas privadas, valores pessoais ou informações de segurança patrimonial. Guardar esses itens em local privado.
 
+**LISTA OFICIAL:** [16 serviços numerados e documentação individual](ORCAMENTOS-A-PESQUISAR.md). Itens 01–06 e 08–16 estão em fase de detalhamento sem pesquisa; gás (07) está pronto para envio manual por WhatsApp. A adequação elétrica da lavadora Brastemp convencional de 8 kg foi postergada.
+
 **Fila de novos serviços:** [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md). Os novos MDs individuais serão criados conforme o usuário enviar a lista; por enquanto não pesquisar fornecedores. Ver [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENTOS.md).
 
 ## Painel de acompanhamento
@@ -13,7 +15,7 @@
 |---|---|---|---:|---|
 | [Remanejamento de aquecedor a gás](servicos/gas/ORCAMENTO-GAS-2026-11-09.md) | **7 contatos preparados para 09/11; nenhum envio confirmado** | Abrir WhatsApp com mensagens prontas e solicitar visitas de viabilidade/segurança | 0 confirmados neste arquivo | 2026-11-08 |
 | Janela acústica | Em pesquisa; nenhuma contratação registrada | Comparar janela sobreposta versus substituição | 0 confirmados neste arquivo | 2026-11-08 |
-| Outros serviços do apartamento | A definir | Descrever escopo e requisitos | 0 | 2026-11-08 |
+| Demais serviços 01–06 e 08–16 | MDs individuais criados; aguardam detalhamento e pedido de pesquisa | Atualizar o MD por número; não buscar fornecedores ainda | 0 confirmados neste arquivo | 2026-11-08 |
 
 *Os serviços acima são apenas categorias de pesquisa discutidas; não significam que orçamentos foram recebidos ou empresas contratadas.*
 

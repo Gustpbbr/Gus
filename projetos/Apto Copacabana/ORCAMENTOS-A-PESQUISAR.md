@@ -1,37 +1,60 @@
-# Fila de serviços a orçar — Apto Copacabana
+# Lista numerada de serviços a orçar — Apto Copacabana
 
-**Criado em:** 2026-11-08  
-**Objetivo:** registrar, aos poucos, cada serviço da lista que o usuário vai fornecer. **Ainda não pesquisar fornecedores** para os novos itens, salvo quando o usuário pedir explicitamente.
+**Atualização:** 2026-11-08.  
+**Base:** os 16 serviços definidos pelo usuário na conversa de 2026-11-08.  
+**Regra:** número estável **01 a 16**; tratar cada serviço pelo número ou título, em qualquer nova conversa.
 
-## Como usar este índice
+## Regra prioritária para novas conversas
 
-- O usuário está preparando uma lista de serviços; cada novo item deverá gerar ou atualizar um arquivo em `servicos/<slug>/PEDIDO-ORCAMENTO.md`.
-- O modelo está em [MODELO-PEDIDO-ORCAMENTO.md](MODELO-PEDIDO-ORCAMENTO.md).
-- O procedimento de continuidade entre abas está em [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENTOS.md).
-- A pesquisa de fornecedores e os links `wa.me` só serão preparados **na fase posterior**.
-- Não colocar detalhes pessoais do imóvel neste repositório público.
+**O usuário pediu os arquivos iniciais antes da pesquisa de fornecedores.** Para serviços 01–06 e 08–16, **NÃO PESQUISAR EMPRESAS** até pedido expresso. Ao receber detalhes, **atualizar somente o(s) MD(s) correspondente(s)**, preservando numeração, status e decisões anteriores. Serviço **07 (gás)** já tem pesquisa e links prontos em arquivo separado.
 
-## Lista de novos pedidos
+Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENTOS.md), esta lista e o arquivo do serviço desejado. Não presumir que o GitHub foi consultado sem acesso real pelo conector.
 
-| ID | Serviço | Ambiente | Arquivo específico | Estado | Última atualização |
-|---|---|---|---|---|---|
-| — | Aguardando o usuário fornecer a lista | — | — | `aguardando-lista` | 2026-11-08 |
+## Lista oficial
 
-**Não confundir com serviços já pesquisados:** o remanejamento do aquecedor a gás já está em [ORCAMENTOS-PREPARADOS.md](ORCAMENTOS-PREPARADOS.md), com sete contatos preparados; não recriar esse serviço aqui como pendente de pesquisa.
+| Nº | Serviço | Grupo profissional | Documento | Estado | Fornecedores |
+|---:|---|---|---|---|---|
+| 01 | Reforma elétrica e quadro de disjuntores | A — Elétrica | [MD inicial](servicos/01-reforma-eletrica/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 02 | Substituição dos ventiladores de teto | A — Elétrica | [MD inicial](servicos/02-ventiladores-teto/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 03 | Troca de espelhos de tomadas e interruptores | A — Elétrica | [MD inicial](servicos/03-espelhos-tomadas/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 04 | Substituição da luminária da cozinha | A — Elétrica | [MD inicial](servicos/04-luminaria-cozinha/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 05 | Instalação de ar-condicionado split 18.000 BTU/h | B — Climatização | [MD inicial](servicos/05-ar-split-18000/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 06 | Janela com isolamento acústico | C — Isolamento acústico | [MD inicial](servicos/06-janela-acustica/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 07 | Remanejamento do aquecedor a gás | D — Gás | [MD inicial](servicos/gas/PEDIDO-ORCAMENTO.md) | `links-prontos` | [7 contatos já preparados](servicos/gas/ORCAMENTO-GAS-2026-11-09.md) |
+| 08 | Demolição da bancada de cimento da cozinha | E — Pedreiro / acabamentos civis | [MD inicial](servicos/08-demolicao-bancada-cozinha/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 09 | Instalação de piso na cozinha | E — Pedreiro / acabamentos civis | [MD inicial](servicos/09-piso-cozinha/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 10 | Substituição do rejunte dos azulejos da cozinha | E — Pedreiro / acabamentos civis | [MD inicial](servicos/10-rejunte-azulejos-cozinha/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 11 | Retirar bidê e adaptar banheiro para lavadora Brastemp 8 kg | F — Hidráulica do banheiro | [MD inicial](servicos/11-retirada-bide-preparo-lavadora/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 12 | Substituição da pia do banheiro | F — Hidráulica do banheiro | [MD inicial](servicos/12-pia-banheiro/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 13 | Pintura das paredes do apartamento | G — Pintura | [MD inicial](servicos/13-pintura-paredes/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 14 | Pintura dos azulejos do banheiro | G — Pintura | [MD inicial](servicos/14-pintura-azulejos-banheiro/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 15 | Restauração do piso de madeira / sinteco | H — Piso de madeira | [MD inicial](servicos/15-sinteco-piso-madeira/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 16 | Instalação de papel de parede | I — Papel de parede | [MD inicial](servicos/16-papel-parede/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
 
-## Ao receber cada item
+## Grupos de contratação
 
-1. Verificar se já existe arquivo equivalente no GitHub.
-2. Criar ou atualizar o arquivo individual e sua descrição, sem presumir especificações não dadas.
-3. Atualizar esta tabela substituindo a linha de espera quando a primeira entrada for criada.
-4. Informar ao usuário o que foi registrado.
-5. Esperar a lista continuar; **não iniciar busca de fornecedores**.
+- **A — Elétrica:** 01, 02, 03, 04. Cotar pacote com serviços discriminados; adequação para lavadora 8 kg **não entra agora**.
+- **B — Climatização:** 05. Instalador especializado em split.
+- **C — Acústica/esquadrias:** 06. Comparar substituição, segunda janela interna e alternativas.
+- **D — Gás:** 07. Empresa/gasista habilitado; pesquisa já concluída, mensagens prontas.
+- **E — Pedreiro/acabamentos:** 08, 09, 10. Possível contratação conjunta com escopos separados.
+- **F — Hidráulica do banheiro:** 11, 12. Retirada de bidê + preparação hidráulica para **máquina de lavar Brastemp convencional de 8 kg**, sem lava e seca; elétrica específica será feita depois; substituição de pia.
+- **G — Pintura:** 13, 14. Diferenciar tinta de parede de sistema para azulejos/áreas molhadas.
+- **H — Madeira/sinteco:** 15. Especialista em piso de madeira.
+- **I — Papel de parede:** 16. Pode ter sinergia com pintura, se profissional capacitado.
 
-## Estados da fila
+## Atualização fundamental do serviço 11 — 2026-11-08
 
-- `a-detalhar`: há lacunas que podem afetar o orçamento.
-- `aguardando-pesquisa`: pedido documentado, ainda sem fornecedores.
-- `pesquisa-em-andamento`: busca expressamente solicitada.
-- `links-prontos`: pesquisas completas; mover ou referenciar em `ORCAMENTOS-PREPARADOS.md`.
+O usuário informou que será uma **máquina de lavar Brastemp convencional de 8 kg**, não uma lava e seca. Nesta fase, levantar a retirada do bidê e os pontos **hidráulicos e de esgoto** necessários. **Não incluir adequação elétrica para essa máquina agora**, porque o usuário pretende realizá-la posteriormente. Não presumir modelo exato ou dimensões de instalação.
 
-Quando um pedido for pesquisado, preservar o arquivo original e referenciar a pesquisa concluída; não apagar o histórico.
+## Como evoluir a lista
+
+1. Usuário fala "detalhar serviço 11": abrir o MD correspondente, acrescentar informações e atualizar o histórico; não pesquisar empresas.
+2. Usuário fala "buscar fornecedores do serviço 11": abrir MD e [PROTOCOLO-ORCAMENTOS.md](PROTOCOLO-ORCAMENTOS.md), pesquisar 5+ opções reais verificáveis se disponíveis, registrar fontes, sites, Instagram e WhatsApp com texto pronto.
+3. Usuário fala "quero orçamento pro gás": usar o arquivo pronto do serviço 07; não refazer pesquisa.
+4. Usuário confirma mensagens enviadas ou orçamentos recebidos: registrar o estágio correspondente, sem inventar respostas.
+5. Consultar sempre a documentação antes de responder em nova conversa.
+
+## Privacidade
+
+Repositório **público**: apenas documentação não sensível, sem endereço completo, unidade, fotos internas, contratos ou dados financeiros privados.

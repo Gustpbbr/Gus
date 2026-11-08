@@ -11,6 +11,8 @@ O GitHub guarda a documentação; o ChatGPT ajuda a pesquisar, interpretar, comp
 
 ## Ponto de entrada
 
+**LISTA OFICIAL DE 16 SERVIÇOS NUMERADOS:** consulte [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md) para acessar os MDs individuais 01–16. Nesta etapa, não buscar fornecedores salvo pedido explícito; o gás (07) já possui pesquisa.
+
 **Continuidade entre conversas e captura da lista de novos serviços:** leia primeiro [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENTOS.md) e [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md). Quando o usuário estiver apenas listando necessidades, **crie arquivos individuais, mas não pesquise fornecedores**.
 
 Quando o usuário pedir **"preciso fazer orçamentos"** ou outro serviço para o apartamento:
