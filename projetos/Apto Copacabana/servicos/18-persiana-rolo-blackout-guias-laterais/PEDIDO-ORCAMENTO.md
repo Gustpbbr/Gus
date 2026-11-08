@@ -2,7 +2,7 @@
 
 **Identificador:** APTO-18  
 **Grupo:** K — Persianas / cortinas sob medida  
-**Estado:** `aguardando-detalhamento` (sem pesquisa de fornecedores ou orçamentos).  
+**Estado:** `links-prontos` (9 fornecedores pesquisados; 7 links WhatsApp preparados; 2 contatos pendentes de validação; 0 orçamentos).  
 **Criado:** 2026-11-08.  
 **Localização genérica:** Copacabana, Rio de Janeiro. Não divulgar endereço completo em repositório público.
 
@@ -28,7 +28,7 @@ Fornecimento, medição, fabricação sob medida e instalação de **persiana ro
 
 ## 3. Dados pendentes (não presumir dimensões)
 
-- [ ] Definir cômodo e qual(is) janela(s) receberão a persiana.
+- [x] **Cômodo: quarto**, conforme confirmação expressa do usuário em 2026-11-08; a janela específica será medida presencialmente.
 - [ ] Medidas reais do vão e da área de instalação: largura, altura e profundidade disponíveis.
 - [ ] Fotos da janela, esquadrias, trilhos, peitoril e espaço para o cassete.
 - [ ] Definir fixação interna ao vão versus externa sobre a parede, de acordo com a solução de vedação.
@@ -56,8 +56,8 @@ Solicitar discriminação de:
 
 ## 5. Status de pesquisa e contratação
 
-- **Pesquisa de fornecedores:** não iniciada (usuário pediu criar um novo MD, não pesquisar fabricantes/instaladores).
-- **Fornecedores cotados:** 0.
+- **Pesquisa de fornecedores:** autorizada e realizada; [9 fornecedores com sites, contatos e links preparados](FORNECEDORES-PERSIANA-BLACKOUT-2026-11-08.md). Há 7 contatos por WhatsApp preparados e 2 pendências de telefone. O usuário pediu explicitamente salvar a pesquisa.
+- **Fornecedores pesquisados:** 9. **Fornecedores efetivamente cotados:** 0.
 - **Mensagens enviadas:** 0.
 - **Propostas recebidas:** 0.
 - **Contratação:** não definida.
@@ -71,3 +71,5 @@ Solicitar discriminação de:
 ## Histórico
 
 - 2026-11-08 — Novo serviço registrado mediante solicitação do usuário, com base em print de Reels mostrando **persiana blackout com guias laterais**. Numeração dos itens anteriores 01–17 preservada.
+- 2026-11-08 — Usuário confirmou **quarto** e solicitou pesquisa de instaladores no Rio. Nove candidatos identificados.
+- 2026-11-08 — Usuário pediu arquivar a pesquisa; links preparados sem dados pessoais em repositório público, sem mensagens enviadas.
