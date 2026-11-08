@@ -56,6 +56,12 @@ Se não for possível verificar um site, marcar "site não confirmado"; se só h
 
 ## 4. Mensagem de orçamento
 
+### Mensagem inicial curta (regra do usuário)
+
+Em 2026-11-08 o usuário reforçou que **o primeiro contato de orçamento NÃO deve conter muitos detalhamentos técnicos**. A mensagem inicial deve ser curta, humana e cordial, indicando: nome do solicitante (somente no chat privado), serviço em linhas gerais, bairro/rua se autorizado, pergunta se executam o serviço, visita presencial e custo da visita. **Não enviar checklist técnico de materiais, proteções, prazos e exigências logo na abertura.** Detalhamentos devem constar no MD individual e ser discutidos depois da resposta/vistoria ou incluídos no orçamento formal.
+
+Para guardar em repositório público, usar apenas mensagem genérica sem nome pessoal, rua específica ou informações do imóvel. Personalizar ao apresentar o link em conversa privada.
+
 **Tom obrigatório em todos os serviços:** as mensagens destinadas ao WhatsApp devem ser educadas, naturais e pessoais. Começar com "Olá, tudo bem? Meu nome é [NOME]. Gostaria de solicitar um orçamento..." e terminar com agradecimento. Substituir [NOME] somente no texto final da conversa com o usuário, quando autorizado. O local de execução pode indicar **bairro e rua** no WhatsApp privado quando explicitamente autorizado pelo usuário, mas a versão gravada neste GitHub público deve preservar apenas localização genérica (Copacabana/RJ), sem rua específica ou dados pessoais.
 
 **Não usar a abertura seca "Olá! Quero orçamento..."** nem textos que soem como formulário. Manter, porém, todas as questões técnicas essenciais em linguagem cordial e concisa.
