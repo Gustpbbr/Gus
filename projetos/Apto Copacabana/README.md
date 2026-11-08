@@ -60,6 +60,8 @@ Para obter execução mais confiável, usar uma instrução explícita:
 
 **Gatilho para continuar a lista:** "Apto Copacabana: continue a lista de orçamentos consultando CONTINUIDADE-ORCAMENTOS.md e ORCAMENTOS-A-PESQUISAR.md". Não pesquisar fornecedores antes de um pedido específico.
 
+**Serviço 01 — oito contatos de elétrica preparados:** [FORNECEDORES-ELETRICA-2026-11-08.md](servicos/01-reforma-eletrica/FORNECEDORES-ELETRICA-2026-11-08.md). O usuário determinou mensagens iniciais curtas e cordiais para todos os orçamentos; os detalhes técnicos ficam no MD do serviço.
+
 **Gatilho já preparado:** "quero o orçamento pro gás" → consultar ORCAMENTOS-PREPARADOS.md e servicos/gas/ORCAMENTO-GAS-2026-11-09.md, apresentar links prontos.
 
 Forma abreviada **desejada** (se o contexto e a personalização conseguirem vincular o projeto): "Apto Copacabana: preciso fazer orçamentos de [serviço]."
