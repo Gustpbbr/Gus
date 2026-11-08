@@ -1,7 +1,7 @@
 # Painel de serviços — Apto Copacabana
 
 **Atualizado em:** 2026-11-08
-**Estado:** 7 fornecedores pesquisados e mensagens preparadas para gás; nenhum orçamento recebido ou contratação confirmada neste arquivo.
+**Estado:** 7 contatos de gás preparados; pesquisa de sinteco com 17 candidatos brutos documentada; nenhum orçamento recebido ou contratação confirmada neste arquivo.
 
 > CUIDADO: repositório público. Não inserir endereço completo, números pessoais, fotos internas, comprovantes, contratos, propostas privadas, valores pessoais ou informações de segurança patrimonial. Guardar esses itens em local privado.
 
@@ -15,7 +15,8 @@
 |---|---|---|---:|---|
 | [Remanejamento de aquecedor a gás](servicos/gas/ORCAMENTO-GAS-2026-11-09.md) | **7 contatos preparados para 09/11; nenhum envio confirmado** | Abrir WhatsApp com mensagens prontas e solicitar visitas de viabilidade/segurança | 0 confirmados neste arquivo | 2026-11-08 |
 | Janela acústica | Em pesquisa; nenhuma contratação registrada | Comparar janela sobreposta versus substituição | 0 confirmados neste arquivo | 2026-11-08 |
-| Demais serviços 01–06 e 08–16 | MDs individuais criados; aguardam detalhamento e pedido de pesquisa | Atualizar o MD por número; não buscar fornecedores ainda | 0 confirmados neste arquivo | 2026-11-08 |
+| Restauração de tacos / sinteco (15) | Pesquisa concluída; 17 candidatos brutos, com possíveis nomes duplicados | Contatar fornecedores compatíveis com fosco base água, confirmar linha e marcar visita | 0 confirmados neste arquivo | 2026-11-08 |
+| Demais serviços 01–06, 08–14 e 16 | MDs individuais criados; aguardam detalhamento e pedido de pesquisa | Atualizar o MD por número | 0 confirmados neste arquivo | 2026-11-08 |
 
 *Os serviços acima são apenas categorias de pesquisa discutidas; não significam que orçamentos foram recebidos ou empresas contratadas.*
 
