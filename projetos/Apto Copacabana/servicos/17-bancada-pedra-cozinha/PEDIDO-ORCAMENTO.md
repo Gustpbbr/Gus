@@ -2,7 +2,7 @@
 
 **Identificador:** APTO-17  
 **Grupo:** J — Marmoraria / bancada de pedra  
-**Estado:** `aguardando-detalhamento` — novo serviço cadastrado; **sem material ou fornecedor escolhido**.  
+**Estado:** `links-prontos` — pesquisa de 10 marmorarias arquivada; **sem material ou fornecedor escolhido, sem mensagens enviadas**.  
 **Cadastro:** 2026-11-08.  
 **Localização geral:** Copacabana, RJ. Não incluir endereço específico em repositório público.
 
@@ -10,13 +10,14 @@
 
 - **Fornecimento, fabricação sob medida e instalação de uma bancada de pedra na cozinha**, em substituição à antiga bancada de cimento que será demolida pelo profissional do **serviço 08**.
 - **Orçamento independente** do serviço de demolição 08, da instalação de piso 09 e da troca de rejunte 10.
-- A cozinha foi informada com cerca de **1,50 × 2,00 m (área de piso 3 m²)**; **isso NÃO determina as medidas da bancada**, que exigem levantamento específico.
-- **Material ainda não escolhido**: comparar opções de pedra quando solicitado; não inferir seleção de granito, mármore, quartzo ou quartzito.
+- **Medidas da bancada CONFIRMADAS PELO USUÁRIO: 1,50 × 0,70 m (área superficial 1,05 m²), peça inteira, sem emenda.** Fazer medição final em obra antes da fabricação.
+- **Não adotar retalhos como estratégia de orçamento:** o usuário rejeitou explicitamente essa sugestão para 150 × 70 cm. Orçar peça única cortada sob medida.
+- **Material ainda não escolhido:** comparar granito e **quartzito natural**, especialmente Taj Mahal; sem decisão de aquisição.
 - Avaliar a relação da bancada com a pia/cuba, a lava-louças e o cooktop, conforme layout a confirmar.
 
 ## 2. Dados pendentes antes do orçamento definitivo
 
-- [ ] Comprimento, profundidade e espessura desejados da bancada.
+- [x] Comprimento e profundidade: **1,50 m × 0,70 m**, peça única. [ ] Espessura e bordas pendentes.
 - [ ] Material, cor e acabamento da pedra.
 - [ ] Medidas, tipo e posição da cuba; fornecimento ou reaproveitamento.
 - [ ] Medidas e posição do cooktop; furações, encaixe e acabamento necessários.
@@ -41,8 +42,9 @@ Pedir valor separado de material/fabricação, transporte, subida, instalação,
 
 ## 5. Pesquisa e decisões
 
-**Não pesquisado ainda como serviço independente.** Nenhuma marmoraria selecionada, nenhum material escolhido e nenhum valor recebido. Pesquisas exploratórias de modelos, materiais e fornecedores **não devem ser salvas sem pedido expresso**, conforme preferência do usuário.
+**Pesquisa arquivada por autorização expressa do usuário:** [10 marmorarias — quartzito, granito, links de contato e mensagem pronta](FORNECEDORES-MARMORARIAS-QUARTZITO-2026-11-08.md). Cobertura deliberadamente ampliada a todo o Rio e região metropolitana. **Nenhuma proposta recebida, material escolhido ou mensagem enviada.** Pesquisas novas só devem ser arquivadas mediante pedido expresso.
 
 ## Histórico
 
 - 2026-11-08 — Usuário pediu novo item de orçamento para instalação de bancada de pedra na cozinha. Criado como **17**, preservando números 01–16.
+- 2026-11-08 — Dimensões confirmadas: **1,50 × 0,70 m**, peça única. Comparar granito e quartzito natural, sem presumir retalhos. Pesquisa ampliada para todo o Rio de Janeiro e Grande Rio; 10 marmorarias arquivadas sob pedido expresso.
