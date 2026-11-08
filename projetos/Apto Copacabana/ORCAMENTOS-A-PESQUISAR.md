@@ -6,7 +6,7 @@
 
 ## Regra prioritária para novas conversas
 
-**O usuário pediu os arquivos iniciais antes da pesquisa de fornecedores.** Para serviços 01–06 e 08–16, **NÃO PESQUISAR EMPRESAS** até pedido expresso. Ao receber detalhes, **atualizar somente o(s) MD(s) correspondente(s)**, preservando numeração, status e decisões anteriores. Serviço **07 (gás)** já tem pesquisa e links prontos em arquivo separado.
+**O usuário pediu os arquivos iniciais antes da pesquisa de fornecedores.** Para serviços 02–06 e 08–16, **NÃO PESQUISAR EMPRESAS** até pedido expresso. O serviço 01 teve pesquisa autorizada em 2026-11-08, com 8 fornecedores e mensagens iniciais objetivas. Ao receber detalhes, **atualizar somente o(s) MD(s) correspondente(s)**, preservando numeração, status e decisões anteriores. Serviço **07 (gás)** já tem pesquisa e links prontos em arquivo separado.
 
 Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENTOS.md), esta lista e o arquivo do serviço desejado. Não presumir que o GitHub foi consultado sem acesso real pelo conector.
 
@@ -14,7 +14,7 @@ Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENT
 
 | Nº | Serviço | Grupo profissional | Documento | Estado | Fornecedores |
 |---:|---|---|---|---|---|
-| 01 | Reforma elétrica e quadro de disjuntores | A — Elétrica | [MD inicial](servicos/01-reforma-eletrica/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 01 | Reforma elétrica e quadro de disjuntores | A — Elétrica | [MD inicial](servicos/01-reforma-eletrica/PEDIDO-ORCAMENTO.md) | `links-prontos` | [8 fornecedores + WhatsApp](servicos/01-reforma-eletrica/FORNECEDORES-ELETRICA-2026-11-08.md) |
 | 02 | Substituição dos ventiladores de teto | A — Elétrica | [MD inicial](servicos/02-ventiladores-teto/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
 | 03 | Troca de espelhos de tomadas e interruptores | A — Elétrica | [MD inicial](servicos/03-espelhos-tomadas/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
 | 04 | Substituição da luminária da cozinha | A — Elétrica | [MD inicial](servicos/04-luminaria-cozinha/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
@@ -33,7 +33,7 @@ Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENT
 
 ## Grupos de contratação
 
-- **A — Elétrica:** 01, 02, 03, 04. Cotar pacote com serviços discriminados; adequação para lavadora 8 kg **não entra agora**.
+- **A — Elétrica:** 01, 02, 03, 04. Serviço 01 já pesquisado com 8 contatos; demais serviços aguardam pedido de busca. Cotar pacote com serviços discriminados; adequação para lavadora 8 kg **não entra agora**.
 - **B — Climatização:** 05. Instalador especializado em split.
 - **C — Acústica/esquadrias:** 06. Comparar substituição, segunda janela interna e alternativas.
 - **D — Gás:** 07. Empresa/gasista habilitado; pesquisa já concluída, mensagens prontas.
