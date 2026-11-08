@@ -6,7 +6,7 @@
 
 ## Regra prioritária para novas conversas
 
-**O usuário pediu os arquivos iniciais antes da pesquisa de fornecedores.** Para serviços 03–06 e 08–16, **NÃO PESQUISAR EMPRESAS** até pedido expresso. Os serviços 01 e 02 já foram pesquisados por solicitação do usuário. O serviço 01 teve pesquisa autorizada em 2026-11-08, com 8 fornecedores e mensagens iniciais objetivas. Ao receber detalhes, **atualizar somente o(s) MD(s) correspondente(s)**, preservando numeração, status e decisões anteriores. Serviço **07 (gás)** já tem pesquisa e links prontos em arquivo separado.
+**O usuário pediu os arquivos iniciais antes da pesquisa de fornecedores.** Para serviços 03–05 e 08–16, **NÃO PESQUISAR EMPRESAS** até pedido expresso. O serviço 06 teve busca de fornecedores autorizada em 2026-11-08. Os serviços 01 e 02 já foram pesquisados por solicitação do usuário. O serviço 01 teve pesquisa autorizada em 2026-11-08, com 8 fornecedores e mensagens iniciais objetivas. Ao receber detalhes, **atualizar somente o(s) MD(s) correspondente(s)**, preservando numeração, status e decisões anteriores. Serviço **07 (gás)** já tem pesquisa e links prontos em arquivo separado.
 
 Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENTOS.md), esta lista e o arquivo do serviço desejado. Não presumir que o GitHub foi consultado sem acesso real pelo conector.
 
@@ -19,7 +19,7 @@ Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENT
 | 03 | Troca de espelhos de tomadas e interruptores | A — Elétrica | [MD inicial](servicos/03-espelhos-tomadas/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
 | 04 | Substituição da luminária da cozinha | A — Elétrica | [MD inicial](servicos/04-luminaria-cozinha/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
 | 05 | Instalação de ar-condicionado split 18.000 BTU/h | B — Climatização | [MD inicial](servicos/05-ar-split-18000/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
-| 06 | Janela com isolamento acústico | C — Isolamento acústico | [MD inicial](servicos/06-janela-acustica/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 06 | Janela com isolamento acústico | C — Isolamento acústico | [MD inicial](servicos/06-janela-acustica/PEDIDO-ORCAMENTO.md) | `links-prontos` | [8 empresas para cotação](servicos/06-janela-acustica/FORNECEDORES-JANELAS-2026-11-08.md) |
 | 07 | Remanejamento do aquecedor a gás | D — Gás | [MD inicial](servicos/gas/PEDIDO-ORCAMENTO.md) | `links-prontos` | [7 contatos já preparados](servicos/gas/ORCAMENTO-GAS-2026-11-09.md) |
 | 08 | Demolição da bancada de cimento da cozinha | E — Pedreiro / acabamentos civis | [MD inicial](servicos/08-demolicao-bancada-cozinha/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
 | 09 | Instalação de piso na cozinha | E — Pedreiro / acabamentos civis | [MD inicial](servicos/09-piso-cozinha/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
