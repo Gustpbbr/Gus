@@ -45,7 +45,7 @@ Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENT
 | 10 | Substituição do rejunte dos azulejos da cozinha | E — Pedreiro / acabamentos civis | [Grupo E (item 10)](grupos/GRUPO-E-OBRA-CIVIL-COZINHA.md#servico-10) | `aguardando-pesquisa` | Sem pesquisa |
 | 11 | Retirar bidê e adaptar banheiro para lavadora Brastemp 8 kg | F — Hidráulica do banheiro | [Grupo F (item 11)](grupos/GRUPO-F-HIDRAULICA-BANHEIRO.md#servico-11) | `aguardando-pesquisa` | Sem pesquisa |
 | 12 | Substituição da pia do banheiro | F — Hidráulica do banheiro | [Grupo F (item 12)](grupos/GRUPO-F-HIDRAULICA-BANHEIRO.md#servico-12) | `aguardando-pesquisa` | Sem pesquisa |
-| 13 | Pintura das paredes do apartamento | G — Pintura | [Grupo G (item 13)](grupos/GRUPO-G-PINTURA.md#servico-13) | `aguardando-pesquisa` | Sem pesquisa |
+| 13 | Pintura das paredes do apartamento | G — Pintura | [Grupo G (item 13)](grupos/GRUPO-G-PINTURA.md#servico-13) | `links-prontos` | [7 contatos e WhatsApps](grupos/FORNECEDORES-PINTURA-ITEM-13-2026-11-08.md); não enviados |
 | 14 | Pintura dos azulejos do banheiro | G — Pintura | [Grupo G (item 14)](grupos/GRUPO-G-PINTURA.md#servico-14) | `aguardando-pesquisa` | Sem pesquisa |
 | 15 | Restauração do piso de madeira / sinteco | H — Piso de madeira | [MD inicial](servicos/15-sinteco-piso-madeira/PEDIDO-ORCAMENTO.md) | `pesquisa-concluida` | [17 candidatos identificados](servicos/15-sinteco-piso-madeira/PESQUISA-FORNECEDORES-2026-11-08.md); checar homônimos |
 | 16 | Instalação de papel de parede | I — Papel de parede | [MD inicial](servicos/16-papel-parede/PEDIDO-ORCAMENTO.md) | `links-prontos` | [11 candidatos e links de WhatsApp](servicos/16-papel-parede/FORNECEDORES-PAPEL-PAREDE-2026-11-08.md); nenhuma mensagem enviada |
