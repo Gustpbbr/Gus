@@ -3,6 +3,10 @@
 **Versão:** 1.0 · **Data:** 2026-11-08  
 **Objetivo:** permitir que outra conversa do ChatGPT retome este trabalho consultando arquivos concretos no GitHub, sem depender do histórico do chat original.
 
+## Atualização operacional — Serviço 06 PESQUISADO em 2026-11-08
+
+Pesquisa de **8 empresas de janelas acústicas**, autorizada pelo usuário, sem medidas disponíveis. [Contatos/WhatsApps](servicos/06-janela-acustica/FORNECEDORES-JANELAS-2026-11-08.md), com mensagem de primeiro contato curta: comparar troca da janela com segunda janela interna, avaliar visita e custo. Instagram identificado apenas quando vinculado a fonte; nenhum contato enviado. Sem decisão de modelo ou fornecedor.
+
 ## Atualização operacional — Serviço 02 PESQUISADO em 2026-11-08
 
 O usuário informou que **os ventiladores novos ainda serão escolhidos** e pediu busca de instaladores, inclusive Instagram. Foram encontrados **7 fornecedores**, listados em [FORNECEDORES-VENTILADORES-2026-11-08.md](servicos/02-ventiladores-teto/FORNECEDORES-VENTILADORES-2026-11-08.md); WhatsApp com mensagem curta para retirar ventiladores antigos e instalar novos, com preço por unidade. Instagram verificado indiretamente apenas para O Rei dos Reparos; não inventar perfis. **Nenhuma mensagem enviada.**
