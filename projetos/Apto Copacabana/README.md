@@ -38,6 +38,10 @@ Quando o usuário pedir **"preciso fazer orçamentos"** ou outro serviço para o
 | [DECISOES.md](DECISOES.md) | Registro de escolhas com data, motivo e estado. |
 | [PRIVACIDADE.md](PRIVACIDADE.md) | Regras de segurança para o segundo cérebro do apartamento. |
 
+## Critério de seleção de profissionais
+
+Valorizar principalmente competência técnica, experiência com o serviço específico, portfólio de obras reais, disponibilidade para visita e clareza da proposta. **Não excluir empresas pequenas ou profissionais independentes por poucas avaliações ou ausência de Instagram**. Porte, avaliações e presença nas redes são apenas sinais complementares, não ranqueamento automático.
+
 ## Padrão de comunicação dos pedidos de orçamento
 
 O usuário prefere mensagens de WhatsApp **cordiais, pessoais e naturais**, em vez de textos secos ou impessoais. Aplicar a **todos os serviços** desta pasta, inclusive aos futuros.
