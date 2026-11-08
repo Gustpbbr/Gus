@@ -9,13 +9,14 @@
 
 ## Regra de consulta prioritária
 
-Se o usuário pedir **"quero o orçamento pro gás"**, **"orçamento do gás"**, **"manda os gasistas"** ou expressão equivalente, **não iniciar uma pesquisa nova**: abrir primeiro o arquivo preparado indicado na tabela e apresentar diretamente os links estáticos `wa.me` com o texto já preenchido, juntamente com os sites e Instagram quando disponíveis.
+Quando o usuário pedir orçamento de **serviço já listado abaixo**, especialmente **"orçamento do split"**, **"instaladores de ar-condicionado"**, **"serviço 05"** ou **"orçamento do gás"**, **não iniciar uma pesquisa nova**. Abrir o arquivo preparado e apresentar os links `wa.me`, personalizando a mensagem privadamente quando necessário. O envio é sempre manual do usuário.
 
 Qualquer conversa nova do ChatGPT precisa efetivamente buscar este arquivo pelo conector GitHub; o GitHub não dispara consultas sozinho. Se o conector não estiver disponível, informar em vez de fingir que leu o arquivo.
 
 | Gatilho e serviço | Arquivo preparado | Quantidade | Situação | Data da pesquisa |
 |---|---|---:|---|---|
 | Janela acústica / serviço 06 | [FORNECEDORES-JANELAS-2026-11-08.md](servicos/06-janela-acustica/FORNECEDORES-JANELAS-2026-11-08.md) | 8 | Avaliação presencial sem medidas; 2 alternativas; nenhum envio confirmado | 2026-11-08 |
+| Instalação de split / ar-condicionado / serviço 05 | [FORNECEDORES-INSTALACAO-SPLIT-2026-11-08.md](servicos/05-ar-split-18000/FORNECEDORES-INSTALACAO-SPLIT-2026-11-08.md) | 13 candidatos (11 contatos preparados, 2 em triagem) | Mensagens genéricas e links codificados; personalizar em chat; 0 envios confirmados | 2026-11-08 |
 | Ventiladores de teto / serviço 02 | [FORNECEDORES-VENTILADORES-2026-11-08.md](servicos/02-ventiladores-teto/FORNECEDORES-VENTILADORES-2026-11-08.md) | 7 | Links prontos; modelos ainda não escolhidos; nenhum envio confirmado | 2026-11-08 |
 | Elétrica / serviço 01 / quadro / fiação / 220 V | [FORNECEDORES-ELETRICA-2026-11-08.md](servicos/01-reforma-eletrica/FORNECEDORES-ELETRICA-2026-11-08.md) | 8 | Pesquisa concluída, links com mensagem genérica curta; nenhum envio confirmado | 2026-11-08 |
 | Gás / gasista / aquecedor | [ORCAMENTO-GAS-2026-11-09.md](servicos/gas/ORCAMENTO-GAS-2026-11-09.md) | 7 | Pronto para abertura manual de WhatsApp; nenhum envio confirmado | 2026-11-08 |
