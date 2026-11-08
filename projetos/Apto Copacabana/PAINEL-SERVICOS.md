@@ -1,7 +1,7 @@
 # Painel de serviços — Apto Copacabana
 
 **Atualizado em:** 2026-11-08
-**Estado:** modelo inicial, sem orçamentos ou fornecedores registrados como confirmados.
+**Estado:** 7 fornecedores pesquisados e mensagens preparadas para gás; nenhum orçamento recebido ou contratação confirmada neste arquivo.
 
 > CUIDADO: repositório público. Não inserir endereço completo, números pessoais, fotos internas, comprovantes, contratos, propostas privadas, valores pessoais ou informações de segurança patrimonial. Guardar esses itens em local privado.
 
@@ -9,7 +9,7 @@
 
 | Serviço | Estado | Próximo passo | Orçamentos recebidos | Revisão |
 |---|---|---|---:|---|
-| Remanejamento de aquecedor a gás | Em pesquisa; nenhuma contratação registrada | Solicitar avaliações presenciais de viabilidade e segurança | 0 confirmados neste arquivo | 2026-11-08 |
+| [Remanejamento de aquecedor a gás](servicos/gas/ORCAMENTO-GAS-2026-11-09.md) | **7 contatos preparados para 09/11; nenhum envio confirmado** | Abrir WhatsApp com mensagens prontas e solicitar visitas de viabilidade/segurança | 0 confirmados neste arquivo | 2026-11-08 |
 | Janela acústica | Em pesquisa; nenhuma contratação registrada | Comparar janela sobreposta versus substituição | 0 confirmados neste arquivo | 2026-11-08 |
 | Outros serviços do apartamento | A definir | Descrever escopo e requisitos | 0 | 2026-11-08 |
 
