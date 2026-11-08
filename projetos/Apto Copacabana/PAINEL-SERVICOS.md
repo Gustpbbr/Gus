@@ -13,6 +13,7 @@
 
 | Serviço | Estado | Próximo passo | Orçamentos recebidos | Revisão |
 |---|---|---|---:|---|
+| [Ventiladores — serviço 02](servicos/02-ventiladores-teto/PEDIDO-ORCAMENTO.md) | **7 fornecedores pesquisados; modelos ainda serão escolhidos** | [WhatsApp e contatos preparados](servicos/02-ventiladores-teto/FORNECEDORES-VENTILADORES-2026-11-08.md); aguarda envio manual | 0 confirmados | 2026-11-08 |
 | [Reforma elétrica — serviço 01](servicos/01-reforma-eletrica/PEDIDO-ORCAMENTO.md) | **8 contatos pesquisados; mensagem de abertura curta** | [Sites e WhatsApp preparados](servicos/01-reforma-eletrica/FORNECEDORES-ELETRICA-2026-11-08.md), aguardando envio manual | 0 confirmados | 2026-11-08 |
 | [Remanejamento de aquecedor a gás](servicos/gas/ORCAMENTO-GAS-2026-11-09.md) | **7 contatos preparados para 09/11; nenhum envio confirmado** | Abrir WhatsApp com mensagens prontas e solicitar visitas de viabilidade/segurança | 0 confirmados neste arquivo | 2026-11-08 |
 | Janela acústica | Em pesquisa; nenhuma contratação registrada | Comparar janela sobreposta versus substituição | 0 confirmados neste arquivo | 2026-11-08 |
