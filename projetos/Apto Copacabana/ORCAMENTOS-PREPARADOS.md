@@ -15,6 +15,7 @@ Qualquer conversa nova do ChatGPT precisa efetivamente buscar este arquivo pelo 
 
 | Gatilho e serviço | Arquivo preparado | Quantidade | Situação | Data da pesquisa |
 |---|---|---:|---|---|
+| Persiana rolô blackout / guias laterais / quarto / serviço 18 | [FORNECEDORES-PERSIANA-BLACKOUT-2026-11-08.md](servicos/18-persiana-rolo-blackout-guias-laterais/FORNECEDORES-PERSIANA-BLACKOUT-2026-11-08.md) | 9 candidatos (7 WhatsApps, 2 pendências) | Referência @astraledecor, quarto; mensagem genérica pronta; 0 envios; confirmar medidas e guias em cada fornecedor | 2026-11-08 |
 | Bancada de pedra / marmorarias / quartzito / serviço 17 | [FORNECEDORES-MARMORARIAS-QUARTZITO-2026-11-08.md](servicos/17-bancada-pedra-cozinha/FORNECEDORES-MARMORARIAS-QUARTZITO-2026-11-08.md) | 10 candidatos (9 telefones, 1 site) | Bancada 150 × 70 cm, peça única; granito e quartzito natural; WhatsApps genéricos prontos; 0 envios | 2026-11-08 |
 | Pintura das paredes / pintores / serviço 13 | [FORNECEDORES-PINTURA-ITEM-13-2026-11-08.md](grupos/FORNECEDORES-PINTURA-ITEM-13-2026-11-08.md) | 7 contatos | Mensagens iniciais curtas prontas para 09/11; banheiro por dentro e papel de parede excluídos; nenhum envio confirmado | 2026-11-08 |
 | Papel de parede / instaladores / serviço 16 | [FORNECEDORES-PAPEL-PAREDE-2026-11-08.md](servicos/16-papel-parede/FORNECEDORES-PAPEL-PAREDE-2026-11-08.md) | 11 candidatos | Links com mensagem genérica já preparada; sem envio, sem orçamento; confirmar aplicação avulsa e tipo de papel | 2026-11-08 |
