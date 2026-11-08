@@ -19,6 +19,14 @@
 - Comparar opções de acabamento (incluindo base água quando tecnicamente compatível), cheiro, prazo de cura e durabilidade.
 - Programar após demolição e intervenções que produzam poeira.
 
+## 2.1. Preferência atual de acabamento — conversa de 2026-11-08
+
+- **Preferência em avaliação:** verniz **fosco à base de água** com **tonalidade natural quente** (mel/castanho suave), sem efeito vitrificado intenso.
+- Cotar alternativas **monocomponente residencial** e **bicomponente de maior resistência**, identificando marca/linha e eventual selador ou primer para realçar a tonalidade.
+- Considerar cotação de sinteco tradicional **separada**, para comparação de preço e acabamento.
+- Na inspeção prévia, verificar sinais de cupim, broca ou peças ocas. **Verniz não é tratamento antitérmitas.** Eventual controle de pragas deve ser avaliado tecnicamente e orçado em separado, antes do acabamento, quando indicado.
+- Comunicações futuras devem começar cordialmente com "Olá, tudo bem? Meu nome é [NOME]. Gostaria de solicitar um orçamento...", seguindo o protocolo geral. Os dados pessoais e a rua da obra só entram na mensagem privada ao fornecedor, não neste repositório público.
+
 ## 3. Informações a detalhar
 
 - [ ] Área exata, tipo de madeira e estado do taco.
