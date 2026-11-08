@@ -5,7 +5,7 @@
 ## Como usar amanhã (09/11)
 
 1. **Abrir este arquivo, sem refazer pesquisa.** Priorizar JL, VentAR, Fixmaster, Split Rio, LG Mark, Rei do Ar Condicionado, PH TEC e JFX, sem excluir os demais.
-2. Para montar links para o usuário, substituir **[NOME]** pela identificação informada e, na conversa privada, personalizar **Rua Bolívar, Copacabana** (essa rua não está embutida em nenhum link público salvo aqui). O WhatsApp inicia pela frase educada: *"Olá, tudo bem? Meu nome é ... Gostaria de solicitar um orçamento..."*. Pedir visita e **custo da visita**; não enviar checklist técnico pesado no primeiro contato.
+2. Para montar links para o usuário, substituir **[NOME]** pela identificação informada e, na conversa privada, acrescentar a rua autorizada pelo usuário (a rua não está embutida em nenhum link público salvo aqui). O WhatsApp inicia pela frase educada: *"Olá, tudo bem? Meu nome é ... Gostaria de solicitar um orçamento..."*. Pedir visita e **custo da visita**; não enviar checklist técnico pesado no primeiro contato.
 3. Os links com texto deste arquivo **já estão funcionalmente codificados (UTF-8, somente dígitos no número)**, mas contêm [NOME] e localização genérica para não divulgar informações pessoais no repositório público. Amanhã, apresentar ao usuário links finais personalizados na conversa.
 4. Alguns números são telefones de diretório, **não WhatsApp confirmado**. Diferenciar a situação por empresa; os números 03 e 04 ainda exigem validação de identidade, portanto não têm links pré-preenchidos.
 5. Nenhum envio é automático: apenas o usuário pressiona Enviar.
