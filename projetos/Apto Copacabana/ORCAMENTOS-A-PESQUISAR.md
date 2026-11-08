@@ -1,12 +1,12 @@
 # Lista numerada de serviços a orçar — Apto Copacabana
 
 **Atualização:** 2026-11-08.  
-**Base:** os 16 serviços definidos pelo usuário na conversa de 2026-11-08.  
-**Regra:** número estável **01 a 16**; tratar cada serviço pelo número ou título, em qualquer nova conversa.
+**Base:** 16 serviços iniciais e item 17 adicionado pelo usuário em 2026-11-08.  
+**Regra:** número estável **01 a 17**; tratar cada serviço pelo número ou título, em qualquer nova conversa.
 
 ## Regra prioritária para novas conversas
 
-**O usuário pediu os arquivos iniciais antes da pesquisa de fornecedores.** Para serviços 03–04, 08–14 e 16, **NÃO PESQUISAR EMPRESAS** até pedido expresso. O serviço 05 teve pesquisa autorizada e arquivada em 2026-11-08. O serviço 06 teve busca de fornecedores autorizada em 2026-11-08. Os serviços 01 e 02 já foram pesquisados por solicitação do usuário. O serviço 01 teve pesquisa autorizada em 2026-11-08, com 8 fornecedores e mensagens iniciais objetivas. Ao receber detalhes, **atualizar somente o(s) MD(s) correspondente(s)**, preservando numeração, status e decisões anteriores. Serviço **07 (gás)** já tem pesquisa e links prontos em arquivo separado.
+**O usuário pediu os arquivos iniciais antes da pesquisa de fornecedores.** Para serviços ainda sem pesquisa, inclusive **17**, NÃO PESQUISAR EMPRESAS até pedido expresso. O usuário autorizou pesquisa dos serviços **08–10** em 2026-11-08 (resultado ainda a relatar), mas isso não autoriza pesquisa/contratação de marmoraria para 17. O serviço 05 teve pesquisa autorizada e arquivada em 2026-11-08. O serviço 06 teve busca de fornecedores autorizada em 2026-11-08. Os serviços 01 e 02 já foram pesquisados por solicitação do usuário. O serviço 01 teve pesquisa autorizada em 2026-11-08, com 8 fornecedores e mensagens iniciais objetivas. Ao receber detalhes, **atualizar somente o(s) MD(s) correspondente(s)**, preservando numeração, status e decisões anteriores. Serviço **07 (gás)** já tem pesquisa e links prontos em arquivo separado.
 
 Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENTOS.md), esta lista e o arquivo do serviço desejado. Não presumir que o GitHub foi consultado sem acesso real pelo conector.
 
@@ -30,6 +30,7 @@ Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENT
 | 14 | Pintura dos azulejos do banheiro | G — Pintura | [MD inicial](servicos/14-pintura-azulejos-banheiro/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
 | 15 | Restauração do piso de madeira / sinteco | H — Piso de madeira | [MD inicial](servicos/15-sinteco-piso-madeira/PEDIDO-ORCAMENTO.md) | `pesquisa-concluida` | [17 candidatos identificados](servicos/15-sinteco-piso-madeira/PESQUISA-FORNECEDORES-2026-11-08.md); checar homônimos |
 | 16 | Instalação de papel de parede | I — Papel de parede | [MD inicial](servicos/16-papel-parede/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 17 | Fornecimento e instalação de bancada de pedra na cozinha | J — Marmoraria | [MD inicial](servicos/17-bancada-pedra-cozinha/PEDIDO-ORCAMENTO.md) | `aguardando-detalhamento` | Sem pesquisa específica |
 
 ## Grupos de contratação
 
@@ -42,6 +43,7 @@ Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENT
 - **G — Pintura:** 13, 14. Diferenciar tinta de parede de sistema para azulejos/áreas molhadas.
 - **H — Madeira/sinteco:** 15. Especialista em piso de madeira.
 - **I — Papel de parede:** 16. Pode ter sinergia com pintura, se profissional capacitado.
+- **J — Marmoraria / pedra:** 17. Bancada nova na cozinha; cotação separada da demolição de cimento (08).
 
 ## Atualização fundamental do serviço 11 — 2026-11-08
 
