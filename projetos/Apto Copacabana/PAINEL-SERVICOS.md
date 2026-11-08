@@ -5,6 +5,8 @@
 
 > CUIDADO: repositório público. Não inserir endereço completo, números pessoais, fotos internas, comprovantes, contratos, propostas privadas, valores pessoais ou informações de segurança patrimonial. Guardar esses itens em local privado.
 
+**Fila de novos serviços:** [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md). Os novos MDs individuais serão criados conforme o usuário enviar a lista; por enquanto não pesquisar fornecedores. Ver [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENTOS.md).
+
 ## Painel de acompanhamento
 
 | Serviço | Estado | Próximo passo | Orçamentos recebidos | Revisão |
