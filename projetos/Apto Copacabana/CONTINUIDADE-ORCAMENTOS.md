@@ -3,6 +3,10 @@
 **Versão:** 1.0 · **Data:** 2026-11-08  
 **Objetivo:** permitir que outra conversa do ChatGPT retome este trabalho consultando arquivos concretos no GitHub, sem depender do histórico do chat original.
 
+## Pesquisa de pintores (item 13) salva para contato em 2026-11-09
+
+Por pedido explícito do usuário, a pesquisa de **7 contatos** da pintura de paredes foi registrada em [FORNECEDORES-PINTURA-ITEM-13-2026-11-08.md](grupos/FORNECEDORES-PINTURA-ITEM-13-2026-11-08.md), com links WhatsApp e mensagem curta genérica. O grupo G continua consolidando 13 (paredes) e 14 (azulejos do banheiro), mas **a busca atual refere-se só ao 13**, sem pintura interna do banheiro nem papel de parede. Todos os envios estão pendentes e dependem do usuário. Não pesquisar de novo quando solicitar esses contatos; abrir o arquivo.
+
 ## Prioridade máxima: estrutura consolidada por grupos (2026-11-08)
 
 O usuário pediu para **juntar MDs irmãos**. Abrir [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md), que é o índice oficial e aponta para os **documentos canônicos por grupo**. Os conjuntos **01–04 (elétrica)**, **08–10 (pedreiro)**, **11–12 (hidráulica)** e **13–14 (pintura)** agora são MDs consolidados em `grupos/`. Os antigos `servicos/<slug>/PEDIDO-ORCAMENTO.md` ficaram apenas como **atalhos** para preservar links, portanto **não inserir novo detalhamento neles**. Sempre editar o MD do grupo com o item numerado correspondente. Os demais 05, 06, 07, 15, 16 e 17 continuam com MDs individuais por serem especialidades distintas. A nova bancada de pedra **17** fica com marmoraria, orçamento separado do pedreiro (08–10).
