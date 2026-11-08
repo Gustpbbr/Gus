@@ -53,9 +53,9 @@ Outras linhas identificadas: WEG Composé, Schneider Miluz, Simon S19, Fame Evid
 - Preço por ponto, diferença entre fornecimento de material e instalação.
 - Confirmar atendimento em Copacabana, possibilidade e custo de visita técnica, prazo, materiais, garantia e condições de pagamento.
 
-## 5. Pesquisa de fornecedores
+## 5. Pesquisa de modelos e fornecedores
 
-**Estado:** pesquisa NÃO INICIADA por pedido do usuário. Não cadastrar fornecedores, telefones, sites ou Instagram antes da próxima etapa.
+**Pesquisa de materiais:** [PESQUISA-MODELOS-2026-11-08.md](PESQUISA-MODELOS-2026-11-08.md) — linhas, preços de referência, segurança, links de fabricantes e pontos a contar. Modelos ainda não escolhidos. **Não foi realizada pesquisa de prestadores de serviço** nesta etapa; nenhum fornecedor contatado.
 
 ## 6. Preparação de contato e orçamento
 
