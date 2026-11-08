@@ -15,6 +15,7 @@ Qualquer conversa nova do ChatGPT precisa efetivamente buscar este arquivo pelo 
 
 | Gatilho e serviço | Arquivo preparado | Quantidade | Situação | Data da pesquisa |
 |---|---|---:|---|---|
+| Elétrica / serviço 01 / quadro / fiação / 220 V | [FORNECEDORES-ELETRICA-2026-11-08.md](servicos/01-reforma-eletrica/FORNECEDORES-ELETRICA-2026-11-08.md) | 8 | Pesquisa concluída, links com mensagem genérica curta; nenhum envio confirmado | 2026-11-08 |
 | Gás / gasista / aquecedor | [ORCAMENTO-GAS-2026-11-09.md](servicos/gas/ORCAMENTO-GAS-2026-11-09.md) | 7 | Pronto para abertura manual de WhatsApp; nenhum envio confirmado | 2026-11-08 |
 
 | Sinteco / tacos / piso madeira (serviço 15) | [PESQUISA-FORNECEDORES-2026-11-08.md](servicos/15-sinteco-piso-madeira/PESQUISA-FORNECEDORES-2026-11-08.md) | 17 candidatos | Pesquisa concluída; fontes públicas, contatos e modelos WhatsApp; personalização privada antes do envio; homônimos a conferir | 2026-11-08 |
