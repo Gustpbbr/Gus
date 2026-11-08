@@ -3,6 +3,8 @@
 **Última atualização:** 2026-11-08.
 **Localização genérica:** Copacabana, Rio de Janeiro. Não armazenar endereço completo neste repositório público.
 
+**Atenção:** este índice guarda apenas pesquisas concluídas, com fornecedores e WhatsApp já preparados. Os serviços que o usuário está apenas listando ficam em [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md), conforme [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENTOS.md). Não iniciar pesquisa ao registrar um item novo.
+
 ## Regra de consulta prioritária
 
 Se o usuário pedir **"quero o orçamento pro gás"**, **"orçamento do gás"**, **"manda os gasistas"** ou expressão equivalente, **não iniciar uma pesquisa nova**: abrir primeiro o arquivo preparado indicado na tabela e apresentar diretamente os links estáticos `wa.me` com o texto já preenchido, juntamente com os sites e Instagram quando disponíveis.
