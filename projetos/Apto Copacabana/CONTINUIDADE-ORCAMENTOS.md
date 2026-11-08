@@ -3,9 +3,15 @@
 **Versão:** 1.0 · **Data:** 2026-11-08  
 **Objetivo:** permitir que outra conversa do ChatGPT retome este trabalho consultando arquivos concretos no GitHub, sem depender do histórico do chat original.
 
+## Atualização operacional — Serviço 01 PESQUISADO em 2026-11-08
+
+A pedido expresso do usuário, foram localizados **8 fornecedores** para reforma elétrica. Sites e números, perfil da especialidade, notas de verificação e links WhatsApp com primeiro contato **curto e cordial** estão em [FORNECEDORES-ELETRICA-2026-11-08.md](servicos/01-reforma-eletrica/FORNECEDORES-ELETRICA-2026-11-08.md). O detalhamento técnico permanece em [PEDIDO-ORCAMENTO.md](servicos/01-reforma-eletrica/PEDIDO-ORCAMENTO.md). Nenhum envio ou resposta confirmado.
+
+**Regra crucial:** mensagens iniciais de TODOS os serviços devem ser breves. Não incluir checklist técnico extenso no primeiro WhatsApp; deixar análise técnica para vistoria/etapa posterior.
+
 ## Atualização operacional — lista inicial já recebida em 2026-11-08
 
-**O usuário enviou e autorizou a criação dos 16 MDs iniciais.** Eles estão indexados em [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md), numerados 01–16. Não criar itens duplicados ao reabrir a conversa. **Agora o próximo passo é enriquecer o detalhamento de cada item, um por vez, sem pesquisar fornecedores até ordem expressa.**
+**O usuário enviou e autorizou a criação dos 16 MDs iniciais.** Eles estão indexados em [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md), numerados 01–16. Não criar itens duplicados ao reabrir a conversa. **Agora o próximo passo é enriquecer os itens ainda sem pesquisa, um por vez. Serviço 01 já foi pesquisado por ordem expressa; os demais exigem pedido específico.**
 
 **Correção mais recente:** serviço 11 prevê **máquina de lavar convencional Brastemp de 8 kg (não lava e seca)**. A adequação elétrica específica está postergada; esta etapa trata apenas de retirada do bidê e preparação hidráulica/esgoto. O serviço 01 também exclui a lavadora desta fase.
 
