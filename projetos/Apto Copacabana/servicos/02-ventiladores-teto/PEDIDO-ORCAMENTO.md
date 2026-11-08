@@ -22,6 +22,7 @@
 ## 3. Informações a detalhar
 
 - [ ] Quantidade, modelos e locais dos ventiladores; itens a comprar.
+- [x] Pesquisa preliminar de 8 modelos concluída sem compra. [Comparativo de modelos](MODELOS-VENTILADORES-2026-11-08.md).
 - [ ] Necessidade de reforço ou reparos no teto.
 
 ## 4. Critérios para solicitar orçamento (fase futura)
@@ -45,6 +46,7 @@
 
 ## 8. Histórico
 
+- 2026-11-08 — Levantados oito modelos, preços de fabricante e shortlist inicial, sem escolha ou compra; consultar MODELOS-VENTILADORES-2026-11-08.md.
 - 2026-11-08 — Pesquisa autorizada: 7 empresas e profissionais, 7 links de WhatsApp preparados; modelos de ventiladores ainda serão escolhidos.
 - 2026-11-08 — Criado o MD inicial com numeração fixa. Sem nova pesquisa de fornecedores.
 
