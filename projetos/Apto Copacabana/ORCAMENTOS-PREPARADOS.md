@@ -3,7 +3,7 @@
 **Última atualização:** 2026-11-08.
 **Localização genérica:** Copacabana, Rio de Janeiro. Não armazenar endereço completo neste repositório público.
 
-**Lista completa dos 16 serviços e MDs iniciais:** [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md). Serviço 11: lavadora Brastemp convencional 8 kg, elétrica específica adiada.
+**Lista completa dos 17 serviços e MDs iniciais:** [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md). Serviço 11: lavadora Brastemp convencional 8 kg, elétrica específica adiada.
 
 **Atenção:** este índice guarda apenas pesquisas concluídas, com fornecedores e WhatsApp já preparados. Os serviços que o usuário está apenas listando ficam em [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md), conforme [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENTOS.md). Não iniciar pesquisa ao registrar um item novo.
 
@@ -15,6 +15,7 @@ Qualquer conversa nova do ChatGPT precisa efetivamente buscar este arquivo pelo 
 
 | Gatilho e serviço | Arquivo preparado | Quantidade | Situação | Data da pesquisa |
 |---|---|---:|---|---|
+| Bancada de pedra / marmorarias / quartzito / serviço 17 | [FORNECEDORES-MARMORARIAS-QUARTZITO-2026-11-08.md](servicos/17-bancada-pedra-cozinha/FORNECEDORES-MARMORARIAS-QUARTZITO-2026-11-08.md) | 10 candidatos (9 telefones, 1 site) | Bancada 150 × 70 cm, peça única; granito e quartzito natural; WhatsApps genéricos prontos; 0 envios | 2026-11-08 |
 | Pintura das paredes / pintores / serviço 13 | [FORNECEDORES-PINTURA-ITEM-13-2026-11-08.md](grupos/FORNECEDORES-PINTURA-ITEM-13-2026-11-08.md) | 7 contatos | Mensagens iniciais curtas prontas para 09/11; banheiro por dentro e papel de parede excluídos; nenhum envio confirmado | 2026-11-08 |
 | Papel de parede / instaladores / serviço 16 | [FORNECEDORES-PAPEL-PAREDE-2026-11-08.md](servicos/16-papel-parede/FORNECEDORES-PAPEL-PAREDE-2026-11-08.md) | 11 candidatos | Links com mensagem genérica já preparada; sem envio, sem orçamento; confirmar aplicação avulsa e tipo de papel | 2026-11-08 |
 | Janela acústica / serviço 06 | [FORNECEDORES-JANELAS-2026-11-08.md](servicos/06-janela-acustica/FORNECEDORES-JANELAS-2026-11-08.md) | 8 | Avaliação presencial sem medidas; 2 alternativas; nenhum envio confirmado | 2026-11-08 |
