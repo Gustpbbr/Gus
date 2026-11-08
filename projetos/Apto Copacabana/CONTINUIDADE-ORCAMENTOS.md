@@ -49,7 +49,7 @@ Se o usuário disser:
 
 ## Estados por serviço
 
-`a-detalhar` → `aguardando-pesquisa` → `pesquisa-em-andamento` → `links-prontos` → `mensagens-enviadas-pelo-usuario` → `aguardando-respostas` → `orcamentos-recebidos` → `comparacao` → `contratado` → `concluido`.
+`a-detalhar` → `aguardando-pesquisa` → `pesquisa-em-andamento` → `pesquisa-concluida` (levantamento de contatos públicos, possível personalização privada pendente) → `links-prontos` → `mensagens-enviadas-pelo-usuario` → `aguardando-respostas` → `orcamentos-recebidos` → `comparacao` → `contratado` → `concluido`.
 
 Também podem existir `pausado`, `cancelado` ou `indisponivel`.
 
