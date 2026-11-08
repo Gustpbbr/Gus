@@ -56,6 +56,12 @@ Se não for possível verificar um site, marcar "site não confirmado"; se só h
 
 ## 4. Mensagem de orçamento
 
+**Tom obrigatório em todos os serviços:** as mensagens destinadas ao WhatsApp devem ser educadas, naturais e pessoais. Começar com "Olá, tudo bem? Meu nome é [NOME]. Gostaria de solicitar um orçamento..." e terminar com agradecimento. Substituir [NOME] somente no texto final da conversa com o usuário, quando autorizado. O local de execução pode indicar **bairro e rua** no WhatsApp privado quando explicitamente autorizado pelo usuário, mas a versão gravada neste GitHub público deve preservar apenas localização genérica (Copacabana/RJ), sem rua específica ou dados pessoais.
+
+**Não usar a abertura seca "Olá! Quero orçamento..."** nem textos que soem como formulário. Manter, porém, todas as questões técnicas essenciais em linguagem cordial e concisa.
+
+
+
 Elaborar mensagem única, curta e objetiva, adaptada ao serviço. Perguntar:
 - disponibilidade e atendimento em Copacabana;
 - visita técnica presencial e custo da visita;
