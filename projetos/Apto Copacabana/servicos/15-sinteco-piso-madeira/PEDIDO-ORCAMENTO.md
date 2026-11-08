@@ -2,7 +2,7 @@
 
 **Identificador:** APTO-15  
 **Grupo:** H — Piso de madeira  
-**Estado:** `aguardando-pesquisa`  
+**Estado:** `pesquisa-concluida`  
 **Criado/atualizado em:** 2026-11-08  
 **Origem:** solicitação e correções explícitas do usuário; requisitos adicionais de planejamento são indicativos e devem ser confirmados.  
 **Localização:** Copacabana, Rio de Janeiro (sem endereço exato neste repositório público).
@@ -40,11 +40,11 @@
 
 ## 5. Pesquisa de fornecedores
 
-**Estado:** pesquisa NÃO INICIADA por pedido do usuário. Não cadastrar fornecedores, telefones, sites ou Instagram antes da próxima etapa.
+**Estado:** pesquisa ampliada de fornecedores documentada em [PESQUISA-FORNECEDORES-2026-11-08.md](PESQUISA-FORNECEDORES-2026-11-08.md), com 17 candidatos, critérios técnicos e canais de contato públicos. Comparar identidade de nomes semelhantes antes de contar como empresas independentes.
 
 ## 6. Preparação de contato e orçamento
 
-**Mensagem de WhatsApp:** ainda não preparada; redigir após detalhamento técnico e pesquisa de fornecedores. **Nenhuma mensagem enviada.**
+**Mensagem de WhatsApp:** modelo cordial e links de contato público documentados na pesquisa; personalização com os dados do cliente somente na conversa privada. **Nenhuma mensagem enviada.**
 
 ## 7. Possíveis pacotes / interdependências
 
