@@ -40,7 +40,7 @@ Pesquisar em fontes complementares:
 
 **Transparência Instagram:** busca via web por perfis não equivale a navegar autenticado dentro do Instagram. Se a página exigir login, não afirmar que verificou posts, atividade recente ou comentários. Link de perfil encontrado em outro site deve ser identificado como "perfil divulgado em fonte externa", não "perfil auditado".
 
-**Critérios de seleção:** compatibilidade com serviço, atendimento geográfico, meios de contato, credenciais/segurança quando aplicáveis, evidência pública; não confundir anúncios com avaliações independentes.
+**Critérios de seleção:** priorizar domínio técnico do serviço específico, experiência demonstrável em trabalhos semelhantes, portfólio, escopo, visita técnica e materiais; ponderar atendimento, credenciais/segurança quando aplicáveis e evidência pública. **Não usar nota, quantidade de avaliações, seguidores ou porte empresarial como filtro de exclusão ou critério predominante.** Bons profissionais independentes podem ter pouca presença digital. Avaliações são apenas contexto e reclamações exigem atribuição documental correta; não confundir anúncios com avaliações independentes.
 
 ## 3. Conferência de identidade e links
 
