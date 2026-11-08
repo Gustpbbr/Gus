@@ -2,7 +2,7 @@
 
 **Identificador:** APTO-06  
 **Grupo:** C — Isolamento acústico  
-**Estado:** `aguardando-pesquisa`  
+**Estado:** `links-prontos` — 8 empresas pesquisadas; nenhum contato confirmado  
 **Criado/atualizado em:** 2026-11-08  
 **Origem:** solicitação e correções explícitas do usuário; requisitos adicionais de planejamento são indicativos e devem ser confirmados.  
 **Localização:** Copacabana, Rio de Janeiro (sem endereço exato neste repositório público).
@@ -33,11 +33,11 @@
 
 ## 5. Pesquisa de fornecedores
 
-**Estado:** pesquisa NÃO INICIADA por pedido do usuário. Não cadastrar fornecedores, telefones, sites ou Instagram antes da próxima etapa.
+**Estado:** pesquisa de fornecedores solicitada e concluída em 2026-11-08: 8 empresas. [Abrir lista de empresas, sites e WhatsApps preparados](FORNECEDORES-JANELAS-2026-11-08.md). Nenhuma mensagem enviada ou orçamento recebido.
 
 ## 6. Preparação de contato e orçamento
 
-**Mensagem de WhatsApp:** ainda não preparada; redigir após detalhamento técnico e pesquisa de fornecedores. **Nenhuma mensagem enviada.**
+**Mensagem de WhatsApp:** preparada em formato curto, pedindo visita para avaliar substituição versus segunda janela interna, sem precisar fornecer medidas. [Abrir mensagens preparadas](FORNECEDORES-JANELAS-2026-11-08.md). **Nenhuma mensagem enviada.**
 
 ## 7. Possíveis pacotes / interdependências
 
@@ -45,6 +45,7 @@
 
 ## 8. Histórico
 
+- 2026-11-08 — Usuário autorizou busca de fornecedores antes de obter medidas. Oito empresas registradas em arquivo de pesquisa, com contatos e WhatsApp. A confirmação de visita/custo e opções de janela depende de resposta de cada empresa.
 - 2026-11-08 — Criado o MD inicial com numeração fixa. Sem nova pesquisa de fornecedores.
 
 ## Privacidade
