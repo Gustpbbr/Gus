@@ -1,5 +1,12 @@
 # Apto Copacabana — segundo cérebro do apartamento
 
+## Organização por grupos de contratação
+
+Os **MDs irmãos foram consolidados**, preservando a numeração 01–17. O documento de entrada é [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md), que aponta para os documentos canônicos dos 10 grupos. Especialidades com mais de um serviço: [elétrica 01–04](grupos/GRUPO-A-ELETRICA.md), [obra civil da cozinha 08–10](grupos/GRUPO-E-OBRA-CIVIL-COZINHA.md), [hidráulica do banheiro 11–12](grupos/GRUPO-F-HIDRAULICA-BANHEIRO.md) e [pintura 13–14](grupos/GRUPO-G-PINTURA.md). Os antigos `PEDIDO-ORCAMENTO.md` desses serviços agora são **atalhos**, para manter links de outras conversas. O serviço **17 (bancada nova de pedra)** permanece separado para marmoraria, embora relacionado à obra civil da cozinha.
+
+**Regras:** manter pesquisa exploratória de produtos na conversa, sem salvar no GitHub sem pedido; atualizar a documentação de escopo/contratação somente quando solicitado; primeiro WhatsApp curto e cordial. A pesquisa dos pedreiros 08–10 e estimativas discutidas nesta conversa **não estão sendo importadas automaticamente** para o GitHub.
+
+
 **Estado:** espaço inicial de organização, criado em 2026-11-08.
 **Repositório:** Gustpbbr/Gus (PÚBLICO). **Este diretório contém apenas instruções e modelos não sensíveis.**
 

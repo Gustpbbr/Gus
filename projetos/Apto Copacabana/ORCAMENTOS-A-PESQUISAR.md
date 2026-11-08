@@ -2,7 +2,7 @@
 
 **Atualização:** 2026-11-08.  
 **Base:** 16 serviços iniciais e item 17 adicionado pelo usuário em 2026-11-08.  
-**Regra:** número estável **01 a 17**; tratar cada serviço pelo número ou título, em qualquer nova conversa.
+**Regra:** número estável **01 a 17**; pesquisar/detalhar no **documento do grupo**, conforme os links abaixo; não editar os antigos MDs individuais que agora servem de atalhos.
 
 ## Regra prioritária para novas conversas
 
@@ -10,24 +10,43 @@
 
 Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENTOS.md), esta lista e o arquivo do serviço desejado. Não presumir que o GitHub foi consultado sem acesso real pelo conector.
 
+## Documentos consolidados por especialidade
+
+**Abrir primeiro o documento do grupo**, não o antigo MD individual. Os arquivos antigos foram transformados em atalhos para preservar links anteriores. Os serviços continuam numerados individualmente.
+
+| Grupo | Responsável principal | Itens | Documento único |
+|---|---|---|---|
+| A | Eletricista | 01, 02, 03, 04 | [Elétrica](grupos/GRUPO-A-ELETRICA.md) |
+| B | Instalador de split | 05 | [Climatização](servicos/05-ar-split-18000/PEDIDO-ORCAMENTO.md) |
+| C | Empresa de janelas acústicas | 06 | [Janela acústica](servicos/06-janela-acustica/PEDIDO-ORCAMENTO.md) |
+| D | Gasista | 07 | [Gás](servicos/gas/PEDIDO-ORCAMENTO.md) |
+| E | Pedreiro | 08, 09, 10 | [Obra civil da cozinha](grupos/GRUPO-E-OBRA-CIVIL-COZINHA.md) |
+| F | Encanador | 11, 12 | [Hidráulica banheiro](grupos/GRUPO-F-HIDRAULICA-BANHEIRO.md) |
+| G | Pintor | 13, 14 | [Pintura](grupos/GRUPO-G-PINTURA.md) |
+| H | Restaurador de madeira | 15 | [Sinteco](servicos/15-sinteco-piso-madeira/PEDIDO-ORCAMENTO.md) |
+| I | Instalador de papel de parede | 16 | [Papel de parede](servicos/16-papel-parede/PEDIDO-ORCAMENTO.md) |
+| J | Marmoraria | 17 | [Bancada de pedra](servicos/17-bancada-pedra-cozinha/PEDIDO-ORCAMENTO.md) |
+
+**Itens 08–10 e 17:** todos são da cozinha, mas **17 precisa de orçamento específico de marmoraria**, não incluir automaticamente no pacote do pedreiro.
+
 ## Lista oficial
 
 | Nº | Serviço | Grupo profissional | Documento | Estado | Fornecedores |
 |---:|---|---|---|---|---|
-| 01 | Reforma elétrica e quadro de disjuntores | A — Elétrica | [MD inicial](servicos/01-reforma-eletrica/PEDIDO-ORCAMENTO.md) | `links-prontos` | [8 fornecedores + WhatsApp](servicos/01-reforma-eletrica/FORNECEDORES-ELETRICA-2026-11-08.md) |
-| 02 | Substituição dos ventiladores de teto | A — Elétrica | [MD inicial](servicos/02-ventiladores-teto/PEDIDO-ORCAMENTO.md) | `links-prontos` | [7 fornecedores + WhatsApp](servicos/02-ventiladores-teto/FORNECEDORES-VENTILADORES-2026-11-08.md) |
-| 03 | Troca de espelhos de tomadas e interruptores | A — Elétrica | [MD inicial](servicos/03-espelhos-tomadas/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
-| 04 | Substituição da luminária da cozinha | A — Elétrica | [MD inicial](servicos/04-luminaria-cozinha/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 01 | Reforma elétrica e quadro de disjuntores | A — Elétrica | [Grupo A (item 01)](grupos/GRUPO-A-ELETRICA.md#servico-01) | `links-prontos` | [8 fornecedores + WhatsApp](servicos/01-reforma-eletrica/FORNECEDORES-ELETRICA-2026-11-08.md) |
+| 02 | Substituição dos ventiladores de teto | A — Elétrica | [Grupo A (item 02)](grupos/GRUPO-A-ELETRICA.md#servico-02) | `links-prontos` | [7 fornecedores + WhatsApp](servicos/02-ventiladores-teto/FORNECEDORES-VENTILADORES-2026-11-08.md) |
+| 03 | Troca de espelhos de tomadas e interruptores | A — Elétrica | [Grupo A (item 03)](grupos/GRUPO-A-ELETRICA.md#servico-03) | `aguardando-pesquisa` | Sem pesquisa |
+| 04 | Substituição da luminária da cozinha | A — Elétrica | [Grupo A (item 04)](grupos/GRUPO-A-ELETRICA.md#servico-04) | `aguardando-pesquisa` | Sem pesquisa |
 | 05 | Instalação de ar-condicionado split 18.000 BTU/h | B — Climatização | [MD inicial](servicos/05-ar-split-18000/PEDIDO-ORCAMENTO.md) | `links-prontos` | [13 candidatos, 11 com links de contato preparado](servicos/05-ar-split-18000/FORNECEDORES-INSTALACAO-SPLIT-2026-11-08.md), sendo 2 sem validação completa |
 | 06 | Janela com isolamento acústico | C — Isolamento acústico | [MD inicial](servicos/06-janela-acustica/PEDIDO-ORCAMENTO.md) | `links-prontos` | [8 empresas para cotação](servicos/06-janela-acustica/FORNECEDORES-JANELAS-2026-11-08.md) |
 | 07 | Remanejamento do aquecedor a gás | D — Gás | [MD inicial](servicos/gas/PEDIDO-ORCAMENTO.md) | `links-prontos` | [7 contatos já preparados](servicos/gas/ORCAMENTO-GAS-2026-11-09.md) |
-| 08 | Demolição da bancada de cimento da cozinha | E — Pedreiro / acabamentos civis | [MD inicial](servicos/08-demolicao-bancada-cozinha/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
-| 09 | Instalação de piso na cozinha | E — Pedreiro / acabamentos civis | [MD inicial](servicos/09-piso-cozinha/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
-| 10 | Substituição do rejunte dos azulejos da cozinha | E — Pedreiro / acabamentos civis | [MD inicial](servicos/10-rejunte-azulejos-cozinha/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
-| 11 | Retirar bidê e adaptar banheiro para lavadora Brastemp 8 kg | F — Hidráulica do banheiro | [MD inicial](servicos/11-retirada-bide-preparo-lavadora/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
-| 12 | Substituição da pia do banheiro | F — Hidráulica do banheiro | [MD inicial](servicos/12-pia-banheiro/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
-| 13 | Pintura das paredes do apartamento | G — Pintura | [MD inicial](servicos/13-pintura-paredes/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
-| 14 | Pintura dos azulejos do banheiro | G — Pintura | [MD inicial](servicos/14-pintura-azulejos-banheiro/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 08 | Demolição da bancada de cimento da cozinha | E — Pedreiro / acabamentos civis | [Grupo E (item 08)](grupos/GRUPO-E-OBRA-CIVIL-COZINHA.md#servico-08) | `aguardando-pesquisa` | Sem pesquisa |
+| 09 | Instalação de piso na cozinha | E — Pedreiro / acabamentos civis | [Grupo E (item 09)](grupos/GRUPO-E-OBRA-CIVIL-COZINHA.md#servico-09) | `aguardando-pesquisa` | Sem pesquisa |
+| 10 | Substituição do rejunte dos azulejos da cozinha | E — Pedreiro / acabamentos civis | [Grupo E (item 10)](grupos/GRUPO-E-OBRA-CIVIL-COZINHA.md#servico-10) | `aguardando-pesquisa` | Sem pesquisa |
+| 11 | Retirar bidê e adaptar banheiro para lavadora Brastemp 8 kg | F — Hidráulica do banheiro | [Grupo F (item 11)](grupos/GRUPO-F-HIDRAULICA-BANHEIRO.md#servico-11) | `aguardando-pesquisa` | Sem pesquisa |
+| 12 | Substituição da pia do banheiro | F — Hidráulica do banheiro | [Grupo F (item 12)](grupos/GRUPO-F-HIDRAULICA-BANHEIRO.md#servico-12) | `aguardando-pesquisa` | Sem pesquisa |
+| 13 | Pintura das paredes do apartamento | G — Pintura | [Grupo G (item 13)](grupos/GRUPO-G-PINTURA.md#servico-13) | `aguardando-pesquisa` | Sem pesquisa |
+| 14 | Pintura dos azulejos do banheiro | G — Pintura | [Grupo G (item 14)](grupos/GRUPO-G-PINTURA.md#servico-14) | `aguardando-pesquisa` | Sem pesquisa |
 | 15 | Restauração do piso de madeira / sinteco | H — Piso de madeira | [MD inicial](servicos/15-sinteco-piso-madeira/PEDIDO-ORCAMENTO.md) | `pesquisa-concluida` | [17 candidatos identificados](servicos/15-sinteco-piso-madeira/PESQUISA-FORNECEDORES-2026-11-08.md); checar homônimos |
 | 16 | Instalação de papel de parede | I — Papel de parede | [MD inicial](servicos/16-papel-parede/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
 | 17 | Fornecimento e instalação de bancada de pedra na cozinha | J — Marmoraria | [MD inicial](servicos/17-bancada-pedra-cozinha/PEDIDO-ORCAMENTO.md) | `aguardando-detalhamento` | Sem pesquisa específica |
