@@ -2,7 +2,7 @@
 
 **Identificador:** APTO-01  
 **Grupo:** A — Elétrica  
-**Estado:** `aguardando-pesquisa` — detalhamento técnico iniciado; fornecedores ainda não pesquisados  
+**Estado:** `links-prontos` — 8 fornecedores pesquisados, mensagens genéricas preparadas; nenhum envio confirmado  
 **Criado/atualizado em:** 2026-11-08  
 **Origem:** solicitação e correções explícitas do usuário; requisitos adicionais de planejamento são indicativos e devem ser confirmados.  
 **Localização:** Copacabana, Rio de Janeiro (sem endereço exato neste repositório público).
@@ -68,11 +68,21 @@
 
 ## 5. Pesquisa de fornecedores
 
-**Estado:** pesquisa NÃO INICIADA por pedido do usuário. Não cadastrar fornecedores, telefones, sites ou Instagram antes da próxima etapa.
+**Estado:** PESQUISA CONCLUÍDA EM 2026-11-08. Oito fornecedores identificados; nenhum foi contatado e nenhum orçamento foi recebido.
+
+**[Abrir pesquisa de 8 fornecedores, sites oficiais, Instagram quando encontrado e links WhatsApp com mensagem inicial curta](FORNECEDORES-ELETRICA-2026-11-08.md)**.
+
+Distribuição: profissionais de reforma residencial e empresas com competência divulgada em medição predial/adequação de carga. Necessário confirmar deslocamento, escopo e visita técnica.
+
+**Qualidade dos dados:** um site possui botão WhatsApp com formatação incorreta; usar a versão normalizada identificada no arquivo, sem garantir entrega ou ativação do número.
 
 ## 6. Preparação de contato e orçamento
 
-**Mensagem de WhatsApp:** ainda não preparada; redigir após detalhamento técnico e pesquisa de fornecedores. **Nenhuma mensagem enviada.**
+**Primeiro contato:** curto e cordial, somente indicação geral (troca de quadro, renovação de fiação e avaliação de 220 V), confirmação de atendimento e custo da visita. **Não mandar checklist técnico no primeiro WhatsApp.**
+
+**Mensagem e links genéricos:** [FORNECEDORES-ELETRICA-2026-11-08.md](FORNECEDORES-ELETRICA-2026-11-08.md). Nome e rua podem ser adicionados na conversa privada com autorização, mas não neste repositório público.
+
+**Situação:** links disponíveis para envio MANUAL; nenhuma mensagem enviada.
 
 ## 7. Possíveis pacotes / interdependências
 
@@ -80,6 +90,7 @@
 
 ## 8. Histórico
 
+- 2026-11-08 — Pesquisa de 8 fornecedores, verificação de sites e contatos públicos, com mensagens de primeiro contato objetivas. Nenhum envio confirmado.
 - 2026-11-08 — Usuário forneceu foto do quadro antigo e descreveu objetivo: quadro novo, substituição de toda fiação, avaliar 220 V do edifício, manter tomadas existentes salvo possíveis novos circuitos/pontos para split e lava-louças; adequação elétrica da lavadora convencional de 8 kg permanece postergada. Nenhum fornecedor pesquisado.
 - 2026-11-08 — Criado o MD inicial com numeração fixa. Sem nova pesquisa de fornecedores.
 
