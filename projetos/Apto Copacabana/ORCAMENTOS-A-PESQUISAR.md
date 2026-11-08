@@ -6,7 +6,7 @@
 
 ## Regra prioritária para novas conversas
 
-**O usuário pediu os arquivos iniciais antes da pesquisa de fornecedores.** Para serviços ainda sem pesquisa, inclusive **17**, NÃO PESQUISAR EMPRESAS até pedido expresso. O usuário autorizou pesquisa dos serviços **08–10** em 2026-11-08 (resultado ainda a relatar), mas isso não autoriza pesquisa/contratação de marmoraria para 17. O serviço 05 teve pesquisa autorizada e arquivada em 2026-11-08. O serviço 06 teve busca de fornecedores autorizada em 2026-11-08. Os serviços 01 e 02 já foram pesquisados por solicitação do usuário. O serviço 01 teve pesquisa autorizada em 2026-11-08, com 8 fornecedores e mensagens iniciais objetivas. Ao receber detalhes, **atualizar somente o(s) MD(s) correspondente(s)**, preservando numeração, status e decisões anteriores. Serviço **07 (gás)** já tem pesquisa e links prontos em arquivo separado.
+**O usuário pediu os arquivos iniciais antes da pesquisa de fornecedores; porém, autorizou expressamente a busca e posterior salvamento do item 16 em 2026-11-08.** Para serviços ainda sem pesquisa, inclusive **17**, NÃO PESQUISAR EMPRESAS até pedido expresso. O usuário autorizou pesquisa dos serviços **08–10** em 2026-11-08 (resultado ainda a relatar), mas isso não autoriza pesquisa/contratação de marmoraria para 17. O serviço 05 teve pesquisa autorizada e arquivada em 2026-11-08. O serviço 06 teve busca de fornecedores autorizada em 2026-11-08. Os serviços 01 e 02 já foram pesquisados por solicitação do usuário. O serviço 01 teve pesquisa autorizada em 2026-11-08, com 8 fornecedores e mensagens iniciais objetivas. Ao receber detalhes, **atualizar somente o(s) MD(s) correspondente(s)**, preservando numeração, status e decisões anteriores. Serviço **07 (gás)** já tem pesquisa e links prontos em arquivo separado.
 
 Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENTOS.md), esta lista e o arquivo do serviço desejado. Não presumir que o GitHub foi consultado sem acesso real pelo conector.
 
@@ -48,7 +48,7 @@ Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENT
 | 13 | Pintura das paredes do apartamento | G — Pintura | [Grupo G (item 13)](grupos/GRUPO-G-PINTURA.md#servico-13) | `aguardando-pesquisa` | Sem pesquisa |
 | 14 | Pintura dos azulejos do banheiro | G — Pintura | [Grupo G (item 14)](grupos/GRUPO-G-PINTURA.md#servico-14) | `aguardando-pesquisa` | Sem pesquisa |
 | 15 | Restauração do piso de madeira / sinteco | H — Piso de madeira | [MD inicial](servicos/15-sinteco-piso-madeira/PEDIDO-ORCAMENTO.md) | `pesquisa-concluida` | [17 candidatos identificados](servicos/15-sinteco-piso-madeira/PESQUISA-FORNECEDORES-2026-11-08.md); checar homônimos |
-| 16 | Instalação de papel de parede | I — Papel de parede | [MD inicial](servicos/16-papel-parede/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa |
+| 16 | Instalação de papel de parede | I — Papel de parede | [MD inicial](servicos/16-papel-parede/PEDIDO-ORCAMENTO.md) | `links-prontos` | [11 candidatos e links de WhatsApp](servicos/16-papel-parede/FORNECEDORES-PAPEL-PAREDE-2026-11-08.md); nenhuma mensagem enviada |
 | 17 | Fornecimento e instalação de bancada de pedra na cozinha | J — Marmoraria | [MD inicial](servicos/17-bancada-pedra-cozinha/PEDIDO-ORCAMENTO.md) | `aguardando-detalhamento` | Sem pesquisa específica |
 
 ## Grupos de contratação
