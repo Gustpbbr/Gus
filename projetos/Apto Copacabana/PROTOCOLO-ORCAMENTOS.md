@@ -71,7 +71,7 @@ Elaborar mensagem única, curta e objetiva, adaptada ao serviço. Perguntar:
 
 Exemplo para gasista:
 
-> Olá! Gostaria de orçamento para avaliar a retirada de um aquecedor a gás atualmente instalado dentro do box e sua transferência para um local permitido fora do box, em apartamento em Copacabana, RJ. Fazem visita técnica? Qual o custo? Peço avaliação de ventilação, exaustão, tubulações, testes de segurança, materiais, mão de obra, prazo e garantia. Obrigado!
+> Olá, tudo bem? Meu nome é [NOME]. Gostaria de solicitar um orçamento para avaliar a retirada de um aquecedor a gás atualmente instalado dentro do box e sua transferência para um local permitido, em apartamento em Copacabana/RJ. Vocês realizam visita técnica? Se possível, gostaria de saber o valor da avaliação e receber uma proposta que considere ventilação, exaustão, tubulações, testes de segurança, materiais, mão de obra, prazo e garantia. Muito obrigado!
 
 **Segurança:** mudanças em aquecedores a gás dependem de avaliação presencial e atendimento às exigências aplicáveis; não oferecer instruções improvisadas de remanejamento.
 
