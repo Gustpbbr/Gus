@@ -4,6 +4,12 @@
 **Escopo:** serviços para o apartamento em Copacabana, RJ (região prioritária: Copacabana e Zona Sul).
 **Modo de operação:** ChatGPT + pesquisa na web + links oficiais para WhatsApp; **não** exige WhatsApp Business API.
 
+## Regra prioritária: orçamento já preparado
+
+Antes de pesquisar novamente, ler [ORCAMENTOS-PREPARADOS.md](ORCAMENTOS-PREPARADOS.md). Se houver arquivo do serviço solicitado, **apresentar os links finais armazenados** no arquivo específico e não gastar uma nova pesquisa nem refazer o texto, salvo se o usuário pedir atualização ou detectar erro. O gatilho **"quero o orçamento pro gás"** aponta para [servicos/gas/ORCAMENTO-GAS-2026-11-09.md](servicos/gas/ORCAMENTO-GAS-2026-11-09.md).
+
+**Não presumir acesso automático ao GitHub em novas conversas.** É obrigatório realmente ler os arquivos antes de afirmar que os links estão preparados.
+
 ## 0. Resultado esperado
 
 Quando o usuário solicitar um serviço ou disser "preciso fazer orçamentos":
