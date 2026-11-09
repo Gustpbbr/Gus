@@ -4,6 +4,10 @@
 **Salvamento autorizado pelo usuário:** 2026-11-08  
 **Estado:** pesquisa inicial de **9 fornecedores**, com **7 links de contato por WhatsApp preparados** e **2 contatos que precisam ser confirmados** (um telefone fixo, um número celular de formato inconsistente). **Nenhuma mensagem enviada; nenhum orçamento recebido.**
 
+## Atualização — motores inteligentes e Alexa
+
+[**Consultar quatro contatos prioritários e mensagens para persiana motorizada com Alexa**](MOTORIZACAO-ALEXA-CONTATOS-2026-11-08.md). A versão motorizada pode ter controle remoto e aplicativo, mas não necessariamente corrente manual/mecânica; exigir confirmação para o modelo com guias laterais.
+
 ## Escopo confirmado
 
 - **Cômodo:** quarto de apartamento em Copacabana, RJ.
