@@ -1,8 +1,8 @@
 # Lista numerada de serviços a orçar — Apto Copacabana
 
 **Atualização:** 2026-11-08.  
-**Base:** 16 serviços iniciais e itens 17 e 18 adicionados pelo usuário em 2026-11-08.  
-**Regra:** número estável **01 a 18**; pesquisar/detalhar no **documento do grupo**, conforme os links abaixo; não editar os antigos MDs individuais que agora servem de atalhos.
+**Base:** 16 serviços iniciais e itens 17, 18 e 19 adicionados pelo usuário em 2026-11-08.  
+**Regra:** número estável **01 a 19**; pesquisar/detalhar no **documento do grupo**, conforme os links abaixo; não editar os antigos MDs individuais que agora servem de atalhos.
 
 ## Regra prioritária para novas conversas
 
@@ -27,6 +27,7 @@ Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENT
 | I | Instalador de papel de parede | 16 | [Papel de parede](servicos/16-papel-parede/PEDIDO-ORCAMENTO.md) |
 | J | Marmoraria | 17 | [Bancada de pedra](servicos/17-bancada-pedra-cozinha/PEDIDO-ORCAMENTO.md) |
 | K | Empresa de persianas / cortinas sob medida | 18 | [Rolô blackout com guias laterais](servicos/18-persiana-rolo-blackout-guias-laterais/PEDIDO-ORCAMENTO.md) |
+| L | Portas internas / esquadrias leves | 19 | [Porta de correr para reduzir fuga do ar-condicionado](servicos/19-porta-correr-leve-vedacao-ar-condicionado/PEDIDO-ORCAMENTO.md) |
 
 **Itens 08–10 e 17:** todos são da cozinha, mas **17 precisa de orçamento específico de marmoraria**, não incluir automaticamente no pacote do pedreiro.
 
@@ -52,6 +53,7 @@ Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENT
 | 16 | Instalação de papel de parede | I — Papel de parede | [MD inicial](servicos/16-papel-parede/PEDIDO-ORCAMENTO.md) | `links-prontos` | [11 candidatos e links de WhatsApp](servicos/16-papel-parede/FORNECEDORES-PAPEL-PAREDE-2026-11-08.md); nenhuma mensagem enviada |
 | 17 | Fornecimento e instalação de bancada de pedra na cozinha | J — Marmoraria | [MD inicial](servicos/17-bancada-pedra-cozinha/PEDIDO-ORCAMENTO.md) | `links-prontos` | [10 marmorarias com foco em quartzito](servicos/17-bancada-pedra-cozinha/FORNECEDORES-MARMORARIAS-QUARTZITO-2026-11-08.md); 150 × 70 cm, peça única; 0 envios |
 | 18 | Persiana rolô blackout com guias laterais e redução de frestas | K — Persianas sob medida | [MD inicial](servicos/18-persiana-rolo-blackout-guias-laterais/PEDIDO-ORCAMENTO.md) | `links-prontos` | [9 candidatos, 7 contatos com WhatsApp preparado](servicos/18-persiana-rolo-blackout-guias-laterais/FORNECEDORES-PERSIANA-BLACKOUT-2026-11-08.md); 2 telefones a confirmar; quarto, 0 envios |
+| 19 | Porta de correr interna leve com vedação para reduzir fuga do ar-condicionado | L — Portas internas / esquadrias leves | [MD inicial](servicos/19-porta-correr-leve-vedacao-ar-condicionado/PEDIDO-ORCAMENTO.md) | `aguardando-pesquisa` | Sem pesquisa; medidas pendentes; referência de porta branca com painéis translúcidos |
 
 ## Grupos de contratação
 
@@ -66,6 +68,7 @@ Para recuperar o estado, leia [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENT
 - **I — Papel de parede:** 16. Pode ter sinergia com pintura, se profissional capacitado.
 - **J — Marmoraria / pedra:** 17. Bancada de **150 × 70 cm, peça inteira**; comparar granito e quartzito; pesquisa de 10 marmorarias em todo Rio/Grande Rio, com links preparados. Cotação separada da demolição (08).
 - **K — Persianas / cortinas:** 18. Persiana rolô blackout com **guias laterais para o quarto**, avaliar cassete superior e vedação inferior; medidas pendentes; [9 fornecedores pesquisados](servicos/18-persiana-rolo-blackout-guias-laterais/FORNECEDORES-PERSIANA-BLACKOUT-2026-11-08.md). Se coincidir com janela acústica (06), coordenar medidas.
+- **L — Portas internas / esquadrias leves:** 19. Porta de correr branca com painéis foscos/translúcidos e trilho superior aparente, foco em **reduzir fuga do ar-condicionado** com vedação lateral, superior e inferior; medidas pendentes; não pesquisar fornecedores sem pedido.
 
 ## Atualização fundamental do serviço 11 — 2026-11-08
 

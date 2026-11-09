@@ -5,9 +5,9 @@
 
 > CUIDADO: repositório público. Não inserir endereço completo, números pessoais, fotos internas, comprovantes, contratos, propostas privadas, valores pessoais ou informações de segurança patrimonial. Guardar esses itens em local privado.
 
-**ESTRUTURA CONSOLIDADA:** os serviços 01–04, 08–10, 11–12 e 13–14 têm MDs agrupados por especialidade; itens 17 (marmoraria) e 18 (persianas blackout com guias) separados. Abrir [índice dos 10 grupos](ORCAMENTOS-A-PESQUISAR.md).
+**ESTRUTURA CONSOLIDADA:** os serviços 01–04, 08–10, 11–12 e 13–14 têm MDs agrupados por especialidade; itens 17 (marmoraria), 18 (persianas blackout com guias) e 19 (porta de correr leve para vedação do ar-condicionado) separados. Abrir [índice dos 10 grupos](ORCAMENTOS-A-PESQUISAR.md).
 
-**LISTA OFICIAL:** [18 serviços numerados e documentação individual](ORCAMENTOS-A-PESQUISAR.md). Serviços 01, 02, 05, 06, 07, 13, 15, 16, 17 e 18 possuem pesquisa arquivada; os demais aguardam detalhamento ou solicitação de pesquisa. A adequação elétrica da lavadora Brastemp convencional de 8 kg foi postergada.
+**LISTA OFICIAL:** [19 serviços numerados e documentação individual](ORCAMENTOS-A-PESQUISAR.md). Serviços 01, 02, 05, 06, 07, 13, 15, 16, 17 e 18 possuem pesquisa arquivada; os demais aguardam detalhamento ou solicitação de pesquisa. A adequação elétrica da lavadora Brastemp convencional de 8 kg foi postergada.
 
 **Fila de novos serviços:** [ORCAMENTOS-A-PESQUISAR.md](ORCAMENTOS-A-PESQUISAR.md). Os novos MDs individuais serão criados conforme o usuário enviar a lista; por enquanto não pesquisar fornecedores. Ver [CONTINUIDADE-ORCAMENTOS.md](CONTINUIDADE-ORCAMENTOS.md).
 
@@ -25,6 +25,7 @@
 | [Instalação de papel de parede — serviço 16](servicos/16-papel-parede/PEDIDO-ORCAMENTO.md) | **11 candidatos pesquisados; mensagens genéricas preparadas** | [Contatos e links para solicitação manual](servicos/16-papel-parede/FORNECEDORES-PAPEL-PAREDE-2026-11-08.md); confirmar modalidade de papel e metragem | 0 confirmados | 2026-11-08 |
 | [Nova bancada de pedra — serviço 17](servicos/17-bancada-pedra-cozinha/PEDIDO-ORCAMENTO.md) | **10 marmorarias pesquisadas, 9 links de contato; material não escolhido** | [Abrir contatos preparados para orçamento](servicos/17-bancada-pedra-cozinha/FORNECEDORES-MARMORARIAS-QUARTZITO-2026-11-08.md); bancada 150 × 70 cm, peça única; comparar granito e quartzito natural | 0 confirmados | 2026-11-08 |
 | [Persiana rolô blackout — serviço 18](servicos/18-persiana-rolo-blackout-guias-laterais/PEDIDO-ORCAMENTO.md) | **9 fornecedores pesquisados (7 WhatsApps preparados, 2 contatos a validar)** | [Abrir pesquisa e mensagens](servicos/18-persiana-rolo-blackout-guias-laterais/FORNECEDORES-PERSIANA-BLACKOUT-2026-11-08.md); persiana blackout com guias laterais para o quarto; solicitar medição e confirmar cassete/vedação; coordenar janela acústica (06) | 0 confirmados | 2026-11-08 |
+| [Porta de correr leve — serviço 19](servicos/19-porta-correr-leve-vedacao-ar-condicionado/PEDIDO-ORCAMENTO.md) | **Escopo definido, medidas e material finais a confirmar** | Porta suspensa de estrutura branca, painéis foscos e vedação do ar; [abrir MD](servicos/19-porta-correr-leve-vedacao-ar-condicionado/PEDIDO-ORCAMENTO.md); pesquisar fornecedores somente sob pedido | 0 confirmados | 2026-11-08 |
 | Demais serviços 03–04, 08–12 e 14 | MDs individuais criados; aguardam detalhamento e pedido de pesquisa | Atualizar o MD por número | 0 confirmados neste arquivo | 2026-11-08 |
 
 *Os serviços acima são apenas categorias de pesquisa discutidas; não significam que orçamentos foram recebidos ou empresas contratadas.*

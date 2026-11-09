@@ -3,6 +3,10 @@
 **Versão:** 1.0 · **Data:** 2026-11-08  
 **Objetivo:** permitir que outra conversa do ChatGPT retome este trabalho consultando arquivos concretos no GitHub, sem depender do histórico do chat original.
 
+## Novo serviço 19 — Porta de correr leve para reduzir fuga de ar-condicionado (2026-11-08)
+
+Após ler o item **18** (persiana blackout), o usuário solicitou um **novo MD** para porta interna **de correr suspensa sobre a parede, com estrutura e trilho brancos e painéis translúcidos foscos**, conforme imagem compartilhada na conversa. Principal objetivo: **reduzir a passagem de ar frio** do ambiente climatizado para hall/circulação. O documento oficial é [PEDIDO-ORCAMENTO.md](servicos/19-porta-correr-leve-vedacao-ar-condicionado/PEDIDO-ORCAMENTO.md). **Não presumir dimensões nem material final**; policarbonato compacto fosco é hipótese a comparar, não decisão. Exigir discussão de folgas e vedações de porta de correr, reconhecer que ela não é hermética. Nenhum fornecedor pesquisado, nenhuma mensagem enviada, sem foto privada no GitHub. Preservar numeração 01–19. O serviço 18 permanece distinto e com fornecedores já pesquisados.
+
 ## Pesquisa de pintores (item 13) salva para contato em 2026-11-09
 
 Por pedido explícito do usuário, a pesquisa de **7 contatos** da pintura de paredes foi registrada em [FORNECEDORES-PINTURA-ITEM-13-2026-11-08.md](grupos/FORNECEDORES-PINTURA-ITEM-13-2026-11-08.md), com links WhatsApp e mensagem curta genérica. O grupo G continua consolidando 13 (paredes) e 14 (azulejos do banheiro), mas **a busca atual refere-se só ao 13**, sem pintura interna do banheiro nem papel de parede. Todos os envios estão pendentes e dependem do usuário. Não pesquisar de novo quando solicitar esses contatos; abrir o arquivo.
