@@ -54,6 +54,17 @@ Solicitar discriminação de:
 
 *Personalizar nome e localização específica somente na conversa privada, nunca no repositório público.*
 
+## 4A. Motorização, Alexa e controles (pesquisa arquivada)
+
+[**Abrir fornecedores e mensagens para orçamento de blackout motorizado com Alexa**](MOTORIZACAO-ALEXA-CONTATOS-2026-11-08.md).
+
+- O usuário deseja avaliar **versão motorizada com Alexa** e saber se é possível manter **acionamento manual mecânico** em paralelo.
+- **Freires Persianas e Espaço Casa Decor:** anunciam blackout com guias e motor/controle inteligente; confirmar modelo de integração.
+- **Corty & Persy:** guias + motorização anunciadas; Alexa na combinação exata a confirmar.
+- **Astrale Decor:** fornece a referência visual; motorização e Alexa no modelo do vídeo a confirmar.
+- O acionamento por controle remoto **não equivale** a funcionamento manual em falta de energia; cotar as opções separadas.
+- Nenhuma mensagem enviada ou proposta recebida.
+
 ## 5. Status de pesquisa e contratação
 
 - **Pesquisa de fornecedores:** autorizada e realizada; [9 fornecedores com sites, contatos e links preparados](FORNECEDORES-PERSIANA-BLACKOUT-2026-11-08.md). Há 7 contatos por WhatsApp preparados e 2 pendências de telefone. O usuário pediu explicitamente salvar a pesquisa.
@@ -73,3 +84,4 @@ Solicitar discriminação de:
 - 2026-11-08 — Novo serviço registrado mediante solicitação do usuário, com base em print de Reels mostrando **persiana blackout com guias laterais**. Numeração dos itens anteriores 01–17 preservada.
 - 2026-11-08 — Usuário confirmou **quarto** e solicitou pesquisa de instaladores no Rio. Nove candidatos identificados.
 - 2026-11-08 — Usuário pediu arquivar a pesquisa; links preparados sem dados pessoais em repositório público, sem mensagens enviadas.
+- 2026-11-08 — Pesquisa de motorização com Alexa e quatro fornecedores prioritários arquivada por pedido expresso, distinguindo controle remoto de acionamento mecânico.
