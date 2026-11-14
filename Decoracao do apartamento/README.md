@@ -260,3 +260,11 @@ Decoracao do apartamento/
 ---
 
 **Próximo passo concreto:** criar projeto demonstrativo com imagem fictícia e regiões editáveis, ao mesmo tempo que se define armazenamento privado e o inventário das fotografias reais. Só então integrar a foto-matriz e a biblioteca de materiais do apartamento.
+
+## Protótipo 3D standalone (2026-11-14)
+
+- **Arquivo:** [Simulador-3D.html](Simulador-3D.html) — maquete 3D interativa da cozinha, executada localmente num único arquivo HTML (Canvas 2D com projeção 3D por software), sem CDNs, dependências ou envio de arquivos.
+- **Capacidades implementadas:** câmera orbitável por toque/mouse, pinça/zoom, vistas frontal/superior/lateral, alterações independentes de piso, bancada, armários, parede, coluna e revestimento, iluminação demonstrativa, cenários A/B, exportação de PNG e de escolhas JSON.
+- **Limites:** aproximação geométrica, sem dimensionamento executivo validado e sem fotorealismo físico; mobiliário e janelas interpretativos; texturas procedurais ilustrativas, não imagens oficiais dos fabricantes.
+- **Base do modelo:** bancada principal de 2,35 m e altura de 0,90 m indicadas como referência no executivo; profundidade adotada 0,60 m, pé-direito de 3,00 m utilizado apenas como hipótese a confirmar. Não usar como arquivo de fabricação ou instalação.
+- **Acesso:** no GitHub, abrir o arquivo e usar **Download raw file** para baixar; no celular abrir o HTML baixado em um navegador compatível. Não é necessário estar conectado após o download.
