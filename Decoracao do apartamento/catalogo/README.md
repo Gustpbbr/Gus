@@ -1,8 +1,8 @@
 # Biblioteca de imagens reais e produtos — Ateliê do Apartamento
 
 **Atualização:** 2026-11-14 · **Versão:** 1.0 (inventário inicial)  
-**Inventário:** 163 referências reais de produtos, padrões comerciais e pedras, em 10 categorias.  
-**Pré-visualizações externas cadastradas:** 17; os outros registros abrem a **página/galeria da fonte** e NÃO exibem miniatura inventada.
+**Inventário:** 240 referências de produtos, padrões e sistemas reais, em 14 categorias.  
+**Pré-visualizações externas cadastradas:** 20; os outros registros abrem a **página/galeria da fonte** e NÃO exibem miniatura inventada.
 
 ## Como usar
 - `galeria.html`: catálogo visual responsivo em um único arquivo, com busca, filtros e links para galerias reais. Baixe o HTML e abra no navegador. As miniaturas externas requerem internet.
@@ -31,8 +31,12 @@ O editor existente em `../app/index.html` usa padrões ilustrativos independente
 
 - Pedras naturais e bancadas: 10
 - Pisos e porcelanatos: 18
+- Pisos laminados: 24
 - Revestimentos de parede: 18
 - MDF e painéis de madeira: 72
+- Laminados decorativos: 21
+- Papéis e painéis de parede: 22
+- Persianas e blackout: 10
 - Tintas e cores: 18
 - Metais de cozinha: 8
 - Metais de banheiro: 8
