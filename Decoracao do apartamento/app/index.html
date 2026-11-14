@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Ateliê do Apartamento — Editor de Superfícies</title>
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#eeeae4;background:#121614;font-synthesis:none}*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.35;cursor:not-allowed}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #d8ba84;outline-offset:2px}.shell{max-width:1600px;margin:auto;padding:22px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}.eyebrow{font-size:11px;color:#c5a975;letter-spacing:.14em;text-transform:uppercase;font-weight:700}.topbar h1{font-size:clamp(23px,2.4vw,34px);font-weight:650;letter-spacing:-.045em;margin:4px 0}.muted,.hint{color:#aaa9a1}.muted{font-size:13px}.safe{font-size:12px;color:#bde2cc;border:1px solid #355546;border-radius:50px;padding:8px 12px}.layout{display:grid;grid-template-columns:minmax(0,1fr) 355px;gap:18px;align-items:start}.panel{border:1px solid #303832;border-radius:17px;background:#1b201d;overflow:hidden}.section{padding:17px 18px;border-bottom:1px solid #303832}.section:last-child{border:0}.section-title{font-size:12px;text-transform:uppercase;letter-spacing:.11em;font-weight:750;color:#c4b49b;margin:0 0 12px}.toolbar{padding:13px;display:flex;flex-wrap:wrap;gap:7px;align-items:center}.btn{background:#29312c;border:1px solid #435047;color:#eaece9;border-radius:9px;padding:9px 11px;font-size:12px;min-height:36px}.btn:hover:not(:disabled){background:#364139}.btn.primary{background:#bb9e69;border-color:#d1b680;color:#171a17;font-weight:730}.btn.active{background:#3e5948;border-color:#82b194}.btn.danger{border-color:#754b4b;color:#f2bcbc}.btn.ghost{background:transparent}.btn.small{padding:5px 8px;min-height:28px}.separator{height:25px;width:1px;background:#444d45;margin:0 3px}.filelabel{display:inline-flex;align-items:center}.canvas-wrap{position:relative;background:repeating-linear-gradient(45deg,#212822,#212822 12px,#252d26 12px,#252d26 24px);border-top:1px solid #303832;min-height:350px;display:flex;align-items:center;justify-content:center}canvas{width:100%;height:auto;max-height:74vh;object-fit:contain;display:block;touch-action:none;cursor:crosshair}.blank{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;text-align:center;flex-direction:column;color:#c8cac1;gap:9px;padding:20px}.blank strong{font-size:20px;color:#f2ece2}.blank span{max-width:400px;font-size:13px;line-height:1.6}.canvas-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid #303832;padding:10px 15px;font-size:11px;color:#b4b5ae}.side .section{padding:17px}.field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}.field label{font-size:12px;color:#dad7ce}.field input:not([type=color]):not([type=range]):not([type=file]),select{background:#101512;color:#f0eee8;border:1px solid #4b554b;border-radius:8px;padding:9px;width:100%}.inline{display:flex;gap:8px;align-items:center}.inline>*{flex:1}.region-list{display:flex;flex-direction:column;gap:6px;max-height:170px;overflow:auto}.region{border:1px solid #444c43;border-radius:8px;padding:9px 10px;background:#232a25;color:#e8e8e3;text-align:left;display:flex;align-items:center;justify-content:space-between;font-size:12px;gap:5px}.region.selected{border-color:#c7a36f;background:#384034}.region small{color:#a4a9a1}.empty{border:1px dashed #465148;border-radius:9px;padding:16px;text-align:center;color:#9fa49d;font-size:12px}.palette{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.swatch{border:1px solid #454e45;background:#202720;color:#e9e9e1;border-radius:9px;padding:6px;text-align:left;min-height:90px;display:flex;flex-direction:column;gap:5px}.swatch:hover{border-color:#cdb58a}.swatch.selected{border-color:#e5bb79;box-shadow:inset 0 0 0 1px #e5bb79}.swatch-color{height:43px;border-radius:5px;display:block;background-size:cover}.swatch-name{font-size:10px;line-height:1.25}.slider-row{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#c3c4bd}input[type=range]{accent-color:#c7a46e;width:100%}input[type=color]{width:48px;height:36px;border:1px solid #535e55;padding:1px;border-radius:7px;background:transparent;cursor:pointer}.notice{padding:10px;border-radius:8px;background:#28332d;color:#bccfc0;font-size:11px;line-height:1.55}.compare-row{display:flex;align-items:center;gap:9px;width:100%}.compare-row input{flex:1}.footer{max-width:1100px;color:#949b93;font-size:11px;line-height:1.65;margin:16px auto 0}.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#e0c590;color:#1d241e;padding:10px 15px;border-radius:10px;box-shadow:0 9px 30px #0006;font-size:13px;display:none;z-index:10}.toast.show{display:block}@media(max-width:970px){.layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}.side .section{border-right:1px solid #303832}.topbar{align-items:start}}@media(max-width:580px){.shell{padding:12px}.topbar{flex-direction:column;gap:6px}.safe{align-self:flex-start}.side{display:block}.side .section{border-right:0}.toolbar{gap:6px}.btn{padding:8px}.canvas-wrap{min-height:235px}.palette{grid-template-columns:repeat(4,minmax(0,1fr))}.swatch{min-height:86px}.swatch-name{font-size:9px}}[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="topbar">
+  <div><div class="eyebrow">Projeto independente · protótipo 0.1</div><h1>Ateliê do Apartamento</h1><div class="muted">Editor fotográfico de regiões e acabamentos — sem regenerar sua fotografia.</div></div>
+  <div class="safe">● Arquivos locais · sem envio da foto</div>
+</header>
+<main class="layout">
+  <section class="panel">
+    <div class="toolbar">
+      <label class="btn primary filelabel">+ Abrir fotografia<input type="file" id="photoFile" accept="image/*" hidden></label>
+      <span class="separator"></span>
+      <button class="btn active" id="selectMode">Selecionar</button>
+      <button class="btn" id="drawMode">+ Marcar região</button>
+      <button class="btn" id="finish" disabled>Fechar contorno</button>
+      <button class="btn ghost" id="cancel" disabled>Cancelar</button>
+      <span class="separator"></span>
+      <button class="btn" id="undo" disabled>↶ Desfazer</button>
+      <button class="btn" id="redo" disabled>↷ Refazer</button>
+      <button class="btn" id="toggleOutline">Contornos: ON</button>
+      <button class="btn" id="toggleCompare">Comparar</button>
+    </div>
+    <div class="canvas-wrap">
+      <canvas id="stage" width="1200" height="650" aria-label="Fotografia editável. Selecione áreas ou marque um polígono."></canvas>
+      <div class="blank" id="blank"><strong>Sua fotografia será a base imutável.</strong><span>Abra uma foto da cozinha ou de outro ambiente. Depois use “Marcar região” e clique nos vértices de uma superfície para torná-la editável.</span></div>
+    </div>
+    <div class="toolbar" id="compareControls" hidden>
+      <span style="font-size:12px">Original</span><div class="compare-row"><input id="compare" type="range" min="0" max="100" value="50" aria-label="Divisor antes/depois"><span style="font-size:12px">Editado</span></div>
+    </div>
+    <div class="canvas-foot"><span id="status">Aguardando fotografia</span><span id="dimensions">Sem imagem · sem alterações</span></div>
+    <div class="toolbar">
+      <button class="btn" id="exportPng" disabled>Exportar imagem PNG</button>
+      <button class="btn" id="exportJson" disabled>Salvar projeto JSON</button>
+      <label class="btn filelabel">Abrir projeto JSON<input type="file" id="jsonFile" accept=".json,application/json" hidden></label>
+      <button class="btn danger" id="clear" disabled>Limpar regiões</button>
+    </div>
+  </section>
+  <aside class="panel side">
+    <div class="section">
+      <h2 class="section-title">01 · Áreas editáveis</h2>
+      <div class="field"><label for="kind">Categoria da próxima região</label>
+        <select id="kind">
+          <option value="Piso">Piso</option><option value="Bancada">Bancada</option><option value="Parede">Parede</option><option value="Revestimento">Revestimento</option><option value="Coluna">Coluna</option><option value="Armário inferior">Armário inferior</option><option value="Armário superior">Armário superior</option><option value="Porta">Porta</option><option value="Outro">Outro</option>
+        </select>
+      </div>
+      <div class="region-list" id="regions"><div class="empty">Nenhuma região cadastrada.</div></div>
+      <div class="notice" style="margin-top:10px">Para marcar: escolha uma categoria, clique em <b>Marcar região</b>, coloque pelo menos 3 vértices sobre a foto e use <b>Fechar contorno</b>. Depois arraste os vértices para ajustar.</div>
+    </div>
+    <div class="section">
+      <h2 class="section-title">02 · Região selecionada</h2>
+      <div class="field"><label for="regionName">Nome</label><input id="regionName" placeholder="Selecione uma região" disabled></div>
+      <button class="btn danger small" id="deleteRegion" disabled>Excluir apenas esta região</button>
+    </div>
+    <div class="section">
+      <h2 class="section-title">03 · Biblioteca de acabamentos</h2>
+      <div class="palette" id="palette"></div>
+      <p class="hint" style="font-size:11px;line-height:1.55">As amostras iniciais são <b>ilustrativas</b>, não reproduções certificadas de pedras ou MDFs comerciais. Você também pode carregar sua própria textura.</p>
+      <label class="btn filelabel">+ Usar textura local<input type="file" id="textureFile" accept="image/*" hidden></label>
+      <div class="inline" style="margin-top:12px"><span style="font-size:12px">Cor personalizada</span><input type="color" id="customColor" value="#a3a38f" aria-label="Cor personalizada"></div>
+    </div>
+    <div class="section">
+      <h2 class="section-title">04 · Ajustes de aplicação</h2>
+      <div class="slider-row"><span>Intensidade</span><output id="strengthOut">75%</output></div>
+      <input id="strength" type="range" min="0" max="100" value="75" disabled>
+      <div class="slider-row"><span>Escala da textura</span><output id="scaleOut">100%</output></div>
+      <input id="scale" type="range" min="20" max="350" value="100" disabled>
+      <div class="field" style="margin-top:8px"><label for="blend">Modo de mistura</label><select id="blend" disabled><option value="source-over">Normal</option><option value="multiply">Multiplicação (sombras)</option><option value="overlay">Sobreposição</option><option value="soft-light">Luz suave</option><option value="color">Cor (preserva luminância)</option></select></div>
+      <div class="notice">A máscara mantém a edição dentro do contorno. Esta versão usa texturização 2D; <b>homografia, reflexos físicos e geometria 3D ainda não estão implementados</b>.</div>
+    </div>
+  </aside>
+</main>
+<div class="footer">Este protótipo é executado totalmente no navegador. A imagem não é enviada a nenhum servidor. O JSON salva contornos, configurações e texturas adicionadas, mas não inclui a fotografia-base: ao reabrir o projeto, carregue novamente a mesma foto. Evite compartilhar os projetos JSON com imagens privadas.</div>
+<div class="toast" id="toast" role="status"></div>
+</div>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id),c=$('stage'),ctx=c.getContext('2d',{willReadFrequently:false});
+const S={img:null,photoName:'',photoSize:null,regions:[],selected:null,mode:'select',draft:[],drag:null,outline:true,compare:false,compareAt:50,history:[],future:[]};
+const catalog=[
+  {name:'Branco neve',type:'solid',color:'#f6f3ea',preview:'#f6f3ea'},
+  {name:'Areia quente',type:'solid',color:'#d6c3aa',preview:'#d6c3aa'},
+  {name:'Greige',type:'solid',color:'#a6a196',preview:'#a6a196'},
+  {name:'Verde sálvia',type:'solid',color:'#829985',preview:'#829985'},
+  {name:'Azul petróleo',type:'solid',color:'#265b6b',preview:'#265b6b'},
+  {name:'Terracota',type:'solid',color:'#b86e56',preview:'#b86e56'},
+  {name:'Pedra preta · estudo',type:'pattern',key:'granito',preview:'#292d2c'},
+  {name:'Pedra creme · estudo',type:'pattern',key:'pedra',preview:'#d7c5a9'},
+  {name:'Madeira mel · estudo',type:'pattern',key:'madeira',preview:'#b58b59'},
+  {name:'Cerâmica rústica · estudo',type:'pattern',key:'ceramica',preview:'#b46d58'},
+  {name:'Pedra verde · estudo',type:'pattern',key:'verde',preview:'#294e43'},
+  {name:'Azulejo branco · estudo',type:'pattern',key:'azulejo',preview:'#e8e5de'}
+];
+const tiles=new Map(),textureCache=new Map();
+function rand(seed){let n=seed>>>0;return()=>{n=(n*1664525+1013904223)>>>0;return n/4294967296}}
+function createTile(kind){
+  let x=document.createElement('canvas');x.width=x.height=256;let g=x.getContext('2d'),r=rand(20261114);
+  if(kind==='granito'||kind==='verde'){
+    g.fillStyle=kind==='granito'?'#272b2b':'#274c40';g.fillRect(0,0,256,256);
+    for(let i=0;i<2400;i++){let v=Math.floor(r()*130+35),a=kind==='granito'?'rgba('+v+','+v+','+v+','+(r()*.25)+')':'rgba('+(v+12)+','+(v+40)+','+v+','+(r()*.18)+')';g.fillStyle=a;g.beginPath();g.ellipse(r()*256,r()*256,.3+r()*2,.3+r()*1.4,r()*6.3,0,6.3);g.fill()}
+  }else if(kind==='madeira'){
+    g.fillStyle='#b58a59';g.fillRect(0,0,256,256);
+    for(let i=0;i<105;i++){let bx=r()*256,op=r()*.20+.06;g.strokeStyle='rgba(66,42,24,'+op+')';g.lineWidth=.4+r()*2;g.beginPath();for(let y=0;y<=260;y+=8){let xx=bx+Math.sin(y*.034+i)*r()*2.1;if(y===0)g.moveTo(xx,y);else g.lineTo(xx,y)}g.stroke()}
+  }else if(kind==='pedra'){
+    g.fillStyle='#d7c8b2';g.fillRect(0,0,256,256);
+    for(let i=0;i<55;i++){let p=r()*340-60;g.strokeStyle='rgba(144,130,111,'+(r()*.12+.05)+')';g.lineWidth=.4+r()*2;g.beginPath();g.moveTo(p,-10);g.bezierCurveTo(p-30,70,p+85,150,p+40,270);g.stroke()}
+    for(let i=0;i<950;i++){g.fillStyle='rgba(255,249,232,'+(r()*.12)+')';g.fillRect(r()*256,r()*256,1+r()*2,1+r()*2)}
+  }else if(kind==='ceramica'||kind==='azulejo'){
+    g.fillStyle=kind==='ceramica'?'#b56b53':'#e8e5dd';g.fillRect(0,0,256,256);
+    for(let i=0;i<1700;i++){g.fillStyle=kind==='ceramica'?'rgba(70,40,20,'+(r()*.07)+')':'rgba(120,110,90,'+(r()*.04)+')';g.fillRect(r()*256,r()*256,r()*4,r()*4)}
+    g.strokeStyle=kind==='ceramica'?'#d3b39d':'#a4a4a0';g.lineWidth=5;g.strokeRect(0,0,256,256);
+  }
+  tiles.set(kind,x);return x;
+}
+function getTile(key){return tiles.get(key)||createTile(key)}
+function notify(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+function clone(){return JSON.stringify({regions:S.regions,selected:S.selected})}
+function remember(){S.history.push(clone());if(S.history.length>60)S.history.shift();S.future=[];setButtons()}
+function restore(serial){const x=JSON.parse(serial);S.regions=x.regions||[];S.selected=x.selected||null;S.draft=[];S.mode='select';sync();render()}
+function undo(){if(!S.history.length)return;S.future.push(clone());restore(S.history.pop())}
+function redo(){if(!S.future.length)return;S.history.push(clone());restore(S.future.pop())}
+function getSelected(){return S.regions.find(x=>x.id===S.selected)||null}
+function makePath(p){ctx.beginPath();p.forEach((v,i)=>{if(i===0)ctx.moveTo(v[0]*c.width,v[1]*c.height);else ctx.lineTo(v[0]*c.width,v[1]*c.height)});ctx.closePath()}
+function getTextureImg(data){if(textureCache.has(data))return textureCache.get(data);const im=new Image;im.onload=()=>render();im.src=data;textureCache.set(data,im);return im}
+function drawMaterial(region){
+  const m=region.material;if(!m)return;
+  ctx.save();makePath(region.points);ctx.clip();ctx.globalAlpha=m.opacity===undefined?.75:m.opacity;ctx.globalCompositeOperation=m.blend||'source-over';
+  if(m.type==='solid'){ctx.fillStyle=m.color;ctx.fillRect(0,0,c.width,c.height)}
+  else {let im=m.type==='pattern'?getTile(m.key):getTextureImg(m.textureData);if(im&&im.complete&&im.width){let pat=ctx.createPattern(im,'repeat');if(pat){let base=Math.max(.12,Math.min(5,(m.scale||1)*(m.type==='texture'?160/im.width:1)));const mat=new DOMMatrix().scale(base,base);if(pat.setTransform)pat.setTransform(mat);ctx.fillStyle=pat;ctx.fillRect(0,0,c.width,c.height)}}}
+  ctx.restore();
+}
+function render(clean=false){
+  const w=c.width,h=c.height;ctx.clearRect(0,0,w,h);
+  if(!S.img){ctx.fillStyle='#242b25';ctx.fillRect(0,0,w,h);return}
+  ctx.drawImage(S.img,0,0,w,h);
+  S.regions.forEach(drawMaterial);
+  if(S.compare&&!clean){let cut=w*S.compareAt/100;ctx.save();ctx.beginPath();ctx.rect(0,0,cut,h);ctx.clip();ctx.drawImage(S.img,0,0,w,h);ctx.restore();ctx.fillStyle='#f0dfbb';ctx.fillRect(cut-1.5,0,3,h);ctx.beginPath();ctx.arc(cut,h/2,15,0,Math.PI*2);ctx.fill();ctx.fillStyle='#151b16';ctx.textAlign='center';ctx.font='bold 14px system-ui';ctx.fillText('↔',cut+1,h/2+5)}
+  if(!clean&&S.outline){
+    S.regions.forEach(reg=>{ctx.save();makePath(reg.points);ctx.strokeStyle=reg.id===S.selected?'#f7c77e':'rgba(185,216,188,.75)';ctx.lineWidth=reg.id===S.selected?3:1.5;ctx.setLineDash(reg.id===S.selected?[]:[8,5]);ctx.stroke();if(reg.id===S.selected){ctx.setLineDash([]);reg.points.forEach(p=>{ctx.fillStyle='#f0c485';ctx.strokeStyle='#142018';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p[0]*w,p[1]*h,6,0,Math.PI*2);ctx.fill();ctx.stroke()})}ctx.restore()})
+  }
+  if(S.mode==='draw'&&!clean&&S.draft.length){ctx.save();ctx.strokeStyle='#f2ce8e';ctx.fillStyle='#f2ce8e';ctx.lineWidth=2;ctx.setLineDash([8,4]);ctx.beginPath();S.draft.forEach((p,i)=>i?ctx.lineTo(p[0]*w,p[1]*h):ctx.moveTo(p[0]*w,p[1]*h));ctx.stroke();S.draft.forEach(p=>{ctx.beginPath();ctx.arc(p[0]*w,p[1]*h,5,0,7);ctx.fill()});ctx.restore()}
+}
+function sync(){
+ const selected=getSelected();
+ $('regions').replaceChildren();
+ if(!S.regions.length){let div=document.createElement('div');div.className='empty';div.textContent='Nenhuma região cadastrada.';$('regions').append(div)}
+ S.regions.forEach((r,i)=>{let b=document.createElement('button');b.className='region'+(r.id===S.selected?' selected':'');let name=document.createElement('span');name.textContent=r.label;let idx=document.createElement('small');idx.textContent=String(i+1).padStart(2,'0');b.append(name,idx);b.addEventListener('click',()=>{S.selected=r.id;S.mode='select';sync();render()});$('regions').append(b)});
+ $('regionName').disabled=!selected;$('regionName').value=selected?selected.label:'';
+ $('deleteRegion').disabled=!selected;
+ ['strength','scale','blend'].forEach(id=>$(id).disabled=!selected);
+ $('strength').value=selected?Math.round((selected.material.opacity??.75)*100):75;
+ $('strengthOut').textContent=$('strength').value+'%';
+ $('scale').value=selected?Math.round((selected.material.scale||1)*100):100;
+ $('scaleOut').textContent=$('scale').value+'%';
+ $('blend').value=selected?(selected.material.blend||'source-over'):'source-over';
+ $('palette').querySelectorAll('button').forEach(btn=>btn.classList.toggle('selected',!!selected&&selected.material.name===btn.dataset.name));
+ $('selectMode').classList.toggle('active',S.mode==='select');$('drawMode').classList.toggle('active',S.mode==='draw');
+ $('finish').disabled=S.draft.length<3;
+ $('cancel').disabled=S.mode!=='draw';
+ setButtons();
+ $('status').textContent=!S.img?'Aguardando fotografia':S.mode==='draw'?'Marcação: '+S.draft.length+' vértices · clique sobre a fotografia':selected?'Selecionado: '+selected.label+' · arraste pontos para ajustar':'Selecione ou desenhe uma região';
+ $('dimensions').textContent=S.img?S.photoName+' · '+S.photoSize.w+' × '+S.photoSize.h+' px · '+S.regions.length+' regiões':'Sem imagem · sem alterações';
+}
+function setButtons(){
+ $('undo').disabled=!S.history.length;$('redo').disabled=!S.future.length;
+ $('exportPng').disabled=!S.img;$('exportJson').disabled=!S.regions.length;$('clear').disabled=!S.regions.length;
+ $('toggleOutline').textContent='Contornos: '+(S.outline?'ON':'OFF');$('toggleCompare').classList.toggle('active',S.compare);
+ $('compareControls').hidden=!S.compare;
+}
+function pos(e){let r=c.getBoundingClientRect();return [Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),Math.max(0,Math.min(1,(e.clientY-r.top)/r.height))]}
+function inside(pt,poly){let inPoly=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){let a=poly[i],b=poly[j],yTest=(a[1]>pt[1])!==(b[1]>pt[1]);if(yTest&&(pt[0]<(b[0]-a[0])*(pt[1]-a[1])/(b[1]-a[1])+a[0]))inPoly=!inPoly}return inPoly}
+function nearVertex(p,r){let rect=c.getBoundingClientRect(),dist=15/Math.max(rect.width,rect.height);let best=-1,score=999;for(let i=0;i<r.points.length;i++){let q=r.points[i],dx=(p[0]-q[0])*rect.width,dy=(p[1]-q[1])*rect.height,d=Math.sqrt(dx*dx+dy*dy);if(d<14&&d<score){best=i;score=d}}return best}
+function selectOrDraw(e){
+ if(!S.img||S.compare)return;let p=pos(e);
+ if(S.mode==='draw'){
+   if(e.detail>=2){finishRegion();return}
+   S.draft.push(p);sync();render();return
+ }
+ let r=getSelected();if(r){let v=nearVertex(p,r);if(v>=0){remember();S.drag={id:r.id,v};c.setPointerCapture(e.pointerId);return}}
+ for(let i=S.regions.length-1;i>=0;i--){if(inside(p,S.regions[i].points)){S.selected=S.regions[i].id;sync();render();return}}
+ S.selected=null;sync();render();
+}
+function finishRegion(){
+ if(S.draft.length<3){notify('Marque pelo menos 3 pontos.');return}
+ let arr=S.draft.slice();if(arr.length>3){let a=arr[0],b=arr[arr.length-1];if(Math.hypot(a[0]-b[0],a[1]-b[1])<.02)arr.pop()}
+ if(arr.length<3)return;
+ remember();const kind=$('kind').value;let label=kind+' '+(S.regions.filter(x=>x.kind===kind).length+1);
+ const region={id:'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),kind,label,points:arr,material:{type:'solid',color:'#d6c3aa',name:'Areia quente',opacity:.75,blend:'source-over',scale:1}};
+ S.regions.push(region);S.selected=region.id;S.draft=[];S.mode='select';sync();render();notify('Região criada: '+label)
+}
+function selectMaterial(material){let r=getSelected();if(!r){notify('Selecione uma região primeiro.');return}remember();r.material={...material,opacity:r.material.opacity??.75,blend:r.material.blend||'source-over',scale:r.material.scale||1};sync();render()}
+function buildPalette(){
+ catalog.forEach(m=>{let b=document.createElement('button');b.className='swatch';b.dataset.name=m.name;let block=document.createElement('span');block.className='swatch-color';block.style.background=m.preview;if(m.type==='pattern'){let uri=getTile(m.key).toDataURL();block.style.background='url('+uri+') center/cover'}let caption=document.createElement('span');caption.className='swatch-name';caption.textContent=m.name;b.append(block,caption);b.addEventListener('click',()=>selectMaterial(m));$('palette').append(b)})
+}
+function download(blob,name){let url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
+$('photoFile').addEventListener('change',e=>{
+ let file=e.target.files?.[0];if(!file)return;
+ if(S.img&&S.regions.length&&!confirm('A nova fotografia removerá as regiões marcadas. Continuar?'))return;
+ let url=URL.createObjectURL(file),img=new Image;img.onload=()=>{
+   S.img=img;S.photoName=file.name;S.photoSize={w:img.naturalWidth,h:img.naturalHeight};
+   let factor=Math.min(1,1900/img.naturalWidth,1400/img.naturalHeight);
+   c.width=Math.round(img.naturalWidth*factor);c.height=Math.round(img.naturalHeight*factor);
+   S.regions=[];S.selected=null;S.history=[];S.future=[];S.draft=[];S.mode='select';$('blank').hidden=true;sync();render();URL.revokeObjectURL(url);
+ };img.onerror=()=>notify('Não foi possível abrir a fotografia.');img.src=url;e.target.value='';
+});
+$('selectMode').onclick=()=>{S.mode='select';S.draft=[];sync();render()};
+$('drawMode').onclick=()=>{if(!S.img){notify('Abra uma fotografia primeiro.');return}S.mode='draw';S.draft=[];sync();render()};
+$('finish').onclick=finishRegion;
+$('cancel').onclick=()=>{S.mode='select';S.draft=[];sync();render()};
+$('undo').onclick=undo;$('redo').onclick=redo;
+$('toggleOutline').onclick=()=>{S.outline=!S.outline;setButtons();render()};
+$('toggleCompare').onclick=()=>{if(!S.img)return;S.compare=!S.compare;setButtons();render()};
+$('compare').oninput=e=>{S.compareAt=Number(e.target.value);render()};
+c.addEventListener('pointerdown',selectOrDraw);
+c.addEventListener('pointermove',e=>{
+ if(!S.drag)return;let r=S.regions.find(x=>x.id===S.drag.id);if(!r)return;
+ r.points[S.drag.v]=pos(e);render();
+});
+function finishDrag(){if(S.drag){S.drag=null;sync();render()}}
+c.addEventListener('pointerup',finishDrag);c.addEventListener('pointercancel',finishDrag);
+c.addEventListener('dblclick',e=>{e.preventDefault();if(S.mode==='draw')finishRegion()});
+$('regionName').onchange=e=>{let r=getSelected();if(r){remember();r.label=e.target.value.trim()||r.label;sync();render()}};
+$('deleteRegion').onclick=()=>{let r=getSelected();if(!r)return;remember();S.regions=S.regions.filter(x=>x.id!==S.selected);S.selected=null;sync();render()};
+$('clear').onclick=()=>{if(!S.regions.length||!confirm('Excluir todas as regiões deste projeto?'))return;remember();S.regions=[];S.selected=null;sync();render()};
+$('customColor').onchange=e=>selectMaterial({type:'solid',color:e.target.value,name:'Cor personalizada '+e.target.value});
+$('textureFile').onchange=e=>{
+ const f=e.target.files?.[0];if(!f)return;
+ if(!getSelected()){notify('Selecione uma região antes de importar uma textura.');return}
+ const fr=new FileReader;fr.onload=()=>{selectMaterial({type:'texture',textureData:String(fr.result),name:'Textura local: '+f.name});notify('Textura aplicada localmente.')};fr.readAsDataURL(f);e.target.value='';
+};
+['strength','scale'].forEach(id=>{
+ $(id).addEventListener('pointerdown',()=>{if(getSelected())remember()});
+ $(id).addEventListener('input',e=>{let r=getSelected();if(!r)return;if(id==='strength')r.material.opacity=Number(e.target.value)/100;else r.material.scale=Number(e.target.value)/100;$(id==='strength'?'strengthOut':'scaleOut').textContent=e.target.value+'%';render()});
+});
+$('blend').onchange=e=>{let r=getSelected();if(!r)return;remember();r.material.blend=e.target.value;sync();render()};
+$('exportPng').onclick=()=>{
+ if(!S.img)return;render(true);c.toBlob(b=>{render();if(b)download(b,'decoracao-'+Date.now()+'.png')},'image/png');
+};
+$('exportJson').onclick=()=>{
+ const obj={format:'atelie-apartamento/v1',photoName:S.photoName,photoSize:S.photoSize,regions:S.regions,selected:S.selected,exportedAt:new Date().toISOString(),note:'A fotografia-base NÃO está incluída. Importe novamente a mesma foto.'};
+ download(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}),'decoracao-projeto-'+Date.now()+'.json');
+};
+$('jsonFile').onchange=e=>{
+ const f=e.target.files?.[0];if(!f)return;const rd=new FileReader;rd.onload=()=>{
+  try{let x=JSON.parse(rd.result);if(x.format!=='atelie-apartamento/v1'||!Array.isArray(x.regions))throw Error('Formato não reconhecido');
+  if(x.regions.some(r=>!Array.isArray(r.points)||r.points.some(p=>!Array.isArray(p)||p.length!==2||!p.every(Number.isFinite))))throw Error('Contornos inválidos');
+  if(S.img&&x.photoName!==S.photoName&&!confirm('O JSON indica outra fotografia ('+x.photoName+'). Carregar contornos mesmo assim?'))return;
+  S.regions=x.regions;S.selected=x.selected;S.history=[];S.future=[];S.mode='select';
+  sync();render();notify('Projeto aberto. '+(S.img?'Confira a sobreposição.':'Carregue a fotografia-base indicada: '+x.photoName));
+  }catch(err){notify('Erro ao ler projeto: '+err.message)}
+ };rd.readAsText(f);e.target.value='';
+};
+window.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&S.mode==='draw'){$('cancel').click()}
+ if(e.key==='Enter'&&S.mode==='draw'){e.preventDefault();finishRegion()}
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo()}
+});
+buildPalette();sync();render();
+})();
+</script>
+</body>
+</html>
