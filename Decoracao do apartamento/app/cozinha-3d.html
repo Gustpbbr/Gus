@@ -159,13 +159,13 @@ $("resetView").onclick=()=>{yaw=-27;pitch=-23;zoom=.78;camera()};
 $("topView").onclick=()=>{yaw=-10;pitch=-75;zoom=.70;camera()};
 $("zoomIn").onclick=()=>{zoom=Math.min(1.85,zoom*1.17);camera()};
 $("zoomOut").onclick=()=>{zoom=Math.max(.28,zoom/1.17);camera()};
-let pointers=new Map(),moved=false,start=null,previousPinch=0;
-view.addEventListener("pointerdown",e=>{if(e.target.tagName==="BUTTON")return;view.setPointerCapture(e.pointerId);pointers.set(e.pointerId,[e.clientX,e.clientY]);if(pointers.size===1){moved=false;start=[e.clientX,e.clientY]}if(pointers.size===2){let pts=[...pointers.values()];previousPinch=Math.hypot(pts[0][0]-pts[1][0],pts[0][1]-pts[1][1])}});
+let pointers=new Map(),moved=false,start=null,previousPinch=0,initialTarget=null;
+view.addEventListener("pointerdown",e=>{if(e.target.tagName==="BUTTON")return;view.setPointerCapture(e.pointerId);pointers.set(e.pointerId,[e.clientX,e.clientY]);if(pointers.size===1){moved=false;start=[e.clientX,e.clientY];initialTarget=e.target.closest(".obj[data-cat]")}if(pointers.size===2){let pts=[...pointers.values()];previousPinch=Math.hypot(pts[0][0]-pts[1][0],pts[0][1]-pts[1][1])}});
 view.addEventListener("pointermove",e=>{if(!pointers.has(e.pointerId))return;let prev=pointers.get(e.pointerId),n=[e.clientX,e.clientY];pointers.set(e.pointerId,n);
 if(pointers.size===2){let pts=[...pointers.values()],d=Math.hypot(pts[0][0]-pts[1][0],pts[0][1]-pts[1][1]);if(previousPinch>5)zoom=Math.max(.28,Math.min(1.85,zoom*d/previousPinch));previousPinch=d;moved=true;camera();return}
 if(start&&Math.hypot(n[0]-start[0],n[1]-start[1])>6)moved=true;
 yaw+=(n[0]-prev[0])*.32;pitch=Math.max(-82,Math.min(30,pitch-(n[1]-prev[1])*.25));camera()});
-view.addEventListener("pointerup",e=>{pointers.delete(e.pointerId);if(!pointers.size){start=null;previousPinch=0}});
+view.addEventListener("pointerup",e=>{if(pointers.size===1&&!moved&&initialTarget&&initialTarget.dataset.cat)setCategory(initialTarget.dataset.cat);pointers.delete(e.pointerId);if(!pointers.size){start=null;initialTarget=null;previousPinch=0}});
 view.addEventListener("pointercancel",e=>{pointers.delete(e.pointerId);start=null});
 view.addEventListener("wheel",e=>{e.preventDefault();zoom=Math.max(.28,Math.min(1.85,zoom*(e.deltaY>0?.91:1.09)));camera()},{passive:false});
 function writeMessage(txt){$("notice").textContent=txt}
