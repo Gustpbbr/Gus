@@ -8,6 +8,13 @@
 
 > **Objetivo:** criar um aplicativo web interativo para experimentar combinações de decoração e reforma, usando fotografias reais, imagens de referência e — quando apropriado — geometria 3D. O usuário seleciona piso, bancada, portas, armários, paredes, colunas, azulejos, louças, metais, cortinas, iluminação ou mobiliário e escolhe entre dezenas de materiais e modelos. Apenas a região selecionada muda. É possível comparar, salvar e exportar versões.
 
+## Banco de dados de produtos reais (2026-11-14)
+
+- **[Catálogo de referências reais](catalogo/README.md):** 163 referências de materiais e produtos em 10 categorias, com links de origem e metadados de procedência. 17 têm miniaturas comerciais externas; os demais oferecem acesso à fonte sem imagem inventada.
+- **[Galeria visual independente](catalogo/galeria.html):** HTML responsivo e pesquisável, baixável para uso no celular ou computador. Funciona offline para busca, mas as miniaturas e páginas externas requerem internet.
+- **[Dados JSON para o simulador](catalogo/catalogo.json)** e **[fontes e direitos](catalogo/FONTES_E_DIREITOS.md)**.
+- O catálogo **não contém** fotos do apartamento nem arquivos de imagens comerciais reproduzidas. Direitos de uso e textura 3D continuam pendentes de validação.
+
 ## Progresso de implementação — 2026-11-14
 
 - **Implementado:** [editor local de regiões e acabamentos](app/index.html) e [instruções de uso](app/README.md).
