@@ -22,6 +22,15 @@
 | Roca cuba Terra T2 | https://www.arqplace.com.br/cubas-para-banheiro/cuba-de-apoio-redonda-390-sem-mesa-terra-t2-branco-roca | Foto comercial do produto |
 | Deca Cuba Slim | https://www.allbanho.com.br/banheiro/loucas-sanitarias/cubas/cuba-de-apoio-redonda-40cm-branco-deca | Foto comercial do produto |
 
+## Fontes adicionais — ampliação 1.1
+- Durafloor ConectaBIM: https://www.downloads.durafloor.com.br/
+- Formica Natural Wood: https://www.formica.com.br/produtos/natural-wood
+- Formica Classic Wood: https://www.formica.com.br/produtos/classic-wood
+- Papéis e Parede, coleção Urban Jungle: https://www.papeiseparede.com.br/426/papeis-de-parede-urban-jungle
+- Coelho, painel Floresta Tropical: https://www.coelhopapeisdeparede.com.br/produtos/papel-de-parede-floresta-tropical/
+- Oba Arquitetura: https://www.obaarquitetura.com.br/produto/papel-de-parede-tropical/
+- Loja Viva Cortinas: https://persianas.com.br/produtos/
+
 ## Direitos e qualidade
 Nenhuma foto de terceiro foi salva como arquivo neste repositório. `imagemExterna` é uma URL de referência remota e pode falhar ou ser bloqueada. Não presumir licença CC, cessão de direitos, permissão de uso comercial ou autorização para espelhar arquivos. Preservar fonte/autor, limitar uso a referência e buscar licenças específicas antes de redistribuir, baixar em massa ou empacotar no app.
 
