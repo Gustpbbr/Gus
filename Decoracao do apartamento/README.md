@@ -2,11 +2,18 @@
 
 **Versão:** 0.1 — planejamento
 **Data:** 2026-11-14
-**Status:** arquitetura e requisitos; implementação ainda não iniciada
+**Status:** arquitetura definida; protótipo 0.1 do editor 2D criado em `app/index.html` (sem deploy)
 **Repositório:** `Gustpbbr/Gus` (PÚBLICO)
 **Pasta canônica:** `Decoracao do apartamento/`
 
 > **Objetivo:** criar um aplicativo web interativo para experimentar combinações de decoração e reforma, usando fotografias reais, imagens de referência e — quando apropriado — geometria 3D. O usuário seleciona piso, bancada, portas, armários, paredes, colunas, azulejos, louças, metais, cortinas, iluminação ou mobiliário e escolhe entre dezenas de materiais e modelos. Apenas a região selecionada muda. É possível comparar, salvar e exportar versões.
+
+## Progresso de implementação — 2026-11-14
+
+- **Implementado:** [editor local de regiões e acabamentos](app/index.html) e [instruções de uso](app/README.md).
+- **Funciona no navegador:** importação local de foto; polígonos independentes; cores e texturas demonstrativas; ajuste de vértices; intensidade/escala/mistura; original x editado; desfazer/refazer; exportar PNG e JSON.
+- **Ainda não implementado:** textura com perspectiva calibrada, modelos 3D, múltiplas vistas sincronizadas, produtos reais catalogados, objetos intercambiáveis e armazenamento privado sincronizado.
+- **Segurança:** código no Gus público, nenhuma fotografia real ou planta detalhada adicionada.
 
 ## 1. Organização, integração e segurança
 
