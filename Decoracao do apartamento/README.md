@@ -10,7 +10,7 @@
 
 ## Banco de dados de produtos reais (2026-11-14)
 
-- **[Catálogo de referências reais](catalogo/README.md):** 163 referências de materiais e produtos em 10 categorias, com links de origem e metadados de procedência. 17 têm miniaturas comerciais externas; os demais oferecem acesso à fonte sem imagem inventada.
+- **[Catálogo de referências reais](catalogo/README.md):** 240 referências de materiais, padrões e produtos em 14 categorias, com links de origem e metadados de procedência. 20 têm miniaturas comerciais externas; os demais oferecem acesso à fonte sem imagem inventada.
 - **[Galeria visual independente](catalogo/galeria.html):** HTML responsivo e pesquisável, baixável para uso no celular ou computador. Funciona offline para busca, mas as miniaturas e páginas externas requerem internet.
 - **[Dados JSON para o simulador](catalogo/catalogo.json)** e **[fontes e direitos](catalogo/FONTES_E_DIREITOS.md)**.
 - O catálogo **não contém** fotos do apartamento nem arquivos de imagens comerciais reproduzidas. Direitos de uso e textura 3D continuam pendentes de validação.
