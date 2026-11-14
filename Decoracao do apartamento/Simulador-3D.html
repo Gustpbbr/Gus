@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ateliê do Apartamento | Cozinha 3D</title>
+<style>
+:root{color-scheme:dark;--bg:#101411;--panel:#1b221d;--line:#354038;--text:#f3f0e9;--muted:#a7b0a5;--gold:#d9b87b;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}*{box-sizing:border-box}body{background:var(--bg);color:var(--text);margin:0}button,select,input{font:inherit}button{cursor:pointer}button:focus-visible,select:focus-visible{outline:2px solid #f3d89d;outline-offset:2px}.page{max-width:1600px;margin:auto;padding:18px}.brand{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:15px}.brand h1{font-size:clamp(20px,2.5vw,30px);letter-spacing:-.04em;margin:3px 0;font-weight:700}.eyebrow{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);font-weight:700}.sub{font-size:12px;color:var(--muted)}.chip{border:1px solid #3e6d50;color:#b4dcbf;background:#23382a;border-radius:20px;font-size:11px;padding:8px 11px;white-space:nowrap}.cols{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px}.viewport,.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}.viewport{position:relative}.toptools{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}button{border:1px solid #47554a;background:#283329;color:#eeeadd;border-radius:8px;padding:8px 11px;font-size:12px}button:hover{background:#37453a}button.primary{background:#bda173;color:#171c17;border-color:#d9bc8b;font-weight:700}button.active{border-color:#d9b87b;background:#474634}.stage{position:relative;height:min(66vh,740px);min-height:340px;overflow:hidden;background:radial-gradient(ellipse at 50% 20%,#34453d 0%,#18271f 53%,#121c16 100%);touch-action:none}canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}.stage:active canvas{cursor:grabbing}.stage-note{position:absolute;left:13px;top:12px;pointer-events:none;background:rgba(15,22,17,.7);backdrop-filter:blur(7px);border:1px solid #536353;border-radius:8px;padding:8px 10px;max-width:220px;font-size:11px;line-height:1.5;color:#dce0d7}.stage-bottom{position:absolute;right:12px;bottom:12px;background:#141d16bb;padding:7px 10px;border-radius:8px;font-size:11px;color:#d7dfd1;pointer-events:none}.foot{padding:11px 13px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:11px;color:#aeb4aa}.panel-header{padding:16px;border-bottom:1px solid var(--line)}.panel h2{font-size:17px;margin:3px 0 7px}.panel p{font-size:12px;color:var(--muted);line-height:1.55;margin:5px 0}.section{padding:13px 15px;border-bottom:1px solid var(--line)}.section:last-child{border:0}.title{font-size:11px;font-weight:750;letter-spacing:.13em;color:#d3ba8c;text-transform:uppercase;margin:0 0 11px}.cats{display:flex;flex-wrap:wrap;gap:6px}.cats button{font-size:11px;padding:7px 9px}.swatches{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.option{text-align:left;display:flex;align-items:center;gap:9px;padding:7px;border:1px solid #455148;background:#222b24;border-radius:9px;min-height:55px}.option.selected{border-color:#e9ca92;background:#3f4232;box-shadow:inset 0 0 0 1px #e9ca92}.option .preview{width:39px;min-width:39px;height:39px;border-radius:6px;border:1px solid #e5dec41f;box-shadow:inset 0 0 16px #ffffff18;background-size:cover}.option span:last-child{font-size:11px;line-height:1.3}.details{background:#263129;border-radius:9px;padding:11px;font-size:11px;line-height:1.55;color:#c9d4c9}.actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.actions button,.actions label{width:100%;text-align:center}.file{position:relative;display:inline-block;border:1px solid #47554a;background:#283329;color:#eeeadd;border-radius:8px;padding:8px 11px;font-size:12px;cursor:pointer}.file input{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}.slider{display:flex;gap:8px;align-items:center;font-size:11px;color:#d0d4cb}.slider input{flex:1;accent-color:#d9b87b}.warning{color:#b8bbaf;font-size:11px;line-height:1.6;border:1px solid #52604d;background:#293128;padding:10px;border-radius:8px;margin-top:12px}.below{font-size:11px;color:#adb8ac;line-height:1.65;margin-top:13px}.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);padding:11px 14px;border-radius:10px;background:#e5cb92;color:#20251e;box-shadow:0 6px 30px #0008;font-size:12px;display:none;z-index:8}.toast.show{display:block}@media(max-width:900px){.cols{grid-template-columns:1fr}.panel{display:grid;grid-template-columns:1fr 1fr}.panel-header{grid-column:span 2}.section{border-right:1px solid var(--line)}.stage{height:55vh;min-height:310px}}@media(max-width:570px){.page{padding:9px}.brand{align-items:start;gap:8px}.brand h1{font-size:23px}.chip{font-size:9px;padding:6px}.panel{display:block}.stage{height:49vh;min-height:300px}.toptools{padding:9px;gap:5px}.toptools button{padding:8px}.section{border-right:0}.swatches{grid-template-columns:repeat(2,minmax(0,1fr))}.stage-note{font-size:10px;max-width:160px}}
+</style>
+</head>
+<body><div class="page">
+<header class="brand"><div><div class="eyebrow">Ateliê do Apartamento · protótipo 3D</div><h1>Cozinha · Simulador de materiais</h1><div class="sub">Gire, aproxime e personalize cada acabamento sem depender de aplicativos comerciais.</div></div><div class="chip">◉ 100% no navegador</div></header>
+<main class="cols">
+<section class="viewport">
+<div class="toptools">
+  <button id="perspective" class="active">Perspectiva</button><button id="front">Frontal</button><button id="top">Superior</button><button id="left">Lateral</button>
+  <button id="zoomIn" aria-label="Aproximar">＋</button><button id="zoomOut" aria-label="Afastar">－</button>
+  <button id="resetCam">Recentrar</button><button id="shot" class="primary">Salvar imagem</button>
+</div>
+<div class="stage" id="stage"><canvas id="view" aria-label="Modelo tridimensional da cozinha. Arraste para girar e use gesto de pinça para aproximar."></canvas>
+<div class="stage-note">Arraste para girar · Faça pinça para zoom · Toque em uma superfície para trocar seu material.</div>
+<div class="stage-bottom" id="viewInfo">Perspectiva livre</div></div>
+<div class="foot"><span>Modelo 3D demonstrativo baseado no conceito do executivo; ainda não é levantamento técnico.</span><span id="fps">Cozinha + hall · versão 0.1</span></div>
+</section>
+<aside class="panel">
+<div class="panel-header"><div class="eyebrow">Acabamentos</div><h2 id="activeName">Bancada</h2><p>Selecione uma superfície na cena ou use as categorias abaixo. A mudança aparece imediatamente no modelo.</p></div>
+<div class="section"><div class="title">01 · Escolha o elemento</div><div class="cats" id="cats"></div></div>
+<div class="section"><div class="title">02 · Materiais disponíveis</div><div class="swatches" id="swatches"></div><div class="warning">Materiais e texturas visuais aproximados, criados para experimentar paletas. Não reproduzem exatamente o produto comercial ou a iluminação real.</div></div>
+<div class="section"><div class="title">03 · Iluminação</div><div class="slider"><span>Suave</span><input id="light" type="range" min="25" max="135" value="92"><span>Intensa</span></div><p>Iluminação de estudo, sem simulação física certificada.</p></div>
+<div class="section"><div class="title">04 · Combinações</div><div class="actions"><button id="saveA">Guardar A</button><button id="saveB">Guardar B</button><button id="loadA">Exibir A</button><button id="loadB">Exibir B</button><button id="export" class="primary">Exportar escolhas</button><label class="file">Importar escolhas<input type="file" id="import" accept=".json,application/json"></label><button id="default" style="grid-column:span 2">Voltar ao projeto original</button></div></div>
+<div class="section"><div class="title">05 · Medidas usadas nesta maquete</div><div class="details">Bancada principal: <b>2,35 m</b> de referência · profundidade adotada: <b>0,60 m</b> · altura: <b>0,90 m</b>. Pé-direito usado na simulação: <b>3,00 m (a confirmar)</b>. Posicionamento dos móveis, vãos, espessuras e dimensões complementares são aproximações para estudo visual; confirmar in loco antes de executar.</div></div>
+</aside></main>
+<div class="below">Este HTML é autônomo: não baixa bibliotecas externas, não exige login e não envia os dados a servidores. Um arquivo salvo de escolhas contém apenas nomes de acabamentos. O desenho é uma maquete 3D interpretativa da cozinha do projeto, não a reconstrução geométrica definitiva do apartamento.</div>
+<div class="toast" id="toast"></div>
+</div>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id), canvas=$('view'),ctx=canvas.getContext('2d',{alpha:false});
+if(!ctx){alert('Navegador sem suporte a Canvas 2D.');return}
+const C={
+ bancada:{label:'Bancada',items:[
+  ['guatemala','Verde Guatemala','#244739','stone'],['ubatuba','Verde Ubatuba','#182f29','stone'],['saogabriel','Preto São Gabriel','#202525','stone'],['taj','Taj Mahal','#d5c2a1','stone'],['branco','Quartzo branco','#e4e1d8','stone'],['travertino','Travertino bege','#bda98c','stone']]},
+ piso:{label:'Piso',items:[
+  ['areia','Porcelanato areia','#cfc5b8','tile'],['cinza','Porcelanato cinza','#9faaa8','tile'],['terracota','Terracota rústica','#b36c52','tile'],['cimento','Cimento queimado','#a5a5a0','tile'],['madeira','Madeira natural','#a88056','wood']]},
+ inferior:{label:'Armário inferior',items:[
+  ['freijo','Freijó','#ae8050','wood'],['greige','Greige fosco','#aaa298','solid'],['salvia','Verde-sálvia','#789184','solid'],['branco','Branco quente','#e7e4dc','solid'],['nogueira','Nogueira','#745038','wood']]},
+ superior:{label:'Armário aéreo',items:[
+  ['offwhite','Off-white','#e9e7df','solid'],['branco','Branco neve','#faf9f3','solid'],['freijo','Freijó','#b38a58','wood'],['greige','Greige','#b7aea4','solid'],['verde','Verde-oliva','#65725c','solid']]},
+ revestimento:{label:'Revestimento da parede',items:[
+  ['metro','Metro White','#eae9e2','tile'],['amarelo','Amarelo original · aproximação','#c5a34d','tile'],['verde','Verde-sálvia cerâmico','#91a59a','tile'],['azul','Azul petróleo cerâmico','#35576c','tile'],['terracota','Terracota esmaltada','#c18568','tile']]},
+ parede:{label:'Pintura das paredes',items:[
+  ['neve','Branco neve','#f1eee7','solid'],['greige','Greige claro','#d1c9bf','solid'],['areia','Areia','#e0d4bd','solid'],['salvia','Sálvia muito clara','#d4ded2','solid'],['branco','Branco puro','#fafafa','solid']]},
+ coluna:{label:'Pintura da coluna',items:[
+  ['neve','Branco neve','#f1eee7','solid'],['greige','Greige','#d1c9bf','solid'],['areia','Areia','#e0d4bd','solid'],['salvia','Verde-sálvia','#8da08b','solid'],['madeira','Madeira decorativa','#b88c60','wood']]}
+};
+const initial={bancada:'guatemala',piso:'areia',inferior:'freijo',superior:'offwhite',revestimento:'metro',parede:'neve',coluna:'neve'};
+const s={choice:{...initial},active:'bancada',saved:{A:null,B:null},cam:{yaw:.46,pitch:.27,dist:7.8},light:.92,points:new Map(),pointer:null,pinches:[],moved:false,width:0,height:0,hit:[],renderScheduled:false};
+const mouse={x:0,y:0};
+const V=(x,y,z)=>({x,y,z}),sub=(a,b)=>V(a.x-b.x,a.y-b.y,a.z-b.z),dot=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z,cross=(a,b)=>V(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x),norm=v=>{let m=Math.hypot(v.x,v.y,v.z)||1;return V(v.x/m,v.y/m,v.z/m)};
+const lerp=(a,b,t)=>a+(b-a)*t,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function item(cat){return C[cat].items.find(i=>i[0]===s.choice[cat])||C[cat].items[0]}
+function hex(s){s=s.replace('#','');return [parseInt(s.slice(0,2),16),parseInt(s.slice(2,4),16),parseInt(s.slice(4,6),16)]}
+function rgb(col,m=1){let a=hex(col);return 'rgb('+a.map(v=>Math.round(clamp(v*m,0,255))).join(',')+')'}
+function tint(col,m=1){let a=hex(col);return '#'+a.map(v=>Math.round(clamp(v*m,0,255)).toString(16).padStart(2,'0')).join('')}
+function surface(cat){return item(cat)[2]}
+function seeded(a){let x=Math.sin(a*12.9898+78.233)*43758.5453;return x-Math.floor(x)}
+function addFace(faces,pts,mat,cat,opts={}){faces.push({pts,mat,cat,...opts})}
+function addBox(faces,x,y,z,w,h,d,cat,color,options={}){
+ let x0=x-w/2,x1=x+w/2,y0=y-h/2,y1=y+h/2,z0=z-d/2,z1=z+d/2;
+ const m=color||surface(cat)||'#ddd';
+ const facesDef=[
+ {q:[V(x0,y0,z1),V(x1,y0,z1),V(x1,y1,z1),V(x0,y1,z1)],shade:1.0,side:'front'},
+ {q:[V(x1,y0,z0),V(x0,y0,z0),V(x0,y1,z0),V(x1,y1,z0)],shade:.69,side:'back'},
+ {q:[V(x0,y0,z0),V(x0,y0,z1),V(x0,y1,z1),V(x0,y1,z0)],shade:.79,side:'left'},
+ {q:[V(x1,y0,z1),V(x1,y0,z0),V(x1,y1,z0),V(x1,y1,z1)],shade:.84,side:'right'},
+ {q:[V(x0,y1,z1),V(x1,y1,z1),V(x1,y1,z0),V(x0,y1,z0)],shade:1.16,side:'top'},
+ {q:[V(x0,y0,z0),V(x1,y0,z0),V(x1,y0,z1),V(x0,y0,z1)],shade:.64,side:'bottom'}
+ ];
+ facesDef.forEach(f=>addFace(faces,f.q,m,cat,{...options,shade:f.shade,side:f.side}));
+}
+function quad(faces,pts,col,cat,opt={}){addFace(faces,pts,col,cat,{shade:1,...opt})}
+function vertical(faces,x0,x1,y0,y1,z,col,cat,opts={}){quad(faces,[V(x0,y0,z),V(x1,y0,z),V(x1,y1,z),V(x0,y1,z)],col,cat,{side:'front',...opts})}
+function horizontal(faces,x0,x1,z0,z1,y,col,cat,opts={}){quad(faces,[V(x0,y,z0),V(x1,y,z0),V(x1,y,z1),V(x0,y,z1)],col,cat,{side:'top',...opts})}
+function cylinderTop(faces,x,z,y,r,color,cat,seg=24){let a=[];for(let k=0;k<seg;k++){let t=2*Math.PI*k/seg;a.push(V(x+Math.cos(t)*r,y,z+Math.sin(t)*r))}quad(faces,a,color,cat,{shade:1.04,side:'top'})}
+function geometry(){
+ let f=[],floor=surface('piso'),wall=surface('parede'),backs=surface('revestimento');
+ // 3D maquete de cozinha + área aberta do hall; dimensões esquemáticas
+ horizontal(f,-2.55,2.56,-.96,2.22,-.075,'#434c43',null,{shade:.60});
+ // Piso com peças reais distribuídas em metros (estimadas)
+ let wood=s.choice.piso==='madeira'; let stepX=wood?.135:(s.choice.piso==='terracota'?.31:.60),stepZ=wood?.68:(s.choice.piso==='terracota'?.31:.60);
+ for(let i=0,x=-2.50;x<2.50;i++,x+=stepX){
+   for(let j=0,z=-.94;z<2.17;j++,z+=stepZ){
+    let dx=Math.min(stepX,2.50-x),dz=Math.min(stepZ,2.17-z),variation=.955+.085*seeded(i*17+j*29);
+    let gap=wood?.004:.009;let shift=wood&&j%2?.21:0;
+    let x0=x+gap, x1=x+dx-gap, z0=z+gap,z1=z+dz-gap;
+    horizontal(f,x0,x1,z0,z1,-.06,tint(floor,variation),'piso',{texture:wood?'wood':s.choice.piso==='cimento'?'stone':'tile',grainDirection:'x',shade:.96})
+   }
+ }
+ // Parede do fundo e parte lateral
+ vertical(f,-2.52,2.52,-.05,3.04,-.98,wall,'parede',{shade:.97});
+ quad(f,[V(-2.52,-.05,-.98),V(-2.52,-.05,1.15),V(-2.52,3.04,1.15),V(-2.52,3.04,-.98)],wall,'parede',{shade:.81,side:'left'});
+ // rodapé e rodabanca
+ vertical(f,-2.45,2.48,-.02,.10,-.971,'#c5bfb3',null,{shade:.84});
+ vertical(f,-1.26,1.80,.91,1.51,-.952,backs,'revestimento',{shade:.96,texture:'tile'});
+ // Paginação de azulejos 15x15 por padrão, diferente por opção
+ let tc=s.choice.revestimento==='metro'?.125:.15;
+ for(let i=0,x=-1.26;x<1.80;i++,x+=tc)for(let j=0,y=.91;y<1.51;j++,y+=tc){
+   let eps=.004;let x1=Math.min(1.8,x+tc),y1=Math.min(1.51,y+tc);
+   vertical(f,x+eps,x1-eps,y+eps,y1-eps,-.947,tint(backs,.98+.06*seeded(i+j*9)),'revestimento',{shade:1.08});
+ }
+ // JANELA DA ÁREA DE SERVIÇO: indicativa, sem cotas exatas
+ vertical(f,1.72,2.34,1.57,2.34,-.937,'#6d8a87',null,{shade:1.20});
+ vertical(f,1.77,2.29,1.62,2.29,-.931,'#bcd0c5',null,{shade:1.18});
+ vertical(f,2.01,2.05,1.57,2.35,-.925,'#d9ded7',null,{shade:1.18});
+ vertical(f,1.72,2.34,1.93,1.97,-.920,'#d9ded7',null,{shade:1.16});
+ // geladeira à esquerda (inox com variações)
+ addBox(f,-1.93,.93,-.55,.69,1.86,.72,null,'#adb5b5',{texture:'metal'});
+ vertical(f,-2.225,-1.635,0.68,.696,-.173,'#3a4443',null);
+ vertical(f,-2.225,-1.635,1.10,1.116,-.170,'#3c4745',null);
+ addBox(f,-1.71,1.39,-.158,.018,.28,.018,null,'#4d5551');
+ addBox(f,-1.71,.49,-.158,.018,.28,.018,null,'#4d5551');
+ vertical(f,-1.99,-1.87,1.55,1.70,-.169,'#29302e',null,{shade:.85});
+ // gabinete inferior linear: 2,35m de bancada
+ addBox(f,-.05,.438,-.626,2.35,.81,.61,'inferior',null,{texture:item('inferior')[3]==='wood'?'wood':'solid'});
+ // módulo gavetas esquerdo
+ for(let j=0;j<3;j++)vertical(f,-1.18,-.81,.065+j*.245,.294+j*.245,-.303,tint(surface('inferior'),.96+(j%2)*.03),'inferior',{texture:item('inferior')[3]});
+ // lava-louças inox
+ addBox(f,-.552,.423,-.292,.45,.82,.027,null,'#a9b2af',{texture:'metal'});
+ vertical(f,-.775,-.33,.758,.824,-.269,'#343c3a',null);
+ vertical(f,-.71,-.40,.725,.739,-.265,'#d6ded7',null,{shade:1.1});
+ // portas inferiores da pia
+ for(let i=0;i<3;i++){
+  let x0=-.293+i*.47;
+  vertical(f,x0,x0+.455,.06,.837,-.301,tint(surface('inferior'),.97+.035*seeded(i)),'inferior',{texture:item('inferior')[3]});
+ }
+ // bancada horizontal 2,35m, 60cm prof e altura 0,90
+ addBox(f,-.05,.882,-.606,2.38,.045,.67,'bancada',null,{texture:'stone'});
+ // cuba de inox/escura e borda
+ horizontal(f,-.19,.28,-.785,-.40,.907,'#596763',null,{shade:1.04});
+ horizontal(f,-.165,.255,-.765,-.424,.910,'#202b2a',null,{shade:.8});
+ // torneira representada como tubo com segmentos finos
+ addBox(f,.38,1.03,-.790,.024,.23,.026,null,'#cbd5d0',{texture:'metal'});
+ addBox(f,.323,1.147,-.790,.14,.025,.026,null,'#cbd5d0',{texture:'metal'});
+ addBox(f,.256,1.084,-.790,.024,.125,.024,null,'#d3dad4',{texture:'metal'});
+ // Cooktop no lado direito da bancada
+ horizontal(f,.51,1.08,-.814,-.384,.916,'#212724',null,{shade:1.02});
+ for(let i=0;i<2;i++){
+ let z=-.70+i*.21;
+ cylinderTop(f,.803,z,.920,.088,'#69706a',null,20);
+ cylinderTop(f,.803,z,.922,.064,'#252b27',null,20);
+ }
+ // armário aéreo
+ addBox(f,.03,2.015,-.782,2.60,.91,.36,'superior',null,{texture:item('superior')[3]});
+ for(let k=0;k<5;k++){
+  let x0=-1.256+k*.514;
+  vertical(f,x0,x0+.506,1.565,2.46,-.590,tint(surface('superior'),.99+.02*seeded(k)),'superior',{texture:item('superior')[3]});
+ }
+ // micro-ondas na porta do nicho, escuro
+ vertical(f,-.73,-.15,1.76,2.11,-.586,'#434b49',null,{shade:.90});
+ vertical(f,-.67,-.24,1.81,2.07,-.581,'#151b1b',null,{shade:.90});
+ vertical(f,-.225,-.18,1.86,2.04,-.578,'#89908a',null,{shade:.88});
+ // luminária LED sob aéreo
+ addBox(f,.03,1.542,-.593,2.46,.013,.026,null,'#f4dbb1',{shade:1.4});
+ // bancada lateral e armários de serviço, esquemáticos
+ addBox(f,1.60,.435,-.56,.64,.80,.64,'inferior',null,{texture:item('inferior')[3]});
+ addBox(f,1.61,.880,-.55,.69,.046,.69,'bancada',null,{texture:'stone'});
+ // cuba de tanque / apoio discreto
+ horizontal(f,1.45,1.78,-.755,-.39,.910,'#465551',null,{shade:1.04});
+ horizontal(f,1.47,1.76,-.733,-.412,.915,'#263330',null,{shade:.84});
+ // coluna dianteira do lado da copa 
+ addBox(f,1.26,1.475,.37,.27,2.95,.41,'coluna',null,{texture:item('coluna')[3]});
+ // aparador de refeições em madeira
+ addBox(f,1.75,1.055,.89,1.0,.065,.51,null,'#a57b4c',{texture:'wood'});
+ addBox(f,1.30,.54,.89,.045,1.03,.045,null,'#7c6141',{texture:'wood'});
+ addBox(f,2.21,.54,.89,.045,1.03,.045,null,'#7c6141',{texture:'wood'});
+ // duas banquetas simples
+ for(const zz of [1.26,1.90]){
+  let xx=1.68;
+  addBox(f,xx,.705,zz,.36,.055,.30,null,'#bb945f',{texture:'wood'});
+  for(const dx of [-.13,.13])for(const dz of [-.10,.10])addBox(f,xx+dx,.35,zz+dz,.028,.70,.028,null,'#92754c');
+  addBox(f,xx,.98,zz+.127,.36,.49,.032,null,'#b68b58',{texture:'wood'});
+ }
+ // sombra estilizada na parede inferior da bancada
+ vertical(f,-1.20,1.80,.91,.945,-.944,'#606b58',null,{shade:.70});
+ return f;
+}
+let eye,forward,right,up,focal;
+function setupCam(){
+ const t=V(0,1.22,.16),a=s.cam.yaw,p=s.cam.pitch,d=s.cam.dist;
+ eye=V(t.x+Math.sin(a)*Math.cos(p)*d,t.y+Math.sin(p)*d,t.z+Math.cos(a)*Math.cos(p)*d);
+ forward=norm(sub(t,eye));right=norm(cross(forward,V(0,1,0)));up=norm(cross(right,forward));
+ focal=(Math.min(s.width*1.25,s.height*1.50)*.5)/Math.tan((48*Math.PI/180)/2);
+}
+function project(p){let v=sub(p,eye),z=dot(v,forward);if(z<.1)return null;return{x:s.width*.5+dot(v,right)*focal/z,y:s.height*.53-dot(v,up)*focal/z,z}}
+function onScreen(face){let arr=face.pts.map(project);if(arr.some(p=>!p))return null;return arr}
+function path(pts){ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath()}
+function renderFace(entry){
+ const {face,a}=entry;const base=face.mat,shade=(face.shade??1)*s.light;
+ path(a);let col=tint(base,shade);
+ if(face.texture==='metal'){
+  let min=Math.min(...a.map(p=>p.x)),max=Math.max(...a.map(p=>p.x));let gr=ctx.createLinearGradient(min,0,max,0);
+  gr.addColorStop(0,tint(base,.74*s.light));gr.addColorStop(.22,tint(base,1.12*s.light));gr.addColorStop(.48,tint(base,.83*s.light));gr.addColorStop(.79,tint(base,1.10*s.light));gr.addColorStop(1,tint(base,.84*s.light));ctx.fillStyle=gr;
+ }else ctx.fillStyle=col;
+ ctx.fill();
+ ctx.strokeStyle='rgba(14,25,19,.13)';ctx.lineWidth=.8;ctx.stroke();
+ if(face.texture==='wood'){
+  ctx.save();path(a);ctx.clip();let minX=Math.min(...a.map(p=>p.x)),maxX=Math.max(...a.map(p=>p.x)),minY=Math.min(...a.map(p=>p.y)),maxY=Math.max(...a.map(p=>p.y));
+  let dir=face.side==='top'?'horizontal':'vertical';
+  for(let i=0;i<Math.min(55,Math.floor((maxX-minX)/4)+5);i++){
+   let t=i/50,px=minX+(maxX-minX)*t,py=minY+(maxY-minY)*t;
+   ctx.beginPath();ctx.strokeStyle=(i%6===0?'rgba(45,26,12,.17)':'rgba(255,231,186,.08)');ctx.lineWidth=(i%11===0?1.8:.75);
+   if(dir==='vertical'){ctx.moveTo(px,minY);ctx.bezierCurveTo(px+4,minY+15,px-3,maxY-13,px,maxY)}
+   else {ctx.moveTo(minX,py);ctx.bezierCurveTo(minX+15,py+3,maxX-14,py-2,maxX,py)}
+   ctx.stroke();
+  }ctx.restore();
+ }
+ if(face.texture==='stone'){
+  ctx.save();path(a);ctx.clip();let bx=Math.min(...a.map(p=>p.x)),ex=Math.max(...a.map(p=>p.x)),by=Math.min(...a.map(p=>p.y)),ey=Math.max(...a.map(p=>p.y));
+  for(let n=0;n<5;n++){let yy=by+(ey-by)*seeded(n*51+17),xx=bx-50;ctx.beginPath();ctx.moveTo(xx,yy);
+   for(let j=0;j<13;j++){let tx=bx+(ex-bx)*(j/12),ty=yy+Math.sin(j*.8+n)*5+n*1.6;ctx.lineTo(tx,ty)}
+   ctx.lineWidth=n%2?1:.65;ctx.strokeStyle=s.choice.bancada==='taj'||s.choice.bancada==='travertino'?'rgba(111,89,58,.18)':'rgba(244,249,231,.14)';ctx.stroke()}
+  ctx.restore();
+ }
+ if(face.cat){s.hit.push({points:a,cat:face.cat})}
+}
+function render(){
+ s.renderScheduled=false;
+ let rect=$('stage').getBoundingClientRect();if(!rect.width||!rect.height)return;
+ let dpr=Math.min(window.devicePixelRatio||1,2),w=Math.round(rect.width*dpr),h=Math.round(rect.height*dpr);
+ if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}ctx.setTransform(dpr,0,0,dpr,0,0);s.width=rect.width;s.height=rect.height;
+ let bg=ctx.createLinearGradient(0,0,0,s.height);bg.addColorStop(0,'#405146');bg.addColorStop(.59,'#26382e');bg.addColorStop(1,'#17231b');ctx.fillStyle=bg;ctx.fillRect(0,0,s.width,s.height);
+ // chão atmosférico exterior
+ const glow=ctx.createRadialGradient(s.width*.54,s.height*.72,10,s.width*.54,s.height*.72,s.width*.7);glow.addColorStop(0,'rgba(225,212,182,.13)');glow.addColorStop(1,'rgba(15,20,16,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,s.width,s.height);
+ setupCam();
+ const faces=geometry(),entries=[];
+ for(const face of faces){const a=onScreen(face);if(!a)continue;const depth=a.reduce((t,p)=>t+p.z,0)/a.length;entries.push({face,a,depth})}
+ entries.sort((a,b)=>b.depth-a.depth);
+ s.hit=[];entries.forEach(renderFace);
+ // subtil vignette
+ const vg=ctx.createRadialGradient(s.width*.5,s.height*.45,s.width*.12,s.width*.5,s.height*.5,s.width*.8);vg.addColorStop(0,'rgba(3,10,4,0)');vg.addColorStop(1,'rgba(2,9,4,.24)');ctx.fillStyle=vg;ctx.fillRect(0,0,s.width,s.height);
+ $('viewInfo').textContent='3D livre · '+C[s.active].label+' selecionado';
+}
+function schedule(){if(!s.renderScheduled){s.renderScheduled=true;requestAnimationFrame(render)}}
+function notify(str){const e=$('toast');e.textContent=str;e.classList.add('show');clearTimeout(notify.t);notify.t=setTimeout(()=>e.classList.remove('show'),2600)}
+function setActive(cat){
+ s.active=cat;$('activeName').textContent=C[cat].label;
+ $('cats').replaceChildren();Object.entries(C).forEach(([key,v])=>{let b=document.createElement('button');b.textContent=v.label;b.classList.toggle('active',key===cat);b.onclick=()=>setActive(key);$('cats').append(b)});
+ $('swatches').replaceChildren();C[cat].items.forEach(v=>{
+  let b=document.createElement('button');b.className='option'+(s.choice[cat]===v[0]?' selected':'');
+  let sw=document.createElement('span');sw.className='preview';sw.style.background=v[2];
+  if(v[3]==='wood')sw.style.backgroundImage='repeating-linear-gradient(91deg,transparent 0 5px,#0002 6px,transparent 8px,#fff1 11px)';
+  if(v[3]==='stone')sw.style.backgroundImage='repeating-linear-gradient(145deg,transparent 0 14px,#fff2 15px,transparent 19px)';
+  if(v[3]==='tile')sw.style.backgroundImage='linear-gradient(90deg,transparent 95%,#f5f5ed66 95%),linear-gradient(0deg,transparent 95%,#f5f5ed66 95%)',sw.style.backgroundSize='18px 18px';
+  let label=document.createElement('span');label.textContent=v[1];b.append(sw,label);
+  b.onclick=()=>{s.choice[cat]=v[0];setActive(cat);schedule()};$('swatches').append(b)
+ });schedule();
+}
+function hit(p,poly){let inside=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){let a=poly[i],b=poly[j];if((a.y>p.y)!==(b.y>p.y)&&p.x<(b.x-a.x)*(p.y-a.y)/(b.y-a.y)+a.x)inside=!inside}return inside}
+function pointerPos(e){let r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
+canvas.addEventListener('pointerdown',e=>{
+ canvas.setPointerCapture(e.pointerId);s.points.set(e.pointerId,pointerPos(e));s.moved=false;
+ if(s.points.size===1)s.pointer=pointerPos(e);
+});
+canvas.addEventListener('pointermove',e=>{
+ if(!s.points.has(e.pointerId))return;
+ let now=pointerPos(e),prev=s.points.get(e.pointerId);s.points.set(e.pointerId,now);
+ if(s.points.size>=2){
+  const pts=[...s.points.values()],other=pts.find(p=>p!==now)||pts[0];
+  const dist=Math.hypot(pts[0].x-pts[1].x,pts[0].y-pts[1].y);
+  if(s.lastPinch){s.cam.dist=clamp(s.cam.dist*(s.lastPinch/dist),3.45,14.0);schedule()}
+  s.lastPinch=dist;s.moved=true;return;
+ }
+ let dx=now.x-prev.x,dy=now.y-prev.y;
+ if(Math.abs(dx)+Math.abs(dy)>.5){s.cam.yaw+=dx*.008;s.cam.pitch=clamp(s.cam.pitch+dy*.006,-.02,1.48);s.moved=true;s.activePreset=null;schedule()}
+});
+function stopPointer(e){
+ if(s.points.has(e.pointerId)){
+  const old=s.pointer,p=pointerPos(e);
+  if(!s.moved&&old&&Math.hypot(old.x-p.x,old.y-p.y)<12){
+   for(let k=s.hit.length-1;k>=0;k--)if(s.hit[k].cat&&hit(p,s.hit[k].points)){setActive(s.hit[k].cat);break}
+  }
+ }
+ s.points.delete(e.pointerId);s.lastPinch=null;if(!s.points.size)s.pointer=null;
+}
+canvas.addEventListener('pointerup',stopPointer);canvas.addEventListener('pointercancel',stopPointer);
+canvas.addEventListener('wheel',e=>{e.preventDefault();s.cam.dist=clamp(s.cam.dist*(e.deltaY>0?1.08:.92),3.45,14);schedule()},{passive:false});
+const camPresets={perspective:{yaw:.46,pitch:.27,dist:7.8},front:{yaw:0,pitch:.11,dist:7.25},top:{yaw:0,pitch:1.47,dist:8.7},left:{yaw:-.80,pitch:.25,dist:7.8}};
+function preset(key){s.cam={...camPresets[key]};['perspective','front','top','left'].forEach(k=>$(k).classList.toggle('active',k===key));schedule()}
+Object.keys(camPresets).forEach(k=>$(k).onclick=()=>preset(k));
+$('zoomIn').onclick=()=>{s.cam.dist=clamp(s.cam.dist*.83,3.45,14);schedule()};
+$('zoomOut').onclick=()=>{s.cam.dist=clamp(s.cam.dist*1.19,3.45,14);schedule()};
+$('resetCam').onclick=()=>preset('perspective');
+$('light').oninput=e=>{s.light=Number(e.target.value)/100;schedule()};
+$('shot').onclick=()=>{render();const a=document.createElement('a');a.download='cozinha-3d-'+Date.now()+'.png';a.href=canvas.toDataURL('image/png');document.body.append(a);a.click();a.remove();notify('Imagem exportada.')};
+$('saveA').onclick=()=>{s.saved.A={...s.choice};notify('Combinação A guardada nesta sessão.')};
+$('saveB').onclick=()=>{s.saved.B={...s.choice};notify('Combinação B guardada nesta sessão.')};
+$('loadA').onclick=()=>{if(!s.saved.A)return notify('Guarde a combinação A primeiro.');s.choice={...s.saved.A};setActive(s.active);notify('Exibindo combinação A.')};
+$('loadB').onclick=()=>{if(!s.saved.B)return notify('Guarde a combinação B primeiro.');s.choice={...s.saved.B};setActive(s.active);notify('Exibindo combinação B.')};
+$('default').onclick=()=>{s.choice={...initial};setActive(s.active);notify('Materiais de referência restaurados.')};
+function download(content,name,type){let blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000)}
+$('export').onclick=()=>{download(JSON.stringify({format:'atelier-cozinha3d/v1',choice:s.choice,A:s.saved.A,B:s.saved.B,note:'Materiais aproximados; geometria 3D demonstrativa'},null,2),'cozinha3d-escolhas.json','application/json');notify('Escolhas exportadas.')};
+$('import').onchange=e=>{let file=e.target.files&&e.target.files[0];if(!file)return;const rd=new FileReader;rd.onload=()=>{try{const x=JSON.parse(rd.result);if(x.format!=='atelier-cozinha3d/v1')throw Error('Arquivo incompatível');for(let key of Object.keys(C)){let val=x.choice?.[key];if(val&&C[key].items.some(i=>i[0]===val))s.choice[key]=val}if(x.A)s.saved.A=x.A;if(x.B)s.saved.B=x.B;setActive(s.active);notify('Escolhas carregadas.')}catch(err){notify('Erro: '+err.message)}};rd.readAsText(file);e.target.value=''};
+window.addEventListener('resize',schedule);window.addEventListener('orientationchange',schedule);
+setActive('bancada');schedule();
+})();
+</script>
+</body></html>
