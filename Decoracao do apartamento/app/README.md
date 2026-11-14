@@ -1,5 +1,13 @@
 # Ateliê do Apartamento — protótipo 0.1
 
+## Protótipo 3D autônomo
+
+- **Arquivo:** [cozinha-3d.html](cozinha-3d.html)
+- **Instalação:** nenhuma; basta baixar o HTML e abrir no navegador com suporte a CSS 3D.
+- **Funções:** girar câmera, zoom por botões e pinça, selecionar categorias/superfícies, trocar pisos/bancadas/armários/parede/revestimento, salvar cenários A e B localmente e exportar escolhas JSON.
+- **Limites:** geometria **esquemática**, não calibrada ao executivo; materiais procedurais ilustrativos; não reproduz o apartamento com precisão dimensional e não fornece renderização fisicamente realista.
+- **Privacidade:** somente modelos sintéticos no repositório público; fotos e planta detalhada não estão embutidas.
+
 ## O que está implementado
 
 Editor web local de fotografias, com uma única página HTML, sem dependências externas e sem servidor.
