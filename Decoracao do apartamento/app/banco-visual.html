@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#17221e">
+<title>Atlas do Apartamento | Banco Visual</title>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#252d28;background:#f3f2ee;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #be9b5c;outline-offset:2px}button:disabled{opacity:.45;cursor:not-allowed}a{color:inherit}
+:root{--forest:#18251f;--forest2:#26382e;--sage:#517060;--line:#e1e4df;--muted:#747e75;--paper:#fff;--accent:#c59a62}
+.shell{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}
+.sidebar{background:var(--forest);color:#f1f1e9;padding:27px 16px;display:flex;flex-direction:column;gap:12px}
+.logo{padding:7px 13px 24px;border-bottom:1px solid #ffffff20;margin-bottom:7px}.logo .mark{width:35px;height:35px;display:grid;place-items:center;background:#d4b17a;border-radius:12px;color:#1d2821;font-size:19px;margin-bottom:17px;font-weight:800}.logo strong{font-size:18px;letter-spacing:-.055em}.logo small{display:block;color:#a9b8ac;margin-top:6px;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.navlink{display:flex;align-items:center;gap:11px;border:0;border-radius:10px;color:#c7d2c8;padding:11px 12px;text-decoration:none;background:transparent;text-align:left;font-size:13px;width:100%}.navlink:hover,.navlink.active{background:#33493a;color:white}.navlink .symbol{width:22px;text-align:center;font-size:17px}
+.spacer{flex:1}.privacy{border:1px solid #ffffff25;background:#ffffff09;border-radius:13px;padding:13px;color:#d0dbd0;font-size:11px;line-height:1.65}.privacy b{color:#e2c18e}
+.main{padding:28px clamp(15px,3vw,40px) 50px;min-width:0;max-width:1800px;width:100%;margin:auto}
+.top{display:flex;align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap;margin-bottom:25px}
+.eyebrow{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.16em;color:#65806d}
+h1{font-size:clamp(25px,2.5vw,37px);letter-spacing:-.055em;margin:4px 0 6px;font-weight:740}
+.subtitle{font-size:13px;color:#758177;margin:0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid #d6ddd4;background:#fff;color:#304338;border-radius:10px;padding:10px 13px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:7px;justify-content:center;min-height:38px;text-decoration:none}
+.btn:hover{background:#f3f6f0}.btn.primary{background:var(--forest2);color:#fff;border-color:var(--forest2)}.btn.primary:hover{background:#36503f}.btn.secondary{background:#e6ece3}.btn.danger{border-color:#d6aca9;color:#973d3d}.btn.small{padding:7px 10px;min-height:31px;font-size:11px}
+label.btn input{display:none}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:15px 18px;min-width:0}.stat strong{font-size:26px;letter-spacing:-.055em;display:block;font-weight:730}.stat span{font-size:11px;color:#768078}.stat em{font-size:11px;font-style:normal;color:#426a51}
+.work{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(290px,.8fr);gap:16px;align-items:start}
+.card{background:#fff;border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:0 2px 16px #243b3008}
+.cardhead{padding:16px 19px;display:flex;justify-content:space-between;align-items:center;gap:9px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.cardhead h2{font-size:16px;letter-spacing:-.025em;margin:0}.cardhead small{font-size:11px;color:#778279}.pill{border:1px solid #dfe5df;border-radius:999px;padding:6px 10px;color:#4f6658;font-size:11px;font-weight:700}
+.plan-wrap{position:relative;margin:19px;min-height:235px;border-radius:12px;background:#f3f5f0;border:1px dashed #cbd7ca;overflow:hidden;display:grid;place-items:center;user-select:none;touch-action:pan-x pan-y}
+.plan-wrap.has-plan{min-height:0;aspect-ratio:4.23/1;border:0;box-shadow:inset 0 0 0 1px #d4dcd2;background:#fbfaf8;cursor:crosshair}
+.plan-image{display:none;position:absolute;width:100%;height:100%;object-fit:fill;inset:0}.has-plan .plan-image{display:block}
+.plan-placeholder{max-width:420px;text-align:center;padding:22px;color:#62746a;font-size:13px;line-height:1.7}.plan-placeholder b{font-size:16px;color:#314438}
+.has-plan .plan-placeholder{display:none}
+.markers{position:absolute;inset:0;pointer-events:none}
+.pin{position:absolute;width:28px;height:28px;border:2px solid white;border-radius:50%;background:#315a43;color:white;font-size:12px;font-weight:800;display:grid;place-items:center;box-shadow:0 2px 9px #16261f80;transform:translate(-50%,-50%);pointer-events:auto;cursor:grab;touch-action:none}
+.pin::before{content:"";display:block;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:12px solid #d7a263;position:absolute;left:5px;top:-13px;transform:rotate(var(--angle,0deg));transform-origin:50% 26px;filter:drop-shadow(0 0 1px white)}
+.pin.selected{background:#c08c51;transform:translate(-50%,-50%) scale(1.24);z-index:5}.pin.estimated{border-style:dashed}.pin:hover{z-index:6}
+.plan-footer{padding:0 19px 19px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:11px;color:#7c887c}
+.rooms{display:flex;flex-wrap:wrap;gap:7px;padding:0 19px 19px}.room{border:1px solid #d9e0d8;border-radius:999px;padding:8px 12px;background:white;font-size:11px;color:#526458;font-weight:700}.room:hover,.room.active{background:#2d4a38;color:#fff;border-color:#2d4a38}
+.help-card{padding:19px;line-height:1.65;font-size:12px;color:#5c6b60}.help-card strong{color:#2e4336}.help-card p{margin:8px 0}
+.tip{border-radius:10px;padding:11px;background:#f1f5ee;color:#526b59;font-size:11px;line-height:1.6}
+.section-title{margin:27px 0 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.section-title h2{margin:0;font-size:20px;letter-spacing:-.04em}.section-title span{color:#7e877f;font-size:12px}
+.filters{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:15px}.search{flex:1;min-width:160px;background:#fff;border:1px solid #dce2dc;border-radius:10px;padding:10px 12px;font-size:12px}.dropdown{border:1px solid #dce2dc;border-radius:10px;background:white;padding:10px;font-size:12px;color:#425747;max-width:170px}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:13px}
+.asset{padding:0;border:1px solid var(--line);background:#fff;border-radius:13px;overflow:hidden;text-align:left;min-width:0;color:inherit;transition:transform .15s,box-shadow .15s}.asset:hover{transform:translateY(-2px);box-shadow:0 8px 20px #18392b20}.asset.active{outline:2px solid #b68b57}
+.thumb{height:153px;background:#e9eee7;display:grid;place-items:center;overflow:hidden;position:relative}.thumb img{width:100%;height:100%;object-fit:cover}.thumb .type{position:absolute;left:9px;top:9px;background:#fdfdf9eb;color:#354a3e;padding:5px 7px;border-radius:7px;font-size:10px;font-weight:700}
+.asset-body{padding:12px}.asset-body strong{font-size:12px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.asset-body span{color:#7e8b7e;display:block;font-size:11px;margin-top:5px}
+.no-results{background:#fff;border:1px dashed #ccd9ce;border-radius:15px;padding:35px 15px;text-align:center;font-size:13px;color:#728074;grid-column:1/-1}
+.detail-image{width:100%;aspect-ratio:4/3;background:#f1f4ef;display:grid;place-items:center;overflow:hidden}.detail-image img{width:100%;height:100%;object-fit:contain}.detail-body{padding:18px}.field{display:flex;flex-direction:column;gap:6px;margin-bottom:13px}.field label{font-size:11px;color:#68776b;font-weight:750}.field input,.field select,.field textarea{border:1px solid #dce3dc;border-radius:9px;background:#fff;padding:10px 11px;font-size:12px;max-width:100%;color:#2e4034;width:100%}.field textarea{resize:vertical;min-height:60px}.field-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}.angle{width:100%;accent-color:#436e4e}.detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.minor{font-size:11px;color:#7b887c;line-height:1.6}.warning{background:#fff9ea;color:#7b602f;border:1px solid #e9d8b0;border-radius:9px;padding:9px 11px;font-size:11px;line-height:1.5}
+.modal{position:fixed;inset:0;z-index:100;background:#132018d9;display:none;align-items:center;justify-content:center;padding:18px}.modal.open{display:flex}
+.modal-content{position:relative;background:#fff;border-radius:15px;padding:11px;max-width:95vw;max-height:96vh;overflow:auto;box-shadow:0 30px 90px #0008}.modal-content img{max-width:90vw;max-height:85vh;object-fit:contain;display:block}.close{position:absolute;right:17px;top:17px;z-index:2;background:#fff;border:1px solid #ddd;border-radius:50%;width:33px;height:33px;font-size:17px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:200;background:#253e2d;color:#fff;border-radius:12px;padding:12px 18px;display:none;font-size:13px;box-shadow:0 8px 35px #0004;max-width:90vw}.toast.show{display:block}
+[hidden]{display:none!important}
+@media(max-width:1170px){.work{grid-template-columns:minmax(0,1fr) 310px}.shell{grid-template-columns:185px minmax(0,1fr)}}
+@media(max-width:930px){.shell{display:block}.sidebar{padding:12px;display:flex;flex-direction:row;gap:7px;align-items:center;flex-wrap:wrap}.logo{padding:3px 8px;border:0;margin:0}.logo .mark{display:none}.logo small{display:none}.logo strong{font-size:15px}.sidebar .privacy,.sidebar .spacer{display:none}.navlink{width:auto;padding:8px;font-size:11px}.navlink .symbol{font-size:13px;width:15px}.main{padding:18px}.work{grid-template-columns:1fr}.detail-image{max-height:265px;aspect-ratio:16/7}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.main{padding:12px}.top{gap:8px}.actions{width:100%;justify-content:flex-start}.btn{font-size:11px;padding:9px}.stat{padding:12px}.stat strong{font-size:23px}.stats{gap:8px}.cardhead{padding:13px}.plan-wrap{margin:12px;min-height:170px}.plan-footer{padding:0 12px 12px}.rooms{padding:0 12px 12px}.room{padding:7px 9px}.gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.thumb{height:135px}.asset-body{padding:10px}.sidebar{overflow-x:auto;flex-wrap:nowrap}.navlink{white-space:nowrap}.navlink:nth-of-type(3),.navlink:nth-of-type(4){display:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="sidebar">
+  <div class="logo"><div class="mark">A</div><strong>Atlas do Apartamento</strong><small>Banco visual · v1</small></div>
+  <button class="navlink active" id="goAtlas"><span class="symbol">▦</span>Planta + fotos</button>
+  <button class="navlink" id="goGallery"><span class="symbol">▧</span>Galeria</button>
+  <a class="navlink" href="../index.html"><span class="symbol">✎</span>Editor de superfícies</a>
+  <a class="navlink" href="../../catalogo/galeria.html"><span class="symbol">◫</span>Catálogo de materiais</a>
+  <div class="spacer"></div>
+  <div class="privacy"><b>● Privacidade local</b><br>Fotos e planta ficam neste navegador; o repositório público guarda somente o código.</div>
+</aside>
+<main class="main">
+  <header class="top">
+    <div><div class="eyebrow">PROJETO EXECUTIVO · ACERVO VISUAL</div><h1>Mapa de imagens</h1><p class="subtitle">Da planta às fotografias, das fotografias às decisões.</p></div>
+    <div class="actions">
+      <label class="btn primary">▣ Importar projeto PDF <input type="file" id="pdfInput" accept=".pdf,application/pdf"></label>
+      <label class="btn">＋ Adicionar fotos <input type="file" id="photosInput" accept="image/*" multiple></label>
+      <button class="btn" id="exportBtn">↓ Backup</button>
+      <label class="btn">↑ Restaurar <input type="file" id="backupInput" accept=".json,application/json"></label>
+    </div>
+  </header>
+  <div class="stats">
+    <div class="stat"><strong id="countAssets">0</strong><span>Imagens catalogadas</span></div>
+    <div class="stat"><strong id="countRooms">0</strong><span>Ambientes com imagens</span></div>
+    <div class="stat"><strong id="countPins">0</strong><span>Pontos associados à planta</span></div>
+    <div class="stat"><strong id="countDocs">0</strong><span>Pranchas técnicas</span></div>
+  </div>
+  <div class="work">
+    <section class="card" id="planSection">
+      <div class="cardhead"><div><h2>Planta interativa</h2><small id="planSubtitle">Importe a planta de arquitetura para ativar o mapa</small></div><span class="pill" id="mapStatus">Sem planta</span></div>
+      <div class="plan-wrap" id="planWrap">
+        <img id="planImage" class="plan-image" alt="Recorte da planta de arquitetura importada do PDF">
+        <div class="plan-placeholder"><div style="font-size:42px">⌂</div><b>Seu apartamento, visto de cima</b><p>Selecione o PDF executivo para extrair a planta e classificar automaticamente os renders das páginas 2 a 8.</p><small>Nenhum arquivo será enviado ao GitHub ou a outro servidor.</small></div>
+        <div class="markers" id="markers" aria-label="Marcadores de posição e direção das fotografias"></div>
+      </div>
+      <div class="plan-footer"><span>◉ Pinos tracejados = localização estimada · arraste para corrigir</span><span id="placementStatus">Selecione uma foto para posicionar</span></div>
+      <div class="rooms" id="roomChips"></div>
+    </section>
+    <aside class="card" id="inspector">
+      <div class="cardhead"><div><h2>Ficha da imagem</h2><small>Ambiente, origem e orientação</small></div><span class="pill" id="selectionTag">Nada selecionado</span></div>
+      <div class="detail-image" id="detailPreview"><span style="font-size:12px;color:#718173;padding:18px;text-align:center">Selecione uma imagem na galeria para editar seus metadados.</span></div>
+      <div class="detail-body" id="detailForm" hidden>
+        <div class="field"><label for="imageTitle">Nome da vista</label><input id="imageTitle" maxlength="120"></div>
+        <div class="field-row">
+          <div class="field"><label for="imageRoom">Ambiente</label><select id="imageRoom"></select></div>
+          <div class="field"><label for="imageType">Natureza</label><select id="imageType"><option>Render executivo</option><option>Fotografia real</option><option>Simulação</option><option>Referência</option><option>Prancha técnica</option></select></div>
+        </div>
+        <div class="field"><label for="imageWall">Parede / vista (opcional)</label><input id="imageWall" placeholder="Ex.: parede da bancada" maxlength="120"></div>
+        <div class="field"><label for="imageNotes">Observações e decisões</label><textarea id="imageNotes" maxlength="1800" placeholder="Material, versão, o que deve permanecer..."></textarea></div>
+        <div class="field"><label for="imageAngle">Direção da câmera: <b id="angleText">0°</b></label><input class="angle" type="range" min="0" max="359" id="imageAngle"></div>
+        <div class="detail-actions">
+          <button class="btn primary small" id="saveDetails">Salvar ficha</button>
+          <button class="btn small" id="placePin">⌖ Posicionar na planta</button>
+          <button class="btn small" id="expandImage">Ampliar</button>
+          <button class="btn danger small" id="deleteImage">Excluir</button>
+        </div>
+        <div class="warning" id="estimateMessage">A posição sugerida é apenas uma aproximação. Confira no local e ajuste o ponto e a direção.</div>
+        <p class="minor" id="sourceMessage"></p>
+      </div>
+      <div class="help-card" id="emptyInspector">
+        <strong>Comece pelo projeto executivo</strong>
+        <p>O aplicativo reconhece a organização conhecida das pranchas do PDF enviado: sala, quarto, banheiro, cozinha e área de serviço.</p>
+        <div class="tip">As imagens renderizadas não são fotografias do estado atual. Quando importar suas fotos reais, cadastre-as como <b>Fotografia real</b>.</div>
+      </div>
+    </aside>
+  </div>
+  <div class="section-title" id="gallerySection"><h2>Acervo por ambiente</h2><span id="resultsLabel">Selecione uma categoria ou pesquise por nome</span></div>
+  <div class="filters"><input class="search" id="searchInput" aria-label="Pesquisar imagens" placeholder="⌕ Buscar por cômodo, elemento, parede ou observação...">
+    <select class="dropdown" id="typeFilter" aria-label="Filtrar por tipo"><option value="todos">Todos os tipos</option><option>Render executivo</option><option>Fotografia real</option><option>Simulação</option><option>Referência</option><option>Prancha técnica</option></select>
+    <button class="btn secondary small" id="showAll">Mostrar todos</button>
+    <button class="btn small" id="eraseAll">Limpar dados locais</button>
+  </div>
+  <div class="gallery" id="gallery" aria-live="polite"></div>
+  <p class="minor" style="margin-top:22px">Fonte: projeto executivo de arquitetura fornecido pelo proprietário. Os recortes são gerados no próprio dispositivo. O mapa mostra posições iniciais estimadas, não um levantamento fotogramétrico. O catálogo e o editor existentes permanecem independentes.</p>
+</main>
+</div>
+<div class="modal" id="lightbox" role="dialog" aria-modal="true" aria-label="Imagem ampliada"><div class="modal-content"><button class="close" id="closeLightbox" aria-label="Fechar">×</button><img id="fullImage" alt=""></div></div>
+<div class="toast" id="toast" role="status"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+"use strict";
+(function(){
+const ROOMS=["Todos","Sala","Quarto","Banheiro","Cozinha","Área de serviço","Hall","Circulação","Geral"];
+// Retângulos extraídos da localização das imagens no PDF original (pontos PDF, não coordenadas de obra).
+// A interpretação dos cômodos e dos marcadores iniciais deve ser confirmada pelo usuário.
+const CROPS=[
+[2,[215.8,41.2,975.1,800.5],"Sala","Sala — perspectiva geral"],
+[3,[19.7,138.6,584.2,703.1],"Sala","Sala — painel e divisão"],
+[3,[606.7,138.5,1171.2,703.1],"Sala","Sala — painel da TV"],
+[4,[21.6,138.3,587.6,704.3],"Sala","Sala — sofá"],
+[4,[603.2,137.4,1169.2,703.4],"Sala","Sala — mesa de refeições"],
+[5,[19.3,190.7,390.5,654.9],"Quarto","Quarto — armários e cama"],
+[5,[409.4,186.8,780.6,651.1],"Quarto","Quarto — vista lateral"],
+[5,[800.4,186.7,1171.6,651.0],"Quarto","Quarto — cabeceira"],
+[6,[73.1,86.0,572.5,754.8],"Banheiro","Banheiro — box"],
+[6,[615.0,84.2,1117.8,757.5],"Banheiro","Banheiro — bancada"],
+[7,[228.4,53.8,962.5,787.9],"Cozinha","Cozinha — perspectiva frontal"],
+[8,[16.5,176.7,382.3,666.7],"Cozinha","Cozinha — bancada e armários"],
+[8,[398.5,175.0,790.2,665.0],"Área de serviço","Área de serviço — lava e seca"],
+[8,[809.8,175.7,1174.4,664.1],"Cozinha","Cozinha — bancada de refeições"]
+];
+const SHEETS=[
+[9,"Geral","Planta demolir e construir"],
+[10,"Geral","Planta de arquitetura"],
+[12,"Cozinha","Pontos hidráulicos e banheiro"],
+[13,"Cozinha","Pontos elétricos — cozinha"],
+[14,"Cozinha","Detalhamento da cozinha"],
+[15,"Banheiro","Detalhamento do banheiro"],
+[16,"Sala","Pontos elétricos — quarto e sala"],
+[17,"Quarto","Detalhamento de quarto e sala"],
+[18,"Cozinha","Detalhamento de sóculo"],
+[19,"Cozinha","Planta de paginação e revestimentos"],
+[21,"Cozinha","Detalhamento de marmoraria"]
+];
+const ANCHORS={"Sala":[.84,.60],"Quarto":[.59,.61],"Banheiro":[.43,.48],"Cozinha":[.23,.40],"Área de serviço":[.34,.31],"Hall":[.10,.74],"Circulação":[.39,.85],"Geral":[.5,.5]};
+const PDF_NAME="EXECUTIVO GUSTAVO COPACABANA - OBRA.pdf";
+const STORE="items", META="meta";let db=null,assets=[],selectedId=null,room="Todos",plan=null,placing=false,importing=false;
+const urls=new Map();
+const el=id=>document.getElementById(id);
+function msg(s){el("toast").textContent=s;el("toast").classList.add("show");clearTimeout(msg.t);msg.t=setTimeout(()=>el("toast").classList.remove("show"),4200)}
+function uid(){return (crypto.randomUUID?crypto.randomUUID():"img-"+Date.now()+"-"+Math.random().toString(16).slice(2))}
+function getSrc(item){if(!item||!item.blob)return "";if(!urls.has(item.id))urls.set(item.id,URL.createObjectURL(item.blob));return urls.get(item.id)}
+function freeSrc(id){if(urls.has(id)){URL.revokeObjectURL(urls.get(id));urls.delete(id)}}
+function requestDone(req){return new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+async function openDb(){return new Promise((resolve,reject)=>{const req=indexedDB.open("atlas-apartamento-local-v1",1);req.onupgradeneeded=()=>{const d=req.result;if(!d.objectStoreNames.contains(STORE))d.createObjectStore(STORE,{keyPath:"id"});if(!d.objectStoreNames.contains(META))d.createObjectStore(META,{keyPath:"id"})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+async function put(table,item){if(!db)return;const tx=db.transaction(table,"readwrite");await requestDone(tx.objectStore(table).put(item))}
+async function del(table,id){if(!db)return;await requestDone(db.transaction(table,"readwrite").objectStore(table).delete(id))}
+async function listAll(table){if(!db)return [];return requestDone(db.transaction(table,"readonly").objectStore(table).getAll())}
+async function persist(item){await put(STORE,item)}
+function setPlan(value){if(plan&&plan.blob)URL.revokeObjectURL(plan.url);plan=value;if(plan&&plan.blob){plan.url=URL.createObjectURL(plan.blob);el("planImage").src=plan.url;el("planWrap").classList.add("has-plan");el("planSubtitle").textContent="Projeto executivo · prancha 02 · planta de arquitetura";el("mapStatus").textContent="Planta carregada"}else{el("planImage").removeAttribute("src");el("planWrap").classList.remove("has-plan");el("planSubtitle").textContent="Importe a planta de arquitetura para ativar o mapa";el("mapStatus").textContent="Sem planta"}renderPins()}
+function markerFor(name,n){const p=ANCHORS[name]||ANCHORS.Geral;const dx=((n%3)-1)*.023,dy=((Math.floor(n/3)%3)-1)*.11;return {x:Math.min(.95,Math.max(.05,p[0]+dx)),y:Math.min(.9,Math.max(.1,p[1]+dy)),angle:0,estimated:true}}
+function countByRoom(r){return assets.filter(a=>a.room===r).length}
+function renderChips(){el("roomChips").innerHTML="";ROOMS.forEach(r=>{const b=document.createElement("button");b.type="button";b.className="room"+(r===room?" active":"");b.textContent=r+" · "+(r==="Todos"?assets.length:countByRoom(r));b.addEventListener("click",()=>{room=r;render()});el("roomChips").appendChild(b)})}
+function renderStats(){el("countAssets").textContent=assets.length;el("countRooms").textContent=new Set(assets.filter(a=>a.room!=="Geral").map(a=>a.room)).size;el("countPins").textContent=assets.filter(a=>a.marker).length;el("countDocs").textContent=assets.filter(a=>a.type==="Prancha técnica").length}
+function selected(){return assets.find(a=>a.id===selectedId)||null}
+function renderPins(){const box=el("markers");box.innerHTML="";if(!plan)return;let pos=0;const shown=assets.filter(a=>a.marker&&(room==="Todos"||a.room===room));
+shown.forEach(a=>{const pin=document.createElement("button");pin.type="button";pin.className="pin"+(a.id===selectedId?" selected":"")+(a.marker.estimated?" estimated":"");pin.style.left=(a.marker.x*100)+"%";pin.style.top=(a.marker.y*100)+"%";pin.style.setProperty("--angle",(Number(a.marker.angle)||0)+"deg");pin.title=a.title+" — "+a.room+(a.marker.estimated?" (estimado)":"");pin.textContent=String(++pos);pin.setAttribute("aria-label",pin.title);let drag=false,moved=false,start=null;pin.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();drag=true;moved=false;start=[e.clientX,e.clientY];pin.setPointerCapture(e.pointerId)});pin.addEventListener("pointermove",e=>{if(!drag)return;if(Math.hypot(e.clientX-start[0],e.clientY-start[1])<5&&!moved)return;moved=true;const rect=el("planWrap").getBoundingClientRect();const x=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width)),y=Math.max(0,Math.min(1,(e.clientY-rect.top)/rect.height));pin.style.left=x*100+"%";pin.style.top=y*100+"%";a.marker.x=x;a.marker.y=y;a.marker.estimated=false});pin.addEventListener("pointerup",async e=>{e.stopPropagation();if(drag){drag=false;selectedId=a.id;if(moved){await persist(a);msg("Ponto reposicionado na planta")}render()}});box.appendChild(pin)})}
+function renderGallery(){const q=el("searchInput").value.trim().toLocaleLowerCase("pt-BR");const t=el("typeFilter").value;const entries=assets.filter(a=>(room==="Todos"||a.room===room)&&(t==="todos"||a.type===t)&&(!q||[a.title,a.room,a.type,a.wall||"",a.notes||""].join(" ").toLocaleLowerCase("pt-BR").includes(q)));el("resultsLabel").textContent=entries.length+" resultado(s) · "+room;const box=el("gallery");box.innerHTML="";if(!entries.length){const empty=document.createElement("div");empty.className="no-results";empty.textContent=assets.length?"Nenhuma imagem corresponde a este filtro.":"Ainda não há imagens. Importe o PDF executivo ou adicione suas fotos reais.";box.appendChild(empty);return}
+entries.forEach(a=>{const b=document.createElement("button");b.type="button";b.className="asset"+(a.id===selectedId?" active":"");const thumb=document.createElement("div");thumb.className="thumb";const im=document.createElement("img");im.loading="lazy";im.src=getSrc(a);im.alt=a.title;thumb.appendChild(im);const type=document.createElement("span");type.className="type";type.textContent=a.type;thumb.appendChild(type);const body=document.createElement("div");body.className="asset-body";const name=document.createElement("strong");name.textContent=a.title;const info=document.createElement("span");info.textContent=a.room+(a.page?" · p. "+a.page:"");body.append(name,info);b.append(thumb,body);b.addEventListener("click",()=>{selectedId=a.id;render();el("inspector").scrollIntoView({behavior:"smooth",block:"nearest"})});box.appendChild(b)})}
+function renderInspector(){const a=selected();el("detailForm").hidden=!a;el("emptyInspector").hidden=!!a;el("selectionTag").textContent=a?a.room:"Nada selecionado";el("detailPreview").innerHTML="";if(!a){const s=document.createElement("span");s.style.cssText="font-size:12px;color:#718173;padding:18px;text-align:center";s.textContent="Selecione uma imagem na galeria ou clique em um marcador da planta.";el("detailPreview").appendChild(s);return}const img=document.createElement("img");img.src=getSrc(a);img.alt=a.title;img.addEventListener("click",showImage);img.style.cursor="zoom-in";el("detailPreview").appendChild(img);el("imageTitle").value=a.title;el("imageRoom").value=a.room;el("imageType").value=a.type;el("imageWall").value=a.wall||"";el("imageNotes").value=a.notes||"";el("imageAngle").value=a.marker?.angle||0;el("angleText").textContent=el("imageAngle").value+"°";el("estimateMessage").hidden=!(a.marker&&a.marker.estimated);el("sourceMessage").textContent=a.page?"Origem: "+PDF_NAME+" · página "+a.page+" · "+(a.type==="Prancha técnica"?"prancha original":"imagem de projeto/render"):"Origem: arquivo importado pelo usuário";
+el("placePin").textContent=a.marker?"⌖ Reposicionar na planta":"⌖ Criar marcador na planta"}
+function render(){renderStats();renderChips();renderPins();renderGallery();renderInspector()}
+function showImage(){const a=selected();if(!a)return;el("fullImage").src=getSrc(a);el("fullImage").alt=a.title;el("lightbox").classList.add("open")}
+function getViewCrop(pageCanvas,rect,pageWidth,pageHeight,max=1200){const [x0,y0,x1,y1]=rect;const ratio=pageCanvas.width/pageWidth;const sx=Math.round(x0*ratio),sy=Math.round(y0*ratio),sw=Math.round((x1-x0)*ratio),sh=Math.round((y1-y0)*ratio);const sc=Math.min(1,max/sw);const c=document.createElement("canvas");c.width=Math.max(1,Math.round(sw*sc));c.height=Math.max(1,Math.round(sh*sc));c.getContext("2d").drawImage(pageCanvas,sx,sy,sw,sh,0,0,c.width,c.height);return new Promise(resolve=>c.toBlob(resolve,"image/jpeg",.86))}
+async function renderPage(doc,pageNumber){const page=await doc.getPage(pageNumber),base=page.getViewport({scale:1}),scale=1.35;const canvas=document.createElement("canvas");canvas.width=Math.round(base.width*scale);canvas.height=Math.round(base.height*scale);await page.render({canvasContext:canvas.getContext("2d",{alpha:false}),viewport:page.getViewport({scale}),background:"rgb(255,255,255)"}).promise;return {canvas,width:base.width,height:base.height}}
+async function readPdf(file){if(importing)return;if(!window.pdfjsLib){msg("Leitor PDF indisponível. Conecte-se à internet e recarregue a página.");return}importing=true;const input=el("pdfInput");input.disabled=true;try{pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";msg("Importando recortes do projeto no próprio navegador...");const bytes=new Uint8Array(await file.arrayBuffer());const doc=await pdfjsLib.getDocument({data:bytes}).promise;if(doc.numPages<21)throw new Error("Este arquivo não possui as 21 páginas esperadas do executivo.");const grouped=new Map();CROPS.forEach((c,i)=>{if(!grouped.has(c[0]))grouped.set(c[0],[]);grouped.get(c[0]).push({...{data:c},idx:i})});SHEETS.forEach(c=>{if(!grouped.has(c[0]))grouped.set(c[0],[])});
+const imported=[];for(const pageNumber of Array.from(grouped.keys()).sort((a,b)=>a-b)){el("planSubtitle").textContent="Extraindo página "+pageNumber+" de "+doc.numPages+"...";await new Promise(r=>setTimeout(r,0));const r=await renderPage(doc,pageNumber);if(pageNumber===10){const blob=await getViewCrop(r.canvas,[12,296,1012,532],r.width,r.height,1650);setPlan({blob});await put(META,{id:"plan",blob})}const items=grouped.get(pageNumber);
+for(const entry of items){const data=entry.data;const cropBlob=await getViewCrop(r.canvas,data[1],r.width,r.height,1150);if(!cropBlob)continue;const key="pdf-r-"+pageNumber+"-"+entry.idx;const prev=assets.find(a=>a.id===key);const newEntry={id:key,title:prev?.title||data[3],room:prev?.room||data[2],type:"Render executivo",wall:prev?.wall||"",notes:prev?.notes||"",blob:cropBlob,page:pageNumber,marker:prev?.marker||markerFor(data[2],entry.idx),source:"pdf-render"};imported.push(newEntry)}
+const sheet=SHEETS.find(c=>c[0]===pageNumber);if(sheet){const key="pdf-t-"+pageNumber;const prev=assets.find(a=>a.id===key);imported.push({id:key,title:prev?.title||sheet[2],room:prev?.room||sheet[1],type:"Prancha técnica",wall:prev?.wall||"",notes:prev?.notes||"",blob:await getViewCrop(r.canvas,[0,0,r.width,r.height],r.width,r.height,1200),page:pageNumber,marker:prev?.marker||null,source:"pdf-sheet"})}
+}
+for(const a of imported){freeSrc(a.id);await persist(a);assets=assets.filter(x=>x.id!==a.id);assets.push(a)}assets.sort((a,b)=>(a.page||999)-(b.page||999));room="Todos";selectedId=imported[0]?.id||null;render();msg(imported.length+" imagens e pranchas catalogadas. Ajuste os pontos estimados na planta.")}catch(e){console.error(e);msg("Falha ao importar PDF: "+String(e.message||e).slice(0,150))}finally{importing=false;input.disabled=false;input.value=""}}
+async function uploadPhotos(files){const arr=Array.from(files||[]).filter(f=>f.type.startsWith("image/"));if(!arr.length)return;for(const file of arr){const a={id:uid(),title:file.name.replace(/\.[^.]+$/,"").replace(/[-_]/g," "),room:room==="Todos"?"Geral":room,type:"Fotografia real",wall:"",notes:"",blob:file,page:null,marker:null,source:"user"};assets.push(a);await persist(a)}selectedId=assets[assets.length-1].id;render();msg(arr.length+" foto(s) adicionada(s). Escolha o ambiente na ficha.")} 
+async function saveDetails(){const a=selected();if(!a)return;a.title=el("imageTitle").value.trim()||"Imagem sem título";a.room=el("imageRoom").value;a.type=el("imageType").value;a.wall=el("imageWall").value.trim();a.notes=el("imageNotes").value.trim();if(a.marker){a.marker.angle=Number(el("imageAngle").value);a.marker.estimated=false}await persist(a);render();msg("Ficha salva neste navegador")}
+function planClicked(e){if(!plan)return;if(placing){const a=selected();if(!a){msg("Selecione uma imagem primeiro");return}const rect=el("planWrap").getBoundingClientRect();a.marker={x:Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width)),y:Math.max(0,Math.min(1,(e.clientY-rect.top)/rect.height)),angle:Number(el("imageAngle").value),estimated:false};persist(a).then(()=>{placing=false;room="Todos";el("placementStatus").textContent="Marcador salvo · arraste para ajustar";render();msg("Marcador posicionado")});return}const rect=el("planWrap").getBoundingClientRect();const x=(e.clientX-rect.left)/rect.width,y=(e.clientY-rect.top)/rect.height;let picked="";if(x>.71)picked="Sala";else if(x>.49)picked="Quarto";else if(x>.365&&y<.72)picked="Banheiro";else if(x>.31&&y<.37)picked="Área de serviço";else if(y>.8&&x>.34)picked="Circulação";else if(x<.19&&y>.67)picked="Hall";else picked="Cozinha";room=picked;render();msg("Ambiente sugerido: "+picked+" · classificação aproximada")}
+function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000)}
+function blobToUrl(blob){return new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=()=>reject(fr.error);fr.readAsDataURL(blob)})}
+async function exportBackup(){if(!assets.length&&!plan){msg("Nada para exportar ainda.");return}msg("Preparando backup completo, incluindo imagens...");const serial=[];for(const a of assets){const {blob,...rest}=a;serial.push({...rest,dataUrl:await blobToUrl(blob)})}const payload={schemaVersion:1,app:"Atlas do Apartamento",exportedAt:new Date().toISOString(),plan:plan?.blob?await blobToUrl(plan.blob):null,assets:serial};download(new Blob([JSON.stringify(payload)],{type:"application/json"}),"atlas-apartamento-backup-"+new Date().toISOString().slice(0,10)+".json");msg("Backup completo exportado")}
+function dataUrlBlob(data){if(typeof data!=="string"||!/^data:image\//.test(data))throw new Error("Imagem inválida no backup");const split=data.split(","),m=split[0].match(/^data:(.+);base64$/);if(!m)throw new Error("Formato não aceito");const bin=atob(split.slice(1).join(",")),bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return new Blob([bytes],{type:m[1]})}
+async function importBackup(file){if(!file)return;try{const payload=JSON.parse(await file.text());if(payload.schemaVersion!==1||!Array.isArray(payload.assets))throw new Error("Backup incompatível");if(!confirm("Restaurar "+payload.assets.length+" imagens do backup? Imagens com o mesmo ID serão substituídas."))return;if(payload.plan){const blob=dataUrlBlob(payload.plan);await put(META,{id:"plan",blob});setPlan({blob})}for(const entry of payload.assets){if(!entry.id||!entry.dataUrl)continue;const blob=dataUrlBlob(entry.dataUrl);const a={id:String(entry.id),title:String(entry.title||"Imagem"),room:ROOMS.includes(entry.room)?entry.room:"Geral",type:String(entry.type||"Referência"),notes:String(entry.notes||""),wall:String(entry.wall||""),marker:entry.marker||null,page:entry.page||null,source:entry.source||"backup",blob};freeSrc(a.id);await persist(a);assets=assets.filter(x=>x.id!==a.id);assets.push(a)}selectedId=assets[0]?.id||null;room="Todos";render();msg("Backup restaurado: "+payload.assets.length+" imagens")}catch(e){console.error(e);msg("Não foi possível restaurar: "+String(e.message||e))}}
+async function deleteCurrent(){const a=selected();if(!a||!confirm("Excluir apenas esta imagem do acervo local?"))return;await del(STORE,a.id);freeSrc(a.id);assets=assets.filter(x=>x.id!==a.id);selectedId=null;render();msg("Imagem excluída")}
+async function deleteEverything(){if(!confirm("ATENÇÃO: apagar a planta e TODAS as imagens armazenadas neste navegador? Faça um backup antes."))return;for(const a of assets){await del(STORE,a.id);freeSrc(a.id)}await del(META,"plan");assets=[];selectedId=null;room="Todos";setPlan(null);render();msg("Dados locais apagados")}
+function wire(){const roomSel=el("imageRoom");ROOMS.filter(r=>r!=="Todos").forEach(r=>{const o=document.createElement("option");o.textContent=r;roomSel.append(o)});
+el("pdfInput").addEventListener("change",e=>readPdf(e.target.files[0]));el("photosInput").addEventListener("change",e=>{uploadPhotos(e.target.files);e.target.value=""});el("saveDetails").addEventListener("click",saveDetails);el("imageAngle").addEventListener("input",e=>el("angleText").textContent=e.target.value+"°");
+el("placePin").addEventListener("click",()=>{if(!plan){msg("Importe primeiro a planta do PDF");return}placing=true;el("placementStatus").textContent="Toque na posição desejada da planta";el("planWrap").scrollIntoView({behavior:"smooth",block:"center"});msg("Toque na planta para posicionar a fotografia")});
+el("planWrap").addEventListener("click",planClicked);el("searchInput").addEventListener("input",renderGallery);el("typeFilter").addEventListener("change",renderGallery);el("showAll").addEventListener("click",()=>{room="Todos";el("searchInput").value="";el("typeFilter").value="todos";render()});el("deleteImage").addEventListener("click",deleteCurrent);el("eraseAll").addEventListener("click",deleteEverything);el("expandImage").addEventListener("click",showImage);el("exportBtn").addEventListener("click",exportBackup);el("backupInput").addEventListener("change",e=>{importBackup(e.target.files[0]);e.target.value=""});
+el("closeLightbox").addEventListener("click",()=>el("lightbox").classList.remove("open"));el("lightbox").addEventListener("click",e=>{if(e.target===el("lightbox"))el("lightbox").classList.remove("open")});document.addEventListener("keydown",e=>{if(e.key==="Escape")el("lightbox").classList.remove("open")});
+el("goAtlas").addEventListener("click",()=>el("planSection").scrollIntoView({behavior:"smooth"}));el("goGallery").addEventListener("click",()=>el("gallerySection").scrollIntoView({behavior:"smooth"}))
+}
+async function init(){wire();try{db=await openDb();assets=await listAll(STORE);const stored=await listAll(META);const p=stored.find(x=>x.id==="plan");if(p&&p.blob)setPlan({blob:p.blob});if(assets.length)msg("Acervo restaurado deste navegador: "+assets.length+" imagens")}catch(e){console.error(e);msg("Armazenamento persistente indisponível. Use o backup manual.")}render()}
+init();
+})();
+</script>
+</body>
+</html>
