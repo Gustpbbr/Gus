@@ -8,6 +8,15 @@
 
 > **Objetivo:** criar um aplicativo web interativo para experimentar combinações de decoração e reforma, usando fotografias reais, imagens de referência e — quando apropriado — geometria 3D. O usuário seleciona piso, bancada, portas, armários, paredes, colunas, azulejos, louças, metais, cortinas, iluminação ou mobiliário e escolhe entre dezenas de materiais e modelos. Apenas a região selecionada muda. É possível comparar, salvar e exportar versões.
 
+## Novo: Atlas do Apartamento — banco visual vinculado à planta (2026-11-16)
+
+- **Aplicativo:** [abrir código do Atlas](app/banco-visual.html) (HTML único, execução no navegador).
+- **Manual de uso:** [BANCO-VISUAL.md](app/BANCO-VISUAL.md).
+- **Entradas:** PDF executivo enviado pelo proprietário, pacote ZIP já organizado na pasta privada *Apartamento Copacabana* do Google Drive ou fotos reais individuais.
+- **Capacidades:** planta com marcadores de câmera ajustáveis, galeria por ambiente, metadados de vistas, registros de origem e backup completo.
+- **Privacidade:** não há foto/planta real no GitHub; imagens importadas ficam no navegador (IndexedDB) ou no ZIP/Drive privado. O Atlas ainda não possui sincronização automática com o Drive.
+- **Status:** MVP funcional publicado como código, sem implantação web. Posições de câmera e identificação da planta são estimativas sujeitas a revisão; importação de novas fotografias exige classificação manual.
+
 ## Banco de dados de produtos reais (2026-11-14)
 
 - **[Catálogo de referências reais](catalogo/README.md):** 240 referências de materiais, padrões e produtos em 14 categorias, com links de origem e metadados de procedência. 20 têm miniaturas comerciais externas; os demais oferecem acesso à fonte sem imagem inventada.
