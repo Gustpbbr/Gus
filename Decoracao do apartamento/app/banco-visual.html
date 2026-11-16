@@ -65,8 +65,8 @@ label.btn input{display:none}
   <div class="logo"><div class="mark">A</div><strong>Atlas do Apartamento</strong><small>Banco visual · v1</small></div>
   <button class="navlink active" id="goAtlas"><span class="symbol">▦</span>Planta + fotos</button>
   <button class="navlink" id="goGallery"><span class="symbol">▧</span>Galeria</button>
-  <a class="navlink" href="../index.html"><span class="symbol">✎</span>Editor de superfícies</a>
-  <a class="navlink" href="../../catalogo/galeria.html"><span class="symbol">◫</span>Catálogo de materiais</a>
+  <a class="navlink" href="./index.html"><span class="symbol">✎</span>Editor de superfícies</a>
+  <a class="navlink" href="../catalogo/galeria.html"><span class="symbol">◫</span>Catálogo de materiais</a>
   <div class="spacer"></div>
   <div class="privacy"><b>● Privacidade local</b><br>Fotos e planta ficam neste navegador; o repositório público guarda somente o código.</div>
 </aside>
@@ -75,6 +75,7 @@ label.btn input{display:none}
     <div><div class="eyebrow">PROJETO EXECUTIVO · ACERVO VISUAL</div><h1>Mapa de imagens</h1><p class="subtitle">Da planta às fotografias, das fotografias às decisões.</p></div>
     <div class="actions">
       <label class="btn primary">▣ Importar projeto PDF <input type="file" id="pdfInput" accept=".pdf,application/pdf"></label>
+      <label class="btn">▤ Importar pacote ZIP <input type="file" id="zipInput" accept=".zip,application/zip,application/x-zip-compressed"></label>
       <label class="btn">＋ Adicionar fotos <input type="file" id="photosInput" accept="image/*" multiple></label>
       <button class="btn" id="exportBtn">↓ Backup</button>
       <label class="btn">↑ Restaurar <input type="file" id="backupInput" accept=".json,application/json"></label>
@@ -138,6 +139,7 @@ label.btn input{display:none}
 <div class="modal" id="lightbox" role="dialog" aria-modal="true" aria-label="Imagem ampliada"><div class="modal-content"><button class="close" id="closeLightbox" aria-label="Fechar">×</button><img id="fullImage" alt=""></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 "use strict";
 (function(){
@@ -210,6 +212,46 @@ for(const entry of items){const data=entry.data;const cropBlob=await getViewCrop
 const sheet=SHEETS.find(c=>c[0]===pageNumber);if(sheet){const key="pdf-t-"+pageNumber;const prev=assets.find(a=>a.id===key);imported.push({id:key,title:prev?.title||sheet[2],room:prev?.room||sheet[1],type:"Prancha técnica",wall:prev?.wall||"",notes:prev?.notes||"",blob:await getViewCrop(r.canvas,[0,0,r.width,r.height],r.width,r.height,1200),page:pageNumber,marker:prev?.marker||null,source:"pdf-sheet"})}
 }
 for(const a of imported){freeSrc(a.id);await persist(a);assets=assets.filter(x=>x.id!==a.id);assets.push(a)}assets.sort((a,b)=>(a.page||999)-(b.page||999));room="Todos";selectedId=imported[0]?.id||null;render();msg(imported.length+" imagens e pranchas catalogadas. Ajuste os pontos estimados na planta.")}catch(e){console.error(e);msg("Falha ao importar PDF: "+String(e.message||e).slice(0,150))}finally{importing=false;input.disabled=false;input.value=""}}
+async function importZip(file){
+if(!file)return;
+if(!window.JSZip){msg("Leitor ZIP indisponível. Conecte-se à internet e recarregue.");return}
+if(importing)return;
+importing=true;
+try{
+msg("Abrindo pacote visual no próprio navegador...");
+const zip=await JSZip.loadAsync(await file.arrayBuffer());
+const planEntry=zip.file("plan.jpg")||zip.file("planta.jpg");
+if(planEntry){const blob=await planEntry.async("blob");await put(META,{id:"plan",blob});setPlan({blob});el("planWrap").style.aspectRatio="2830/700";el("planSubtitle").textContent="Planta do pacote visual — pontos de câmera ajustáveis"}
+const htmlEntry=zip.file("index.html");
+const html=htmlEntry?await htmlEntry.async("string"):"";
+const start=html.indexOf("const P = [");
+const end=start>=0?html.indexOf("];",start):-1;
+const section=start>=0&&end>start?html.slice(start,end):"";
+const rx=/\{n:(\d+), room:"([^"]+)", x:(\d+),y:(\d+),h:(-?\d+), v:(\d+), conf:"([^"]+)", t:"([^"]+)", w:"([^"]+)", note:"([^"]*)"\}/g;
+const entries=[];let match;
+while((match=rx.exec(section))!==null){
+entries.push({n:Number(match[1]),room:match[2],x:Number(match[3]),y:Number(match[4]),h:Number(match[5]),variation:match[6]==="1",confidence:match[7],title:match[8],wall:match[9],notes:match[10]});
+}
+const fallback=Object.keys(zip.files).filter(k=>/^img\/i\d+\.(?:jpe?g|png)$/i.test(k)).map(k=>({n:Number(k.match(/i(\d+)\./i)[1]),room:"Geral",title:k,wall:"",notes:"",variation:false,confidence:"A confirmar",x:1415,y:350,h:0}));
+const chosen=entries.length?entries:fallback;
+let added=0;
+for(const item of chosen){
+const pattern=new RegExp("^img/i"+String(item.n).padStart(2,"0")+"\\.(jpe?g|png)$","i");
+const key=Object.keys(zip.files).find(x=>pattern.test(x));
+if(!key)continue;
+const blob=await zip.file(key).async("blob");
+const id="pacote-visual-"+item.n;
+const old=assets.find(a=>a.id===id);
+const a={id,title:old?.title||item.title,room:old?.room||(ROOMS.includes(item.room)?item.room:"Geral"),type:old?.type||(item.variation?"Simulação":"Render executivo"),wall:old?.wall||item.wall,notes:old?.notes||(item.notes+" [Localização original: "+item.confidence+"; revisar.]"),blob,source:"zip-visual",marker:old?.marker||{x:Math.min(1,item.x/2830),y:Math.min(1,item.y/700),angle:(item.h+90+360)%360,estimated:true}};
+freeSrc(id);await persist(a);assets=assets.filter(x=>x.id!==id);assets.push(a);added++;
+}
+if(!added)throw Error("Não encontrei imagens compatíveis na pasta img/.");
+selectedId=assets.find(a=>a.id==="pacote-visual-4")?.id||assets[0]?.id||null;
+room="Todos";render();msg("Pacote importado: "+added+" imagens com ambiente e câmeras estimadas");
+}catch(e){console.error(e);msg("Não foi possível importar o ZIP: "+String(e.message||e).slice(0,130))}
+finally{importing=false;el("zipInput").value=""}
+}
+
 async function uploadPhotos(files){const arr=Array.from(files||[]).filter(f=>f.type.startsWith("image/"));if(!arr.length)return;for(const file of arr){const a={id:uid(),title:file.name.replace(/\.[^.]+$/,"").replace(/[-_]/g," "),room:room==="Todos"?"Geral":room,type:"Fotografia real",wall:"",notes:"",blob:file,page:null,marker:null,source:"user"};assets.push(a);await persist(a)}selectedId=assets[assets.length-1].id;render();msg(arr.length+" foto(s) adicionada(s). Escolha o ambiente na ficha.")} 
 async function saveDetails(){const a=selected();if(!a)return;a.title=el("imageTitle").value.trim()||"Imagem sem título";a.room=el("imageRoom").value;a.type=el("imageType").value;a.wall=el("imageWall").value.trim();a.notes=el("imageNotes").value.trim();if(a.marker){a.marker.angle=Number(el("imageAngle").value);a.marker.estimated=false}await persist(a);render();msg("Ficha salva neste navegador")}
 function planClicked(e){if(!plan)return;if(placing){const a=selected();if(!a){msg("Selecione uma imagem primeiro");return}const rect=el("planWrap").getBoundingClientRect();a.marker={x:Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width)),y:Math.max(0,Math.min(1,(e.clientY-rect.top)/rect.height)),angle:Number(el("imageAngle").value),estimated:false};persist(a).then(()=>{placing=false;room="Todos";el("placementStatus").textContent="Marcador salvo · arraste para ajustar";render();msg("Marcador posicionado")});return}const rect=el("planWrap").getBoundingClientRect();const x=(e.clientX-rect.left)/rect.width,y=(e.clientY-rect.top)/rect.height;let picked="";if(x>.71)picked="Sala";else if(x>.49)picked="Quarto";else if(x>.365&&y<.72)picked="Banheiro";else if(x>.31&&y<.37)picked="Área de serviço";else if(y>.8&&x>.34)picked="Circulação";else if(x<.19&&y>.67)picked="Hall";else picked="Cozinha";room=picked;render();msg("Ambiente sugerido: "+picked+" · classificação aproximada")}
@@ -221,7 +263,7 @@ async function importBackup(file){if(!file)return;try{const payload=JSON.parse(a
 async function deleteCurrent(){const a=selected();if(!a||!confirm("Excluir apenas esta imagem do acervo local?"))return;await del(STORE,a.id);freeSrc(a.id);assets=assets.filter(x=>x.id!==a.id);selectedId=null;render();msg("Imagem excluída")}
 async function deleteEverything(){if(!confirm("ATENÇÃO: apagar a planta e TODAS as imagens armazenadas neste navegador? Faça um backup antes."))return;for(const a of assets){await del(STORE,a.id);freeSrc(a.id)}await del(META,"plan");assets=[];selectedId=null;room="Todos";setPlan(null);render();msg("Dados locais apagados")}
 function wire(){const roomSel=el("imageRoom");ROOMS.filter(r=>r!=="Todos").forEach(r=>{const o=document.createElement("option");o.textContent=r;roomSel.append(o)});
-el("pdfInput").addEventListener("change",e=>readPdf(e.target.files[0]));el("photosInput").addEventListener("change",e=>{uploadPhotos(e.target.files);e.target.value=""});el("saveDetails").addEventListener("click",saveDetails);el("imageAngle").addEventListener("input",e=>el("angleText").textContent=e.target.value+"°");
+el("pdfInput").addEventListener("change",e=>readPdf(e.target.files[0]));el("zipInput").addEventListener("change",e=>importZip(e.target.files[0]));el("photosInput").addEventListener("change",e=>{uploadPhotos(e.target.files);e.target.value=""});el("saveDetails").addEventListener("click",saveDetails);el("imageAngle").addEventListener("input",e=>el("angleText").textContent=e.target.value+"°");
 el("placePin").addEventListener("click",()=>{if(!plan){msg("Importe primeiro a planta do PDF");return}placing=true;el("placementStatus").textContent="Toque na posição desejada da planta";el("planWrap").scrollIntoView({behavior:"smooth",block:"center"});msg("Toque na planta para posicionar a fotografia")});
 el("planWrap").addEventListener("click",planClicked);el("searchInput").addEventListener("input",renderGallery);el("typeFilter").addEventListener("change",renderGallery);el("showAll").addEventListener("click",()=>{room="Todos";el("searchInput").value="";el("typeFilter").value="todos";render()});el("deleteImage").addEventListener("click",deleteCurrent);el("eraseAll").addEventListener("click",deleteEverything);el("expandImage").addEventListener("click",showImage);el("exportBtn").addEventListener("click",exportBackup);el("backupInput").addEventListener("change",e=>{importBackup(e.target.files[0]);e.target.value=""});
 el("closeLightbox").addEventListener("click",()=>el("lightbox").classList.remove("open"));el("lightbox").addEventListener("click",e=>{if(e.target===el("lightbox"))el("lightbox").classList.remove("open")});document.addEventListener("keydown",e=>{if(e.key==="Escape")el("lightbox").classList.remove("open")});
