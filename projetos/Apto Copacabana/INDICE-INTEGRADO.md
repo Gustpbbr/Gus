@@ -79,3 +79,10 @@ Estados mínimos: **documentado / observado / inferido / pendente / aprovado / s
 - Se houver conflito de versões, marcar **PENDENTE**; não escolher por dedução.
 - A aprovação técnica e a liberação de serviços cabem a profissionais habilitados.
 - Nas próximas conversas, ler os arquivos canônicos relevantes antes de afirmar um estado atualizado.
+
+## 6. Alertas de revisão de escopo (não corrigir sem validação)
+
+- O item 05 da lista oficial ainda está nomeado como **split 18.000 BTU/h**. O dimensionamento e a seleção final precisam ser conferidos antes de transformar o item em especificação fechada.
+- O item 11 ainda descreve adaptação do banheiro para **lavadora Brastemp convencional de 8 kg**. Esse cadastro pode estar superado pelo planejamento de **lava e seca**; revisar escopo hidráulico, elétrico e dimensional com base na escolha atual e em documentos de suporte.
+- Os estados `links-prontos`, `pesquisa-concluida` ou `aguardando-pesquisa` refletem o arquivo consultado, datado de 2026-11-08. Não significam orçamento recebido, compra, contratação ou execução.
+- A lista 01–19 é uma **lista de serviços a orçar**, não substitui a EAP completa da obra, inspeções, dependências, licenças, comissionamento, limpeza final e entrega.
