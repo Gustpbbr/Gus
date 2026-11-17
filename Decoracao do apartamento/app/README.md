@@ -1,5 +1,19 @@
 # Ateliê do Apartamento — protótipo 0.1
 
+## Atlas — planejamento de perspectivas C01 (2026-11-16)
+
+A página [banco-visual.html](banco-visual.html) agora contém o módulo **Nova perspectiva · C01 · Cozinha**:
+
+- Altura da câmera em centímetros (padrão 110), distância focal em mm equivalente a sensor full-frame de 36 mm (padrão 24) e rumo no plano (padrão 180°).
+- Convenção do rumo na planta exibida: 0° para cima, 90° direita, 180° baixo e 270° esquerda. **Não é azimute geográfico**.
+- Calculo do campo visual horizontal a partir da focal, sem atribuir automaticamente distância de câmera, escala física ou geometria 3D.
+- Toque em **Posicionar C01 na planta**, depois toque no local aproximado da câmera. Um marcador "C" tracejado aparece, separado dos marcadores das fotos.
+- Toque em **Salvar parâmetros** para registrar a proposta em IndexedDB local; o backup do Atlas inclui os dados de C01.
+- Marcador, altura e direção são **hipóteses de trabalho**, não levantamento técnico nem renderização. Não há geração automática da nova imagem.
+
+**Privacidade:** nenhuma planta, fotografia, posição específica do imóvel ou arquivo de câmera particular fica no código público do GitHub. A posição só é registrada no navegador do usuário e em backups que ele exporta.
+
+
 ## Protótipo 3D autônomo
 
 - **Arquivo:** [cozinha-3d.html](cozinha-3d.html)
