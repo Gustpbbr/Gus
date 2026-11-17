@@ -57,6 +57,19 @@ label.btn input{display:none}
 @media(max-width:1170px){.work{grid-template-columns:minmax(0,1fr) 310px}.shell{grid-template-columns:185px minmax(0,1fr)}}
 @media(max-width:930px){.shell{display:block}.sidebar{padding:12px;display:flex;flex-direction:row;gap:7px;align-items:center;flex-wrap:wrap}.logo{padding:3px 8px;border:0;margin:0}.logo .mark{display:none}.logo small{display:none}.logo strong{font-size:15px}.sidebar .privacy,.sidebar .spacer{display:none}.navlink{width:auto;padding:8px;font-size:11px}.navlink .symbol{font-size:13px;width:15px}.main{padding:18px}.work{grid-template-columns:1fr}.detail-image{max-height:265px;aspect-ratio:16/7}.stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.main{padding:12px}.top{gap:8px}.actions{width:100%;justify-content:flex-start}.btn{font-size:11px;padding:9px}.stat{padding:12px}.stat strong{font-size:23px}.stats{gap:8px}.cardhead{padding:13px}.plan-wrap{margin:12px;min-height:170px}.plan-footer{padding:0 12px 12px}.rooms{padding:0 12px 12px}.room{padding:7px 9px}.gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.thumb{height:135px}.asset-body{padding:10px}.sidebar{overflow-x:auto;flex-wrap:nowrap}.navlink{white-space:nowrap}.navlink:nth-of-type(3),.navlink:nth-of-type(4){display:none}}
+
+/* Planejamento de vistas — dados pessoais somente no navegador */
+.camera-planner{padding:18px 20px 20px;border-top:1px solid var(--line);background:#fafbf8}
+.camera-planner h3{font-size:16px;margin:0 0 5px}
+.camera-planner p{font-size:12px;color:#647268;line-height:1.6;margin:5px 0 13px}
+.cam-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;max-width:600px}
+.cam-fields label{font-size:11px;font-weight:700;color:#475b4a;display:flex;flex-direction:column;gap:5px}
+.cam-fields input{min-width:0;border:1px solid #ced8cc;border-radius:8px;padding:8px;background:#fff;color:#26372c;width:100%}
+.cam-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
+.cam-msg{font-size:12px;color:#435847;margin-top:8px}
+.pin.planned{background:#876134;border-color:#fff0ca;border-style:dashed;z-index:8}
+.pin.planned::before{border-bottom-color:#e1b45c}
+@media(max-width:500px){.cam-fields{grid-template-columns:repeat(3,minmax(0,1fr))}.camera-planner{padding:15px 13px}}
 </style>
 </head>
 <body>
@@ -97,6 +110,22 @@ label.btn input{display:none}
       </div>
       <div class="plan-footer"><span>◉ Pinos tracejados = localização estimada · arraste para corrigir</span><span id="placementStatus">Selecione uma foto para posicionar</span></div>
       <div class="rooms" id="roomChips"></div>
+      <section class="camera-planner" aria-label="Planejador de nova perspectiva">
+        <h3>◉ Nova perspectiva · C01 · Cozinha</h3>
+        <p>Registre a câmera proposta, sem gerar uma imagem fictícia. No Atlas, <b>0° = acima</b>, <b>90° = direita</b>, <b>180° = abaixo</b> e <b>270° = esquerda</b> na planta. Focal em equivalente full-frame (sensor de 36 mm).</p>
+        <div class="cam-fields">
+          <label>Altura (cm)<input id="cameraHeight" type="number" inputmode="numeric" min="50" max="250" step="5" value="110"></label>
+          <label>Focal (mm)<input id="cameraFocal" type="number" inputmode="decimal" min="12" max="100" step="1" value="24"></label>
+          <label>Direção (°)<input id="cameraHeading" type="number" inputmode="numeric" min="0" max="359" step="1" value="180"></label>
+        </div>
+        <div class="cam-actions">
+          <button class="btn primary small" id="cameraPlace">⌖ Posicionar C01 na planta</button>
+          <button class="btn small" id="cameraSave">Salvar parâmetros</button>
+          <button class="btn danger small" id="cameraRemove">Excluir C01</button>
+        </div>
+        <p class="cam-msg" id="cameraStatus" role="status">Parâmetros preparados. Toque em “Posicionar C01” e escolha o ponto na planta; a posição permanece estimada até ser calibrada.</p>
+        <p>Campo horizontal aproximado: <b id="cameraFov">73,7°</b>. Esta função registra câmera e orientação; ainda não renderiza uma nova fotografia.</p>
+      </section>
     </section>
     <aside class="card" id="inspector">
       <div class="cardhead"><div><h2>Ficha da imagem</h2><small>Ambiente, origem e orientação</small></div><span class="pill" id="selectionTag">Nada selecionado</span></div>
@@ -177,7 +206,7 @@ const SHEETS=[
 ];
 const ANCHORS={"Sala":[.84,.60],"Quarto":[.59,.61],"Banheiro":[.43,.48],"Cozinha":[.23,.40],"Área de serviço":[.34,.31],"Hall":[.10,.74],"Circulação":[.39,.85],"Geral":[.5,.5]};
 const PDF_NAME="EXECUTIVO GUSTAVO COPACABANA - OBRA.pdf";
-const STORE="items", META="meta";let db=null,assets=[],selectedId=null,room="Todos",plan=null,placing=false,importing=false;
+const STORE="items", META="meta";let db=null,assets=[],selectedId=null,room="Todos",plan=null,placing=false,importing=false,placingCamera=false,plannedView=null;
 const urls=new Map();
 const el=id=>document.getElementById(id);
 function msg(s){el("toast").textContent=s;el("toast").classList.add("show");clearTimeout(msg.t);msg.t=setTimeout(()=>el("toast").classList.remove("show"),4200)}
@@ -192,12 +221,54 @@ async function listAll(table){if(!db)return [];return requestDone(db.transaction
 async function persist(item){await put(STORE,item)}
 function setPlan(value){if(plan&&plan.blob)URL.revokeObjectURL(plan.url);plan=value;if(plan&&plan.blob){plan.url=URL.createObjectURL(plan.blob);el("planImage").src=plan.url;el("planWrap").classList.add("has-plan");el("planSubtitle").textContent="Projeto executivo · prancha 02 · planta de arquitetura";el("mapStatus").textContent="Planta carregada"}else{el("planImage").removeAttribute("src");el("planWrap").classList.remove("has-plan");el("planSubtitle").textContent="Importe a planta de arquitetura para ativar o mapa";el("mapStatus").textContent="Sem planta"}renderPins()}
 function markerFor(name,n){const p=ANCHORS[name]||ANCHORS.Geral;const dx=((n%3)-1)*.023,dy=((Math.floor(n/3)%3)-1)*.11;return {x:Math.min(.95,Math.max(.05,p[0]+dx)),y:Math.min(.9,Math.max(.1,p[1]+dy)),angle:0,estimated:true}}
+
+function cameraParams(){
+ const heightCm=Math.min(250,Math.max(50,Number(el("cameraHeight").value)||110));
+ const focalMm=Math.min(100,Math.max(12,Number(el("cameraFocal").value)||24));
+ const angle=((Math.round(Number(el("cameraHeading").value)||0)%360)+360)%360;
+ return {heightCm,focalMm,angle};
+}
+function showCameraForm(){
+ const p=plannedView||{heightCm:110,focalMm:24,angle:180};
+ el("cameraHeight").value=p.heightCm;
+ el("cameraFocal").value=p.focalMm;
+ el("cameraHeading").value=p.angle;
+ refreshCameraFov();
+ if(plannedView?.marker){el("cameraStatus").textContent="C01 posicionada na planta (estimativa). Altura, focal e direção salvas localmente; ainda não há renderização 3D."}
+}
+function refreshCameraFov(){
+ const fov=2*Math.atan(36/(2*cameraParams().focalMm))*180/Math.PI;
+ el("cameraFov").textContent=fov.toLocaleString("pt-BR",{maximumFractionDigits:1})+"°";
+}
+async function saveCamera(){
+ const p=cameraParams();
+ plannedView={...plannedView,id:"camera-c01",room:"Cozinha",title:"C01 · Vista da bancada de refeições",sensorWidthMm:36,...p,geometryStatus:"estimada",rendered:false};
+ await put(META,{id:"plannedView",value:plannedView});
+ renderPins();refreshCameraFov();
+ el("cameraStatus").textContent=plannedView.marker?"C01 salva no dispositivo — ponto estimado, ainda sem imagem renderizada.":"C01 salva no dispositivo — marque agora sua posição na planta.";
+ msg("Parâmetros da câmera C01 salvos localmente");
+}
+async function removeCamera(){
+ placingCamera=false;plannedView=null;await del(META,"plannedView");renderPins();showCameraForm();el("cameraStatus").textContent="C01 removida. Ajuste os campos e crie uma nova proposta.";msg("Câmera C01 removida");
+}
+function renderCameraPin(box){
+ if(!plannedView?.marker||(room!=="Todos"&&room!=="Cozinha"))return;
+ const p=plannedView, pin=document.createElement("button");
+ pin.type="button";pin.className="pin planned estimated";pin.textContent="C";
+ pin.style.left=(p.marker.x*100)+"%";pin.style.top=(p.marker.y*100)+"%";
+ pin.style.setProperty("--angle",(p.angle||0)+"deg");
+ pin.title="C01 — câmera planejada, sem fotografia · posição estimada";
+ pin.setAttribute("aria-label",pin.title);
+ pin.addEventListener("click",e=>{e.stopPropagation();showCameraForm();el("cameraStatus").textContent="C01 selecionada. Para mudar o local, use Posicionar C01 na planta.";});
+ box.appendChild(pin);
+}
 function countByRoom(r){return assets.filter(a=>a.room===r).length}
 function renderChips(){el("roomChips").innerHTML="";ROOMS.forEach(r=>{const b=document.createElement("button");b.type="button";b.className="room"+(r===room?" active":"");b.textContent=r+" · "+(r==="Todos"?assets.length:countByRoom(r));b.addEventListener("click",()=>{room=r;render()});el("roomChips").appendChild(b)})}
 function renderStats(){el("countAssets").textContent=assets.length;el("countRooms").textContent=new Set(assets.filter(a=>a.room!=="Geral").map(a=>a.room)).size;el("countPins").textContent=assets.filter(a=>a.marker).length;el("countDocs").textContent=assets.filter(a=>a.type==="Prancha técnica").length}
 function selected(){return assets.find(a=>a.id===selectedId)||null}
 function renderPins(){const box=el("markers");box.innerHTML="";if(!plan)return;let pos=0;const shown=assets.filter(a=>a.marker&&(room==="Todos"||a.room===room));
-shown.forEach(a=>{const pin=document.createElement("button");pin.type="button";pin.className="pin"+(a.id===selectedId?" selected":"")+(a.marker.estimated?" estimated":"");pin.style.left=(a.marker.x*100)+"%";pin.style.top=(a.marker.y*100)+"%";pin.style.setProperty("--angle",(Number(a.marker.angle)||0)+"deg");pin.title=a.title+" — "+a.room+(a.marker.estimated?" (estimado)":"");pin.textContent=String(++pos);pin.setAttribute("aria-label",pin.title);let drag=false,moved=false,start=null;pin.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();drag=true;moved=false;start=[e.clientX,e.clientY];pin.setPointerCapture(e.pointerId)});pin.addEventListener("pointermove",e=>{if(!drag)return;if(Math.hypot(e.clientX-start[0],e.clientY-start[1])<5&&!moved)return;moved=true;const rect=el("planWrap").getBoundingClientRect();const x=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width)),y=Math.max(0,Math.min(1,(e.clientY-rect.top)/rect.height));pin.style.left=x*100+"%";pin.style.top=y*100+"%";a.marker.x=x;a.marker.y=y;a.marker.estimated=false});pin.addEventListener("pointerup",async e=>{e.stopPropagation();if(drag){drag=false;selectedId=a.id;if(moved){await persist(a);msg("Ponto reposicionado na planta")}render()}});box.appendChild(pin)})}
+shown.forEach(a=>{const pin=document.createElement("button");pin.type="button";pin.className="pin"+(a.id===selectedId?" selected":"")+(a.marker.estimated?" estimated":"");pin.style.left=(a.marker.x*100)+"%";pin.style.top=(a.marker.y*100)+"%";pin.style.setProperty("--angle",(Number(a.marker.angle)||0)+"deg");pin.title=a.title+" — "+a.room+(a.marker.estimated?" (estimado)":"");pin.textContent=String(++pos);pin.setAttribute("aria-label",pin.title);let drag=false,moved=false,start=null;pin.addEventListener("pointerdown",e=>{e.preventDefault();e.stopPropagation();drag=true;moved=false;start=[e.clientX,e.clientY];pin.setPointerCapture(e.pointerId)});pin.addEventListener("pointermove",e=>{if(!drag)return;if(Math.hypot(e.clientX-start[0],e.clientY-start[1])<5&&!moved)return;moved=true;const rect=el("planWrap").getBoundingClientRect();const x=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width)),y=Math.max(0,Math.min(1,(e.clientY-rect.top)/rect.height));pin.style.left=x*100+"%";pin.style.top=y*100+"%";a.marker.x=x;a.marker.y=y;a.marker.estimated=false});pin.addEventListener("pointerup",async e=>{e.stopPropagation();if(drag){drag=false;selectedId=a.id;if(moved){await persist(a);msg("Ponto reposicionado na planta")}render()}});box.appendChild(pin)})
+renderCameraPin(box)}
 function renderGallery(){const q=el("searchInput").value.trim().toLocaleLowerCase("pt-BR");const t=el("typeFilter").value;const entries=assets.filter(a=>(room==="Todos"||a.room===room)&&(t==="todos"||a.type===t)&&(!q||[a.title,a.room,a.type,a.wall||"",a.notes||""].join(" ").toLocaleLowerCase("pt-BR").includes(q)));el("resultsLabel").textContent=entries.length+" resultado(s) · "+room;const box=el("gallery");box.innerHTML="";if(!entries.length){const empty=document.createElement("div");empty.className="no-results";empty.textContent=assets.length?"Nenhuma imagem corresponde a este filtro.":"Ainda não há imagens. Importe o PDF executivo ou adicione suas fotos reais.";box.appendChild(empty);return}
 entries.forEach(a=>{const b=document.createElement("button");b.type="button";b.className="asset"+(a.id===selectedId?" active":"");const thumb=document.createElement("div");thumb.className="thumb";const im=document.createElement("img");im.loading="lazy";im.src=getSrc(a);im.alt=a.title;thumb.appendChild(im);const type=document.createElement("span");type.className="type";type.textContent=a.type;thumb.appendChild(type);const body=document.createElement("div");body.className="asset-body";const name=document.createElement("strong");name.textContent=a.title;const info=document.createElement("span");info.textContent=a.room+(a.page?" · p. "+a.page:"");body.append(name,info);b.append(thumb,body);b.addEventListener("click",()=>{selectedId=a.id;render();el("inspector").scrollIntoView({behavior:"smooth",block:"nearest"})});box.appendChild(b)})}
 function renderInspector(){const a=selected();el("detailForm").hidden=!a;el("emptyInspector").hidden=!!a;el("selectionTag").textContent=a?a.room:"Nada selecionado";el("detailPreview").innerHTML="";if(!a){const s=document.createElement("span");s.style.cssText="font-size:12px;color:#718173;padding:18px;text-align:center";s.textContent="Selecione uma imagem na galeria ou clique em um marcador da planta.";el("detailPreview").appendChild(s);return}const img=document.createElement("img");img.src=getSrc(a);img.alt=a.title;img.addEventListener("click",showImage);img.style.cursor="zoom-in";el("detailPreview").appendChild(img);el("imageTitle").value=a.title;el("imageRoom").value=a.room;el("imageType").value=a.type;el("imageWall").value=a.wall||"";el("imageNotes").value=a.notes||"";el("imageAngle").value=a.marker?.angle||0;el("angleText").textContent=el("imageAngle").value+"°";el("estimateMessage").hidden=!(a.marker&&a.marker.estimated);el("sourceMessage").textContent=a.page?"Origem: "+PDF_NAME+" · página "+a.page+" · "+(a.type==="Prancha técnica"?"prancha original":"imagem de projeto/render"):"Origem: arquivo importado pelo usuário";
@@ -254,22 +325,36 @@ finally{importing=false;el("zipInput").value=""}
 
 async function uploadPhotos(files){const arr=Array.from(files||[]).filter(f=>f.type.startsWith("image/"));if(!arr.length)return;for(const file of arr){const a={id:uid(),title:file.name.replace(/\.[^.]+$/,"").replace(/[-_]/g," "),room:room==="Todos"?"Geral":room,type:"Fotografia real",wall:"",notes:"",blob:file,page:null,marker:null,source:"user"};assets.push(a);await persist(a)}selectedId=assets[assets.length-1].id;render();msg(arr.length+" foto(s) adicionada(s). Escolha o ambiente na ficha.")} 
 async function saveDetails(){const a=selected();if(!a)return;a.title=el("imageTitle").value.trim()||"Imagem sem título";a.room=el("imageRoom").value;a.type=el("imageType").value;a.wall=el("imageWall").value.trim();a.notes=el("imageNotes").value.trim();if(a.marker){a.marker.angle=Number(el("imageAngle").value);a.marker.estimated=false}await persist(a);render();msg("Ficha salva neste navegador")}
-function planClicked(e){if(!plan)return;if(placing){const a=selected();if(!a){msg("Selecione uma imagem primeiro");return}const rect=el("planWrap").getBoundingClientRect();a.marker={x:Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width)),y:Math.max(0,Math.min(1,(e.clientY-rect.top)/rect.height)),angle:Number(el("imageAngle").value),estimated:false};persist(a).then(()=>{placing=false;room="Todos";el("placementStatus").textContent="Marcador salvo · arraste para ajustar";render();msg("Marcador posicionado")});return}const rect=el("planWrap").getBoundingClientRect();const x=(e.clientX-rect.left)/rect.width,y=(e.clientY-rect.top)/rect.height;let picked="";if(x>.71)picked="Sala";else if(x>.49)picked="Quarto";else if(x>.365&&y<.72)picked="Banheiro";else if(x>.31&&y<.37)picked="Área de serviço";else if(y>.8&&x>.34)picked="Circulação";else if(x<.19&&y>.67)picked="Hall";else picked="Cozinha";room=picked;render();msg("Ambiente sugerido: "+picked+" · classificação aproximada")}
+function planClicked(e){if(!plan)return;
+if(placingCamera){
+ const rect=el("planWrap").getBoundingClientRect();
+ const x=Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width));
+ const y=Math.max(0,Math.min(1,(e.clientY-rect.top)/rect.height));
+ plannedView={...plannedView,id:"camera-c01",room:"Cozinha",title:"C01 · Vista da bancada de refeições",sensorWidthMm:36,...cameraParams(),marker:{x,y,estimated:true},geometryStatus:"estimada",rendered:false};
+ placingCamera=false;room="Cozinha";put(META,{id:"plannedView",value:plannedView}).then(()=>{render();el("cameraStatus").textContent="C01 marcada com posição estimada. Confira a localização na planta antes de renderizar.";msg("C01 registrada: posição estimada")});
+ return;
+}
+if(placing){const a=selected();if(!a){msg("Selecione uma imagem primeiro");return}const rect=el("planWrap").getBoundingClientRect();a.marker={x:Math.max(0,Math.min(1,(e.clientX-rect.left)/rect.width)),y:Math.max(0,Math.min(1,(e.clientY-rect.top)/rect.height)),angle:Number(el("imageAngle").value),estimated:false};persist(a).then(()=>{placing=false;room="Todos";el("placementStatus").textContent="Marcador salvo · arraste para ajustar";render();msg("Marcador posicionado")});return}const rect=el("planWrap").getBoundingClientRect();const x=(e.clientX-rect.left)/rect.width,y=(e.clientY-rect.top)/rect.height;let picked="";if(x>.71)picked="Sala";else if(x>.49)picked="Quarto";else if(x>.365&&y<.72)picked="Banheiro";else if(x>.31&&y<.37)picked="Área de serviço";else if(y>.8&&x>.34)picked="Circulação";else if(x<.19&&y>.67)picked="Hall";else picked="Cozinha";room=picked;render();msg("Ambiente sugerido: "+picked+" · classificação aproximada")}
 function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000)}
 function blobToUrl(blob){return new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=()=>reject(fr.error);fr.readAsDataURL(blob)})}
-async function exportBackup(){if(!assets.length&&!plan){msg("Nada para exportar ainda.");return}msg("Preparando backup completo, incluindo imagens...");const serial=[];for(const a of assets){const {blob,...rest}=a;serial.push({...rest,dataUrl:await blobToUrl(blob)})}const payload={schemaVersion:1,app:"Atlas do Apartamento",exportedAt:new Date().toISOString(),plan:plan?.blob?await blobToUrl(plan.blob):null,assets:serial};download(new Blob([JSON.stringify(payload)],{type:"application/json"}),"atlas-apartamento-backup-"+new Date().toISOString().slice(0,10)+".json");msg("Backup completo exportado")}
+async function exportBackup(){if(!assets.length&&!plan){msg("Nada para exportar ainda.");return}msg("Preparando backup completo, incluindo imagens...");const serial=[];for(const a of assets){const {blob,...rest}=a;serial.push({...rest,dataUrl:await blobToUrl(blob)})}const payload={schemaVersion:1,app:"Atlas do Apartamento",exportedAt:new Date().toISOString(),plan:plan?.blob?await blobToUrl(plan.blob):null,assets:serial,plannedView};download(new Blob([JSON.stringify(payload)],{type:"application/json"}),"atlas-apartamento-backup-"+new Date().toISOString().slice(0,10)+".json");msg("Backup completo exportado")}
 function dataUrlBlob(data){if(typeof data!=="string"||!/^data:image\//.test(data))throw new Error("Imagem inválida no backup");const split=data.split(","),m=split[0].match(/^data:(.+);base64$/);if(!m)throw new Error("Formato não aceito");const bin=atob(split.slice(1).join(",")),bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);return new Blob([bytes],{type:m[1]})}
-async function importBackup(file){if(!file)return;try{const payload=JSON.parse(await file.text());if(payload.schemaVersion!==1||!Array.isArray(payload.assets))throw new Error("Backup incompatível");if(!confirm("Restaurar "+payload.assets.length+" imagens do backup? Imagens com o mesmo ID serão substituídas."))return;if(payload.plan){const blob=dataUrlBlob(payload.plan);await put(META,{id:"plan",blob});setPlan({blob})}for(const entry of payload.assets){if(!entry.id||!entry.dataUrl)continue;const blob=dataUrlBlob(entry.dataUrl);const a={id:String(entry.id),title:String(entry.title||"Imagem"),room:ROOMS.includes(entry.room)?entry.room:"Geral",type:String(entry.type||"Referência"),notes:String(entry.notes||""),wall:String(entry.wall||""),marker:entry.marker||null,page:entry.page||null,source:entry.source||"backup",blob};freeSrc(a.id);await persist(a);assets=assets.filter(x=>x.id!==a.id);assets.push(a)}selectedId=assets[0]?.id||null;room="Todos";render();msg("Backup restaurado: "+payload.assets.length+" imagens")}catch(e){console.error(e);msg("Não foi possível restaurar: "+String(e.message||e))}}
+async function importBackup(file){if(!file)return;try{const payload=JSON.parse(await file.text());if(payload.schemaVersion!==1||!Array.isArray(payload.assets))throw new Error("Backup incompatível");if(!confirm("Restaurar "+payload.assets.length+" imagens do backup? Imagens com o mesmo ID serão substituídas."))return;if(payload.plan){const blob=dataUrlBlob(payload.plan);await put(META,{id:"plan",blob});setPlan({blob})}if(payload.plannedView){plannedView=payload.plannedView;await put(META,{id:"plannedView",value:plannedView});showCameraForm()}for(const entry of payload.assets){if(!entry.id||!entry.dataUrl)continue;const blob=dataUrlBlob(entry.dataUrl);const a={id:String(entry.id),title:String(entry.title||"Imagem"),room:ROOMS.includes(entry.room)?entry.room:"Geral",type:String(entry.type||"Referência"),notes:String(entry.notes||""),wall:String(entry.wall||""),marker:entry.marker||null,page:entry.page||null,source:entry.source||"backup",blob};freeSrc(a.id);await persist(a);assets=assets.filter(x=>x.id!==a.id);assets.push(a)}selectedId=assets[0]?.id||null;room="Todos";render();msg("Backup restaurado: "+payload.assets.length+" imagens")}catch(e){console.error(e);msg("Não foi possível restaurar: "+String(e.message||e))}}
 async function deleteCurrent(){const a=selected();if(!a||!confirm("Excluir apenas esta imagem do acervo local?"))return;await del(STORE,a.id);freeSrc(a.id);assets=assets.filter(x=>x.id!==a.id);selectedId=null;render();msg("Imagem excluída")}
-async function deleteEverything(){if(!confirm("ATENÇÃO: apagar a planta e TODAS as imagens armazenadas neste navegador? Faça um backup antes."))return;for(const a of assets){await del(STORE,a.id);freeSrc(a.id)}await del(META,"plan");assets=[];selectedId=null;room="Todos";setPlan(null);render();msg("Dados locais apagados")}
-function wire(){const roomSel=el("imageRoom");ROOMS.filter(r=>r!=="Todos").forEach(r=>{const o=document.createElement("option");o.textContent=r;roomSel.append(o)});
+async function deleteEverything(){if(!confirm("ATENÇÃO: apagar a planta e TODAS as imagens armazenadas neste navegador? Faça um backup antes."))return;for(const a of assets){await del(STORE,a.id);freeSrc(a.id)}await del(META,"plan");await del(META,"plannedView");plannedView=null;placingCamera=false;showCameraForm();assets=[];selectedId=null;room="Todos";setPlan(null);render();msg("Dados locais apagados")}
+function wire(){
+ el("cameraPlace").addEventListener("click",()=>{if(!plan){msg("Importe a planta ou o pacote ZIP primeiro");return;}placing=false;placingCamera=true;el("cameraStatus").textContent="Toque no ponto da cozinha onde ficará a câmera C01 (estimativa).";el("planWrap").scrollIntoView({behavior:"smooth",block:"center"});});
+ el("cameraSave").addEventListener("click",saveCamera);
+ el("cameraRemove").addEventListener("click",removeCamera);
+ ["cameraHeight","cameraFocal","cameraHeading"].forEach(id=>el(id).addEventListener("input",refreshCameraFov));
+ const roomSel=el("imageRoom");ROOMS.filter(r=>r!=="Todos").forEach(r=>{const o=document.createElement("option");o.textContent=r;roomSel.append(o)});
 el("pdfInput").addEventListener("change",e=>readPdf(e.target.files[0]));el("zipInput").addEventListener("change",e=>importZip(e.target.files[0]));el("photosInput").addEventListener("change",e=>{uploadPhotos(e.target.files);e.target.value=""});el("saveDetails").addEventListener("click",saveDetails);el("imageAngle").addEventListener("input",e=>el("angleText").textContent=e.target.value+"°");
 el("placePin").addEventListener("click",()=>{if(!plan){msg("Importe primeiro a planta do PDF");return}placing=true;el("placementStatus").textContent="Toque na posição desejada da planta";el("planWrap").scrollIntoView({behavior:"smooth",block:"center"});msg("Toque na planta para posicionar a fotografia")});
 el("planWrap").addEventListener("click",planClicked);el("searchInput").addEventListener("input",renderGallery);el("typeFilter").addEventListener("change",renderGallery);el("showAll").addEventListener("click",()=>{room="Todos";el("searchInput").value="";el("typeFilter").value="todos";render()});el("deleteImage").addEventListener("click",deleteCurrent);el("eraseAll").addEventListener("click",deleteEverything);el("expandImage").addEventListener("click",showImage);el("exportBtn").addEventListener("click",exportBackup);el("backupInput").addEventListener("change",e=>{importBackup(e.target.files[0]);e.target.value=""});
 el("closeLightbox").addEventListener("click",()=>el("lightbox").classList.remove("open"));el("lightbox").addEventListener("click",e=>{if(e.target===el("lightbox"))el("lightbox").classList.remove("open")});document.addEventListener("keydown",e=>{if(e.key==="Escape")el("lightbox").classList.remove("open")});
 el("goAtlas").addEventListener("click",()=>el("planSection").scrollIntoView({behavior:"smooth"}));el("goGallery").addEventListener("click",()=>el("gallerySection").scrollIntoView({behavior:"smooth"}))
 }
-async function init(){wire();try{db=await openDb();assets=await listAll(STORE);const stored=await listAll(META);const p=stored.find(x=>x.id==="plan");if(p&&p.blob)setPlan({blob:p.blob});if(assets.length)msg("Acervo restaurado deste navegador: "+assets.length+" imagens")}catch(e){console.error(e);msg("Armazenamento persistente indisponível. Use o backup manual.")}render()}
+async function init(){wire();try{db=await openDb();assets=await listAll(STORE);const stored=await listAll(META);const p=stored.find(x=>x.id==="plan");if(p&&p.blob)setPlan({blob:p.blob});const cv=stored.find(x=>x.id==="plannedView");if(cv?.value)plannedView=cv.value;showCameraForm();if(assets.length)msg("Acervo restaurado deste navegador: "+assets.length+" imagens")}catch(e){console.error(e);msg("Armazenamento persistente indisponível. Use o backup manual.")}refreshCameraFov();render()}
 init();
 })();
 </script>
